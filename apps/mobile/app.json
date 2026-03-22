@@ -1,0 +1,17 @@
+{
+  "expo": {
+    "name": "SportyKids",
+    "slug": "sportykids",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.sportykids.app"
+    },
+    "android": {
+      "package": "com.sportykids.app"
+    }
+  }
+}

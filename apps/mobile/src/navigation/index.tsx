@@ -1,0 +1,89 @@
+import { NavigationContainer } from '@react-navigation/native';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import { Text } from 'react-native';
+import { t } from '@sportykids/shared';
+import { useUser } from '../lib/user-context';
+import { HomeFeedScreen } from '../screens/HomeFeed';
+import { ReelsScreen } from '../screens/Reels';
+import { QuizScreen } from '../screens/Quiz';
+import { FavoriteTeamScreen } from '../screens/FavoriteTeam';
+import { ParentalControlScreen } from '../screens/ParentalControl';
+import { OnboardingScreen } from '../screens/Onboarding';
+
+const Tab = createBottomTabNavigator();
+const Stack = createNativeStackNavigator();
+
+function MainTabs() {
+  const { locale } = useUser();
+
+  return (
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#2563EB',
+        tabBarInactiveTintColor: '#9CA3AF',
+        tabBarStyle: { borderTopColor: '#F1F5F9' },
+      }}
+    >
+      <Tab.Screen
+        name="HomeFeed"
+        component={HomeFeedScreen}
+        options={{
+          tabBarLabel: t('nav.news', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📰</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Reels"
+        component={ReelsScreen}
+        options={{
+          tabBarLabel: t('nav.reels', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🎬</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Quiz"
+        component={QuizScreen}
+        options={{
+          tabBarLabel: t('nav.quiz', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🧠</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="FavoriteTeam"
+        component={FavoriteTeamScreen}
+        options={{
+          tabBarLabel: t('nav.my_team', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>⚽</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Parents"
+        component={ParentalControlScreen}
+        options={{
+          tabBarLabel: t('nav.parents', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🔒</Text>,
+        }}
+      />
+    </Tab.Navigator>
+  );
+}
+
+export function AppNavigator() {
+  const { user, loading } = useUser();
+
+  if (loading) return null;
+
+  return (
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
+        {user ? (
+          <Stack.Screen name="Main" component={MainTabs} />
+        ) : (
+          <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+        )}
+      </Stack.Navigator>
+    </NavigationContainer>
+  );
+}

@@ -1,0 +1,12 @@
+@import "tailwindcss";
+
+@theme {
+  --color-blue: #2563EB;
+  --color-green: #22C55E;
+  --color-yellow: #FACC15;
+  --color-background: #F8FAFC;
+  --color-text: #1E293B;
+
+  --font-poppins: 'Poppins', sans-serif;
+  --font-inter: 'Inter', sans-serif;
+}

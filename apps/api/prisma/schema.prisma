@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+model NewsItem {
+  id          String   @id @default(cuid())
+  title       String
+  summary     String   @default("")
+  imageUrl    String   @default("")
+  source      String
+  sourceUrl   String
+  sport       String
+  team        String?
+  minAge      Int      @default(6)
+  maxAge      Int      @default(14)
+  publishedAt DateTime
+  createdAt   DateTime @default(now())
+  rssGuid     String   @unique
+}
+
+model User {
+  id              String   @id @default(cuid())
+  name            String
+  age             Int
+  favoriteSports  String   @default("[]")
+  favoriteTeam    String?
+  selectedFeeds   String   @default("[]")
+  totalPoints     Int      @default(0)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  parentalProfile ParentalProfile?
+  activityLogs    ActivityLog[]
+}
+
+model Reel {
+  id              String   @id @default(cuid())
+  title           String
+  videoUrl        String
+  thumbnailUrl    String   @default("")
+  source          String
+  sport           String
+  team            String?
+  minAge          Int      @default(6)
+  maxAge          Int      @default(14)
+  durationSeconds Int      @default(60)
+  createdAt       DateTime @default(now())
+}
+
+model QuizQuestion {
+  id              String @id @default(cuid())
+  question        String
+  options         String
+  correctAnswer   Int
+  sport           String
+  points          Int    @default(10)
+  relatedNewsId   String?
+}
+
+model ParentalProfile {
+  id                 String @id @default(cuid())
+  userId             String @unique
+  user               User   @relation(fields: [userId], references: [id])
+  pin                String
+  allowedSports      String @default("[]")
+  allowedFeeds       String @default("[]")
+  allowedFormats     String @default("[\"news\",\"reels\",\"quiz\"]")
+  maxDailyTimeMinutes Int   @default(60)
+}
+
+model ActivityLog {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  type      String
+  createdAt DateTime @default(now())
+}
+
+model RssSource {
+  id           String    @id @default(cuid())
+  name         String
+  url          String    @unique
+  sport        String
+  active       Boolean   @default(true)
+  lastSyncedAt DateTime?
+}

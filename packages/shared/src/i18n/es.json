@@ -1,0 +1,122 @@
+{
+  "app": { "name": "SportyKids" },
+  "meta": {
+    "title": "SportyKids - Noticias deportivas para niños",
+    "description": "Noticias deportivas personalizadas, vídeos cortos y quizzes interactivos para niños."
+  },
+  "nav": {
+    "news": "Noticias",
+    "reels": "Reels",
+    "quiz": "Quiz",
+    "my_team": "Mi Equipo",
+    "parents": "Padres"
+  },
+  "home": {
+    "latest_news": "Últimas noticias",
+    "subtitle": "Las mejores noticias deportivas para ti",
+    "no_news": "No hay noticias para estos filtros",
+    "no_news_hint": "Prueba con otro deporte o rango de edad"
+  },
+  "filters": {
+    "all": "Todos",
+    "all_ages": "Todas",
+    "age": "Edad:"
+  },
+  "sports": {
+    "football": "Fútbol",
+    "basketball": "Baloncesto",
+    "tennis": "Tenis",
+    "swimming": "Natación",
+    "athletics": "Atletismo",
+    "cycling": "Ciclismo",
+    "formula1": "Fórmula 1",
+    "padel": "Pádel"
+  },
+  "age_ranges": {
+    "6-8": "6-8 años",
+    "9-11": "9-11 años",
+    "12-14": "12-14 años"
+  },
+  "reels": {
+    "title": "Reels",
+    "subtitle": "Vídeos cortos deportivos",
+    "no_reels": "No hay reels disponibles"
+  },
+  "quiz": {
+    "title": "Quiz Deportivo",
+    "subtitle": "¡Demuestra cuánto sabes de deportes!",
+    "total_score": "Tu puntuación total",
+    "completed": "¡Quiz completado!",
+    "points_earned": "Puntos ganados",
+    "round_points": "Puntos en esta ronda:",
+    "correct": "¡Correcto! 🎉",
+    "incorrect": "¡Casi! La respuesta correcta era otra 💪",
+    "view_results": "Ver resultados",
+    "pts": "pts"
+  },
+  "team": {
+    "my_team": "Mi Equipo",
+    "team_news": "Noticias y novedades de tu equipo",
+    "select_team": "Elige tu equipo favorito para ver sus noticias",
+    "choose_favorite": "Elige tu equipo favorito:",
+    "no_recent_news": "No hay noticias recientes de {team}",
+    "news_sync_hint": "Las noticias aparecerán aquí cuando se sincronicen"
+  },
+  "onboarding": {
+    "step1_title": "¡Hola! ¿Cómo te llamas?",
+    "name_placeholder": "Tu nombre",
+    "age_question": "¿Cuántos años tienes?",
+    "step2_title": "¿Qué deportes te gustan?",
+    "step2_subtitle": "Elige al menos uno",
+    "step3_title": "¿Tienes equipo favorito?",
+    "step3_subtitle": "Opcional — puedes saltarlo",
+    "step4_title": "¿De dónde quieres leer noticias?",
+    "step4_subtitle": "Si no eliges ninguno, verás todas las fuentes",
+    "creating_profile": "Creando perfil..."
+  },
+  "parental": {
+    "control": "Control Parental",
+    "create_pin": "Crear PIN parental",
+    "create_pin_subtitle": "Elige un PIN de 4 dígitos para proteger el control parental",
+    "confirm_pin": "Confirmar PIN",
+    "confirm_pin_subtitle": "Escribe el PIN otra vez para confirmar",
+    "enter_pin": "Introduce el PIN para acceder",
+    "manage_content": "Gestiona el contenido y la actividad de {name}",
+    "weekly_activity": "Actividad semanal",
+    "news_read": "Noticias leídas",
+    "reels_viewed": "Reels vistos",
+    "quizzes_played": "Quizzes jugados",
+    "total_points": "Puntos totales",
+    "allowed_formats": "Formatos permitidos",
+    "max_daily_time": "Tiempo máximo diario",
+    "enabled": "Activado",
+    "blocked": "Bloqueado"
+  },
+  "buttons": {
+    "read_more": "Ver más",
+    "load_more": "Cargar más noticias",
+    "next": "Siguiente",
+    "back": "Atrás",
+    "start": "¡Empezar!",
+    "start_quiz": "¡Empezar Quiz!",
+    "play_again": "Jugar otra vez",
+    "next_question": "Siguiente pregunta",
+    "cancel": "Cancelar",
+    "change_team": "Cambiar equipo",
+    "access": "Acceder",
+    "create_pin": "Crear PIN",
+    "confirm": "Confirmar",
+    "loading": "Cargando...",
+    "verifying": "Verificando...",
+    "saving": "Guardando..."
+  },
+  "errors": {
+    "loading_news": "Error cargando noticias",
+    "pins_mismatch": "Los PINs no coinciden. Inténtalo de nuevo.",
+    "incorrect_pin": "PIN incorrecto",
+    "connection_error": "Error de conexión",
+    "create_pin_failed": "Error al crear el PIN",
+    "invalid_data": "Datos inválidos",
+    "not_found": "No encontrado"
+  }
+}
