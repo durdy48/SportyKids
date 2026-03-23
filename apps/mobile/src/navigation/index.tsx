@@ -30,40 +30,40 @@ function MainTabs() {
         name="HomeFeed"
         component={HomeFeedScreen}
         options={{
-          tabBarLabel: t('nav.news', locale),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>📰</Text>,
+          title: t('nav.news', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📰</Text>,
         }}
       />
       <Tab.Screen
         name="Reels"
         component={ReelsScreen}
         options={{
-          tabBarLabel: t('nav.reels', locale),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🎬</Text>,
+          title: t('nav.reels', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🎬</Text>,
         }}
       />
       <Tab.Screen
         name="Quiz"
         component={QuizScreen}
         options={{
-          tabBarLabel: t('nav.quiz', locale),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🧠</Text>,
+          title: t('nav.quiz', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🧠</Text>,
         }}
       />
       <Tab.Screen
         name="FavoriteTeam"
         component={FavoriteTeamScreen}
         options={{
-          tabBarLabel: t('nav.my_team', locale),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>⚽</Text>,
+          title: t('nav.my_team', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>⚽</Text>,
         }}
       />
       <Tab.Screen
         name="Parents"
         component={ParentalControlScreen}
         options={{
-          tabBarLabel: t('nav.parents', locale),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20, color }}>🔒</Text>,
+          title: t('nav.parents', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🔒</Text>,
         }}
       />
     </Tab.Navigator>

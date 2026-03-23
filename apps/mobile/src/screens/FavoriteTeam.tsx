@@ -6,7 +6,7 @@ import { fetchNews } from '../lib/api';
 import { useUser } from '../lib/user-context';
 import { NewsCard } from '../components/NewsCard';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://192.168.1.189:3001/api';
 
 export function FavoriteTeamScreen() {
   const { user, setUser, locale } = useUser();

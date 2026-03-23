@@ -6,7 +6,7 @@ import { SPORTS, TEAMS, AGE_RANGES, COLORS, sportToEmoji, t, getSportLabel, getA
 import type { AgeRange } from '@sportykids/shared';
 import { useUser } from '../lib/user-context';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://192.168.1.189:3001/api';
 const TOTAL_STEPS = 4;
 
 export function OnboardingScreen() {
@@ -22,7 +22,7 @@ export function OnboardingScreen() {
   const [selectedFeeds, setSelectedFeeds] = useState<string[]>([]);
 
   useEffect(() => {
-    fetch(`${API_BASE}/news/sources/list`)
+    fetch(`${API_BASE}/news/fuentes/listado`)
       .then((r) => r.json())
       .then(setSources)
       .catch(console.error);

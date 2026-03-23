@@ -4,7 +4,7 @@ import type { QuizQuestion } from '@sportykids/shared';
 import { COLORS, sportToEmoji, t, getSportLabel } from '@sportykids/shared';
 import { useUser } from '../lib/user-context';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://192.168.1.189:3001/api';
 
 type GameState = 'start' | 'playing' | 'result';
 

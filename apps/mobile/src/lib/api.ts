@@ -1,7 +1,7 @@
 import type { NewsItem } from '@sportykids/shared';
 
-// In development use local IP or localhost
-const API_BASE = 'http://localhost:3001/api';
+// In development use local IP (localhost won't work on physical devices)
+const API_BASE = 'http://192.168.1.189:3001/api';
 
 export interface NewsResponse {
   news: NewsItem[];

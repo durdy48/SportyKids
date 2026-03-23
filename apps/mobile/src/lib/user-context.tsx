@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { User } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://192.168.1.189:3001/api';
 const STORAGE_KEY = 'sportykids_user_id';
 const LOCALE_KEY = 'sportykids_locale';
 

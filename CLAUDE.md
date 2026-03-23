@@ -24,7 +24,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | API | Express 5 + TypeScript | Node >= 20 |
 | ORM | Prisma 6 | SQLite (dev) |
 | Webapp | Next.js 16 (App Router) | Tailwind CSS 4 |
-| App móvil | React Native + Expo | React Navigation 7 |
+| App móvil | React Native 0.81 + Expo SDK 54 | React Navigation 7 |
 | Validación | Zod 4 | — |
 | RSS | rss-parser 3 | — |
 | Cron | node-cron 4 | — |
@@ -70,25 +70,30 @@ sportykids/
 │   │                    # QuizGame, PinInput, ParentalPanel
 │   ├── lib/             # api.ts (cliente API), user-context.tsx (UserProvider + useUser)
 │   └── styles/          # globals.css (Tailwind + CSS vars)
-├── apps/mobile/src/
-│   ├── screens/         # HomeFeed, Reels, Quiz, FavoriteTeam, Onboarding, ParentalControl
-│   ├── components/      # NewsCard, FiltersBar
-│   ├── navigation/      # Bottom tabs (5): News, Reels, Quiz, My Team, Parents
-│   └── lib/             # api.ts, user-context.tsx
+├── apps/mobile/
+│   ├── App.tsx           # Entry point (registerRootComponent)
+│   ├── metro.config.js   # Monorepo-aware Metro config (disableHierarchicalLookup)
+│   ├── app.json          # Expo config
+│   └── src/
+│       ├── App.tsx        # Root component (SafeAreaProvider + UserProvider + Navigation)
+│       ├── screens/       # HomeFeed, Reels, Quiz, FavoriteTeam, Onboarding, ParentalControl
+│       ├── components/    # NewsCard, FiltersBar
+│       ├── navigation/    # Bottom tabs (5): News, Reels, Quiz, My Team, Parents
+│       └── lib/           # api.ts, user-context.tsx
 └── docs/
     ├── es/              # 10 documentos en español
     └── en/              # 10 documentos en inglés
 ```
 
-## API REST — endpoints
+## API REST — endpoints (rutas reales en español)
 
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | GET | `/api/health` | Health check |
 | GET | `/api/news?sport=&team=&age=&page=&limit=` | Noticias con filtros |
 | GET | `/api/news/:id` | Detalle noticia |
-| GET | `/api/news/sources/list` | Fuentes RSS activas |
-| POST | `/api/news/sync` | Sincronización manual |
+| GET | `/api/news/fuentes/listado` | Fuentes RSS activas |
+| POST | `/api/news/sincronizar` | Sincronización manual |
 | GET | `/api/reels?sport=&age=&page=&limit=` | Feed de reels |
 | GET | `/api/reels/:id` | Detalle reel |
 | GET | `/api/quiz/questions?count=&sport=` | Preguntas aleatorias |
@@ -97,12 +102,14 @@ sportykids/
 | POST | `/api/users` | Crear usuario (onboarding) |
 | GET | `/api/users/:id` | Obtener usuario |
 | PUT | `/api/users/:id` | Actualizar preferencias |
-| POST | `/api/parents/setup` | Crear PIN parental |
-| POST | `/api/parents/verify-pin` | Verificar PIN |
-| GET | `/api/parents/profile/:userId` | Perfil parental |
-| PUT | `/api/parents/profile/:userId` | Actualizar restricciones |
-| GET | `/api/parents/activity/:userId` | Resumen actividad semanal |
-| POST | `/api/parents/activity/record` | Registrar actividad |
+| POST | `/api/parents/configurar` | Crear PIN parental |
+| POST | `/api/parents/verificar-pin` | Verificar PIN |
+| GET | `/api/parents/perfil/:userId` | Perfil parental |
+| PUT | `/api/parents/perfil/:userId` | Actualizar restricciones |
+| GET | `/api/parents/actividad/:userId` | Resumen actividad semanal |
+| POST | `/api/parents/actividad/registrar` | Registrar actividad |
+
+**IMPORTANTE**: Las rutas de `news` (excepto CRUD) y `parents` están en **español** en el backend. Los endpoints de `users`, `reels`, y `quiz` están en inglés. Verificar siempre contra `apps/api/src/routes/` antes de consumir desde frontends.
 
 ## Modelos de datos (Prisma)
 
@@ -192,6 +199,8 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 - Reels son placeholders (YouTube embeds, no vídeos reales)
 - Quiz con preguntas estáticas del seed (no se generan automáticamente)
 - SQLite en desarrollo (migrar a PostgreSQL para producción)
+- `API_BASE` hardcodeado en cada screen del mobile (debería centralizarse en un único módulo)
+- Rutas API inconsistentes: mezcla de español e inglés (news/parents en español, quiz/reels/users en inglés)
 
 ## Entorno de desarrollo — notas
 
@@ -199,6 +208,16 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 - Si hay errores EPERM en la caché npm, usar `--cache /private/tmp/claude-502/npm-cache`.
 - tsx puede fallar con EPERM en sandbox. Usar `dangerouslyDisableSandbox: true` o `TSX_IPC_DIR`.
 - Prisma migrate necesita `PRISMA_ENGINES_DIR=/private/tmp/claude-502/prisma-engines` en sandbox.
+
+## App móvil (Expo) — notas críticas
+
+- **Expo SDK 54** con React Native 0.81.5, React 19.1.0. Versiones deben coincidir exactamente con las que espera el SDK.
+- **Node 24** es compatible con SDK 54 pero NO con SDK 52 (metro-cache falla con `ERR_PACKAGE_PATH_NOT_EXPORTED`).
+- **Monorepo + Metro**: npm hoists dependencias a la raíz. Metro resuelve desde root por defecto, lo que causa que use versiones incorrectas. `metro.config.js` con `disableHierarchicalLookup: true` es **obligatorio** (ver `apps/mobile/metro.config.js`).
+- **Entry point**: `package.json` → `"main": "App.tsx"` (raíz de mobile). `App.tsx` importa y registra via `registerRootComponent` desde `src/App.tsx`. NO usar `node_modules/expo/AppEntry.js` (no resuelve en monorepo).
+- **IP local para dispositivos físicos**: El móvil no resuelve `localhost`. Todos los `API_BASE` en `apps/mobile/src/` apuntan a `http://192.168.1.189:3001/api`. Actualizar si cambia la IP de red.
+- **Expo Go**: La versión de Expo Go del dispositivo debe coincidir con el SDK instalado. SDK 54 = Expo Go más reciente del App Store.
+- **AsyncStorage**: Usar `@react-native-async-storage/async-storage@2.2.0` (v3 no es compatible con SDK 54).
 
 ## Instrucciones breves
 

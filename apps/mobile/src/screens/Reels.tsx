@@ -7,7 +7,7 @@ import type { Reel } from '@sportykids/shared';
 import { SPORTS, COLORS, sportToEmoji, t, getSportLabel } from '@sportykids/shared';
 import { useUser } from '../lib/user-context';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://192.168.1.189:3001/api';
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const REEL_HEIGHT = SCREEN_HEIGHT - 160;
 

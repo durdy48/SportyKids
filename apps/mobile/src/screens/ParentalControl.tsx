@@ -3,7 +3,7 @@ import { View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, Activi
 import { COLORS, t } from '@sportykids/shared';
 import { useUser } from '../lib/user-context';
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = 'http://192.168.1.189:3001/api';
 
 type ScreenState = 'loading' | 'create-pin' | 'confirm-pin' | 'verify-pin' | 'panel';
 
@@ -25,7 +25,7 @@ export function ParentalControlScreen() {
 
   useEffect(() => {
     if (!user) return;
-    fetch(`${API_BASE}/parents/profile/${user.id}`)
+    fetch(`${API_BASE}/parents/perfil/${user.id}`)
       .then((r) => r.json())
       .then((d) => setScreenState(d.exists ? 'verify-pin' : 'create-pin'))
       .catch(() => setScreenState('create-pin'));
@@ -34,7 +34,7 @@ export function ParentalControlScreen() {
   const verify = async () => {
     if (!user || pin.length !== 4) return;
     try {
-      const res = await fetch(`${API_BASE}/parents/verify-pin`, {
+      const res = await fetch(`${API_BASE}/parents/verificar-pin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, pin }),
@@ -42,7 +42,7 @@ export function ParentalControlScreen() {
       const data = await res.json();
       if (data.verified) {
         setProfile(data.profile);
-        fetch(`${API_BASE}/parents/activity/${user.id}`).then((r) => r.json()).then(setActivity);
+        fetch(`${API_BASE}/parents/actividad/${user.id}`).then((r) => r.json()).then(setActivity);
         setScreenState('panel');
       } else {
         setError(t('errors.incorrect_pin', locale));
@@ -62,14 +62,14 @@ export function ParentalControlScreen() {
     if (pin !== tempPin) { setError(t('errors.pins_mismatch', locale)); setPin(''); return; }
     if (!user) return;
     try {
-      const res = await fetch(`${API_BASE}/parents/setup`, {
+      const res = await fetch(`${API_BASE}/parents/configurar`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId: user.id, pin }),
       });
       const data = await res.json();
       setProfile(data);
-      fetch(`${API_BASE}/parents/activity/${user.id}`).then((r) => r.json()).then(setActivity);
+      fetch(`${API_BASE}/parents/actividad/${user.id}`).then((r) => r.json()).then(setActivity);
       setScreenState('panel');
     } catch { setError(t('errors.create_pin_failed', locale)); }
     setPin('');
@@ -83,7 +83,7 @@ export function ParentalControlScreen() {
     if (formats.length === 0) return;
     setSaving(true);
     try {
-      const res = await fetch(`${API_BASE}/parents/profile/${user.id}`, {
+      const res = await fetch(`${API_BASE}/parents/perfil/${user.id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ allowedFormats: formats }),
