@@ -32,7 +32,21 @@ npx prisma migrate deploy
 npx tsx prisma/seed.ts
 ```
 
-### 2. Build de la API
+### 2. Configurar proveedor AI
+
+Para produccion, usar OpenRouter o Anthropic en lugar de Ollama:
+
+```bash
+# .env produccion
+AI_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-or-v1-...
+
+# O con Anthropic
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+### 3. Build de la API
 
 ```bash
 cd apps/api
@@ -41,7 +55,7 @@ npm run build
 node dist/index.js
 ```
 
-### 3. Build de la webapp
+### 4. Build de la webapp
 
 ```bash
 cd apps/web
@@ -120,6 +134,8 @@ services:
     environment:
       DATABASE_URL: postgresql://sportykids:sportykids@db:5432/sportykids
       PORT: 3001
+      AI_PROVIDER: openrouter
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
     ports:
       - "3001:3001"
     depends_on:
@@ -135,11 +151,14 @@ volumes:
 - [ ] Configurar HTTPS
 - [ ] Configurar CORS con dominios especificos
 - [ ] Implementar rate limiting
-- [ ] Añadir autenticacion real (JWT)
+- [ ] Anadir autenticacion real (JWT)
+- [ ] Configurar proveedor AI de produccion (OpenRouter/Anthropic)
 - [ ] Configurar logs estructurados
 - [ ] Verificar feeds RSS funcionan en produccion
 - [ ] Configurar backups de base de datos
 - [ ] Configurar monitoring/alertas
-- [ ] Revisar seguridad del PIN (bcrypt en vez de SHA-256)
+- [x] ~~Revisar seguridad del PIN (bcrypt en vez de SHA-256)~~ — Implementado (bcrypt con migracion transparente)
+- [x] ~~Validacion server-side de restricciones parentales~~ — Implementado (parental-guard middleware)
 - [ ] Tests automatizados
 - [ ] CI/CD pipeline
+- [ ] Configurar notificaciones push reales (actualmente solo preferencias almacenadas)

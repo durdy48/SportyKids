@@ -26,8 +26,8 @@ graph LR
 |-------|-----|-------------|-------|
 | Blue | `#2563EB` | `--color-blue` | Primary, active links, main buttons |
 | Green | `#22C55E` | `--color-green` | Success, correct answer, secondary CTA |
-| Yellow | `#FACC15` | `--color-yellow` | Score, highlights, selected sources |
-| White | `#FFFFFF` | — | Card and component background |
+| Yellow | `#FACC15` | `--color-yellow` | Score, highlights, selected sources, sticker rarity |
+| White | `#FFFFFF` | -- | Card and component background |
 | Light background | `#F8FAFC` | `--color-background` | General page background |
 | Dark text | `#1E293B` | `--color-text` | Main text and headings |
 
@@ -59,26 +59,43 @@ graph LR
 |  AS - 2h ago    [Team]  |
 |                         |
 |  +-------------------+  |
+|  |   Explain it Easy  |  |  <- triggers AI summary
+|  +-------------------+  |
+|  +-------------------+  |
 |  |     Read more      |  |
 |  +-------------------+  |
 +-------------------------+
 ```
 
-### Reel card
+### Age-adapted summary (`AgeAdaptedSummary`)
 ```
-+---------------------+
-|                     |
-|                     |
-|   [Video embed]     |
-|   (YouTube iframe)  |
-|                     |
-|                     |
-+---------------------+
-| football     [Team] |
-| 2:00                |
-| Reel title          |
-| Source              |
-+---------------------+
++-------------------------+
+|  Age: 6-8               |
+|  +-------------------+  |
+|  | A simpler version |  |
+|  | of the article    |  |
+|  | written for young |  |
+|  | readers...        |  |
+|  +-------------------+  |
++-------------------------+
+```
+
+### Reel card (Grid layout)
+```
++----------+  +----------+
+| [Thumb]  |  | [Thumb]  |
+| football |  | tennis   |
+| 2:00     |  | 1:30     |
+| Title... |  | Title... |
+| [Like]   |  | [Like]   |
++----------+  +----------+
++----------+  +----------+
+| [Thumb]  |  | [Thumb]  |
+| basket   |  | swimming |
+| 0:45     |  | 3:00     |
+| Title... |  | Title... |
+| [Like]   |  | [Like]   |
++----------+  +----------+
 ```
 
 ### Quiz
@@ -87,6 +104,7 @@ graph LR
 |  # # # _ _   3/5       |
 +-------------------------+
 |  football - 10 pts      |
+|  Daily Quiz             |
 |                         |
 |  Question here?         |
 |                         |
@@ -108,28 +126,97 @@ graph LR
 +-------------------------+
 ```
 
+### Team stats card
+```
++-------------------------+
+|  Real Madrid            |
+|  La Liga - Position: 1  |
+|                         |
+|  W: 22  D: 5  L: 3     |
+|                         |
+|  Top Scorer:            |
+|  Vinicius Jr            |
+|                         |
+|  Next Match:            |
+|  vs Barcelona - Mar 30  |
++-------------------------+
+```
+
+### Sticker card (`StickerCard`)
+```
++----------+
+| [Image]  |
+|          |
+| Name     |
+| football |
+| [rare]   |
++----------+
+```
+
+### Achievement card (`AchievementCard`)
+```
++-------------------------+
+|  [Icon]                 |
+|  Achievement Name       |
+|  Description of what    |
+|  you need to do...      |
+|  [Unlocked / Locked]    |
++-------------------------+
+```
+
+### Collection page
+```
++-------------------------------------+
+|  My Collection                      |
+|  Stickers: 12/36  Achievements: 5/20|
+|                                     |
+|  [All] [Football] [Basketball] ...  |
+|                                     |
+|  +--------+ +--------+ +--------+  |
+|  |Sticker1| |Sticker2| |Sticker3|  |
+|  +--------+ +--------+ +--------+  |
+|  +--------+ +--------+ +--------+  |
+|  |  ???   | |  ???   | |Sticker6|  |
+|  +--------+ +--------+ +--------+  |
+|                                     |
+|  --- Achievements ---               |
+|  [Achievement1] [Achievement2] ...  |
++-------------------------------------+
+```
+
 ### Filters bar (`FiltersBar`)
-Horizontal scrollable chip bar for filtering content by sport. Used in Home Feed, Reels, and Quiz sections.
+Horizontal scrollable chip bar for filtering content by sport. Used in Home Feed, Reels, Quiz, and Collection sections. In the Home Feed, also includes a feed mode selector (Headlines / Cards / Explain).
+
+### Parental panel (5 tabs)
+```
++-------------------------------------+
+|  Parental Control                   |
+|  [Profile|Content|Restrict|Activity|PIN]|
++-------------------------------------+
+|  (content of selected tab)          |
+|                                     |
++-------------------------------------+
+```
 
 ## Navigation
 
 ### Web (Horizontal NavBar)
 ```
-+--------------------------------------------------+
-| SportyKids  | News | Reels | Quiz | My Team | Lock  Pablo |
-+--------------------------------------------------+
++--------------------------------------------------------------+
+| SportyKids | News | Reels | Quiz | My Team | Collection | Lock  Pablo |
++--------------------------------------------------------------+
 ```
 
-**Routes**: `/` (Home), `/onboarding`, `/reels`, `/quiz`, `/team`, `/parents`
+**Routes**: `/` (Home), `/onboarding`, `/reels`, `/quiz`, `/team`, `/collection`, `/parents`
 
 ### Mobile (Bottom Tabs)
 ```
-+--------------------------------------------------+
-|  News    Reels    Quiz   My Team   Parents        |
-+--------------------------------------------------+
++--------------------------------------------------------------+
+|  News    Reels    Quiz   My Team   Collection   Parents      |
++--------------------------------------------------------------+
 ```
 
-**Screens**: `NewsCard` feed, Reels, Quiz, `FavoriteTeam`, `ParentalControl`
+**Screens**: HomeFeed, Reels, Quiz, FavoriteTeam, Collection, ParentalControl
 
 ## Sport iconography
 
@@ -145,6 +232,15 @@ Horizontal scrollable chip bar for filtering content by sport. Used in Home Feed
 | Padel | `padel` | paddle emoji | `#14B8A6` teal |
 
 Sport-to-color and sport-to-emoji mappings are provided by `sportToColor()` and `sportToEmoji()` from `@sportykids/shared`.
+
+## Sticker rarity visual treatment
+
+| Rarity | Border / Glow | Frequency |
+|--------|---------------|-----------|
+| Common | Standard border | Most frequent |
+| Rare | Blue glow | Moderate |
+| Epic | Purple glow | Uncommon |
+| Legendary | Gold glow + animation | Very rare |
 
 ## Responsive
 
@@ -163,4 +259,4 @@ Sport-to-color and sport-to-emoji mappings are provided by `sportToColor()` and 
 
 ## Internationalization
 
-All user-facing text in components supports i18n through the `t(key, locale)` function from `@sportykids/shared`. Labels for sports, UI buttons, headings, and navigation items are translatable. See the Development Guide for details on adding new locales.
+All user-facing text in components supports i18n through the `t(key, locale)` function from `@sportykids/shared`. Labels for sports, UI buttons, headings, navigation items, achievement names, and sticker descriptions are translatable. See the Development Guide for details on adding new locales.

@@ -13,4 +13,19 @@
 
 ---
 
+**Estado**: Fases 0-4 (MVP) + Fase 5 (6 milestones diferenciadores) completadas.
+
+Funcionalidades principales:
+- Feed de noticias deportivas con ranking personalizado y 3 modos de vista
+- Moderacion de contenido por IA (multi-proveedor: Ollama/OpenRouter/Claude)
+- Resumenes adaptados por edad (6-8, 9-11, 12-14)
+- Quiz dinamico generado por IA + preguntas diarias
+- Gamificacion: puntos, rachas, 36 cromos, 20 logros
+- Control parental robusto: bcrypt, sesiones, enforcement server-side
+- 47 fuentes RSS en 8 deportes
+- Estadisticas de equipos (15 equipos)
+- App movil con paridad completa (Expo SDK 54)
+
+---
+
 [English version](../en/README.md)

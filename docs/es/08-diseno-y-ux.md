@@ -2,7 +2,7 @@
 
 ## Identidad visual
 
-SportyKids tiene un diseno infantil pero confiable, pensado para que los ninos lo disfruten y los padres confien.
+SportyKids tiene un diseno infantil pero confiable, pensado para que los ninos lo disfruten y los padres confien. Con la incorporacion de gamificacion (cromos y logros), el diseno refuerza la motivacion y el engagement.
 
 ## Paleta de colores
 
@@ -26,12 +26,12 @@ graph LR
 |-------|-----|-------------|-----|
 | Azul | `#2563EB` | `--color-blue` | Primario, enlaces activos, botones principales |
 | Verde | `#22C55E` | `--color-green` | Exito, respuesta correcta, CTA secundario |
-| Amarillo | `#FACC15` | `--color-yellow` | Puntuacion, destacados, fuentes seleccionadas |
+| Amarillo | `#FACC15` | `--color-yellow` | Puntuacion, destacados, cromos desbloqueados |
 | Blanco | `#FFFFFF` | — | Fondo de tarjetas y componentes |
 | Fondo claro | `#F8FAFC` | `--color-background` | Fondo general de la pagina |
 | Texto oscuro | `#1E293B` | `--color-text` | Texto principal y titulos |
 
-> **Nota:** Las variables CSS se renombraron de español a inglés (`--color-azul` -> `--color-blue`, `--color-verde` -> `--color-green`, etc.).
+> **Nota:** Las variables CSS se renombraron de espanol a ingles (`--color-azul` -> `--color-blue`, `--color-verde` -> `--color-green`, etc.).
 
 ## Tipografia
 
@@ -44,104 +44,177 @@ graph LR
 
 ### Tarjeta de noticia (`NewsCard`)
 ```
-┌─────────────────────────┐
-│  ┌───────────────────┐  │
-│  │    [Imagen]        │  │
-│  │  ┌───────────┐    │  │
-│  │  │⚽ football │    │  │
-│  │  └───────────┘    │  │
-│  └───────────────────┘  │
-│                         │
-│  Titulo de la noticia   │
-│  en dos lineas maximo   │
-│                         │
-│  Resumen breve del      │
-│  contenido...           │
-│                         │
-│  AS · hace 2h  [Equipo] │
-│                         │
-│  ┌───────────────────┐  │
-│  │     Ver mas        │  │
-│  └───────────────────┘  │
-└─────────────────────────┘
+┌─────────────────────────────┐
+│  ┌───────────────────────┐  │
+│  │    [Imagen]            │  │
+│  │  ┌───────────┐        │  │
+│  │  │ football  │        │  │
+│  │  └───────────┘        │  │
+│  └───────────────────────┘  │
+│                             │
+│  Titulo de la noticia       │
+│  en dos lineas maximo       │
+│                             │
+│  Resumen breve del          │
+│  contenido...               │
+│                             │
+│  AS · hace 2h  [Equipo]    │
+│                             │
+│  ┌────────────┐ ┌────────┐ │
+│  │  Ver mas   │ │Explica │ │
+│  │            │ │ facil  │ │
+│  └────────────┘ └────────┘ │
+└─────────────────────────────┘
 ```
 
-### Reel card
+El boton "Explica facil" abre el componente `AgeAdaptedSummary` que muestra un resumen generado por IA adaptado a la edad del nino.
+
+### Reel card (grid layout)
 ```
-┌─────────────────────┐
-│                     │
-│                     │
-│   [Video embed]     │
-│   (YouTube iframe)  │
-│                     │
-│                     │
-├─────────────────────┤
-│ ⚽ football [Equipo]│
-│ 2:00                │
-│ Titulo del reel     │
-│ Fuente              │
-└─────────────────────┘
+┌───────┐ ┌───────┐ ┌───────┐
+│[thumb]│ │[thumb]│ │[thumb]│
+│  ▶    │ │  ▶    │ │  ▶    │
+│ 2:00  │ │ 1:30  │ │ 3:00  │
+├───────┤ ├───────┤ ├───────┤
+│Titulo │ │Titulo │ │Titulo │
+│♥  ↗   │ │♥  ↗   │ │♥  ↗   │
+└───────┘ └───────┘ └───────┘
 ```
+
+Layout de grid con miniaturas de YouTube, duracion, titulo, iconos de like y share.
 
 ### Quiz
 ```
-┌─────────────────────────┐
-│  ■ ■ ■ □ □   3/5       │
-├─────────────────────────┤
-│  ⚽ football · 10 pts   │
-│                         │
-│  ¿Pregunta aqui?        │
-│                         │
-│  ┌─ A ──────────────┐  │
-│  │  Opcion 1         │  │
-│  └───────────────────┘  │
-│  ┌─ B ──────────────┐  │
-│  │  Opcion 2  ✓      │  │  <- verde si correcta
-│  └───────────────────┘  │
-│  ┌─ C ──────────────┐  │
-│  │  Opcion 3  ✗      │  │  <- rojo si incorrecta
-│  └───────────────────┘  │
-│  ┌─ D ──────────────┐  │
-│  │  Opcion 4         │  │
-│  └───────────────────┘  │
-│                         │
-│  ┌─ Siguiente ──────┐  │
-│  └───────────────────┘  │
-└─────────────────────────┘
+┌─────────────────────────────┐
+│  ■ ■ ■ □ □   3/5           │
+├─────────────────────────────┤
+│  football · 10 pts          │
+│                             │
+│  Pregunta aqui?             │
+│                             │
+│  ┌─ A ──────────────────┐  │
+│  │  Opcion 1             │  │
+│  └───────────────────────┘  │
+│  ┌─ B ──────────────────┐  │
+│  │  Opcion 2  ✓          │  │  <- verde si correcta
+│  └───────────────────────┘  │
+│  ┌─ C ──────────────────┐  │
+│  │  Opcion 3  ✗          │  │  <- rojo si incorrecta
+│  └───────────────────────┘  │
+│  ┌─ D ──────────────────┐  │
+│  │  Opcion 4             │  │
+│  └───────────────────────┘  │
+│                             │
+│  ┌─ Siguiente ──────────┐  │
+│  └───────────────────────┘  │
+└─────────────────────────────┘
+```
+
+### Coleccion de cromos
+```
+┌─────────────────────────────────┐
+│  Mi Coleccion        12/36      │
+├─────────────────────────────────┤
+│  [Todos] [Futbol] [Basket] ... │
+│                                 │
+│  ┌────────┐ ┌────────┐ ┌────┐  │
+│  │  ⚽    │ │  🏀    │ │ ?? │  │
+│  │ Bota   │ │  Mate  │ │    │  │
+│  │  Oro   │ │  Epico │ │    │  │
+│  │ ★★★★  │ │ ★★★   │ │ ★  │  │
+│  └────────┘ └────────┘ └────┘  │
+│                                 │
+│  ┌─ Logros ─────────────────┐  │
+│  │ ✓ Racha de 3 dias        │  │
+│  │ ✓ 100 puntos             │  │
+│  │ □ 5 deportes distintos   │  │
+│  │ □ Coleccionar 20 cromos  │  │
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘
+```
+
+### Panel parental (5 pestanas)
+```
+┌─────────────────────────────────────┐
+│  Control Parental                    │
+├──────┬──────┬──────┬──────┬────────┤
+│Perfil│Conten│Restr.│Activ.│  PIN   │
+├──────┴──────┴──────┴──────┴────────┤
+│                                     │
+│  Pestana activa: Actividad          │
+│                                     │
+│  Esta semana:                       │
+│  Noticias: 12  Reels: 5  Quiz: 3   │
+│  Tiempo total: 47 min               │
+│                                     │
+│  ┌─ Lun ─ Mar ─ Mie ─ Jue ─ Vie ┐ │
+│  │  ██   ███   █    ████   ██    │ │
+│  │  8m   15m   4m   20m    10m   │ │
+│  └───────────────────────────────┘ │
+│                                     │
+│  Por deporte:                       │
+│  Futbol: 60%  Basket: 25%  Tenis: 15% │
+└─────────────────────────────────────┘
+```
+
+### Equipo favorito (con estadisticas)
+```
+┌─────────────────────────────┐
+│  Real Madrid                 │
+│  ┌───────────────────────┐  │
+│  │  1ero en La Liga      │  │
+│  │  V: 22  E: 5  D: 3   │  │
+│  │  Goleador: Vinicius   │  │
+│  │  Proximo: vs Barcelona│  │
+│  └───────────────────────┘  │
+│                             │
+│  Ultimas noticias:          │
+│  ┌──────────────────────┐  │
+│  │ [NewsCard filtrada]   │  │
+│  └──────────────────────┘  │
+└─────────────────────────────┘
 ```
 
 ## Navegacion
 
 ### Web (NavBar horizontal)
 ```
-┌──────────────────────────────────────────────────────────┐
-│ SportyKids  | Noticias | Reels | Quiz | Mi Equipo (/team)|   Padres (/parents)  Pablo │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│ SportyKids | Noticias | Reels | Quiz | Mi Equipo | Coleccion | Padres  Pablo │
+└──────────────────────────────────────────────────────────────────────┘
 ```
 
-Rutas de la webapp: `/`, `/onboarding`, `/reels`, `/quiz`, `/team`, `/parents`
+Rutas de la webapp: `/`, `/onboarding`, `/reels`, `/quiz`, `/team`, `/collection`, `/parents`
 
 ### Movil (Bottom Tabs)
 ```
-┌──────────────────────────────────────────────────┐
-│  Noticias   Reels    Quiz   Mi Equipo  Padres    │
-└──────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────┐
+│  Noticias   Reels    Quiz   Mi Equipo  Coleccion   Padres    │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ## Iconografia por deporte
 
-| Deporte | Valor en código | Emoji | Color del badge |
+| Deporte | Valor en codigo | Emoji | Color del badge |
 |---------|----------------|-------|----------------|
-| Fútbol | `football` | ⚽ | `#22C55E` verde |
+| Futbol | `football` | ⚽ | `#22C55E` verde |
 | Baloncesto | `basketball` | 🏀 | `#F97316` naranja |
 | Tenis | `tennis` | 🎾 | `#FACC15` amarillo |
-| Natación | `swimming` | 🏊 | `#3B82F6` azul |
+| Natacion | `swimming` | 🏊 | `#3B82F6` azul |
 | Atletismo | `athletics` | 🏃 | `#EF4444` rojo |
 | Ciclismo | `cycling` | 🚴 | `#A855F7` purpura |
 | Formula 1 | `formula1` | 🏎️ | `#DC2626` rojo oscuro |
-| Pádel | `padel` | 🏓 | `#14B8A6` teal |
+| Padel | `padel` | 🏓 | `#14B8A6` teal |
 
 Las funciones `sportToColor()` y `sportToEmoji()` de `@sportykids/shared` devuelven el color y emoji correspondiente a cada valor de deporte.
+
+## Modos de vista del feed
+
+| Modo | Descripcion |
+|------|-------------|
+| **Headlines** | Solo titulares compactos, maximo contenido por pantalla |
+| **Cards** | Tarjeta completa con imagen, resumen, fuente (default) |
+| **Explain** | Cards + boton "Explica facil" para resumen adaptado por edad |
 
 ## Responsive
 
@@ -158,13 +231,15 @@ Las funciones `sportToColor()` y `sportToEmoji()` de `@sportykids/shared` devuel
 - Etiquetas semanticas HTML (article, nav, main, h1-h3)
 - Esquinas redondeadas (border-radius: 12-24px) para apariencia amigable
 
-## Internacionalización
+## Internacionalizacion
 
-Todos los textos visibles en la UI se gestionan a través del sistema i18n (`packages/shared/src/i18n/`). Esto incluye:
+Todos los textos visibles en la UI se gestionan a traves del sistema i18n (`packages/shared/src/i18n/`). Esto incluye:
 
-- Nombres de deportes (ej. `football` -> "Fútbol" en español)
-- Etiquetas de navegación
+- Nombres de deportes (ej. `football` -> "Futbol" en espanol)
+- Etiquetas de navegacion
 - Textos de botones y formularios
 - Mensajes de error y feedback
+- Nombres de logros y cromos
+- Descripciones de rarezas
 
-Los valores de deporte en el código son en inglés (`football`, `basketball`, etc.) y se traducen al idioma del usuario mediante `t('sports.football', locale)`.
+Los valores de deporte en el codigo son en ingles (`football`, `basketball`, etc.) y se traducen al idioma del usuario mediante `t('sports.football', locale)`.
