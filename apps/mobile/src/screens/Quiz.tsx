@@ -1,10 +1,9 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking } from 'react-native';
 import type { QuizQuestion } from '@sportykids/shared';
 import { COLORS, sportToEmoji, t, getSportLabel } from '@sportykids/shared';
+import { fetchQuestions, submitAnswer, fetchScore } from '../lib/api';
 import { useUser } from '../lib/user-context';
-
-const API_BASE = 'http://192.168.1.189:3001/api';
 
 type GameState = 'start' | 'playing' | 'result';
 
@@ -14,25 +13,26 @@ export function QuizScreen() {
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [index, setIndex] = useState(0);
   const [selection, setSelection] = useState<number | null>(null);
-  const [feedback, setFeedback] = useState<{ correct: boolean; correctAnswer: number } | null>(null);
+  const [feedback, setFeedback] = useState<{ correct: boolean; correctAnswer: number; pointsEarned: number } | null>(null);
   const [totalPoints, setTotalPoints] = useState(0);
   const [roundPoints, setRoundPoints] = useState(0);
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     if (user) {
-      fetch(`${API_BASE}/quiz/score/${user.id}`)
-        .then((r) => r.json())
+      fetchScore(user.id)
         .then((d) => setTotalPoints(d.totalPoints))
         .catch(console.error);
     }
   }, [user]);
 
   const startQuiz = async () => {
+    if (!user) return;
     setLoading(true);
     try {
-      const res = await fetch(`${API_BASE}/quiz/questions?count=5`);
-      const data = await res.json();
+      // Pass age from user profile for age-appropriate questions
+      const ageParam = user.age ? String(user.age) : undefined;
+      const data = await fetchQuestions(5, undefined, ageParam);
       setQuestions(data.questions);
       setIndex(0);
       setRoundPoints(0);
@@ -50,12 +50,7 @@ export function QuizScreen() {
     if (feedback || !user) return;
     setSelection(option);
     try {
-      const res = await fetch(`${API_BASE}/quiz/answer`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ userId: user.id, questionId: questions[index].id, answer: option }),
-      });
-      const data = await res.json();
+      const data = await submitAnswer(user.id, questions[index].id, option);
       setFeedback(data);
       setRoundPoints((p) => p + data.pointsEarned);
     } catch (err) {
@@ -105,6 +100,13 @@ export function QuizScreen() {
           </View>
 
           <View style={s.card}>
+            {/* Daily quiz badge */}
+            {question.isDaily && (
+              <View style={s.dailyBadge}>
+                <Text style={s.dailyBadgeText}>{t('quiz.daily_quiz', locale)}</Text>
+              </View>
+            )}
+
             <Text style={s.badge}>
               {sportToEmoji(question.sport)} {getSportLabel(question.sport, locale)} · {question.points} {t('quiz.pts', locale)}
             </Text>
@@ -139,6 +141,19 @@ export function QuizScreen() {
                 {feedback.correct ? t('quiz.correct', locale) : t('quiz.incorrect', locale)}
               </Text>
             </View>
+          )}
+
+          {/* Related news link for daily questions */}
+          {feedback && question.isDaily && question.relatedNewsId && (
+            <TouchableOpacity
+              style={s.relatedNewsLink}
+              onPress={() => {
+                // Open related news - deep link or in-app navigation
+                // For now point to API detail (could be enhanced later)
+              }}
+            >
+              <Text style={s.relatedNewsText}>{t('quiz.read_news', locale)}</Text>
+            </TouchableOpacity>
           )}
 
           {feedback && (
@@ -187,6 +202,17 @@ const s = StyleSheet.create({
   barBlue: { backgroundColor: COLORS.blue },
   barGray: { backgroundColor: '#E5E7EB' },
   card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  dailyBadge: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#FEF9C3',
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 20,
+    marginBottom: 8,
+    borderWidth: 1,
+    borderColor: COLORS.yellow,
+  },
+  dailyBadgeText: { fontSize: 11, fontWeight: '700', color: '#92400E' },
   badge: { fontSize: 12, color: '#6B7280', backgroundColor: '#F3F4F6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start' },
   questionText: { fontSize: 20, fontWeight: '700', color: COLORS.darkText, marginTop: 16, marginBottom: 20 },
   option: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 2, marginBottom: 10 },
@@ -196,4 +222,19 @@ const s = StyleSheet.create({
   feedbackOk: { backgroundColor: '#DCFCE7', borderColor: '#BBF7D0' },
   feedbackBad: { backgroundColor: '#FEE2E2', borderColor: '#FECACA' },
   feedbackText: { fontSize: 14, fontWeight: '600', textAlign: 'center' },
+  relatedNewsLink: {
+    marginTop: 10,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  relatedNewsText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.blue,
+  },
 });

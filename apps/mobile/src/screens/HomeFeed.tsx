@@ -1,25 +1,28 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, FlatList, ActivityIndicator, Text, StyleSheet, RefreshControl } from 'react-native';
+import { View, FlatList, ActivityIndicator, Text, StyleSheet, RefreshControl, TouchableOpacity, Alert } from 'react-native';
 import type { NewsItem } from '@sportykids/shared';
 import { COLORS, t } from '@sportykids/shared';
-import { fetchNews } from '../lib/api';
+import { fetchNews, fetchNewsSummary } from '../lib/api';
 import { NewsCard } from '../components/NewsCard';
 import { FiltersBar } from '../components/FiltersBar';
 import { useUser } from '../lib/user-context';
 
 export function HomeFeedScreen() {
-  const { locale } = useUser();
+  const { user, locale } = useUser();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [activeSport, setActiveSport] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
+  const [expandedSummaries, setExpandedSummaries] = useState<Record<string, string>>({});
+  const [loadingSummary, setLoadingSummary] = useState<string | null>(null);
 
   const loadNews = useCallback(async (p: number, accumulate: boolean = false) => {
     try {
       const result = await fetchNews({
         sport: activeSport ?? undefined,
+        userId: user?.id,
         page: p,
         limit: 20,
       });
@@ -31,7 +34,7 @@ export function HomeFeedScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeSport]);
+  }, [activeSport, user?.id]);
 
   useEffect(() => {
     setLoading(true);
@@ -52,16 +55,69 @@ export function HomeFeedScreen() {
     loadNews(next, true);
   };
 
+  const handleExplainEasy = async (item: NewsItem) => {
+    if (expandedSummaries[item.id]) {
+      // Toggle off
+      setExpandedSummaries((prev) => {
+        const copy = { ...prev };
+        delete copy[item.id];
+        return copy;
+      });
+      return;
+    }
+
+    setLoadingSummary(item.id);
+    try {
+      const result = await fetchNewsSummary(item.id, user?.age ?? 10, locale);
+      setExpandedSummaries((prev) => ({ ...prev, [item.id]: result.summary }));
+    } catch {
+      Alert.alert(
+        t('summary.error', locale),
+        t('summary.error', locale),
+      );
+    } finally {
+      setLoadingSummary(null);
+    }
+  };
+
+  const renderItem = ({ item }: { item: NewsItem }) => (
+    <View>
+      <NewsCard item={item} />
+      <View style={styles.explainRow}>
+        <TouchableOpacity
+          style={styles.explainButton}
+          onPress={() => handleExplainEasy(item)}
+          disabled={loadingSummary === item.id}
+        >
+          {loadingSummary === item.id ? (
+            <ActivityIndicator size="small" color={COLORS.blue} />
+          ) : (
+            <Text style={styles.explainText}>
+              {expandedSummaries[item.id] ? '▲' : '▼'} {t('summary.explain_easy', locale)}
+            </Text>
+          )}
+        </TouchableOpacity>
+      </View>
+      {expandedSummaries[item.id] ? (
+        <View style={styles.summaryBox}>
+          <Text style={styles.summaryText}>{expandedSummaries[item.id]}</Text>
+        </View>
+      ) : null}
+    </View>
+  );
+
   return (
     <View style={styles.container}>
       <FlatList
         data={news}
         keyExtractor={(item) => item.id}
-        renderItem={({ item }) => <NewsCard item={item} />}
+        renderItem={renderItem}
         ListHeaderComponent={
           <View style={styles.header}>
             <Text style={styles.title}>{t('home.latest_news', locale)}</Text>
-            <Text style={styles.subtitle}>{t('home.subtitle', locale)}</Text>
+            <Text style={styles.subtitle}>
+              {user ? t('feed.personalized', locale) : t('home.subtitle', locale)}
+            </Text>
             <FiltersBar activeSport={activeSport} onSportChange={setActiveSport} />
           </View>
         }
@@ -117,5 +173,36 @@ const styles = StyleSheet.create({
   emptyText: {
     fontSize: 16,
     color: '#9CA3AF',
+  },
+  explainRow: {
+    paddingHorizontal: 16,
+    marginTop: -4,
+    marginBottom: 8,
+  },
+  explainButton: {
+    alignSelf: 'flex-start',
+    backgroundColor: '#EFF6FF',
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 12,
+  },
+  explainText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: COLORS.blue,
+  },
+  summaryBox: {
+    marginHorizontal: 16,
+    marginBottom: 12,
+    padding: 14,
+    backgroundColor: '#EFF6FF',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#BFDBFE',
+  },
+  summaryText: {
+    fontSize: 14,
+    color: COLORS.darkText,
+    lineHeight: 20,
   },
 });

@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, ParentalProfile } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
-import { getUser, getParentalProfile } from './api';
+import { getUser, getParentalProfile, checkIn } from './api';
 
 interface UserContextType {
   user: User | null;
@@ -31,6 +31,7 @@ const UserContext = createContext<UserContextType>({
 
 const STORAGE_KEY = 'sportykids_usuario_id';
 const LOCALE_KEY = 'sportykids_locale';
+const CHECKIN_DATE_KEY = 'sportykids_last_checkin';
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
@@ -65,6 +66,17 @@ export function UserProvider({ children }: { children: ReactNode }) {
       .then(async (u) => {
         setUserState(u);
         await loadParentalProfile(u.id);
+        // Daily check-in: only once per calendar day
+        const today = new Date().toISOString().slice(0, 10);
+        const lastCheckIn = localStorage.getItem(CHECKIN_DATE_KEY);
+        if (lastCheckIn !== today) {
+          try {
+            await checkIn(u.id);
+            localStorage.setItem(CHECKIN_DATE_KEY, today);
+          } catch {
+            // Check-in endpoint may not be available yet — ignore
+          }
+        }
       })
       .catch(() => localStorage.removeItem(STORAGE_KEY))
       .finally(() => setLoading(false));

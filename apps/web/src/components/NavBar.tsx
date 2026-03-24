@@ -15,6 +15,7 @@ export function NavBar() {
     { href: '/', label: t('nav.news', locale), emoji: '📰', format: 'news' },
     { href: '/reels', label: t('nav.reels', locale), emoji: '🎬', format: 'reels' },
     { href: '/quiz', label: t('nav.quiz', locale), emoji: '🧠', format: 'quiz' },
+    { href: '/collection', label: t('nav.collection', locale), emoji: '🏆', format: null },
     { href: '/team', label: t('nav.my_team', locale), emoji: '⚽', format: null },
   ];
 

@@ -1,48 +1,135 @@
 'use client';
 
+import { useState, useCallback } from 'react';
 import type { Reel } from '@sportykids/shared';
-import { sportToEmoji, getSportLabel } from '@sportykids/shared';
+import { sportToEmoji, getSportLabel, t } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
+import { getLikedReels, toggleLike } from '@/lib/reel-likes';
 
 interface ReelCardProps {
   reel: Reel;
   locale: Locale;
 }
 
+function formatDuration(seconds: number): string {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  return `${m}:${s.toString().padStart(2, '0')}`;
+}
+
 export function ReelCard({ reel, locale }: ReelCardProps) {
+  const [liked, setLiked] = useState(() => getLikedReels().has(reel.id));
+  const [playing, setPlaying] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const handleLike = useCallback((e: React.MouseEvent) => {
+    e.stopPropagation();
+    setLiked(toggleLike(reel.id));
+  }, [reel.id]);
+
+  const handleShare = useCallback(async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      await navigator.clipboard.writeText(reel.videoUrl);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    } catch { /* ignore */ }
+  }, [reel.videoUrl]);
+
+  const buildEmbedUrl = (baseUrl: string, params: Record<string, string>): string => {
+    const url = new URL(baseUrl);
+    for (const [key, value] of Object.entries(params)) {
+      url.searchParams.set(key, value);
+    }
+    return url.toString();
+  };
+
+  const embedUrl = playing
+    ? buildEmbedUrl(reel.videoUrl, { autoplay: '1', mute: '0', controls: '1', modestbranding: '1', rel: '0' })
+    : buildEmbedUrl(reel.videoUrl, { autoplay: '0', controls: '0', modestbranding: '1', rel: '0' });
+
+  // Extract YouTube video ID for thumbnail
+  const ytId = reel.videoUrl.match(/embed\/([a-zA-Z0-9_-]+)/)?.[1];
+  const thumbnail = reel.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : '');
+
   return (
-    <div className="snap-start h-[80vh] min-h-[500px] flex items-center justify-center p-4">
-      <div className="bg-black rounded-3xl overflow-hidden w-full max-w-sm h-full flex flex-col shadow-2xl">
-        {/* Embedded video */}
-        <div className="flex-1 relative">
+    <div className="group rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+      {/* Video / Thumbnail area */}
+      <div className="relative aspect-video bg-gray-900 cursor-pointer" onClick={() => setPlaying(!playing)}>
+        {playing ? (
           <iframe
-            src={`${reel.videoUrl}?autoplay=0&controls=1&modestbranding=1`}
+            src={embedUrl}
             className="w-full h-full"
-            allow="accelerometer; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
             allowFullScreen
             title={reel.title}
           />
+        ) : (
+          <>
+            {thumbnail ? (
+              <img
+                src={thumbnail}
+                alt={reel.title}
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-gray-800 to-gray-900">
+                <span className="text-4xl">{sportToEmoji(reel.sport)}</span>
+              </div>
+            )}
+            {/* Play overlay */}
+            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+              <div className="w-12 h-12 rounded-full bg-white/90 flex items-center justify-center shadow-lg">
+                <span className="text-[var(--color-blue)] text-lg ml-0.5">{'\u25B6'}</span>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Duration badge */}
+        <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-medium px-1.5 py-0.5 rounded">
+          {formatDuration(reel.durationSeconds)}
         </div>
 
-        {/* Reel info */}
-        <div className="bg-gradient-to-t from-black/90 to-black/60 p-4 text-white">
-          <div className="flex items-center gap-2 mb-2">
-            <span className="bg-white/20 text-xs px-2.5 py-1 rounded-full font-medium">
-              {sportToEmoji(reel.sport)} {getSportLabel(reel.sport, locale)}
-            </span>
+        {/* Sport badge */}
+        <div className="absolute top-2 left-2 bg-black/60 text-white text-[10px] font-medium px-2 py-0.5 rounded-full">
+          {sportToEmoji(reel.sport)} {getSportLabel(reel.sport, locale)}
+        </div>
+      </div>
+
+      {/* Info area */}
+      <div className="p-3">
+        <h3 className="font-[family-name:var(--font-poppins)] font-semibold text-sm text-[var(--color-text)] leading-snug line-clamp-2">
+          {reel.title}
+        </h3>
+
+        <div className="flex items-center justify-between mt-2">
+          <div className="flex items-center gap-2 text-xs text-gray-400">
+            <span>{reel.source}</span>
             {reel.team && (
-              <span className="bg-[var(--color-blue)]/30 text-xs px-2.5 py-1 rounded-full font-medium">
-                {reel.team}
-              </span>
+              <>
+                <span>{'\u00B7'}</span>
+                <span className="text-[var(--color-blue)]">{reel.team}</span>
+              </>
             )}
-            <span className="text-xs text-white/60 ml-auto">
-              {Math.floor(reel.durationSeconds / 60)}:{String(reel.durationSeconds % 60).padStart(2, '0')}
-            </span>
           </div>
-          <h3 className="font-[family-name:var(--font-poppins)] font-semibold text-base leading-snug">
-            {reel.title}
-          </h3>
-          <p className="text-xs text-white/50 mt-1">{reel.source}</p>
+
+          <div className="flex items-center gap-1">
+            <button
+              onClick={handleLike}
+              className={`p-1.5 rounded-full transition-colors ${liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+              aria-label={t('reels.like', locale)}
+            >
+              <span className="text-sm">{liked ? '\u2764\uFE0F' : '\u{1F90D}'}</span>
+            </button>
+            <button
+              onClick={handleShare}
+              className="p-1.5 rounded-full text-gray-400 hover:text-[var(--color-blue)] transition-colors"
+              aria-label={t('reels.share', locale)}
+            >
+              <span className="text-sm">{copied ? '\u2705' : '\u{1F4E4}'}</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

@@ -1,5 +1,6 @@
 import cron from 'node-cron';
-import { syncAllSources } from '../services/aggregator';
+import { syncAllSources, SyncAllResult } from '../services/aggregator';
+import { startDailyQuizJob } from './generate-daily-quiz';
 
 let activeJob: cron.ScheduledTask | null = null;
 
@@ -16,10 +17,13 @@ export function startSyncJob(): void {
   });
 
   console.log('Sync job scheduled: every 30 minutes.');
+
+  // Start daily quiz generation job
+  startDailyQuizJob();
 }
 
 // Manual synchronization (on startup or from admin route)
-export async function runManualSync(): Promise<number> {
+export async function runManualSync(): Promise<SyncAllResult> {
   console.log(`[${new Date().toISOString()}] Running manual synchronization...`);
   return syncAllSources();
 }

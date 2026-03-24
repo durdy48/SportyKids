@@ -28,9 +28,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Validación | Zod 4 | — |
 | RSS | rss-parser 3 | — |
 | Cron | node-cron 4 | — |
+| AI Client | openai SDK (multi-provider) | Ollama/OpenRouter/Anthropic |
 | Shared | @sportykids/shared | Tipos, constantes, utils, i18n |
 
 **Nota**: Prisma v7 no es compatible con este proyecto (rompe la config de datasource url). Usar Prisma ^6.
+
+**Nota AI**: El AI client usa `openai` SDK como cliente universal para Ollama y OpenRouter (APIs compatibles). Anthropic se importa dinámicamente solo si `AI_PROVIDER=anthropic`. Por defecto `AI_PROVIDER=ollama` (gratis, local).
 
 ## Comandos de desarrollo
 
@@ -52,7 +55,8 @@ npx tsx prisma/seed.ts
 ```
 sportykids/
 ├── packages/shared/src/
-│   ├── types/           # User, NewsItem, Reel, QuizQuestion, ParentalProfile, AgeRange
+│   ├── types/           # User, NewsItem, Reel, QuizQuestion, ParentalProfile, AgeRange,
+│   │                    # SafetyStatus, SafetyResult, RssSource, RssSourceCatalogResponse
 │   ├── constants/       # SPORTS, TEAMS, AGE_RANGES, COLORS
 │   ├── utils/           # sportToColor, sportToEmoji, formatDate, truncateText
 │   └── i18n/            # es.json, en.json, t(), getSportLabel(), getAgeRangeLabel()
@@ -60,14 +64,22 @@ sportykids/
 │   ├── prisma/          # schema.prisma, migrations/, seed.ts
 │   └── src/
 │       ├── routes/      # news.ts, reels.ts, quiz.ts, users.ts, parents.ts
-│       ├── services/    # aggregator.ts (RSS), classifier.ts (team detection)
-│       ├── jobs/        # sync-feeds.ts (cron cada 30min)
-│       ├── middleware/   # error-handler.ts, auth.ts (placeholder)
+│       ├── services/    # aggregator.ts (RSS), classifier.ts (team detection),
+│       │                # ai-client.ts (multi-provider), content-moderator.ts,
+│       │                # summarizer.ts (age-adapted summaries),
+│       │                # gamification.ts (streaks, stickers, achievements),
+│       │                # feed-ranker.ts (smart feed), team-stats.ts (team stats)
+│       ├── jobs/        # sync-feeds.ts (cron cada 30min), generate-daily-quiz.ts (cron 06:00 UTC)
+│       ├── middleware/   # error-handler.ts, auth.ts (placeholder), parental-guard.ts (M5)
 │       └── config/      # database.ts (PrismaClient singleton)
 ├── apps/web/src/
-│   ├── app/             # / (home), /onboarding, /reels, /quiz, /team, /parents
+│   ├── app/             # / (home, 3 feed modes), /onboarding (5 steps), /reels (TikTok vertical),
+│   │                    # /quiz, /team (stats hub), /parents (5 tabs), /collection
 │   ├── components/      # NewsCard, FiltersBar, NavBar, OnboardingWizard, ReelCard,
-│   │                    # QuizGame, PinInput, ParentalPanel
+│   │                    # QuizGame, PinInput, ParentalPanel, AgeAdaptedSummary,
+│   │                    # StickerCard, StreakCounter, AchievementBadge, RewardToast,
+│   │                    # FeedModeToggle, HeadlineRow, TeamStatsCard, TeamReelsStrip,
+│   │                    # ReelPlayer, VerticalFeed, NotificationSettings, LimitReached
 │   ├── lib/             # api.ts (cliente API), user-context.tsx (UserProvider + useUser)
 │   └── styles/          # globals.css (Tailwind + CSS vars)
 ├── apps/mobile/
@@ -92,13 +104,27 @@ sportykids/
 | GET | `/api/health` | Health check |
 | GET | `/api/news?sport=&team=&age=&page=&limit=` | Noticias con filtros |
 | GET | `/api/news/:id` | Detalle noticia |
+| GET | `/api/news/:id/resumen?age=&locale=` | Resumen adaptado por edad (M2) |
 | GET | `/api/news/fuentes/listado` | Fuentes RSS activas |
-| POST | `/api/news/sincronizar` | Sincronización manual |
-| GET | `/api/reels?sport=&age=&page=&limit=` | Feed de reels |
+| GET | `/api/news/fuentes/catalogo` | Catálogo completo de fuentes RSS con metadata |
+| POST | `/api/news/fuentes/custom` | Añadir fuente RSS personalizada |
+| DELETE | `/api/news/fuentes/custom/:id` | Eliminar fuente personalizada |
+| POST | `/api/news/sincronizar` | Sincronización manual (incluye stats de moderación) |
+| GET | `/api/reels?sport=&age=&page=&limit=` | Feed de reels (M6: Reel fields videoType, aspectRatio) |
 | GET | `/api/reels/:id` | Detalle reel |
-| GET | `/api/quiz/questions?count=&sport=` | Preguntas aleatorias |
+| GET | `/api/teams/:teamName/stats` | Estadísticas de equipo (M6) |
+| POST | `/api/users/:id/notifications/subscribe` | Suscribir preferencias de notificación (M6 MVP) |
+| GET | `/api/users/:id/notifications` | Obtener preferencias de notificación |
+| GET | `/api/quiz/questions?count=&sport=&age=` | Preguntas (daily first, seed fallback). `age`: '6-8','9-11','12-14' |
+| POST | `/api/quiz/generate` | Genera quiz diario desde noticias recientes (M3) |
 | POST | `/api/quiz/answer` | Enviar respuesta `{userId, questionId, answer}` |
 | GET | `/api/quiz/score/:userId` | Puntuación total |
+| GET | `/api/gamification/stickers` | Catálogo de stickers (M4) |
+| GET | `/api/gamification/stickers/:userId` | Stickers coleccionados del usuario |
+| GET | `/api/gamification/achievements` | Definiciones de logros |
+| GET | `/api/gamification/achievements/:userId` | Logros desbloqueados del usuario |
+| GET | `/api/gamification/streaks/:userId` | Info de racha del usuario |
+| POST | `/api/gamification/check-in` | Check-in diario (racha + sticker + logros) |
 | POST | `/api/users` | Crear usuario (onboarding) |
 | GET | `/api/users/:id` | Obtener usuario |
 | PUT | `/api/users/:id` | Actualizar preferencias |
@@ -113,20 +139,27 @@ sportykids/
 
 ## Modelos de datos (Prisma)
 
-- **NewsItem** — noticias agregadas de RSS (`rssGuid` único para dedup)
-- **User** — perfil del niño (`favoriteSports` y `selectedFeeds` son JSON strings en SQLite)
-- **Reel** — vídeos cortos (seed con YouTube embeds en MVP)
-- **QuizQuestion** — preguntas trivia (`options` es JSON string, `correctAnswer` es índice 0-3)
-- **ParentalProfile** — control parental (1:1 con User, PIN hasheado SHA-256)
-- **ActivityLog** — tracking de actividad (tipos: `news_viewed`, `reels_viewed`, `quizzes_played`)
-- **RssSource** — fuentes RSS configurables (activables/desactivables)
+- **NewsItem** — noticias agregadas de RSS (`rssGuid` único para dedup). Campos M1: `safetyStatus` (pending/approved/rejected), `safetyReason`, `moderatedAt`
+- **User** — perfil del niño (`favoriteSports` y `selectedFeeds` son JSON strings en SQLite). Campos M4: `currentStreak`, `longestStreak`, `lastActiveDate`, `currentQuizCorrectStreak`, `quizPerfectCount`
+- **Sticker** — cromos digitales coleccionables (M4). Rarezas: common, rare, epic, legendary
+- **UserSticker** — relación usuario-sticker (M4). Unique: `[userId, stickerId]`
+- **Achievement** — definiciones de logros (M4). 20 predefinidos. Unique: `key`
+- **UserAchievement** — logros desbloqueados por usuario (M4). Unique: `[userId, achievementId]`
+- **Reel** — vídeos cortos (seed con YouTube embeds). Campos M6: `videoType`, `aspectRatio`, `previewGifUrl`
+- **TeamStats** — estadísticas de equipos (M6). Seed con 15 equipos. Unique: `teamName`
+- **QuizQuestion** — preguntas trivia (`options` es JSON string, `correctAnswer` es índice 0-3). Campos M3: `generatedAt`, `ageRange`, `expiresAt` (daily questions expire after 48h)
+- **NewsSummary** — resúmenes adaptados por edad (M2). Unique: `[newsItemId, ageRange, locale]`. Cascade delete con NewsItem.
+- **ParentalProfile** — control parental (1:1 con User, PIN hasheado bcrypt M5). Session tokens in-memory (5 min TTL)
+- **ActivityLog** — tracking de actividad (tipos: `news_viewed`, `reels_viewed`, `quizzes_played`). Campos M5: `durationSeconds`, `contentId`, `sport`
+- **RssSource** — fuentes RSS configurables (activables/desactivables). Campos M1: `country`, `language`, `logoUrl`, `description`, `category`, `isCustom`, `addedBy`
 
 **Nota SQLite**: Los arrays se almacenan como JSON strings. Al migrar a PostgreSQL, cambiar a arrays nativos.
 
 ## Flujo de datos
 
-1. **Cron job** (`sync-feeds.ts`) cada 30min + al arrancar → consume RSS de AS, Mundo Deportivo, Marca
+1. **Cron job** (`sync-feeds.ts`) cada 30min + al arrancar → consume RSS de 40+ fuentes
 2. **Aggregator** (`aggregator.ts`) parsea RSS, limpia HTML, extrae imágenes
+3. **Content Moderator** (`content-moderator.ts`) clasifica contenido como safe/unsafe via AI (fail-open)
 3. **Classifier** (`classifier.ts`) detecta equipo por keywords en título (20+ equipos/deportistas)
 4. **API** sirve contenido filtrado por sport, team, age → frontends consumen via fetch
 5. **User context** (web: localStorage, mobile: AsyncStorage) persiste ID del usuario
@@ -169,6 +202,7 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 - Sin autenticación real en MVP — usuario se identifica por ID sin JWT.
 - Restricciones parentales se aplican en frontend (ocultar tabs). **Validar en backend** antes de producción.
 - Fuentes de contenido exclusivamente de prensa deportiva verificada.
+- **M1: Moderación automática** — Todas las noticias pasan por un moderador AI que filtra contenido inapropiado (apuestas, violencia, contenido sexual, etc.). Solo las noticias `approved` se muestran a niños. Las rechazadas se guardan para auditoría parental.
 
 ## Estado del MVP
 
@@ -181,23 +215,31 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 | 4 | ✅ Completada | Control parental (PIN, formatos, actividad semanal) |
 | 5 | 🔲 Pendiente | Test interno + beta cerrada (5-10 familias) |
 
-## Fuentes RSS activas
+## Fuentes RSS
 
-| Fuente | Deporte | Estado |
-|--------|---------|--------|
-| AS - Football | football | ✅ Funciona |
-| AS - Basketball | basketball | ✅ Funciona |
-| Mundo Deportivo | football | ✅ Funciona |
-| Marca | football | ⚠️ Intermitente (DNS issues) |
+**40+ fuentes predefinidas** en el catálogo (`prisma/seed.ts`), distribuidas en los 8 deportes y varios países (ES, GB, US). Además se pueden **añadir fuentes personalizadas** via `POST /api/news/fuentes/custom`.
+
+Fuentes principales: AS, Marca, Mundo Deportivo, Sport, BBC Sport, ESPN, CyclingNews, SwimSwam, Autosport, etc.
+
+**Nota**: Marca tiene DNS issues intermitentes. Algunas fuentes internacionales pueden no devolver contenido consistentemente.
+
+## Documentación
+
+Después de cada cambio, arreglo o implementación nueva, revisa toda la documentación de la carpeta "docs" y actualiza de acuerdo a lo realizado para mantener todo con lo último.
+
+# Testing
+
+Después de cada cambio, arreglo o implementación nueva, asegurate de mantener los tests sin fallos y con buena cobertura.
+
 
 ## Deuda técnica conocida
 
 - Sin tests automatizados (unitarios ni integración)
 - Sin autenticación real (JWT/sesiones)
-- PIN parental con SHA-256 (migrar a bcrypt)
-- Restricciones parentales solo en frontend
+- ~~PIN parental con SHA-256~~ → M5: migrado a bcrypt con migración transparente
+- ~~Restricciones parentales solo en frontend~~ → M5: middleware backend `parental-guard.ts` en news/reels/quiz
 - Reels son placeholders (YouTube embeds, no vídeos reales)
-- Quiz con preguntas estáticas del seed (no se generan automáticamente)
+- ~~Quiz con preguntas estáticas del seed~~ → M3 implementado: quiz dinámico con generación AI diaria (cron 06:00 UTC) + fallback a seed
 - SQLite en desarrollo (migrar a PostgreSQL para producción)
 - `API_BASE` hardcodeado en cada screen del mobile (debería centralizarse en un único módulo)
 - Rutas API inconsistentes: mezcla de español e inglés (news/parents en español, quiz/reels/users en inglés)

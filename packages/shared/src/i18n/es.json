@@ -8,6 +8,7 @@
     "news": "Noticias",
     "reels": "Reels",
     "quiz": "Quiz",
+    "collection": "Colección",
     "my_team": "Mi Equipo",
     "parents": "Padres"
   },
@@ -16,6 +17,12 @@
     "subtitle": "Las mejores noticias deportivas para ti",
     "no_news": "No hay noticias para estos filtros",
     "no_news_hint": "Prueba con otro deporte o rango de edad"
+  },
+  "feed": {
+    "mode_headlines": "Titulares",
+    "mode_cards": "Tarjetas",
+    "mode_explain": "Explicado fácil",
+    "personalized": "Tu feed personalizado"
   },
   "filters": {
     "all": "Todos",
@@ -40,7 +47,12 @@
   "reels": {
     "title": "Reels",
     "subtitle": "Vídeos cortos deportivos",
-    "no_reels": "No hay reels disponibles"
+    "no_reels": "No hay reels disponibles",
+    "like": "Me gusta",
+    "share": "Compartir",
+    "copied": "¡Enlace copiado!",
+    "tap_to_play": "Toca para reproducir",
+    "filter": "Filtrar"
   },
   "quiz": {
     "title": "Quiz Deportivo",
@@ -52,7 +64,13 @@
     "correct": "¡Correcto! 🎉",
     "incorrect": "¡Casi! La respuesta correcta era otra 💪",
     "view_results": "Ver resultados",
-    "pts": "pts"
+    "pts": "pts",
+    "daily_quiz": "Quiz del Día",
+    "from_today_news": "De las noticias de hoy",
+    "read_news": "Lee la noticia relacionada",
+    "no_daily": "Aún no hay quiz diario, ¡prueba estos!",
+    "generate_success": "Quiz generado correctamente",
+    "generate_error": "Error al generar el quiz"
   },
   "team": {
     "my_team": "Mi Equipo",
@@ -60,7 +78,17 @@
     "select_team": "Elige tu equipo favorito para ver sus noticias",
     "choose_favorite": "Elige tu equipo favorito:",
     "no_recent_news": "No hay noticias recientes de {team}",
-    "news_sync_hint": "Las noticias aparecerán aquí cuando se sincronicen"
+    "news_sync_hint": "Las noticias aparecerán aquí cuando se sincronicen",
+    "league_position": "Posición en liga",
+    "recent_results": "Últimos resultados",
+    "top_scorer": "Máximo goleador",
+    "next_match": "Próximo partido",
+    "news": "Noticias del equipo",
+    "reels": "Reels del equipo",
+    "win": "V",
+    "draw": "E",
+    "loss": "D",
+    "position_ordinal": "{{position}}º en {{league}}"
   },
   "onboarding": {
     "step1_title": "¡Hola! ¿Cómo te llamas?",
@@ -72,7 +100,15 @@
     "step3_subtitle": "Opcional — puedes saltarlo",
     "step4_title": "¿De dónde quieres leer noticias?",
     "step4_subtitle": "Si no eliges ninguno, verás todas las fuentes",
-    "creating_profile": "Creando perfil..."
+    "creating_profile": "Creando perfil...",
+    "step5_title": "Configuraci\u00f3n parental",
+    "step5_subtitle": "Configura un PIN para gestionar la experiencia de tu hijo",
+    "pin_create": "Crea un PIN de 4 d\u00edgitos",
+    "pin_confirm": "Confirma tu PIN",
+    "pin_mismatch": "Los PINs no coinciden",
+    "formats_label": "Formatos de contenido permitidos",
+    "time_limit_label": "L\u00edmite de tiempo diario",
+    "no_limit": "Sin l\u00edmite"
   },
   "parental": {
     "control": "Control Parental",
@@ -90,7 +126,39 @@
     "allowed_formats": "Formatos permitidos",
     "max_daily_time": "Tiempo máximo diario",
     "enabled": "Activado",
-    "blocked": "Bloqueado"
+    "blocked": "Bloqueado",
+    "tab_profile": "Perfil",
+    "tab_content": "Contenido",
+    "tab_restrictions": "Restricciones",
+    "tab_activity": "Actividad",
+    "tab_pin": "PIN",
+    "daily_usage": "Uso diario (minutos)",
+    "average_daily": "Media diaria",
+    "limit_alerts": "Alertas de l\u00edmite",
+    "most_viewed": "M\u00e1s visto",
+    "this_week": "Esta semana",
+    "prev_week": "Semana anterior",
+    "next_week": "Semana siguiente",
+    "change_pin": "Cambiar PIN",
+    "current_pin": "PIN actual",
+    "new_pin": "Nuevo PIN",
+    "pin_changed": "PIN cambiado correctamente",
+    "session_active": "Sesi\u00f3n activa",
+    "session_expired": "Sesi\u00f3n expirada, introduce el PIN de nuevo",
+    "day_mon": "L",
+    "day_tue": "M",
+    "day_wed": "X",
+    "day_thu": "J",
+    "day_fri": "V",
+    "day_sat": "S",
+    "day_sun": "D"
+  },
+  "limit": {
+    "reached_title": "\u00a1Hasta ma\u00f1ana!",
+    "reached_message": "Has alcanzado tu l\u00edmite de tiempo. \u00a1Vuelve ma\u00f1ana para m\u00e1s deportes!",
+    "format_blocked": "Esta secci\u00f3n no est\u00e1 disponible. \u00a1Pregunta a tus padres!",
+    "sport_blocked": "Este deporte no est\u00e1 en tu lista. \u00a1Pregunta a tus padres para a\u00f1adirlo!",
+    "go_home": "Ir al inicio"
   },
   "buttons": {
     "read_more": "Ver más",
@@ -118,5 +186,83 @@
     "create_pin_failed": "Error al crear el PIN",
     "invalid_data": "Datos inválidos",
     "not_found": "No encontrado"
+  },
+  "sources": {
+    "catalog_title": "Fuentes de noticias",
+    "catalog_subtitle": "Elige tus fuentes favoritas",
+    "select_all": "Seleccionar todas",
+    "deselect_all": "Deseleccionar todas",
+    "selected_count": "{{count}} fuentes seleccionadas",
+    "country_ES": "España",
+    "country_GB": "Reino Unido",
+    "country_US": "Estados Unidos",
+    "country_FR": "Francia",
+    "country_IT": "Italia",
+    "country_DE": "Alemania",
+    "category_general": "General",
+    "category_team": "Equipo",
+    "category_league": "Liga",
+    "category_youth": "Cantera",
+    "add_custom": "Añadir fuente personalizada",
+    "custom_url_placeholder": "URL del feed RSS",
+    "custom_name_placeholder": "Nombre de la fuente",
+    "custom_sport_label": "Deporte",
+    "custom_add_button": "Añadir fuente",
+    "custom_validating": "Validando feed RSS...",
+    "custom_success": "Fuente añadida correctamente ({{count}} noticias importadas)",
+    "custom_error_invalid": "No se pudo leer el feed RSS de esta URL",
+    "custom_error_duplicate": "Esta URL ya existe en el catálogo",
+    "custom_delete_confirm": "¿Eliminar esta fuente personalizada?",
+    "custom_badge": "Personalizada"
+  },
+  "sync": {
+    "approved": "aprobadas",
+    "rejected": "rechazadas",
+    "moderation_errors": "errores de moderación"
+  },
+  "summary": {
+    "explain_easy": "Explica fácil",
+    "adapted_for_age": "Adaptado para {{range}} años",
+    "loading": "Generando resumen...",
+    "error": "No se pudo generar el resumen"
+  },
+  "collection": {
+    "title": "Mi Colección",
+    "stickers_collected": "{{collected}} de {{total}} stickers",
+    "all_sports": "Todos",
+    "achievements": "Logros",
+    "locked": "Bloqueado",
+    "obtained": "Obtenido"
+  },
+  "sticker": {
+    "rarity": {
+      "common": "Común",
+      "rare": "Raro",
+      "epic": "Épico",
+      "legendary": "Legendario"
+    }
+  },
+  "streak": {
+    "current": "Racha actual",
+    "longest": "Mejor racha",
+    "next_reward": "Próxima recompensa en {{days}} días",
+    "days": "días"
+  },
+  "achievement": {
+    "unlocked": "¡Logro desbloqueado!"
+  },
+  "notifications": {
+    "title": "Notificaciones",
+    "enable": "Activar notificaciones",
+    "sports": "Actualizaciones deportivas",
+    "daily_quiz": "Recordatorio de quiz diario",
+    "team_updates": "Novedades de mi equipo",
+    "saved": "Preferencias guardadas",
+    "mvp_note": "Las notificaciones estarán disponibles pronto"
+  },
+  "gamification": {
+    "points_earned": "+{{points}} puntos",
+    "sticker_earned": "¡Nuevo sticker!",
+    "perfect_quiz": "¡Quiz perfecto!"
   }
 }

@@ -1,4 +1,4 @@
-import type { NewsItem, Reel, QuizQuestion, User, ParentalProfile } from '@sportykids/shared';
+import type { NewsItem, Reel, QuizQuestion, User, ParentalProfile, RssSource, RssSourceCatalogResponse, Sticker, UserSticker, Achievement, UserAchievement, CheckInResponse, TeamStats, PushPreferences } from '@sportykids/shared';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
@@ -14,8 +14,19 @@ export interface NewsFilters {
   team?: string;
   age?: number;
   source?: string;
+  userId?: string;
   page?: number;
   limit?: number;
+}
+
+export async function fetchNewsSummary(
+  newsId: string,
+  age: number,
+  locale: string
+): Promise<{ summary: string; ageRange: string; generatedAt: string }> {
+  const res = await fetch(`${API_BASE}/news/${newsId}/resumen?age=${age}&locale=${locale}`);
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  return res.json();
 }
 
 export async function fetchNews(filters: NewsFilters = {}): Promise<NewsResponse> {
@@ -24,6 +35,7 @@ export async function fetchNews(filters: NewsFilters = {}): Promise<NewsResponse
   if (filters.team) params.set('team', filters.team);
   if (filters.age) params.set('age', String(filters.age));
   if (filters.source) params.set('source', filters.source);
+  if (filters.userId) params.set('userId', filters.userId);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
 
@@ -78,6 +90,30 @@ export async function fetchSources(): Promise<RssSourceInfo[]> {
   return res.json();
 }
 
+export async function fetchSourceCatalog(): Promise<RssSourceCatalogResponse> {
+  const res = await fetch(`${API_BASE}/news/fuentes/catalogo`);
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+export async function addCustomSource(data: { url: string; name: string; sport: string; userId: string }): Promise<RssSource> {
+  const res = await fetch(`${API_BASE}/news/fuentes/custom`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+export async function deleteCustomSource(sourceId: string, userId?: string): Promise<void> {
+  const params = userId ? `?userId=${encodeURIComponent(userId)}` : '';
+  const res = await fetch(`${API_BASE}/news/fuentes/custom/${sourceId}${params}`, {
+    method: 'DELETE',
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+}
+
 // Reels
 export interface ReelsResponse {
   reels: Reel[];
@@ -97,9 +133,10 @@ export async function fetchReels(filters: { sport?: string; page?: number; limit
 }
 
 // Quiz
-export async function fetchQuestions(count: number = 5, sport?: string): Promise<{ questions: QuizQuestion[] }> {
+export async function fetchQuestions(count: number = 5, sport?: string, age?: string): Promise<{ questions: QuizQuestion[] }> {
   const params = new URLSearchParams({ count: String(count) });
   if (sport) params.set('sport', sport);
+  if (age) params.set('age', age);
   const res = await fetch(`${API_BASE}/quiz/questions?${params.toString()}`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
@@ -123,7 +160,7 @@ export async function fetchScore(userId: string): Promise<{ name: string; totalP
 
 // Parental controls
 export async function setupParentalPin(userId: string, pin: string, options?: { allowedFormats?: string[]; maxDailyTimeMinutes?: number }): Promise<ParentalProfile> {
-  const res = await fetch(`${API_BASE}/parents/setup`, {
+  const res = await fetch(`${API_BASE}/parents/configurar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, pin, ...options }),
@@ -133,7 +170,7 @@ export async function setupParentalPin(userId: string, pin: string, options?: { 
 }
 
 export async function verifyPin(userId: string, pin: string): Promise<{ verified: boolean; exists: boolean; profile?: ParentalProfile }> {
-  const res = await fetch(`${API_BASE}/parents/verify-pin`, {
+  const res = await fetch(`${API_BASE}/parents/verificar-pin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, pin }),
@@ -143,13 +180,13 @@ export async function verifyPin(userId: string, pin: string): Promise<{ verified
 }
 
 export async function getParentalProfile(userId: string): Promise<{ exists: boolean; profile?: ParentalProfile }> {
-  const res = await fetch(`${API_BASE}/parents/profile/${userId}`);
+  const res = await fetch(`${API_BASE}/parents/perfil/${userId}`);
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
 }
 
 export async function updateParentalProfile(userId: string, data: Partial<ParentalProfile>): Promise<ParentalProfile> {
-  const res = await fetch(`${API_BASE}/parents/profile/${userId}`, {
+  const res = await fetch(`${API_BASE}/parents/perfil/${userId}`, {
     method: 'PUT',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -159,15 +196,93 @@ export async function updateParentalProfile(userId: string, data: Partial<Parent
 }
 
 export async function fetchActivity(userId: string): Promise<{ news_viewed: number; reels_viewed: number; quizzes_played: number; totalPoints: number }> {
-  const res = await fetch(`${API_BASE}/parents/activity/${userId}`);
+  const res = await fetch(`${API_BASE}/parents/actividad/${userId}`);
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
 }
 
-export async function recordActivity(userId: string, type: string): Promise<void> {
-  await fetch(`${API_BASE}/parents/activity/record`, {
+export async function recordActivity(userId: string, type: string, durationSeconds?: number, contentId?: string, sport?: string): Promise<void> {
+  await fetch(`${API_BASE}/parents/actividad/registrar`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ userId, type }),
+    body: JSON.stringify({ userId, type, durationSeconds, contentId, sport }),
   });
+}
+
+export async function fetchActivityDetail(userId: string, from: string, to: string): Promise<{ days: { date: string; news_viewed: number; reels_viewed: number; quizzes_played: number; totalMinutes: number }[]; mostViewed: string }> {
+  const res = await fetch(`${API_BASE}/parents/actividad/${userId}/detalle?from=${from}&to=${to}`);
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  return res.json();
+}
+
+// Gamification
+
+export async function getStickers(): Promise<{ stickers: Sticker[] }> {
+  const res = await fetch(`${API_BASE}/gamification/stickers`);
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+export async function getUserStickers(userId: string): Promise<{ stickers: UserSticker[]; total: number; collected: number }> {
+  const res = await fetch(`${API_BASE}/gamification/stickers/${userId}`);
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+export async function getAchievements(): Promise<{ achievements: Achievement[] }> {
+  const res = await fetch(`${API_BASE}/gamification/achievements`);
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+export async function getUserAchievements(userId: string): Promise<{ achievements: UserAchievement[]; total: number; unlocked: number }> {
+  const res = await fetch(`${API_BASE}/gamification/achievements/${userId}`);
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+export async function getStreakInfo(userId: string): Promise<{ currentStreak: number; longestStreak: number; lastActiveDate: string | null }> {
+  const res = await fetch(`${API_BASE}/gamification/streaks/${userId}`);
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+export async function checkIn(userId: string): Promise<CheckInResponse> {
+  const res = await fetch(`${API_BASE}/gamification/check-in`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId }),
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+// Team stats
+export async function fetchTeamStats(teamName: string): Promise<TeamStats | null> {
+  try {
+    const res = await fetch(`${API_BASE}/teams/${encodeURIComponent(teamName)}/stats`);
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+// Notifications
+export async function subscribeNotifications(
+  userId: string,
+  data: { enabled: boolean; preferences: PushPreferences }
+): Promise<void> {
+  const res = await fetch(`${API_BASE}/users/${userId}/notifications/subscribe`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+}
+
+export async function getNotifications(userId: string): Promise<{ enabled: boolean; preferences: PushPreferences }> {
+  const res = await fetch(`${API_BASE}/users/${userId}/notifications`);
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
 }

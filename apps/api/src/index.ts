@@ -8,6 +8,8 @@ import usersRouter from './routes/users';
 import reelsRouter from './routes/reels';
 import quizRouter from './routes/quiz';
 import parentsRouter from './routes/parents';
+import gamificationRouter from './routes/gamification';
+import teamsRouter from './routes/teams';
 import { errorHandler } from './middleware/error-handler';
 import { startSyncJob, runManualSync } from './jobs/sync-feeds';
 
@@ -24,6 +26,8 @@ app.use('/api/users', usersRouter);
 app.use('/api/reels', reelsRouter);
 app.use('/api/quiz', quizRouter);
 app.use('/api/parents', parentsRouter);
+app.use('/api/gamification', gamificationRouter);
+app.use('/api/teams', teamsRouter);
 
 // Health check
 app.get('/api/health', (_req, res) => {

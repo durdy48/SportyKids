@@ -8,6 +8,7 @@
     "news": "News",
     "reels": "Reels",
     "quiz": "Quiz",
+    "collection": "Collection",
     "my_team": "My Team",
     "parents": "Parents"
   },
@@ -16,6 +17,12 @@
     "subtitle": "The best sports news for you",
     "no_news": "No news for these filters",
     "no_news_hint": "Try a different sport or age range"
+  },
+  "feed": {
+    "mode_headlines": "Headlines",
+    "mode_cards": "Cards",
+    "mode_explain": "Explained easy",
+    "personalized": "Your personalized feed"
   },
   "filters": {
     "all": "All",
@@ -40,7 +47,12 @@
   "reels": {
     "title": "Reels",
     "subtitle": "Short sports videos",
-    "no_reels": "No reels available"
+    "no_reels": "No reels available",
+    "like": "Like",
+    "share": "Share",
+    "copied": "Link copied!",
+    "tap_to_play": "Tap to play",
+    "filter": "Filter"
   },
   "quiz": {
     "title": "Sports Quiz",
@@ -52,7 +64,13 @@
     "correct": "Correct! 🎉",
     "incorrect": "Almost! The correct answer was different 💪",
     "view_results": "View results",
-    "pts": "pts"
+    "pts": "pts",
+    "daily_quiz": "Daily Quiz",
+    "from_today_news": "From today's news",
+    "read_news": "Read the related news",
+    "no_daily": "No daily quiz yet, try these!",
+    "generate_success": "Quiz generated successfully",
+    "generate_error": "Error generating quiz"
   },
   "team": {
     "my_team": "My Team",
@@ -60,7 +78,17 @@
     "select_team": "Pick your favorite team to see their news",
     "choose_favorite": "Choose your favorite team:",
     "no_recent_news": "No recent news about {team}",
-    "news_sync_hint": "News will appear here when synced"
+    "news_sync_hint": "News will appear here when synced",
+    "league_position": "League position",
+    "recent_results": "Recent results",
+    "top_scorer": "Top scorer",
+    "next_match": "Next match",
+    "news": "Team news",
+    "reels": "Team reels",
+    "win": "W",
+    "draw": "D",
+    "loss": "L",
+    "position_ordinal": "{{position}}th in {{league}}"
   },
   "onboarding": {
     "step1_title": "Hi! What's your name?",
@@ -72,7 +100,15 @@
     "step3_subtitle": "Optional — you can skip this",
     "step4_title": "Where do you want to read news from?",
     "step4_subtitle": "If you don't pick any, you'll see all sources",
-    "creating_profile": "Creating profile..."
+    "creating_profile": "Creating profile...",
+    "step5_title": "Parental setup",
+    "step5_subtitle": "Set up a PIN to manage your child's experience",
+    "pin_create": "Create a 4-digit PIN",
+    "pin_confirm": "Confirm your PIN",
+    "pin_mismatch": "PINs do not match",
+    "formats_label": "Allowed content formats",
+    "time_limit_label": "Daily time limit",
+    "no_limit": "No limit"
   },
   "parental": {
     "control": "Parental Control",
@@ -90,7 +126,39 @@
     "allowed_formats": "Allowed formats",
     "max_daily_time": "Max daily time",
     "enabled": "Enabled",
-    "blocked": "Blocked"
+    "blocked": "Blocked",
+    "tab_profile": "Profile",
+    "tab_content": "Content",
+    "tab_restrictions": "Restrictions",
+    "tab_activity": "Activity",
+    "tab_pin": "PIN",
+    "daily_usage": "Daily usage (minutes)",
+    "average_daily": "Daily average",
+    "limit_alerts": "Limit alerts",
+    "most_viewed": "Most viewed",
+    "this_week": "This week",
+    "prev_week": "Previous week",
+    "next_week": "Next week",
+    "change_pin": "Change PIN",
+    "current_pin": "Current PIN",
+    "new_pin": "New PIN",
+    "pin_changed": "PIN changed successfully",
+    "session_active": "Session active",
+    "session_expired": "Session expired, enter your PIN again",
+    "day_mon": "M",
+    "day_tue": "T",
+    "day_wed": "W",
+    "day_thu": "T",
+    "day_fri": "F",
+    "day_sat": "S",
+    "day_sun": "S"
+  },
+  "limit": {
+    "reached_title": "See you tomorrow!",
+    "reached_message": "You've reached your daily time limit. Come back tomorrow for more sports!",
+    "format_blocked": "This section is not available. Ask your parents!",
+    "sport_blocked": "This sport is not on your list. Ask your parents to add it!",
+    "go_home": "Go to home"
   },
   "buttons": {
     "read_more": "Read more",
@@ -118,5 +186,83 @@
     "create_pin_failed": "Error creating PIN",
     "invalid_data": "Invalid data",
     "not_found": "Not found"
+  },
+  "sources": {
+    "catalog_title": "News sources",
+    "catalog_subtitle": "Choose your favorite sources",
+    "select_all": "Select all",
+    "deselect_all": "Deselect all",
+    "selected_count": "{{count}} sources selected",
+    "country_ES": "Spain",
+    "country_GB": "United Kingdom",
+    "country_US": "United States",
+    "country_FR": "France",
+    "country_IT": "Italy",
+    "country_DE": "Germany",
+    "category_general": "General",
+    "category_team": "Team",
+    "category_league": "League",
+    "category_youth": "Youth",
+    "add_custom": "Add custom source",
+    "custom_url_placeholder": "RSS feed URL",
+    "custom_name_placeholder": "Source name",
+    "custom_sport_label": "Sport",
+    "custom_add_button": "Add source",
+    "custom_validating": "Validating RSS feed...",
+    "custom_success": "Source added successfully ({{count}} news imported)",
+    "custom_error_invalid": "Could not parse RSS feed at this URL",
+    "custom_error_duplicate": "This URL already exists in the catalog",
+    "custom_delete_confirm": "Delete this custom source?",
+    "custom_badge": "Custom"
+  },
+  "sync": {
+    "approved": "approved",
+    "rejected": "rejected",
+    "moderation_errors": "moderation errors"
+  },
+  "summary": {
+    "explain_easy": "Explain it easy",
+    "adapted_for_age": "Adapted for ages {{range}}",
+    "loading": "Generating summary...",
+    "error": "Could not generate summary"
+  },
+  "collection": {
+    "title": "My Collection",
+    "stickers_collected": "{{collected}} of {{total}} stickers",
+    "all_sports": "All",
+    "achievements": "Achievements",
+    "locked": "Locked",
+    "obtained": "Obtained"
+  },
+  "sticker": {
+    "rarity": {
+      "common": "Common",
+      "rare": "Rare",
+      "epic": "Epic",
+      "legendary": "Legendary"
+    }
+  },
+  "streak": {
+    "current": "Current streak",
+    "longest": "Best streak",
+    "next_reward": "Next reward in {{days}} days",
+    "days": "days"
+  },
+  "achievement": {
+    "unlocked": "Achievement unlocked!"
+  },
+  "notifications": {
+    "title": "Notifications",
+    "enable": "Enable notifications",
+    "sports": "Sports updates",
+    "daily_quiz": "Daily quiz reminder",
+    "team_updates": "My team updates",
+    "saved": "Preferences saved",
+    "mvp_note": "Notifications will be available soon"
+  },
+  "gamification": {
+    "points_earned": "+{{points}} points",
+    "sticker_earned": "New sticker!",
+    "perfect_quiz": "Perfect quiz!"
   }
 }

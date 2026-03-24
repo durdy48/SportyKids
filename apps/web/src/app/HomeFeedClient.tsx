@@ -6,8 +6,13 @@ import { AGE_RANGES, t } from '@sportykids/shared';
 import type { NewsItem, AgeRange } from '@sportykids/shared';
 import { fetchNews } from '@/lib/api';
 import { useUser } from '@/lib/user-context';
+import { useActivityTracker } from '@/lib/use-activity-tracker';
 import { NewsCard } from '@/components/NewsCard';
+import { HeadlineRow } from '@/components/HeadlineRow';
 import { FiltersBar } from '@/components/FiltersBar';
+import { FeedModeToggle, type FeedMode } from '@/components/FeedModeToggle';
+
+const FEED_MODE_KEY = 'sportykids_feed_mode';
 
 export function HomeFeedClient() {
   const { user, loading: userLoading, locale } = useUser();
@@ -20,6 +25,22 @@ export function HomeFeedClient() {
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [feedMode, setFeedMode] = useState<FeedMode>('cards');
+
+  useActivityTracker(user?.id, 'news_viewed');
+
+  // Load persisted feed mode
+  useEffect(() => {
+    const saved = localStorage.getItem(FEED_MODE_KEY) as FeedMode | null;
+    if (saved === 'cards' || saved === 'headlines' || saved === 'explain') {
+      setFeedMode(saved);
+    }
+  }, []);
+
+  const handleFeedModeChange = (mode: FeedMode) => {
+    setFeedMode(mode);
+    localStorage.setItem(FEED_MODE_KEY, mode);
+  };
 
   // Redirect to onboarding if no user
   useEffect(() => {
@@ -37,6 +58,7 @@ export function HomeFeedClient() {
       const result = await fetchNews({
         sport: activeSport ?? undefined,
         age: ageRange ? ageRange.min : (user ? user.age : undefined),
+        userId: user?.id,
         page: pg,
         limit: 20,
       });
@@ -67,6 +89,16 @@ export function HomeFeedClient() {
 
   return (
     <div className="space-y-6">
+      {/* Feed mode toggle */}
+      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+        <FeedModeToggle mode={feedMode} onChange={handleFeedModeChange} locale={locale} />
+        {user.favoriteSports.length > 0 && (
+          <span className="text-sm text-gray-400">
+            {t('feed.personalized', locale)}
+          </span>
+        )}
+      </div>
+
       <FiltersBar
         activeSport={activeSport}
         activeAge={activeAge}
@@ -83,17 +115,38 @@ export function HomeFeedClient() {
 
       {!loading && news.length === 0 && !error && (
         <div className="text-center py-12 text-gray-400">
-          <p className="text-4xl mb-2">🏟️</p>
+          <p className="text-4xl mb-2">{'\u{1F3DF}\uFE0F'}</p>
           <p className="text-lg font-medium">{t('home.no_news', locale)}</p>
           <p className="text-sm">{t('home.no_news_hint', locale)}</p>
         </div>
       )}
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-        {news.map((item) => (
-          <NewsCard key={item.id} news={item} locale={locale} />
-        ))}
-      </div>
+      {/* Headlines mode */}
+      {feedMode === 'headlines' && (
+        <div className="flex flex-col gap-2">
+          {news.map((item) => (
+            <HeadlineRow key={item.id} news={item} locale={locale} />
+          ))}
+        </div>
+      )}
+
+      {/* Cards mode */}
+      {feedMode === 'cards' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {news.map((item) => (
+            <NewsCard key={item.id} news={item} locale={locale} />
+          ))}
+        </div>
+      )}
+
+      {/* Explain mode — cards with explain button always visible */}
+      {feedMode === 'explain' && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          {news.map((item) => (
+            <NewsCard key={item.id} news={item} locale={locale} showExplainButton />
+          ))}
+        </div>
+      )}
 
       {loading && (
         <div className="flex justify-center py-8">

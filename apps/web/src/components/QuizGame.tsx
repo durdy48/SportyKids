@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import type { QuizQuestion } from '@sportykids/shared';
 import { sportToEmoji, t, getSportLabel } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
@@ -79,9 +80,16 @@ export function QuizGame({ questions, userId, onFinish, locale }: QuizGameProps)
 
       {/* Question */}
       <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 mb-4">
-        <span className="text-xs bg-gray-100 px-2.5 py-1 rounded-full font-medium text-gray-500">
-          {sportToEmoji(currentQuestion.sport)} {getSportLabel(currentQuestion.sport, locale)} · {currentQuestion.points} {t('quiz.pts', locale)}
-        </span>
+        <div className="flex items-center gap-2 flex-wrap mb-1">
+          <span className="text-xs bg-gray-100 px-2.5 py-1 rounded-full font-medium text-gray-500">
+            {sportToEmoji(currentQuestion.sport)} {getSportLabel(currentQuestion.sport, locale)} · {currentQuestion.points} {t('quiz.pts', locale)}
+          </span>
+          {currentQuestion.isDaily && (
+            <span className="text-xs bg-[#2563EB] text-white px-2.5 py-1 rounded-full font-medium">
+              📰 {t('quiz.daily_quiz', locale)}
+            </span>
+          )}
+        </div>
         <h3 className="font-[family-name:var(--font-poppins)] text-xl font-bold text-[var(--color-text)] mt-4 mb-6">
           {currentQuestion.question}
         </h3>
@@ -114,6 +122,15 @@ export function QuizGame({ questions, userId, onFinish, locale }: QuizGameProps)
           }`}>
             {result.correct ? t('quiz.correct', locale) : t('quiz.incorrect', locale)}
           </div>
+
+          {currentQuestion.relatedNewsId && (
+            <Link
+              href={`/news/${currentQuestion.relatedNewsId}`}
+              className="block text-center text-sm font-medium text-[#2563EB] hover:underline"
+            >
+              📰 {t('quiz.read_news', locale)}
+            </Link>
+          )}
 
           <button
             onClick={next}

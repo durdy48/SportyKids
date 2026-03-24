@@ -6,6 +6,7 @@ import type { QuizQuestion } from '@sportykids/shared';
 import { t } from '@sportykids/shared';
 import { fetchQuestions, fetchScore } from '@/lib/api';
 import { useUser } from '@/lib/user-context';
+import { useActivityTracker } from '@/lib/use-activity-tracker';
 import { QuizGame } from '@/components/QuizGame';
 
 type State = 'start' | 'playing' | 'result';
@@ -19,6 +20,15 @@ export default function QuizPage() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [roundPoints, setRoundPoints] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [hasDailyQuestions, setHasDailyQuestions] = useState(true);
+
+  useActivityTracker(user?.id, 'quizzes_played');
+
+  const getAgeRange = (age: number): string => {
+    if (age <= 8) return '6-8';
+    if (age <= 11) return '9-11';
+    return '12-14';
+  };
 
   useEffect(() => {
     if (!userLoading && !user) router.replace('/onboarding');
@@ -35,8 +45,11 @@ export default function QuizPage() {
   const startQuiz = async () => {
     setLoading(true);
     try {
-      const result = await fetchQuestions(5);
+      const ageRange = user ? getAgeRange(user.age) : undefined;
+      const result = await fetchQuestions(5, undefined, ageRange);
       setQuestions(result.questions);
+      const hasDaily = result.questions.some((q) => q.isDaily);
+      setHasDailyQuestions(hasDaily);
       setState('playing');
     } catch (err) {
       console.error(err);
@@ -83,12 +96,19 @@ export default function QuizPage() {
       )}
 
       {state === 'playing' && questions.length > 0 && (
-        <QuizGame
-          questions={questions}
-          userId={user.id}
-          onFinish={finishQuiz}
-          locale={locale}
-        />
+        <>
+          {!hasDailyQuestions && (
+            <div className="max-w-lg mx-auto mb-4 text-center text-sm text-gray-400 bg-gray-50 rounded-xl px-4 py-2">
+              {t('quiz.no_daily', locale)}
+            </div>
+          )}
+          <QuizGame
+            questions={questions}
+            userId={user.id}
+            onFinish={finishQuiz}
+            locale={locale}
+          />
+        </>
       )}
 
       {state === 'result' && (

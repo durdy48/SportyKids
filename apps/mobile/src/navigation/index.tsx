@@ -7,6 +7,7 @@ import { useUser } from '../lib/user-context';
 import { HomeFeedScreen } from '../screens/HomeFeed';
 import { ReelsScreen } from '../screens/Reels';
 import { QuizScreen } from '../screens/Quiz';
+import { CollectionScreen } from '../screens/Collection';
 import { FavoriteTeamScreen } from '../screens/FavoriteTeam';
 import { ParentalControlScreen } from '../screens/ParentalControl';
 import { OnboardingScreen } from '../screens/Onboarding';
@@ -48,6 +49,14 @@ function MainTabs() {
         options={{
           title: t('nav.quiz', locale),
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🧠</Text>,
+        }}
+      />
+      <Tab.Screen
+        name="Collection"
+        component={CollectionScreen}
+        options={{
+          title: t('nav.collection', locale),
+          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🏆</Text>,
         }}
       />
       <Tab.Screen

@@ -18,23 +18,47 @@ model NewsItem {
   team        String?
   minAge      Int      @default(6)
   maxAge      Int      @default(14)
-  publishedAt DateTime
-  createdAt   DateTime @default(now())
-  rssGuid     String   @unique
+  publishedAt  DateTime
+  createdAt    DateTime  @default(now())
+  rssGuid      String    @unique
+  safetyStatus String    @default("pending")
+  safetyReason String?
+  moderatedAt  DateTime?
+  summaries    NewsSummary[]
+}
+
+model NewsSummary {
+  id         String   @id @default(cuid())
+  newsItemId String
+  ageRange   String
+  summary    String
+  locale     String   @default("es")
+  createdAt  DateTime @default(now())
+  newsItem   NewsItem @relation(fields: [newsItemId], references: [id], onDelete: Cascade)
+  @@unique([newsItemId, ageRange, locale])
 }
 
 model User {
-  id              String   @id @default(cuid())
-  name            String
-  age             Int
-  favoriteSports  String   @default("[]")
-  favoriteTeam    String?
-  selectedFeeds   String   @default("[]")
-  totalPoints     Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  parentalProfile ParentalProfile?
-  activityLogs    ActivityLog[]
+  id                       String            @id @default(cuid())
+  name                     String
+  age                      Int
+  favoriteSports           String            @default("[]")
+  favoriteTeam             String?
+  selectedFeeds            String            @default("[]")
+  pushEnabled              Boolean           @default(false)
+  pushPreferences          String?
+  totalPoints              Int               @default(0)
+  currentStreak            Int               @default(0)
+  longestStreak            Int               @default(0)
+  lastActiveDate           DateTime?
+  currentQuizCorrectStreak Int               @default(0)
+  quizPerfectCount         Int               @default(0)
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  parentalProfile          ParentalProfile?
+  activityLogs             ActivityLog[]
+  userStickers             UserSticker[]
+  userAchievements         UserAchievement[]
 }
 
 model Reel {
@@ -48,17 +72,25 @@ model Reel {
   minAge          Int      @default(6)
   maxAge          Int      @default(14)
   durationSeconds Int      @default(60)
+  videoType       String?
+  aspectRatio     String?
+  previewGifUrl   String?
   createdAt       DateTime @default(now())
 }
 
 model QuizQuestion {
-  id              String @id @default(cuid())
+  id              String    @id @default(cuid())
   question        String
   options         String
   correctAnswer   Int
   sport           String
-  points          Int    @default(10)
+  points          Int       @default(10)
   relatedNewsId   String?
+  generatedAt     DateTime?
+  ageRange        String?
+  expiresAt       DateTime?
+
+  @@index([expiresAt, sport])
 }
 
 model ParentalProfile {
@@ -73,11 +105,71 @@ model ParentalProfile {
 }
 
 model ActivityLog {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  type      String
-  createdAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  type            String
+  durationSeconds Int?
+  contentId       String?
+  sport           String?
+  createdAt       DateTime @default(now())
+}
+
+model Sticker {
+  id           String        @id @default(cuid())
+  name         String
+  nameKey      String
+  imageUrl     String
+  sport        String
+  team         String?
+  rarity       String
+  createdAt    DateTime      @default(now())
+  userStickers UserSticker[]
+}
+
+model UserSticker {
+  id         String   @id @default(cuid())
+  userId     String
+  stickerId  String
+  source     String
+  obtainedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  sticker    Sticker  @relation(fields: [stickerId], references: [id])
+  @@unique([userId, stickerId])
+}
+
+model Achievement {
+  id               String            @id @default(cuid())
+  key              String            @unique
+  nameKey          String
+  descriptionKey   String
+  icon             String
+  threshold        Int
+  type             String
+  rewardStickerId  String?
+  createdAt        DateTime          @default(now())
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  @@unique([userId, achievementId])
+}
+
+model TeamStats {
+  id             String   @id @default(cuid())
+  teamName       String   @unique
+  sport          String
+  leaguePosition Int?
+  recentResults  String   // JSON array of {opponent, score, result, date}
+  topScorer      String?
+  nextMatch      String?  // JSON object {opponent, date, competition}
+  updatedAt      DateTime @updatedAt
 }
 
 model RssSource {
@@ -87,4 +179,11 @@ model RssSource {
   sport        String
   active       Boolean   @default(true)
   lastSyncedAt DateTime?
+  country      String    @default("ES")
+  language     String    @default("es")
+  logoUrl      String?
+  description  String    @default("")
+  category     String    @default("general")
+  isCustom     Boolean   @default(false)
+  addedBy      String?
 }
