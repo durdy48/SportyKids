@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/database';
+import { formatUser } from '../utils/format-user';
 
 const router = Router();
 
@@ -76,13 +77,77 @@ router.put('/:id', async (req: Request, res: Response) => {
   res.json(formatUser(user));
 });
 
-// Converts JSON string fields to arrays for the response
-function formatUser(user: Record<string, unknown>) {
-  return {
-    ...user,
-    favoriteSports: JSON.parse(user.favoriteSports as string),
-    selectedFeeds: JSON.parse(user.selectedFeeds as string),
-  };
-}
+// POST /api/users/:id/notifications/subscribe — Update push notification preferences
+const notificationSubscribeSchema = z.object({
+  enabled: z.boolean(),
+  preferences: z.object({
+    sports: z.boolean().default(true),
+    dailyQuiz: z.boolean().default(true),
+    teamUpdates: z.boolean().default(true),
+  }).optional(),
+  pushToken: z.string().optional(),
+  platform: z.enum(['expo', 'web']).optional(),
+});
+
+router.post('/:id/notifications/subscribe', async (req: Request, res: Response) => {
+  const parsed = notificationSubscribeSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten() });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+
+  const { enabled, preferences, pushToken, platform } = parsed.data;
+
+  const updated = await prisma.user.update({
+    where: { id: req.params.id },
+    data: {
+      pushEnabled: enabled,
+      pushPreferences: preferences ? JSON.stringify(preferences) : user.pushPreferences,
+    },
+  });
+
+  // Upsert push token if provided
+  if (pushToken && platform) {
+    await prisma.pushToken.upsert({
+      where: { token: pushToken },
+      create: { userId: req.params.id, token: pushToken, platform, active: enabled },
+      update: { active: enabled, userId: req.params.id },
+    });
+  }
+
+  // If disabling, deactivate all push tokens for this user
+  if (!enabled) {
+    await prisma.pushToken.updateMany({
+      where: { userId: req.params.id },
+      data: { active: false },
+    });
+  }
+
+  res.json({
+    pushEnabled: updated.pushEnabled,
+    pushPreferences: updated.pushPreferences ? JSON.parse(updated.pushPreferences) : null,
+  });
+});
+
+// GET /api/users/:id/notifications — Get push notification settings
+router.get('/:id/notifications', async (req: Request, res: Response) => {
+  const user = await prisma.user.findUnique({ where: { id: req.params.id } });
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+
+  res.json({
+    pushEnabled: user.pushEnabled,
+    pushPreferences: user.pushPreferences ? JSON.parse(user.pushPreferences) : null,
+  });
+});
+
 
 export default router;

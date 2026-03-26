@@ -13,7 +13,7 @@ export default function Home() {
         <h2 className="font-[family-name:var(--font-poppins)] text-2xl font-bold text-[var(--color-text)]">
           {t('home.latest_news', locale)}
         </h2>
-        <p className="text-gray-500 text-sm mt-1">
+        <p className="text-[var(--color-muted)] text-sm mt-1">
           {t('home.subtitle', locale)}
         </p>
       </div>

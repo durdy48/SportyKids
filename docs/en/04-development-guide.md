@@ -5,6 +5,7 @@
 - Node.js >= 20
 - npm >= 10
 - Git
+- (Optional) Ollama -- for local AI features (content moderation, summaries, quiz generation)
 
 Docker and PostgreSQL are not needed for local development (SQLite is used).
 
@@ -30,6 +31,15 @@ Create the environment file for the API:
 DATABASE_URL="file:./dev.db"
 PORT=3001
 NODE_ENV=development
+
+# JWT Authentication
+JWT_SECRET=your-secret-key-here          # Required for auth endpoints
+JWT_REFRESH_SECRET=your-refresh-secret   # Required for refresh tokens
+
+# AI Provider (optional -- defaults to ollama)
+AI_PROVIDER=ollama              # ollama | openrouter | anthropic
+# OPENROUTER_API_KEY=sk-...    # required if AI_PROVIDER=openrouter
+# ANTHROPIC_API_KEY=sk-...     # required if AI_PROVIDER=anthropic
 ```
 
 ## Database
@@ -41,7 +51,7 @@ npm run db:migrate
 # Generate Prisma client
 npm run db:generate
 
-# Load sample data (RSS sources, reels, quiz questions)
+# Load sample data (RSS sources, reels, quiz questions, stickers, achievements, team stats)
 cd apps/api && npx tsx prisma/seed.ts
 ```
 
@@ -65,6 +75,19 @@ For the mobile app (requires Expo CLI):
 npm run dev:mobile
 ```
 
+The API URL configuration for mobile is centralized in `apps/mobile/src/config.ts` with 3 environments (dev, preview, production). Do not hardcode URLs in individual screen files.
+
+### Optional: Start Ollama for AI features
+
+```bash
+# Install Ollama from https://ollama.ai
+ollama serve
+# Pull a model (e.g., llama3.2)
+ollama pull llama3.2
+```
+
+Without Ollama, AI features (content moderation, summaries, quiz generation) degrade gracefully -- the app works but uses fallback behavior (fail-open moderation, no summaries, seed quiz questions only).
+
 ## Available Commands
 
 | Command | Description |
@@ -77,6 +100,8 @@ npm run dev:mobile
 | `npm run db:migrate` | Run Prisma migrations |
 | `npm run db:generate` | Regenerate the Prisma client |
 | `npm run lint` | Run ESLint across the entire monorepo |
+| `npm run test` | Run all tests in the monorepo |
+| `npm run test:api` | Run API tests (Vitest) |
 
 ## Structure of a New API Route
 
@@ -93,9 +118,26 @@ npm run dev:mobile
 | `src/routes/news.ts` | Article endpoints (`/api/news`) |
 | `src/routes/users.ts` | User endpoints (`/api/users`) |
 | `src/routes/parents.ts` | Parental control endpoints (`/api/parents`) |
+| `src/routes/quiz.ts` | Quiz endpoints (`/api/quiz`) |
+| `src/routes/reels.ts` | Reels endpoints (`/api/reels`) |
+| `src/routes/gamification.ts` | Gamification endpoints (`/api/gamification`) |
+| `src/routes/teams.ts` | Team stats endpoints (`/api/teams`) |
+| `src/routes/auth.ts` | Authentication endpoints (`/api/auth`) |
 | `src/services/aggregator.ts` | RSS feed consumption |
 | `src/services/classifier.ts` | Content classification by sport/team/age |
-| `src/jobs/sync-feeds.ts` | Cron job for periodic RSS sync |
+| `src/services/ai-client.ts` | Multi-provider AI client (Ollama/OpenRouter/Claude) |
+| `src/services/content-moderator.ts` | AI content safety classification |
+| `src/services/summarizer.ts` | Age-adapted article summaries |
+| `src/services/quiz-generator.ts` | AI quiz question generation |
+| `src/services/gamification.ts` | Points, stickers, achievements, streaks |
+| `src/services/feed-ranker.ts` | Personalized feed scoring and ordering |
+| `src/services/team-stats.ts` | Team statistics management |
+| `src/middleware/parental-guard.ts` | Server-side parental restriction enforcement |
+| `src/middleware/auth.ts` | JWT authentication middleware (non-blocking) |
+| `src/services/push-notifications.ts` | Push notification delivery via expo-server-sdk |
+| `src/jobs/sync-feeds.ts` | Cron job for periodic RSS sync (every 30 min) |
+| `src/jobs/generate-daily-quiz.ts` | Cron job for daily quiz generation (06:00 UTC) |
+| `src/jobs/streak-reminder.ts` | Cron job for streak reminder push notifications (20:00 UTC) |
 
 ## Structure of a New Web Page
 
@@ -109,12 +151,13 @@ npm run dev:mobile
 
 | Route | Page |
 |-------|------|
-| `/` | Home Feed |
-| `/onboarding` | Onboarding wizard |
-| `/reels` | Short videos |
-| `/quiz` | Sports trivia |
-| `/team` | Favorite team section |
-| `/parents` | Parental control panel |
+| `/` | Home Feed (with feed mode selector: Headlines/Cards/Explain) |
+| `/onboarding` | Onboarding wizard (5 steps) |
+| `/reels` | Short videos (grid layout with thumbnails) |
+| `/quiz` | Sports trivia (seed + daily AI questions) |
+| `/team` | Favorite team section (with team stats card) |
+| `/collection` | Sticker collection and achievements |
+| `/parents` | Parental control panel (5 tabs) |
 
 ## Conventions
 
@@ -149,3 +192,25 @@ Constants and utilities in `@sportykids/shared` use English identifiers:
 | `formatDate(date)` | Formats a date for display |
 | `truncateText(text, max)` | Truncates text with ellipsis |
 | `t(key, locale)` | Returns localized string for the given key and locale |
+| `getSportLabel(sport, locale)` | Returns localized sport name |
+| `getAgeRangeLabel(range, locale)` | Returns localized age range label |
+
+## Tests
+
+The project uses **Vitest** as the testing framework for the API:
+
+```bash
+# Run all API tests
+cd apps/api && npx vitest run
+
+# Run tests in watch mode
+cd apps/api && npx vitest
+```
+
+Existing test files:
+- `apps/api/src/utils/safe-json-parse.test.ts` — 6 tests (safe JSON parser)
+- `apps/api/src/utils/url-validator.test.ts` — 16 tests (SSRF validation)
+- `apps/api/src/services/gamification.test.ts` — 7 tests (streaks, stickers, achievements)
+- `apps/api/src/services/feed-ranker.test.ts` — 7 tests (personalized ranking)
+
+Configuration in `apps/api/vitest.config.ts`. Uses `vi.mock` for Prisma and `vi.useFakeTimers` for time-dependent tests.

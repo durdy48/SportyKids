@@ -32,7 +32,23 @@ npx prisma migrate deploy
 npx tsx prisma/seed.ts
 ```
 
-### 2. API build
+### 2. Configure AI provider
+
+For production, configure a cloud AI provider instead of local Ollama:
+
+```bash
+# Option A: OpenRouter (multi-model, cost-effective)
+AI_PROVIDER=openrouter
+OPENROUTER_API_KEY=sk-or-...
+
+# Option B: Anthropic Claude (highest quality)
+AI_PROVIDER=anthropic
+ANTHROPIC_API_KEY=sk-ant-...
+```
+
+If no AI provider is configured, the app works without AI features (content moderation defaults to fail-open, no summaries, seed-only quiz questions).
+
+### 3. API build
 
 ```bash
 cd apps/api
@@ -41,7 +57,7 @@ npm run build
 node dist/index.js
 ```
 
-### 3. Webapp build
+### 4. Webapp build
 
 ```bash
 cd apps/web
@@ -76,6 +92,16 @@ npx eas build --platform all
 
 # Publish to stores
 npx eas submit
+```
+
+### AI Provider (Ollama in production)
+
+If self-hosting Ollama for cost savings:
+```bash
+# Run Ollama on a GPU-equipped server
+docker run -d --gpus all -p 11434:11434 ollama/ollama
+# Set OLLAMA_HOST in your API environment
+OLLAMA_HOST=http://ollama-server:11434
 ```
 
 ## Docker (optional)
@@ -120,6 +146,8 @@ services:
     environment:
       DATABASE_URL: postgresql://sportykids:sportykids@db:5432/sportykids
       PORT: 3001
+      AI_PROVIDER: openrouter
+      OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
     ports:
       - "3001:3001"
     depends_on:
@@ -140,6 +168,11 @@ volumes:
 - [ ] Verify RSS feeds work in production
 - [ ] Configure database backups
 - [ ] Configure monitoring/alerts
-- [ ] Review PIN security (bcrypt instead of SHA-256)
+- [x] ~~Review PIN security (bcrypt instead of SHA-256)~~ -- Done (M5)
+- [x] ~~Server-side parental enforcement~~ -- Done (M5, parental guard middleware)
 - [ ] Automated tests
 - [ ] CI/CD pipeline
+- [ ] Configure AI provider API keys
+- [ ] Set up Ollama or cloud AI for production
+- [ ] Review SSRF prevention for custom RSS sources
+- [ ] Set up error tracking (Sentry or similar)

@@ -1,4 +1,6 @@
 // Shared constants
+export { KID_FRIENDLY_ERRORS, getErrorType } from './errors';
+export type { KidFriendlyError } from './errors';
 
 export const SPORTS = [
   'football',
@@ -56,3 +58,12 @@ export const COLORS = {
   lightBackground: '#F8FAFC',
   darkText: '#1E293B',
 } as const;
+
+export const STICKER_RARITIES = ['common', 'rare', 'epic', 'legendary'] as const;
+
+export const RARITY_COLORS: Record<string, string> = {
+  common: '#94A3B8',
+  rare: '#2563EB',
+  epic: '#9333EA',
+  legendary: '#F59E0B',
+};

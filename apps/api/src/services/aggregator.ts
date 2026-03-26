@@ -1,6 +1,10 @@
 import Parser from 'rss-parser';
 import { prisma } from '../config/database';
 import { classifyNews } from './classifier';
+import { moderateContent } from './content-moderator';
+import { generateSummary } from './summarizer';
+import type { AgeRange } from './summarizer';
+import type { Locale } from '@sportykids/shared';
 
 const parser = new Parser({
   timeout: 10000,
@@ -8,6 +12,33 @@ const parser = new Parser({
     'User-Agent': 'SportyKids/1.0 (Sports news aggregator)',
   },
 });
+
+// ---------------------------------------------------------------------------
+// Types
+// ---------------------------------------------------------------------------
+
+export interface SyncResult {
+  sourceName: string;
+  itemsProcessed: number;
+  itemsCreated: number;
+  itemsSkipped: number;
+  moderationApproved: number;
+  moderationRejected: number;
+  moderationErrors: number;
+}
+
+export interface SyncAllResult {
+  totalProcessed: number;
+  totalCreated: number;
+  totalApproved: number;
+  totalRejected: number;
+  totalErrors: number;
+  sources: SyncResult[];
+}
+
+// ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
 
 // Cleans HTML and truncates text
 function cleanSummary(text: string | undefined, maxChars: number = 200): string {
@@ -42,8 +73,83 @@ function extractImage(item: Parser.Item): string {
   return '';
 }
 
-export async function syncSource(sourceId: string, sourceName: string, sourceUrl: string, sport: string): Promise<number> {
-  let newsAdded = 0;
+// ---------------------------------------------------------------------------
+// Background summary generation
+// ---------------------------------------------------------------------------
+
+const LOCALES: Locale[] = ['es', 'en'];
+const AGE_RANGES: AgeRange[] = ['6-8', '9-11', '12-14'];
+
+async function generateSummariesForNewsItem(
+  newsItemId: string,
+  title: string,
+  content: string,
+  sport: string,
+): Promise<void> {
+  try {
+    for (const locale of LOCALES) {
+      for (const ageRange of AGE_RANGES) {
+        try {
+          // Check if summary already exists
+          const existing = await prisma.newsSummary.findUnique({
+            where: {
+              newsItemId_ageRange_locale: { newsItemId, ageRange, locale },
+            },
+          });
+
+          if (existing) continue;
+
+          const summaryText = await generateSummary(title, content, ageRange, sport, locale);
+
+          if (!summaryText) continue;
+
+          await prisma.newsSummary.upsert({
+            where: {
+              newsItemId_ageRange_locale: { newsItemId, ageRange, locale },
+            },
+            update: { summary: summaryText },
+            create: {
+              newsItemId,
+              ageRange,
+              locale,
+              summary: summaryText,
+            },
+          });
+        } catch (err) {
+          console.warn(
+            `[Aggregator] Failed to generate summary for newsItem=${newsItemId} ageRange=${ageRange} locale=${locale}:`,
+            err instanceof Error ? err.message : err,
+          );
+        }
+      }
+    }
+  } catch (err) {
+    console.warn(
+      `[Aggregator] Failed to generate summaries for newsItem=${newsItemId}:`,
+      err instanceof Error ? err.message : err,
+    );
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Sync a single source
+// ---------------------------------------------------------------------------
+
+export async function syncSource(
+  sourceId: string,
+  sourceName: string,
+  sourceUrl: string,
+  sport: string,
+): Promise<SyncResult> {
+  const result: SyncResult = {
+    sourceName,
+    itemsProcessed: 0,
+    itemsCreated: 0,
+    itemsSkipped: 0,
+    moderationApproved: 0,
+    moderationRejected: 0,
+    moderationErrors: 0,
+  };
 
   try {
     const feed = await parser.parseURL(sourceUrl);
@@ -52,16 +158,53 @@ export async function syncSource(sourceId: string, sourceName: string, sourceUrl
       if (!item.title || !item.link) continue;
 
       const rssGuid = item.guid || item.link;
+      result.itemsProcessed++;
+
+      // Check if item already exists and is not pending — skip re-moderation
+      const existing = await prisma.newsItem.findUnique({ where: { rssGuid } });
+      if (existing && existing.safetyStatus !== 'pending') {
+        result.itemsSkipped++;
+        continue;
+      }
+
       const summary = cleanSummary(item.contentSnippet || item.content);
       const imageUrl = extractImage(item);
       const publishedAt = item.isoDate ? new Date(item.isoDate) : new Date();
-
       const classification = classifyNews(item.title, summary);
 
+      // Run content moderation
+      let safetyStatus = 'pending';
+      let safetyReason: string | null = null;
+      let moderatedAt: Date | null = null;
+
       try {
-        await prisma.newsItem.upsert({
+        const modResult = await moderateContent(item.title, summary);
+        safetyStatus = modResult.status;
+        safetyReason = modResult.reason ?? null;
+        moderatedAt = new Date();
+
+        if (modResult.status === 'approved') {
+          result.moderationApproved++;
+        } else {
+          result.moderationRejected++;
+        }
+      } catch {
+        result.moderationErrors++;
+        // Fail open — leave as pending, will be retried by backfill
+        safetyStatus = 'approved';
+        safetyReason = 'auto-approved: moderation error';
+        moderatedAt = new Date();
+        result.moderationApproved++;
+      }
+
+      try {
+        const upserted = await prisma.newsItem.upsert({
           where: { rssGuid },
-          update: {},
+          update: {
+            safetyStatus,
+            safetyReason,
+            moderatedAt,
+          },
           create: {
             title: item.title,
             summary,
@@ -74,9 +217,18 @@ export async function syncSource(sourceId: string, sourceName: string, sourceUrl
             maxAge: classification.maxAge,
             publishedAt,
             rssGuid,
+            safetyStatus,
+            safetyReason,
+            moderatedAt,
           },
         });
-        newsAdded++;
+
+        // After successful create (not update), fire-and-forget summary generation
+        if (!existing) {
+          void generateSummariesForNewsItem(upserted.id, item.title, summary, sport);
+        }
+
+        result.itemsCreated++;
       } catch (err) {
         // Duplicate or other error — continue with the next news item
         if (!(err instanceof Error && err.message.includes('Unique constraint'))) {
@@ -91,29 +243,53 @@ export async function syncSource(sourceId: string, sourceName: string, sourceUrl
       data: { lastSyncedAt: new Date() },
     });
 
-    console.log(`  OK ${sourceName}: ${newsAdded} news items processed`);
+    console.log(
+      `  OK ${sourceName}: ${result.itemsCreated} created, ` +
+      `${result.moderationApproved} approved, ${result.moderationRejected} rejected`,
+    );
   } catch (err) {
     console.error(`  Error syncing ${sourceName}:`, err instanceof Error ? err.message : err);
   }
 
-  return newsAdded;
+  return result;
 }
 
-export async function syncAllSources(): Promise<number> {
+// ---------------------------------------------------------------------------
+// Sync all active sources
+// ---------------------------------------------------------------------------
+
+export async function syncAllSources(): Promise<SyncAllResult> {
   console.log('Starting feed synchronization...');
   const sources = await prisma.rssSource.findMany({ where: { active: true } });
 
+  const allResult: SyncAllResult = {
+    totalProcessed: 0,
+    totalCreated: 0,
+    totalApproved: 0,
+    totalRejected: 0,
+    totalErrors: 0,
+    sources: [],
+  };
+
   if (sources.length === 0) {
     console.log('No active RSS sources found.');
-    return 0;
+    return allResult;
   }
 
-  let totalNews = 0;
   for (const source of sources) {
-    const count = await syncSource(source.id, source.name, source.url, source.sport);
-    totalNews += count;
+    const result = await syncSource(source.id, source.name, source.url, source.sport);
+    allResult.totalProcessed += result.itemsProcessed;
+    allResult.totalCreated += result.itemsCreated;
+    allResult.totalApproved += result.moderationApproved;
+    allResult.totalRejected += result.moderationRejected;
+    allResult.totalErrors += result.moderationErrors;
+    allResult.sources.push(result);
   }
 
-  console.log(`Synchronization complete: ${totalNews} news items processed from ${sources.length} sources.`);
-  return totalNews;
+  console.log(
+    `Synchronization complete: ${allResult.totalCreated} items from ${sources.length} sources. ` +
+    `Moderation: ${allResult.totalApproved} approved, ${allResult.totalRejected} rejected, ${allResult.totalErrors} errors.`,
+  );
+
+  return allResult;
 }

@@ -1,11 +1,16 @@
 # Modelo de datos
 
-## Diagrama entidad-relación
+## Diagrama entidad-relacion
 
 ```mermaid
 erDiagram
     User ||--o| ParentalProfile : "tiene"
     User ||--o{ ActivityLog : "genera"
+    User ||--o{ UserSticker : "colecciona"
+    User ||--o{ UserAchievement : "desbloquea"
+    NewsItem ||--o{ NewsSummary : "tiene resumenes"
+    Sticker ||--o{ UserSticker : "asignado a"
+    Achievement ||--o{ UserAchievement : "asignado a"
 
     User {
         string id PK
@@ -15,6 +20,9 @@ erDiagram
         string favoriteTeam "nullable"
         string selectedFeeds "JSON array"
         int totalPoints
+        int streak "dias consecutivos"
+        datetime lastActiveDate "nullable"
+        string notificationPreferences "JSON, nullable"
         datetime createdAt
         datetime updatedAt
     }
@@ -30,9 +38,19 @@ erDiagram
         string team "nullable"
         int minAge
         int maxAge
+        string safetyStatus "pending|approved|rejected"
         datetime publishedAt
         datetime createdAt
         string rssGuid UK
+    }
+
+    NewsSummary {
+        string id PK
+        string newsItemId "FK -> NewsItem"
+        string ageRange "6-8|9-11|12-14"
+        string locale "es|en"
+        string summary "texto adaptado"
+        datetime createdAt
     }
 
     Reel {
@@ -46,6 +64,9 @@ erDiagram
         int minAge
         int maxAge
         int durationSeconds
+        string videoType "youtube|native"
+        string aspectRatio "16:9|9:16|1:1"
+        string previewGifUrl "nullable"
         datetime createdAt
     }
 
@@ -53,26 +74,35 @@ erDiagram
         string id PK
         string question
         string options "JSON array"
-        int correctAnswer
+        int correctAnswer "indice 0-3"
         string sport
         int points
         string relatedNewsItemId "nullable"
+        boolean isDaily "false"
+        string ageRange "nullable: 6-8|9-11|12-14"
+        datetime generatedAt "nullable"
+        datetime expiresAt "nullable"
     }
 
     ParentalProfile {
         string id PK
         string userId UK "FK -> User"
-        string pin "SHA-256 hash"
+        string pin "bcrypt hash"
         string allowedSports "JSON array"
         string allowedFeeds "JSON array"
         string allowedFormats "JSON array"
         int maxDailyMinutes
+        string sessionToken "nullable"
+        datetime sessionExpiresAt "nullable"
     }
 
     ActivityLog {
         string id PK
         string userId "FK -> User"
-        string type "news_viewed | reels_viewed | quizzes_played"
+        string type "news_viewed|reels_viewed|quizzes_played"
+        int durationSeconds "nullable"
+        string contentId "nullable"
+        string sport "nullable"
         datetime date
     }
 
@@ -82,54 +112,166 @@ erDiagram
         string url UK
         string sport
         boolean active
+        boolean isCustom "false"
+        string addedByUserId "nullable"
+        string language "nullable"
+        string country "nullable"
         datetime lastSync "nullable"
+    }
+
+    Sticker {
+        string id PK
+        string name
+        string description
+        string sport
+        string imageUrl
+        string rarity "common|rare|epic|legendary"
+        datetime createdAt
+    }
+
+    UserSticker {
+        string id PK
+        string userId "FK -> User"
+        string stickerId "FK -> Sticker"
+        datetime earnedAt
+    }
+
+    Achievement {
+        string id PK
+        string name
+        string description
+        string icon
+        string criteria "JSON"
+        string category "streak|points|quiz|diversity|collection"
+        datetime createdAt
+    }
+
+    UserAchievement {
+        string id PK
+        string userId "FK -> User"
+        string achievementId "FK -> Achievement"
+        datetime unlockedAt
+    }
+
+    TeamStats {
+        string id PK
+        string teamName UK
+        string sport
+        int wins
+        int draws
+        int losses
+        int position "nullable"
+        string topScorer "nullable"
+        string nextMatch "nullable"
+        datetime updatedAt
     }
 ```
 
-## Descripción de modelos
+## Descripcion de modelos
 
 ### User
-Perfil del niño. Los campos `favoriteSports` y `selectedFeeds` se almacenan como JSON strings en SQLite (Prisma no soporta arrays nativos en SQLite).
+Perfil del nino. Los campos `favoriteSports`, `selectedFeeds` y `notificationPreferences` se almacenan como JSON strings en SQLite. Incluye campos de gamificacion (`totalPoints`, `streak`, `lastActiveDate`).
 
 ### NewsItem
-Artículo agregado desde un feed RSS. El campo `rssGuid` es único y se usa para evitar duplicados al re-sincronizar. El deporte viene de la fuente, el equipo se detecta por keywords.
+Articulo agregado desde un feed RSS. El campo `rssGuid` es unico y se usa para evitar duplicados al re-sincronizar. El campo `safetyStatus` indica si el contenido ha sido moderado por IA (`pending`, `approved`, `rejected`).
+
+### NewsSummary
+Resumen adaptado por edad de una noticia. Unico por combinacion de `newsItemId` + `ageRange` + `locale`. Generado por el servicio `summarizer.ts` usando IA.
+
+| Rango de edad | Estilo del resumen |
+|---------------|-------------------|
+| `6-8` | Vocabulario simple, frases cortas, tono entusiasta |
+| `9-11` | Lenguaje intermedio, contexto basico |
+| `12-14` | Lenguaje completo, datos y estadisticas |
 
 ### Reel
-Vídeo corto deportivo. En el MVP se cargan desde un seed con URLs de YouTube embebidas. El campo `videoUrl` contiene la URL de embed.
+Video corto deportivo. Campos extendidos para soporte de distintos formatos:
+- `videoType`: `youtube` (embed) o `native` (video directo)
+- `aspectRatio`: `16:9`, `9:16` (vertical/stories), `1:1` (cuadrado)
+- `previewGifUrl`: miniatura animada opcional
 
 ### QuizQuestion
-Pregunta de trivia deportiva con 4 opciones. `correctAnswer` es el índice (0-3) de la opción correcta. `options` es un JSON array de strings.
+Pregunta de trivia deportiva con 4 opciones. Soporta tanto preguntas estaticas (seed) como generadas dinamicamente por IA:
+- `isDaily`: marca preguntas del quiz diario
+- `ageRange`: dificultad adaptada por edad
+- `generatedAt`: timestamp de generacion por IA
+- `expiresAt`: caducidad de preguntas diarias
 
 ### ParentalProfile
-Configuración del control parental, vinculada 1:1 con User. El PIN se almacena como hash SHA-256. `allowedFormats` controla qué secciones de la app son visibles.
+Configuracion del control parental, vinculada 1:1 con User.
+- **PIN**: almacenado como hash **bcrypt** (migracion transparente desde SHA-256 para usuarios existentes)
+- **Sesiones**: `sessionToken` + `sessionExpiresAt` (TTL 5 minutos) para evitar re-verificacion constante del PIN
+- `allowedFormats`: controla que secciones de la app son visibles
+- `allowedSports`: filtra deportes permitidos
 
 ### ActivityLog
-Evento de tracking. Cada vez que el niño ve una noticia, un reel o juega un quiz, se crea un registro con el tipo correspondiente (`news_viewed`, `reels_viewed`, `quizzes_played`). Se usa para el resumen semanal del panel parental.
+Evento de tracking extendido. Registra acciones del nino con informacion detallada:
+- `durationSeconds`: tiempo dedicado a la actividad (enviado via `sendBeacon` al cerrar)
+- `contentId`: ID de la noticia, reel o quiz consultado
+- `sport`: deporte del contenido para filtrado en panel parental
 
 ### RssSource
-Feed RSS que el agregador consume periódicamente. Se puede activar/desactivar sin borrar.
+Feed RSS configurable. Extendido con soporte para fuentes personalizadas:
+- `isCustom`: indica si fue anadida por un usuario
+- `addedByUserId`: quien anadio la fuente
+- `language` / `country`: metadatos para clasificacion
+
+### Sticker
+Cromo coleccionable. 36 stickers en el seed, distribuidos por deporte y rareza:
+
+| Rareza | Cantidad | Criterio |
+|--------|----------|----------|
+| `common` | ~16 | Hitos basicos |
+| `rare` | ~10 | Logros intermedios |
+| `epic` | ~6 | Logros avanzados |
+| `legendary` | ~4 | Logros excepcionales |
+
+### UserSticker
+Relacion muchos-a-muchos entre User y Sticker. Registra cuando se obtuvo cada cromo.
+
+### Achievement
+Logro desbloqueable. 20 logros en el seed, categorizados por tipo:
+
+| Categoria | Ejemplos |
+|-----------|----------|
+| `streak` | 3, 7, 30 dias consecutivos |
+| `points` | 100, 500, 1000 puntos |
+| `quiz` | 10 respuestas correctas, quiz perfecto |
+| `diversity` | Leer noticias de 5 deportes distintos |
+| `collection` | Coleccionar 10, 20 stickers |
+
+### UserAchievement
+Relacion muchos-a-muchos entre User y Achievement. Registra cuando se desbloqueo cada logro.
+
+### TeamStats
+Estadisticas de equipos deportivos. 15 equipos en el seed. Campos:
+- `wins`, `draws`, `losses`: resultados de la temporada
+- `position`: posicion en la clasificacion
+- `topScorer`: maximo goleador/anotador
+- `nextMatch`: proximo partido (texto)
 
 ## Valores de deporte
 
-Los valores de deporte en la base de datos son en inglés:
+Los valores de deporte en la base de datos son en ingles:
 
-| Valor | Descripción |
+| Valor | Descripcion |
 |-------|-------------|
-| `football` | Fútbol |
+| `football` | Futbol |
 | `basketball` | Baloncesto |
 | `tennis` | Tenis |
-| `swimming` | Natación |
+| `swimming` | Natacion |
 | `athletics` | Atletismo |
 | `cycling` | Ciclismo |
-| `formula1` | Fórmula 1 |
-| `padel` | Pádel |
+| `formula1` | Formula 1 |
+| `padel` | Padel |
 
 ## Notas sobre i18n
 
-Los nombres de modelos y campos están en inglés en el código y la base de datos. Para mostrar textos al usuario en su idioma, se usa la función `t(key, locale)` del módulo `@sportykids/shared/i18n`. Por ejemplo, el valor `football` se traduce a "Fútbol" en español mediante `t('sports.football', 'es')`.
+Los nombres de modelos y campos estan en ingles en el codigo y la base de datos. Para mostrar textos al usuario en su idioma, se usa la funcion `t(key, locale)` del modulo `@sportykids/shared/i18n`. Por ejemplo, el valor `football` se traduce a "Futbol" en espanol mediante `t('sports.football', 'es')`.
 
 ## Notas sobre SQLite
 
 - Los campos tipo array se almacenan como `String` con JSON serializado
-- La API parsea/serializa automáticamente en las respuestas
-- Para producción, migrar a PostgreSQL y usar arrays nativos de Prisma
+- La API parsea/serializa automaticamente en las respuestas
+- Para produccion, migrar a PostgreSQL y usar arrays nativos de Prisma
+- El campo `NewsSummary` tiene un indice unico compuesto en (`newsItemId`, `ageRange`, `locale`)

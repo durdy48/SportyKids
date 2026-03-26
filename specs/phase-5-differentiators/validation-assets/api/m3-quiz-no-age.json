@@ -1,0 +1,58 @@
+{
+  "questions": [
+    {
+      "id": "cmn52tb3x001f26mfja8xkge7",
+      "question": "¿Cuántos sets hay que ganar en un Grand Slam masculino?",
+      "options": [
+        "2",
+        "3",
+        "4",
+        "5"
+      ],
+      "correctAnswer": 1,
+      "sport": "tennis",
+      "points": 15,
+      "relatedNewsId": null,
+      "generatedAt": null,
+      "ageRange": null,
+      "expiresAt": null,
+      "isDaily": false
+    },
+    {
+      "id": "cmn52tb3k001926mfw1mij0yr",
+      "question": "¿Cuántos jugadores tiene un equipo de fútbol en el campo?",
+      "options": [
+        "9",
+        "10",
+        "11",
+        "12"
+      ],
+      "correctAnswer": 2,
+      "sport": "football",
+      "points": 10,
+      "relatedNewsId": null,
+      "generatedAt": null,
+      "ageRange": null,
+      "expiresAt": null,
+      "isDaily": false
+    },
+    {
+      "id": "cmn52tb3t001d26mf1tgiv9fv",
+      "question": "¿Cuántos puntos vale un triple en baloncesto?",
+      "options": [
+        "1",
+        "2",
+        "3",
+        "4"
+      ],
+      "correctAnswer": 2,
+      "sport": "basketball",
+      "points": 10,
+      "relatedNewsId": null,
+      "generatedAt": null,
+      "ageRange": null,
+      "expiresAt": null,
+      "isDaily": false
+    }
+  ]
+}

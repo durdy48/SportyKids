@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/database';
+import { parentalGuard } from '../middleware/parental-guard';
 
 const router = Router();
 
@@ -12,7 +13,7 @@ const filtersSchema = z.object({
 });
 
 // GET /api/reels — Reels feed with filters
-router.get('/', async (req: Request, res: Response) => {
+router.get('/', parentalGuard, async (req: Request, res: Response) => {
   const parsed = filtersSchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: 'Invalid parameters', details: parsed.error.flatten() });
@@ -41,7 +42,7 @@ router.get('/', async (req: Request, res: Response) => {
 });
 
 // GET /api/reels/:id — Reel detail
-router.get('/:id', async (req: Request, res: Response) => {
+router.get('/:id', parentalGuard, async (req: Request, res: Response) => {
   const reel = await prisma.reel.findUnique({ where: { id: req.params.id } });
   if (!reel) {
     res.status(404).json({ error: 'Reel not found' });

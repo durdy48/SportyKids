@@ -6,35 +6,59 @@
 graph LR
     subgraph "Frontend"
         A["Webapp<br/>Next.js 16<br/>:3000"]
-        B["Mobile App<br/>React Native<br/>Expo"]
+        B["Mobile App<br/>React Native<br/>Expo SDK 54"]
     end
 
     subgraph "Backend"
         C["API Server<br/>Express 5<br/>:3001"]
         D["RSS Aggregator<br/>rss-parser"]
         E["Content Classifier<br/>Keyword matching"]
-        F["Cron Scheduler<br/>node-cron"]
+        F["Cron: RSS Sync<br/>every 30 min"]
+        G["Cron: Daily Quiz<br/>06:00 UTC"]
+    end
+
+    subgraph "AI Services"
+        H["AI Client<br/>Ollama / OpenRouter / Claude"]
+        I["Content Moderator"]
+        J["Summarizer"]
+        K["Quiz Generator"]
+    end
+
+    subgraph "Business Services"
+        L["Gamification Engine"]
+        M["Feed Ranker"]
+        N["Team Stats"]
+    end
+
+    subgraph "Middleware"
+        O["Parental Guard"]
     end
 
     subgraph "Storage"
-        G["SQLite<br/>via Prisma"]
+        P["SQLite<br/>via Prisma"]
     end
 
     subgraph "External"
-        H["AS RSS"]
-        I["Marca RSS"]
-        J["Mundo Deportivo RSS"]
+        Q["47 RSS Sources<br/>8 sports"]
     end
 
     A --> C
     B --> C
-    C --> G
+    C --> P
+    C --> O
     F -->|every 30 min| D
-    D --> H
-    D --> I
-    D --> J
+    G -->|06:00 UTC| K
+    D --> Q
     D --> E
-    E --> G
+    E --> I
+    I --> P
+    C --> H
+    H --> I
+    H --> J
+    H --> K
+    C --> L
+    C --> M
+    C --> N
 ```
 
 ## Service descriptions
@@ -43,71 +67,189 @@ graph LR
 Express server that exposes the REST API. Single entry point for all clients.
 
 - **Port**: 3001 (configurable via `PORT`)
-- **Middleware**: CORS, JSON parser, global error handler
-- **Routes**: `/api/news`, `/api/reels`, `/api/quiz`, `/api/users`, `/api/parents`
-- **Health check**: `GET /api/health`
+- **Middleware**: CORS, JSON parser, global error handler, parental guard
+- **Routes**: `/api/news`, `/api/reels`, `/api/quiz`, `/api/users`, `/api/parents`, `/api/gamification`, `/api/teams`
+- **Health check**: `GET /api/health` (includes AI provider status)
+
+### AI Client (`apps/api/src/services/ai-client.ts`)
+Multi-provider abstraction for LLM access. All AI-dependent services use this client.
+
+- **Providers**:
+  - **Ollama** (default): free, local inference, no API key needed
+  - **OpenRouter**: cloud multi-model access, requires `OPENROUTER_API_KEY`
+  - **Anthropic Claude**: high-quality cloud LLM, requires `ANTHROPIC_API_KEY`
+- **Configuration**: set via `AI_PROVIDER` environment variable
+- **Health check**: verifies provider availability at startup and via `/api/health`
+- **Graceful degradation**: all consumers handle AI unavailability with fallback behavior
+
+### Content Moderator (`apps/api/src/services/content-moderator.ts`)
+AI-powered content safety classifier for child-appropriate content.
+
+- **Input**: news article title + summary
+- **Output**: safety classification (`approved` or `rejected`) stored as `safetyStatus` on `NewsItem`
+- **Fail-open policy**: if AI is unavailable, content defaults to `approved` (better to show content than block everything)
+- **Integration**: called by the aggregator after classification, before DB insert
+
+### Summarizer (`apps/api/src/services/summarizer.ts`)
+Generates age-adapted summaries of news articles on demand.
+
+- **Age profiles**:
+  - `6-8`: simple vocabulary, short sentences, fun tone
+  - `9-11`: moderate detail, clear explanations
+  - `12-14`: fuller context, closer to original
+- **Locales**: `es` (Spanish), `en` (English)
+- **Caching**: summaries are stored as `NewsSummary` records (unique per newsItemId + ageRange + locale)
+- **Endpoint**: `GET /api/news/:id/resumen?age=&locale=`
+
+### Quiz Generator (`apps/api/src/services/quiz-generator.ts`)
+AI-powered quiz question generation from recent news articles.
+
+- **Daily cron**: runs at 06:00 UTC, generates questions with round-robin across sports
+- **Manual trigger**: `POST /api/quiz/generate`
+- **Output**: `QuizQuestion` records with `isDaily=true`, `generatedAt`, `expiresAt`
+- **Age calibration**: difficulty adapts to target `ageRange`
+- **Fallback**: 15 seed questions always available if AI generation fails
 
 ### RSS Aggregator (`apps/api/src/services/aggregator.ts`)
 Service that consumes external RSS feeds and converts them into database records.
 
-- **Input**: RSS feed URLs from the `RssSource` table
+- **Input**: RSS feed URLs from the `RssSource` table (47 sources across 8 sports)
 - **Process**: parses XML, extracts fields, cleans HTML, extracts images
 - **Output**: `NewsItem` records in the DB (upsert by `rssGuid` to avoid duplicates)
+- **Pipeline**: parse -> classify -> moderate -> insert
 - **Resilience**: if a feed fails, continues with the next one
+- **Custom sources**: users can add their own RSS sources via API
 
 ### Content Classifier (`apps/api/src/services/classifier.ts`)
 Labels each news item with the detected team and age range.
 
 - **Team detection**: keyword search in title + summary
 - **20+ teams/athletes**: Real Madrid, Barcelona, Alcaraz, Nadal, Alonso...
-- **Age range**: 6-14 years (simplified in MVP)
+- **Age range**: 6-14 years
 
-### Cron Scheduler (`apps/api/src/jobs/sync-feeds.ts`)
+### Gamification Engine (`apps/api/src/services/gamification.ts`)
+Manages points, stickers, achievements, and login streaks.
+
+- **Points system**:
+  - +5 for viewing a news article
+  - +3 for watching a reel
+  - +10 for a correct quiz answer
+  - +50 bonus for a perfect quiz round (5/5)
+  - +2 for daily login check-in
+- **Stickers**: 36 collectible stickers across all sports, awarded on activity milestones
+- **Achievements**: 20 unlockable achievements evaluated on activity events
+- **Streaks**: tracks consecutive daily logins, resets on missed days
+- **6 endpoints** under `/api/gamification/`
+
+### Feed Ranker (`apps/api/src/services/feed-ranker.ts`)
+Scores and orders articles for personalized feeds.
+
+- **Scoring**:
+  - +5 for articles about the user's favorite team
+  - +3 for articles about a favorite sport
+  - Unfollowed sources are filtered out
+- **Feed modes**: Headlines (title only), Cards (image + summary), Explain (with AI summary button)
+- **Integration**: called by the news list endpoint when `userId` is provided
+
+### Team Stats (`apps/api/src/services/team-stats.ts`)
+Manages team statistics data.
+
+- **15 teams seeded** with current season data
+- **Fields**: wins, draws, losses, position, top scorer, next match
+- **Endpoint**: `GET /api/teams/:name/stats`
+
+### Cron Scheduler: RSS Sync (`apps/api/src/jobs/sync-feeds.ts`)
 Scheduled job that runs feed synchronization.
 
 - **Frequency**: every 30 minutes (`*/30 * * * *`)
 - **First run**: on server startup
-- **Manual trigger**: available via `POST /api/news/sync`
+- **Manual trigger**: available via `POST /api/news/sincronizar`
+
+### Cron Scheduler: Daily Quiz (`apps/api/src/jobs/generate-daily-quiz.ts`)
+Scheduled job that generates AI quiz questions from recent news.
+
+- **Frequency**: daily at 06:00 UTC (`0 6 * * *`)
+- **Strategy**: round-robin across sports to ensure variety
+- **Fallback**: if AI is unavailable, no daily questions are generated; seed questions remain available
+
+### Parental Guard Middleware (`apps/api/src/middleware/parental-guard.ts`)
+Server-side enforcement of parental restrictions.
+
+- **Applied to**: news, reels, and quiz routes
+- **Checks**:
+  - Format restrictions (blocks disabled content types)
+  - Sport restrictions (filters blocked sports)
+  - Time enforcement (checks daily time limit)
+- **Behavior**: returns 403 if access is denied; filters results if partially restricted
 
 ### Webapp (`apps/web`)
 Next.js web application with App Router.
 
-- **7 pages**: Home (`/`), Onboarding (`/onboarding`), Reels (`/reels`), Quiz (`/quiz`), Team (`/team`), Parents (`/parents`), 404
+- **8 pages**: Home (`/`), Onboarding (`/onboarding`), Reels (`/reels`), Quiz (`/quiz`), Team (`/team`), Collection (`/collection`), Parents (`/parents`), 404
 - **Styles**: Tailwind CSS with custom design tokens
 - **State**: React Context with localStorage persistence
 - **Fonts**: Poppins (headings), Inter (body)
+- **New components**: AgeAdaptedSummary, CollectionGrid, StickerCard, AchievementCard, feed mode selector
 
 ### Mobile App (`apps/mobile`)
-React Native application with Expo.
+React Native application with Expo SDK 54.
 
-- **5 tabs**: News, Reels, Quiz, My Team, Parents
+- **6 tabs**: News, Reels, Quiz, My Team, Collection, Parents
 - **Navigation**: React Navigation (bottom tabs + stack)
 - **State**: React Context with AsyncStorage
+- **API client**: 27 functions covering all endpoints
+- **Daily check-in**: automatic on app start
+- **Full parity**: all Phase 5 features implemented (collection, 5-step onboarding, etc.)
 
 ## Data flow
 
 ```mermaid
 flowchart TB
     subgraph "Ingestion (every 30 min)"
-        A["Cron trigger"] --> B["Get active sources"]
+        A["Cron trigger"] --> B["Get active sources (47)"]
         B --> C["Download RSS"]
         C --> D["Parse items"]
         D --> E["Classify content"]
-        E --> F["Upsert into DB"]
+        E --> F["AI content moderation"]
+        F --> G["Upsert into DB"]
+    end
+
+    subgraph "Daily Quiz (06:00 UTC)"
+        H["Cron trigger"] --> I["Select recent news"]
+        I --> J["AI generates questions"]
+        J --> K["Store as daily quiz"]
     end
 
     subgraph "Serving (per request)"
-        G["Client request"] --> H["Validate params (Zod)"]
-        H --> I["Prisma query with filters"]
-        I --> J["Format response"]
-        J --> K["Return JSON"]
+        L["Client request"] --> M["Parental guard check"]
+        M --> N["Validate params (Zod)"]
+        N --> O["Feed ranker (if user)"]
+        O --> P["Prisma query with filters"]
+        P --> Q["Format response"]
+        Q --> R["Return JSON"]
+    end
+
+    subgraph "On-demand AI"
+        S["Summary request"] --> T["Check cache"]
+        T -->|miss| U["AI summarizer"]
+        U --> V["Store NewsSummary"]
+        V --> W["Return summary"]
+        T -->|hit| W
+    end
+
+    subgraph "Gamification"
+        X["User action"] --> Y["Award points"]
+        Y --> Z["Evaluate stickers"]
+        Z --> AA["Evaluate achievements"]
+        AA --> AB["Return awards"]
     end
 
     subgraph "Parental control"
-        L["Parent accesses"] --> M["Verify PIN"]
-        M --> N["Load profile"]
-        N --> O["Update restrictions"]
-        O --> P["Frontend hides blocked tabs"]
+        AC["Parent accesses"] --> AD["Verify PIN (bcrypt)"]
+        AD --> AE["Issue session token (5 min)"]
+        AE --> AF["Load profile"]
+        AF --> AG["Update restrictions"]
+        AG --> AH["Guard enforces server-side"]
     end
 ```
 
@@ -124,13 +266,19 @@ The shared package (`packages/shared/src/i18n/`) provides a translation system u
 
 | Metric | Current value |
 |--------|--------------|
-| Active RSS sources | 4 (AS Football, AS Basketball, Mundo Deportivo, Marca) |
-| News per sync | ~160 |
+| Active RSS sources | 47 (across 8 sports) |
+| News per sync | ~500+ |
 | Reels in seed | 10 |
-| Quiz questions | 15 |
+| Quiz questions (seed) | 15 |
+| Quiz questions (daily, AI) | ~5-10/day |
+| Stickers | 36 |
+| Achievements | 20 |
+| Teams with stats | 15 |
 | Sync frequency | 30 min |
+| Daily quiz generation | 06:00 UTC |
 | API startup time | < 2s |
 | Webapp build time | < 5s |
+| Mobile API functions | 27 |
 
 ## Environment variables
 
@@ -139,4 +287,7 @@ The shared package (`packages/shared/src/i18n/`) provides a translation system u
 | `DATABASE_URL` | API | SQLite/PostgreSQL connection URL | `file:./dev.db` |
 | `PORT` | API | Server port | `3001` |
 | `NODE_ENV` | API | Runtime environment | `development` |
+| `AI_PROVIDER` | API | AI provider: `ollama`, `openrouter`, `anthropic` | `ollama` |
+| `OPENROUTER_API_KEY` | API | OpenRouter API key | -- |
+| `ANTHROPIC_API_KEY` | API | Anthropic Claude API key | -- |
 | `NEXT_PUBLIC_API_URL` | Web | API base URL | `http://localhost:3001/api` |

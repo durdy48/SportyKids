@@ -18,23 +18,58 @@ model NewsItem {
   team        String?
   minAge      Int      @default(6)
   maxAge      Int      @default(14)
-  publishedAt DateTime
-  createdAt   DateTime @default(now())
-  rssGuid     String   @unique
+  publishedAt  DateTime
+  createdAt    DateTime  @default(now())
+  rssGuid      String    @unique
+  safetyStatus String    @default("pending")
+  safetyReason String?
+  moderatedAt  DateTime?
+  summaries    NewsSummary[]
+}
+
+model NewsSummary {
+  id         String   @id @default(cuid())
+  newsItemId String
+  ageRange   String
+  summary    String
+  locale     String   @default("es")
+  createdAt  DateTime @default(now())
+  newsItem   NewsItem @relation(fields: [newsItemId], references: [id], onDelete: Cascade)
+  @@unique([newsItemId, ageRange, locale])
 }
 
 model User {
-  id              String   @id @default(cuid())
-  name            String
-  age             Int
-  favoriteSports  String   @default("[]")
-  favoriteTeam    String?
-  selectedFeeds   String   @default("[]")
-  totalPoints     Int      @default(0)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-  parentalProfile ParentalProfile?
-  activityLogs    ActivityLog[]
+  id                       String            @id @default(cuid())
+  name                     String
+  age                      Int
+  email                    String?           @unique
+  passwordHash             String?
+  authProvider             String            @default("anonymous")
+  role                     String            @default("child")
+  parentUserId             String?
+  parentUser               User?             @relation("ParentChild", fields: [parentUserId], references: [id])
+  children                 User[]            @relation("ParentChild")
+  lastLoginAt              DateTime?
+  favoriteSports           String            @default("[]")
+  favoriteTeam             String?
+  selectedFeeds            String            @default("[]")
+  pushEnabled              Boolean           @default(false)
+  pushPreferences          String?
+  totalPoints              Int               @default(0)
+  currentStreak            Int               @default(0)
+  longestStreak            Int               @default(0)
+  lastActiveDate           DateTime?
+  currentQuizCorrectStreak Int               @default(0)
+  quizPerfectCount         Int               @default(0)
+  createdAt                DateTime          @default(now())
+  updatedAt                DateTime          @updatedAt
+  parentalProfile          ParentalProfile?
+  activityLogs             ActivityLog[]
+  locale                   String            @default("es")
+  userStickers             UserSticker[]
+  userAchievements         UserAchievement[]
+  pushTokens               PushToken[]
+  refreshTokens            RefreshToken[]
 }
 
 model Reel {
@@ -48,17 +83,25 @@ model Reel {
   minAge          Int      @default(6)
   maxAge          Int      @default(14)
   durationSeconds Int      @default(60)
+  videoType       String?
+  aspectRatio     String?
+  previewGifUrl   String?
   createdAt       DateTime @default(now())
 }
 
 model QuizQuestion {
-  id              String @id @default(cuid())
+  id              String    @id @default(cuid())
   question        String
   options         String
   correctAnswer   Int
   sport           String
-  points          Int    @default(10)
+  points          Int       @default(10)
   relatedNewsId   String?
+  generatedAt     DateTime?
+  ageRange        String?
+  expiresAt       DateTime?
+
+  @@index([expiresAt, sport])
 }
 
 model ParentalProfile {
@@ -70,14 +113,99 @@ model ParentalProfile {
   allowedFeeds       String @default("[]")
   allowedFormats     String @default("[\"news\",\"reels\",\"quiz\"]")
   maxDailyTimeMinutes Int   @default(60)
+  maxNewsMinutes      Int?
+  maxReelsMinutes     Int?
+  maxQuizMinutes      Int?
+  digestEnabled       Boolean  @default(false)
+  digestEmail         String?
+  digestDay           Int      @default(1)
+  lastDigestSentAt    DateTime?
+  allowedHoursStart   Int      @default(7)
+  allowedHoursEnd     Int      @default(21)
+  timezone            String   @default("Europe/Madrid")
+}
+
+model ContentReport {
+  id          String    @id @default(cuid())
+  userId      String
+  contentType String
+  contentId   String
+  reason      String
+  comment     String?
+  status      String    @default("pending")
+  reviewedAt  DateTime?
+  createdAt   DateTime  @default(now())
+
+  @@index([userId, contentType])
+  @@index([status])
 }
 
 model ActivityLog {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  type      String
-  createdAt DateTime @default(now())
+  id              String   @id @default(cuid())
+  userId          String
+  user            User     @relation(fields: [userId], references: [id])
+  type            String
+  durationSeconds Int?
+  contentId       String?
+  sport           String?
+  createdAt       DateTime @default(now())
+}
+
+model Sticker {
+  id           String        @id @default(cuid())
+  name         String
+  nameKey      String
+  imageUrl     String
+  sport        String
+  team         String?
+  rarity       String
+  createdAt    DateTime      @default(now())
+  userStickers UserSticker[]
+}
+
+model UserSticker {
+  id         String   @id @default(cuid())
+  userId     String
+  stickerId  String
+  source     String
+  obtainedAt DateTime @default(now())
+  user       User     @relation(fields: [userId], references: [id])
+  sticker    Sticker  @relation(fields: [stickerId], references: [id])
+  @@unique([userId, stickerId])
+}
+
+model Achievement {
+  id               String            @id @default(cuid())
+  key              String            @unique
+  nameKey          String
+  descriptionKey   String
+  icon             String
+  threshold        Int
+  type             String
+  rewardStickerId  String?
+  createdAt        DateTime          @default(now())
+  userAchievements UserAchievement[]
+}
+
+model UserAchievement {
+  id            String      @id @default(cuid())
+  userId        String
+  achievementId String
+  unlockedAt    DateTime    @default(now())
+  user          User        @relation(fields: [userId], references: [id])
+  achievement   Achievement @relation(fields: [achievementId], references: [id])
+  @@unique([userId, achievementId])
+}
+
+model TeamStats {
+  id             String   @id @default(cuid())
+  teamName       String   @unique
+  sport          String
+  leaguePosition Int?
+  recentResults  String   // JSON array of {opponent, score, result, date}
+  topScorer      String?
+  nextMatch      String?  // JSON object {opponent, date, competition}
+  updatedAt      DateTime @updatedAt
 }
 
 model RssSource {
@@ -87,4 +215,58 @@ model RssSource {
   sport        String
   active       Boolean   @default(true)
   lastSyncedAt DateTime?
+  country      String    @default("ES")
+  language     String    @default("es")
+  logoUrl      String?
+  description  String    @default("")
+  category     String    @default("general")
+  isCustom     Boolean   @default(false)
+  addedBy      String?
+}
+
+model PushToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  platform  String   // 'expo' | 'web'
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model RefreshToken {
+  id        String   @id @default(cuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
+}
+
+model DailyMission {
+  id           String    @id @default(cuid())
+  userId       String
+  date         String
+  type         String
+  title        String
+  description  String
+  target       Int
+  progress     Int       @default(0)
+  completed    Boolean   @default(false)
+  completedAt  DateTime?
+  rewardType   String
+  rewardRarity String?
+  rewardPoints Int       @default(0)
+  claimed      Boolean   @default(false)
+  claimedAt    DateTime?
+  createdAt    DateTime  @default(now())
+
+  @@unique([userId, date])
+  @@index([userId, completed])
 }

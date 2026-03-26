@@ -19,10 +19,10 @@ export function t(key: string, locale: Locale = 'es', params?: Record<string, st
 
   if (typeof value !== 'string') return key;
 
-  // Replace {param} placeholders
+  // Replace {param} and {{param}} placeholders
   if (params) {
     return Object.entries(params).reduce(
-      (str, [k, v]) => str.replace(`{${k}}`, v),
+      (str, [k, v]) => str.replace(`{{${k}}}`, v).replace(`{${k}}`, v),
       value,
     );
   }
