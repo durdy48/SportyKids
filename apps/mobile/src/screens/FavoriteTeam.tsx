@@ -5,6 +5,8 @@ import { TEAMS, COLORS, t } from '@sportykids/shared';
 import { fetchNews, fetchTeamStats, updateUser } from '../lib/api';
 import { useUser } from '../lib/user-context';
 import { NewsCard } from '../components/NewsCard';
+import { NewsCardSkeleton } from '../components/NewsCardSkeleton';
+import { SkeletonPlaceholder } from '../components/SkeletonPlaceholder';
 
 export function FavoriteTeamScreen() {
   const { user, setUser, locale } = useUser();
@@ -85,7 +87,11 @@ export function FavoriteTeamScreen() {
 
       {/* Team Stats Section */}
       {loading ? (
-        <ActivityIndicator color={COLORS.blue} style={{ marginVertical: 20 }} />
+        <View style={{ paddingHorizontal: 16, gap: 10 }}>
+          <SkeletonPlaceholder width="100%" height={60} borderRadius={12} />
+          <SkeletonPlaceholder width="100%" height={60} borderRadius={12} />
+          <SkeletonPlaceholder width="100%" height={80} borderRadius={12} />
+        </View>
       ) : teamStats ? (
         <View style={s.statsContainer}>
           {/* League Position */}

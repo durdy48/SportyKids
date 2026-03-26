@@ -19,6 +19,119 @@ Verifica que la API esta corriendo y el estado del proveedor AI.
 
 ---
 
+## Autenticacion (Auth)
+
+### `POST /api/auth/register`
+Registro de usuario con email y contrasena. El password se hashea con bcrypt.
+
+**Body:**
+```json
+{
+  "email": "padre@example.com",
+  "password": "miPassword123",
+  "name": "Pablo",
+  "role": "parent"
+}
+```
+
+**Respuesta:**
+```json
+{
+  "user": {
+    "id": "clx...",
+    "email": "padre@example.com",
+    "name": "Pablo",
+    "role": "parent"
+  },
+  "accessToken": "eyJhbG...",
+  "refreshToken": "abc123..."
+}
+```
+
+### `POST /api/auth/login`
+Login con email y contrasena. Devuelve access token (15 min TTL) y refresh token (7 dias, rotado).
+
+**Body:**
+```json
+{
+  "email": "padre@example.com",
+  "password": "miPassword123"
+}
+```
+
+**Respuesta:**
+```json
+{
+  "user": { "id": "clx...", "email": "padre@example.com", "name": "Pablo", "role": "parent" },
+  "accessToken": "eyJhbG...",
+  "refreshToken": "abc123..."
+}
+```
+
+### `POST /api/auth/refresh`
+Rota el refresh token y emite un nuevo access token.
+
+**Body:**
+```json
+{ "refreshToken": "abc123..." }
+```
+
+**Respuesta:**
+```json
+{
+  "accessToken": "eyJhbG...",
+  "refreshToken": "def456..."
+}
+```
+
+### `POST /api/auth/logout`
+Invalida el refresh token actual.
+
+**Body:**
+```json
+{ "refreshToken": "abc123..." }
+```
+
+### `GET /api/auth/me`
+Obtener el usuario autenticado a partir del access token (header `Authorization: Bearer <token>`).
+
+**Respuesta:**
+```json
+{
+  "id": "clx...",
+  "email": "padre@example.com",
+  "name": "Pablo",
+  "role": "parent"
+}
+```
+
+### `POST /api/auth/upgrade`
+Convertir un usuario anonimo existente en usuario autenticado (anadir email + password).
+
+**Body:**
+```json
+{
+  "userId": "clx...",
+  "email": "padre@example.com",
+  "password": "miPassword123"
+}
+```
+
+### `POST /api/auth/link-child`
+Vincular un perfil de nino a una cuenta de padre autenticada.
+
+**Body:**
+```json
+{
+  "parentUserId": "clx...",
+  "childUserId": "clx..."
+}
+```
+
+> **Nota**: El middleware de autenticacion es **no bloqueante** — compatible con usuarios anonimos existentes. Si se proporciona un token JWT valido, se adjunta el usuario al request; si no, el request continua sin autenticacion.
+
+---
+
 ## Noticias (News)
 
 > **Nota**: Las rutas auxiliares de noticias estan en espanol (`/fuentes/`, `/sincronizar`, `/resumen`).
@@ -34,6 +147,7 @@ Listado de noticias con filtros y paginacion. Protegido por middleware `parental
 | `team` | string | — | Filtrar por equipo (busqueda parcial) |
 | `age` | number | — | Filtrar noticias apropiadas para esta edad |
 | `source` | string | — | Filtrar por fuente (busqueda parcial) |
+| `q` | string | — | Busqueda por texto (coincide en titulo y resumen via SQL LIKE) |
 | `page` | number | 1 | Numero de pagina |
 | `limit` | number | 20 | Resultados por pagina (max 50) |
 | `userId` | string | — | Para ranking personalizado (feed ranker) |
@@ -86,6 +200,16 @@ Resumen adaptado por edad de una noticia, generado por IA.
   "ageRange": "6-8",
   "locale": "es",
   "summary": "Un equipo de futbol muy famoso llamado Real Madrid gano un partido muy importante..."
+}
+```
+
+### `GET /api/news/trending`
+IDs de noticias en tendencia (mas vistas en las ultimas 24h). Umbral: >5 vistas.
+
+**Respuesta:**
+```json
+{
+  "trendingIds": ["clx...", "clx..."]
 }
 ```
 
@@ -303,8 +427,8 @@ Obtener perfil del usuario (incluye `streak`, `totalPoints`, `lastActiveDate`).
 ### `PUT /api/users/:id`
 Actualizar preferencias del usuario (todos los campos opcionales).
 
-### `POST /api/users/:id/notifications`
-Guardar preferencias de notificacion del usuario.
+### `POST /api/users/:id/notifications/subscribe`
+Suscribir preferencias de notificacion y registrar push token del dispositivo.
 
 **Body:**
 ```json
@@ -312,9 +436,12 @@ Guardar preferencias de notificacion del usuario.
   "dailyQuiz": true,
   "newStickers": true,
   "teamNews": true,
-  "weeklyReport": false
+  "weeklyReport": false,
+  "pushToken": "ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]"
 }
 ```
+
+El campo `pushToken` es un token de Expo Push Notifications. Se almacena en el modelo `PushToken` y se usa para enviar notificaciones push reales al dispositivo.
 
 ### `GET /api/users/:id/notifications`
 Obtener preferencias de notificacion del usuario.
@@ -512,6 +639,187 @@ Registrar una accion del usuario con duracion.
 }
 ```
 
+### `GET /api/parents/preview/:userId`
+Preview del feed del hijo con las restricciones parentales aplicadas. Permite a los padres ver exactamente lo que el nino ve.
+
+**Respuesta:**
+```json
+{
+  "news": [ ... ],
+  "reels": [ ... ],
+  "restrictions": {
+    "allowedFormats": ["news", "quiz"],
+    "allowedSports": ["football", "basketball"],
+    "maxNewsMinutes": 20,
+    "maxReelsMinutes": 10,
+    "maxQuizMinutes": 15
+  }
+}
+```
+
+### `PUT /api/parents/digest/:userId`
+Configurar preferencias de digest semanal.
+
+**Body:**
+```json
+{
+  "digestEnabled": true,
+  "digestEmail": "padre@example.com",
+  "digestDay": 1
+}
+```
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `digestEnabled` | boolean | Activar/desactivar digest |
+| `digestEmail` | string (email) | Email donde enviar el digest (nullable) |
+| `digestDay` | number (0-6) | Dia de la semana (0=domingo, 1=lunes, ...) |
+
+### `GET /api/parents/digest/:userId`
+Obtener preferencias de digest.
+
+**Respuesta:**
+```json
+{
+  "digestEnabled": true,
+  "digestEmail": "padre@example.com",
+  "digestDay": 1
+}
+```
+
+### `GET /api/parents/digest/:userId/preview`
+Vista previa del digest en formato JSON.
+
+**Respuesta:**
+```json
+{
+  "childName": "Pablo",
+  "period": "2026-03-19 — 2026-03-26",
+  "activity": { "news_viewed": 12, "reels_viewed": 5, "quizzes_played": 3, "totalMinutes": 47 },
+  "topSports": ["football", "basketball"],
+  "achievements": [],
+  "streakDays": 5
+}
+```
+
+### `GET /api/parents/digest/:userId/download`
+Descargar el digest como PDF. Devuelve `Content-Type: application/pdf`.
+
+---
+
+## Misiones diarias (Daily Missions)
+
+### `GET /api/missions/today/:userId`
+Obtener la mision diaria del usuario. Si no existe, se genera automaticamente.
+
+**Query params:**
+
+| Param | Tipo | Default | Descripcion |
+|-------|------|---------|-------------|
+| `locale` | string | `es` | Idioma: `es`, `en` |
+
+**Respuesta:**
+```json
+{
+  "id": "clx...",
+  "userId": "clx...",
+  "date": "2026-03-26",
+  "type": "read_news",
+  "title": "Lector curioso",
+  "description": "Lee 3 noticias hoy",
+  "target": 3,
+  "progress": 1,
+  "completed": false,
+  "rewardType": "sticker",
+  "rewardRarity": "rare",
+  "rewardPoints": 15,
+  "claimed": false
+}
+```
+
+### `POST /api/missions/claim`
+Reclamar la recompensa de una mision completada.
+
+**Body:**
+```json
+{ "userId": "clx..." }
+```
+
+**Respuesta:**
+```json
+{
+  "claimed": true,
+  "pointsAwarded": 15,
+  "stickerAwarded": { "id": "clx...", "name": "...", "rarity": "rare" }
+}
+```
+
+---
+
+## Reportes de contenido (Content Reports)
+
+### `POST /api/reports`
+Enviar un reporte de contenido (el nino marca contenido como inapropiado).
+
+**Body:**
+```json
+{
+  "userId": "clx...",
+  "contentType": "news",
+  "contentId": "clx...",
+  "reason": "inappropriate",
+  "details": "Texto opcional con mas contexto"
+}
+```
+
+**Respuesta:**
+```json
+{
+  "id": "clx...",
+  "status": "pending",
+  "createdAt": "2026-03-26T10:00:00.000Z"
+}
+```
+
+### `GET /api/reports/parent/:userId`
+Obtener reportes enviados por el hijo, para revision parental.
+
+**Respuesta:**
+```json
+{
+  "reports": [
+    {
+      "id": "clx...",
+      "contentType": "news",
+      "contentId": "clx...",
+      "reason": "inappropriate",
+      "details": null,
+      "status": "pending",
+      "createdAt": "2026-03-26T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+### `PUT /api/reports/:reportId`
+Actualizar el estado de un reporte (revision parental).
+
+**Body:**
+```json
+{
+  "status": "reviewed"
+}
+```
+
+**Respuesta:**
+```json
+{
+  "id": "clx...",
+  "status": "reviewed",
+  "updatedAt": "2026-03-26T12:00:00.000Z"
+}
+```
+
 ---
 
 ## Middleware parental-guard
@@ -523,6 +831,58 @@ Las rutas de `news`, `reels` y `quiz` estan protegidas por el middleware `parent
 | **Formato** | Si el formato (news/reels/quiz) no esta en `allowedFormats`, devuelve 403 |
 | **Deporte** | Si el deporte solicitado no esta en `allowedSports`, filtra resultados |
 | **Tiempo** | Si el usuario ha excedido `maxDailyMinutes`, devuelve 429 |
+
+## Modelos nuevos
+
+### PushToken
+Almacena tokens de push de Expo por usuario y dispositivo.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | string | ID unico |
+| `userId` | string | Referencia al usuario |
+| `token` | string | Expo push token (`ExponentPushToken[...]`) |
+| `createdAt` | DateTime | Fecha de registro |
+
+### RefreshToken
+Almacena refresh tokens JWT para rotacion segura.
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `id` | string | ID unico |
+| `userId` | string | Referencia al usuario |
+| `token` | string | Token hasheado |
+| `expiresAt` | DateTime | Expiracion (7 dias) |
+| `createdAt` | DateTime | Fecha de creacion |
+
+### Campos nuevos en User (autenticacion)
+
+| Campo | Tipo | Descripcion |
+|-------|------|-------------|
+| `email` | string? | Email del usuario (unico, nullable) |
+| `passwordHash` | string? | Hash bcrypt del password |
+| `authProvider` | string | Proveedor de auth: `anonymous`, `email` |
+| `role` | string | Rol: `child`, `parent` |
+| `parentUserId` | string? | ID del padre (para vincular cuentas) |
+| `locale` | string | Idioma preferido del usuario (`es`, `en`) |
+
+---
+
+## Triggers de push notifications
+
+El sistema envia notificaciones push reales mediante `expo-server-sdk` en 5 escenarios:
+
+| Trigger | Momento | Contenido |
+|---------|---------|-----------|
+| Quiz listo | Al generarse el quiz diario (06:00 UTC) | "Tu quiz del dia esta listo" |
+| Noticia del equipo | Al sincronizar feeds, si hay noticia del equipo favorito | "Nueva noticia de [equipo]" |
+| Recordatorio de racha | 20:00 UTC diario (cron) si el usuario no ha hecho check-in | "No pierdas tu racha de X dias" |
+| Cromo obtenido | Al ganar un sticker via quiz/check-in/mision | "Has ganado un nuevo cromo: [nombre]" |
+| Mision lista | Al generarse la mision diaria (05:00 UTC) | "Tu mision del dia te espera" |
+
+Las notificaciones respetan las preferencias del usuario (`dailyQuiz`, `teamNews`, `newStickers`). Al tocar una notificacion, la app navega a la pantalla correspondiente (deep linking).
+
+---
 
 ## Nota sobre i18n
 

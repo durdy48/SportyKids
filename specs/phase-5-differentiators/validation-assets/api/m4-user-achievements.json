@@ -1,0 +1,15 @@
+{
+  "unlocked": 1,
+  "total": 20,
+  "achievements": [
+    {
+      "key": "first_sticker",
+      "nameKey": "achievement.first_sticker",
+      "descriptionKey": "achievement.first_sticker_desc",
+      "icon": "🏷️",
+      "threshold": 1,
+      "type": "stickers_collected",
+      "unlockedAt": "2026-03-24T20:51:10.307Z"
+    }
+  ]
+}

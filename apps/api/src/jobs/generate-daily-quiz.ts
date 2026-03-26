@@ -185,6 +185,32 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
     `[DailyQuiz] Finished. Generated: ${result.generated}, Errors: ${result.errors}`,
   );
 
+  // Send push notification to users with dailyQuiz preference
+  if (result.generated > 0) {
+    try {
+      const { sendPushToUsers } = await import('../services/push-sender');
+      const { t } = await import('@sportykids/shared');
+      const users = await prisma.user.findMany({
+        where: { pushEnabled: true },
+        select: { id: true },
+      });
+      if (users.length > 0) {
+        await sendPushToUsers(
+          users.map((u) => u.id),
+          {
+            // TODO: group by user locale for per-locale messages in production
+            title: t('push.quiz_ready_title', 'es'),
+            body: t('push.quiz_ready_body', 'es'),
+            data: { screen: 'Quiz' },
+          },
+          'dailyQuiz',
+        );
+      }
+    } catch (err) {
+      console.error('[DailyQuiz] Error sending push notifications:', err);
+    }
+  }
+
   return result;
 }
 

@@ -1,0 +1,61 @@
+{
+  "news": [
+    {
+      "id": "cmn54p0bd000626zghxbauve3",
+      "title": "Sólo le faltó la guinda a una fiesta del balonmano en Amate (29-30)",
+      "summary": "El Cajasol Sevilla BM Proin compite hasta la última jugada contra el Viveros Herol Nava, de Asobal, pero estuvo menos acertado en el momento decisivo\nDentro de un buen ramillete de individualidades,...",
+      "imageUrl": "",
+      "source": "Diario de Sevilla - Deportes",
+      "sourceUrl": "https://www.diariodesevilla.es/deportes/le-falto-guinda-fiesta-balonmano-sevilla_0_2006287771.html",
+      "sport": "football",
+      "team": "Sevilla FC",
+      "minAge": 6,
+      "maxAge": 14,
+      "publishedAt": "2026-03-24T21:09:34.000Z",
+      "createdAt": "2026-03-24T21:30:19.994Z",
+      "rssGuid": "https://www.diariodesevilla.es/deportes/le-falto-guinda-fiesta-balonmano-sevilla_0_2006287771.html",
+      "safetyStatus": "approved",
+      "safetyReason": "auto-approved: AI unavailable",
+      "moderatedAt": "2026-03-24T21:30:19.993Z"
+    },
+    {
+      "id": "cmn52jxlp000226bbbdrjf8li",
+      "title": "Otro coscorrón a los que inventaron el fútbol",
+      "summary": "Los iluminados gestores del Sevilla tuvieron que intercalar entre sus golpes de efecto apuestas seguras para arreglar los estropicios como Mendilibar, Quique Sánchez Flores y ahora García Plaza...",
+      "imageUrl": "",
+      "source": "Diario de Sevilla - Deportes",
+      "sourceUrl": "https://www.diariodesevilla.es/sevillafc/coscorron-inventaron-futbol-sevilla-almeyda-garcia-plaza-castro-orta-nido_0_2006287501.html",
+      "sport": "football",
+      "team": "Sevilla FC",
+      "minAge": 6,
+      "maxAge": 14,
+      "publishedAt": "2026-03-24T20:16:21.000Z",
+      "createdAt": "2026-03-24T20:30:23.965Z",
+      "rssGuid": "https://www.diariodesevilla.es/sevillafc/coscorron-inventaron-futbol-sevilla-almeyda-garcia-plaza-castro-orta-nido_0_2006287501.html",
+      "safetyStatus": "approved",
+      "safetyReason": "auto-approved: AI unavailable",
+      "moderatedAt": "2026-03-24T20:30:23.964Z"
+    },
+    {
+      "id": "cmn519llm000a26zu0yxohs87",
+      "title": "Luis García Plaza, nuevo entrenador del Sevilla",
+      "summary": "El madrileño firma hasta junio de 2027 y se convierte en el noveno técnico del conjunto andaluz en tan solo cuatro años",
+      "imageUrl": "",
+      "source": "El País - Deportes",
+      "sourceUrl": "https://elpais.com/deportes/futbol/2026-03-24/luis-garcia-plaza-nuevo-entrenador-del-sevilla.html",
+      "sport": "football",
+      "team": "Sevilla FC",
+      "minAge": 6,
+      "maxAge": 14,
+      "publishedAt": "2026-03-24T18:20:38.000Z",
+      "createdAt": "2026-03-24T19:54:22.235Z",
+      "rssGuid": "https://elpais.com/deportes/futbol/2026-03-24/luis-garcia-plaza-nuevo-entrenador-del-sevilla.html",
+      "safetyStatus": "approved",
+      "safetyReason": "auto-approved: AI unavailable",
+      "moderatedAt": "2026-03-24T19:54:22.234Z"
+    }
+  ],
+  "total": 409,
+  "page": 1,
+  "totalPages": 137
+}

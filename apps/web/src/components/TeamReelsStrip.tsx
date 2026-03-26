@@ -26,7 +26,7 @@ export function TeamReelsStrip({ reels, locale }: TeamReelsStripProps) {
             rel="noopener noreferrer"
             className="shrink-0 w-36 group"
           >
-            <div className="relative w-36 h-48 rounded-2xl overflow-hidden bg-gray-200">
+            <div className="relative w-36 h-48 rounded-2xl overflow-hidden bg-[var(--color-border)]">
               {reel.thumbnailUrl ? (
                 <img
                   src={reel.thumbnailUrl}

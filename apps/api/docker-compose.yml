@@ -1,0 +1,34 @@
+# Docker Compose for local PostgreSQL development (B-TF4)
+#
+# Usage:
+#   docker compose up -d postgres
+#
+# Then update .env:
+#   DATABASE_URL="postgresql://sportykids:sportykids@localhost:5432/sportykids"
+#
+# And update prisma/schema.prisma:
+#   provider = "postgresql"
+#
+# Then run:
+#   npx prisma migrate dev
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: sportykids-postgres
+    environment:
+      POSTGRES_USER: sportykids
+      POSTGRES_PASSWORD: sportykids
+      POSTGRES_DB: sportykids
+    ports:
+      - "5432:5432"
+    volumes:
+      - sportykids-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U sportykids"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  sportykids-pgdata:

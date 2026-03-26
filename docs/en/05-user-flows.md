@@ -80,15 +80,19 @@ sequenceDiagram
 
 The main feed displays real sports news filtered by preferences and ranked by the feed ranker.
 
-- **Feed modes**: Headlines (compact list), Cards (image + summary), Explain (with "Explain it Easy" button)
+- **Search**: debounced text search (300ms) across title and summary via `q` query parameter
+- **Feed modes**: Headlines (compact list), Cards (image + summary), Explain (with "Explain it Easy" button). Feed mode toggle is hidden during search.
 - **Filters**: sport chips + age range selector
 - **Cards**: image, headline, summary, source, date, sport/team badge
 - **"Explain it Easy" button**: triggers age-adapted AI summary via `GET /api/news/:id/resumen`
 - **Pagination**: "Load more" button at the bottom
 - **Personalization**: automatically filters by the user's age, ranks by team/sport affinity
+- **Favorites**: heart button on each card to bookmark news. Favorites are persisted in localStorage (web) / AsyncStorage (mobile). Saved news appear in a "Saved" strip above the feed.
+- **Trending**: news with more than 5 views in the last 24h display an orange "Trending" pill badge
 - **Activity tracking**: viewing a news item logs `news_viewed` with duration via `sendBeacon`
 
 ### Key components
+- `SearchBar` -- debounced search input with suggested searches (popular teams/leagues) and clear button
 - `NewsCard` -- displays a single article card with optional "Explain it Easy" button
 - `AgeAdaptedSummary` -- displays the AI-generated summary for the user's age range
 - `FiltersBar` -- sport chip filters and feed mode selector
@@ -98,6 +102,51 @@ When a user is logged in, the feed ranker scores articles:
 - +5 for articles about the user's favorite team
 - +3 for articles about a favorite sport
 - Unfollowed sources are filtered out
+
+### Search flow
+
+```mermaid
+sequenceDiagram
+    actor Child as Child
+    participant App as Webapp
+    participant API as API
+
+    Child->>App: Types in the search bar
+    App->>App: Debounce 300ms
+    App->>API: GET /api/news?q=Madrid&sport=&age=
+    API-->>App: News filtered by title/summary
+    App-->>Child: Shows results (or empty state if none)
+    Child->>App: Clicks suggestion "Real Madrid"
+    App->>App: Fills input and searches
+    Child->>App: Clicks X to clear
+    App-->>Child: Returns to normal feed
+```
+
+- While typing, the feed mode selector is hidden
+- Suggestions include popular teams and leagues
+- If no results, an empty state with SVG illustration is shown
+
+### Favorites flow
+
+```mermaid
+sequenceDiagram
+    actor Child as Child
+    participant App as Webapp
+    participant Storage as localStorage
+
+    Child->>App: Clicks heart on NewsCard
+    App->>Storage: Save news ID
+    App-->>Child: Heart fills red
+    App-->>Child: "Saved" strip appears above feed
+
+    Child->>App: Clicks heart again
+    App->>Storage: Remove news ID
+    App-->>Child: Heart returns to outline
+    App-->>Child: News removed from "Saved" strip
+```
+
+- Favorites persist across sessions (localStorage web, AsyncStorage mobile)
+- No authentication required — client-side local storage
 
 ## 3. Reels
 
@@ -225,6 +274,26 @@ The `parental-guard` middleware runs on news, reels, and quiz routes. It checks:
 - **Sport restrictions**: filters out content from blocked sports
 - **Time enforcement**: checks if the child has exceeded their daily time limit
 
+### Content reporting
+
+Children can flag any news article or reel as inappropriate directly from the content card:
+
+1. The child taps the report button (flag icon) on a NewsCard or ReelCard
+2. Selects a reason from the dropdown (inappropriate, not sports, other)
+3. Optionally adds a comment
+4. The report is sent to `POST /api/reports`
+5. The parent sees pending reports in the Activity tab of the parental panel (`GET /api/reports/parent/:userId`)
+6. The parent can mark the report as reviewed or take action
+
+### Feed preview
+
+Parents can see exactly what their child sees:
+
+1. From the parental panel, the parent clicks "Preview child's feed"
+2. A modal (`FeedPreviewModal`) opens showing news and reels with the child's filters applied
+3. The preview includes active format, sport, and time limit restrictions
+4. Data via `GET /api/parents/preview/:userId`
+
 ## 8. Daily Check-in
 
 Automatic flow on app start for returning users.
@@ -247,3 +316,142 @@ sequenceDiagram
 - Increments `loginStreak` counter
 - Resets streak if a day is skipped
 - May trigger sticker/achievement awards
+
+## 9. Weekly Digest
+
+Parents can enable an automatic weekly summary of their child's activity.
+
+1. From the parental panel, "Digest" tab, the parent enables the weekly digest
+2. Configures destination email and send day (Monday by default)
+3. A cron job (08:00 UTC daily) checks which users are due for a digest
+4. The digest includes: weekly activity, top sports, unlocked achievements, streak info
+5. Can be previewed as JSON (`GET /api/parents/digest/:userId/preview`) or downloaded as PDF (`GET /api/parents/digest/:userId/download`)
+
+## 10. Daily Mission
+
+Each day the child receives a personalized mission that incentivizes app usage.
+
+```mermaid
+sequenceDiagram
+    actor Child as Child
+    participant App as Webapp
+    participant API as API
+
+    Child->>App: Opens the app
+    App->>API: GET /api/missions/today/:userId
+    API-->>App: Today's mission (type, progress, target)
+    App-->>Child: Shows MissionCard on Home Feed
+
+    Child->>App: Performs the activity (e.g. read 3 news)
+    App->>API: POST /api/parents/actividad/registrar
+    API-->>API: checkMissionProgress() updates progress
+    App->>API: GET /api/missions/today/:userId
+    API-->>App: progress: 3/3, completed: true
+
+    Child->>App: Clicks "Claim reward"
+    App->>API: POST /api/missions/claim
+    API-->>App: pointsAwarded + stickerAwarded
+    App-->>Child: Reward animation
+```
+
+- **Generation**: daily cron at 05:00 UTC or on-demand when queried
+- **Types**: `read_news`, `watch_reels`, `play_quiz`, `check_in`, `explore_sports`
+- **Rewards**: points + possible sticker (rarity varies by difficulty)
+- **3 states**: in-progress, completed (unclaimed), claimed
+
+## 11. Authentication (JWT)
+
+Users can optionally register with email and password to secure their account. Anonymous access remains supported for backward compatibility.
+
+```mermaid
+sequenceDiagram
+    actor User as User
+    participant App as App
+    participant API as API
+
+    Note over User,API: Registration
+    User->>App: Enters email + password
+    App->>API: POST /api/auth/register
+    API-->>App: user + accessToken + refreshToken
+    App->>App: Stores tokens
+
+    Note over User,API: Login
+    User->>App: Enters email + password
+    App->>API: POST /api/auth/login
+    API-->>App: user + accessToken + refreshToken
+    App->>App: Stores tokens
+
+    Note over User,API: Authenticated request
+    App->>API: GET /api/news (Authorization: Bearer <accessToken>)
+    API-->>App: Personalized response
+
+    Note over User,API: Token refresh
+    App->>App: Access token expired
+    App->>API: POST /api/auth/refresh {refreshToken}
+    API-->>App: New accessToken + rotated refreshToken
+    App->>App: Stores new tokens
+
+    Note over User,API: Logout
+    User->>App: Clicks logout
+    App->>API: POST /api/auth/logout {refreshToken}
+    API-->>App: Token revoked
+    App->>App: Clears stored tokens
+```
+
+### Key details
+- Access tokens have a 15-minute TTL
+- Refresh tokens have a 7-day TTL and are rotated on each use
+- Anonymous users can upgrade to authenticated accounts via `POST /api/auth/upgrade`
+- Parents can link child accounts via `POST /api/auth/link-child`
+- The auth middleware is non-blocking: requests without a token proceed as anonymous
+
+## 12. Push Notifications
+
+Push notifications keep children engaged and informed about new content.
+
+```mermaid
+sequenceDiagram
+    actor Child as Child
+    participant App as Mobile App
+    participant API as API
+    participant Expo as Expo Push Service
+
+    Note over Child,Expo: Registration
+    App->>App: Request notification permissions
+    App->>App: Get Expo push token
+    App->>API: POST /api/users/:id/notifications/subscribe {pushToken}
+    API-->>App: Token registered
+
+    Note over Child,Expo: Push triggers
+    API->>Expo: Send push (quiz ready / team news / streak reminder / sticker earned / mission ready)
+    Expo->>App: Deliver notification
+    App-->>Child: Shows notification
+
+    Note over Child,Expo: Deep linking
+    Child->>App: Taps notification
+    App->>App: Navigate to relevant screen (quiz, news, collection, etc.)
+```
+
+### Push notification triggers
+
+| Trigger | When | Content |
+|---------|------|---------|
+| Quiz ready | Daily quiz generated (06:00 UTC) | "New daily quiz is ready!" |
+| Team news | New article about favorite team | "New news about {team}!" |
+| Streak reminder | 20:00 UTC daily | "Don't lose your streak! Log in today." |
+| Sticker earned | Sticker awarded via gamification | "You earned a new sticker!" |
+| Mission ready | Daily mission generated (05:00 UTC) | "Your daily mission is ready!" |
+
+- Push delivery uses `expo-server-sdk` for Expo push tokens
+- A cron job at 20:00 UTC sends streak reminders to users who haven't checked in
+- The `User.locale` field is used for per-user notification localization
+
+## 13. Dark Mode
+
+The user can toggle between light, dark, or system (automatic) theme.
+
+1. The toggle is in the NavBar (web), cycling: system -> dark -> light
+2. The preference is saved in `localStorage` (`sportykids-theme`)
+3. An inline script in `<head>` applies the `.dark` class before render to prevent flash
+4. If the theme is `system`, it listens for changes to `prefers-color-scheme`
+5. All CSS variables adapt automatically (background, text, surface, border, muted)

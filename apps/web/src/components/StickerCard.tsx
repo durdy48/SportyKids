@@ -56,12 +56,12 @@ export function StickerCard({ sticker, owned, locale }: StickerCardProps) {
             <span className="text-4xl">{sportEmoji}</span>
           )
         ) : (
-          <span className="text-4xl text-gray-400">?</span>
+          <span className="text-4xl text-[var(--color-muted)]">?</span>
         )}
       </div>
 
       {/* Info area */}
-      <div className="p-2 bg-white">
+      <div className="p-2 bg-[var(--color-surface)]">
         <p className="text-xs font-semibold text-[var(--color-text)] truncate">
           {owned ? sticker.name : '???'}
         </p>

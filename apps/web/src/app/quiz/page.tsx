@@ -8,6 +8,8 @@ import { fetchQuestions, fetchScore } from '@/lib/api';
 import { useUser } from '@/lib/user-context';
 import { useActivityTracker } from '@/lib/use-activity-tracker';
 import { QuizGame } from '@/components/QuizGame';
+import { QuizSkeleton } from '@/components/skeletons';
+import { LimitReached } from '@/components/LimitReached';
 
 type State = 'start' | 'playing' | 'result';
 
@@ -21,6 +23,7 @@ export default function QuizPage() {
   const [roundPoints, setRoundPoints] = useState(0);
   const [loading, setLoading] = useState(false);
   const [hasDailyQuestions, setHasDailyQuestions] = useState(true);
+  const [parentalBlock, setParentalBlock] = useState<{ reason: string; allowedHoursStart?: number; allowedHoursEnd?: number } | null>(null);
 
   useActivityTracker(user?.id, 'quizzes_played');
 
@@ -44,15 +47,20 @@ export default function QuizPage() {
 
   const startQuiz = async () => {
     setLoading(true);
+    setParentalBlock(null);
     try {
       const ageRange = user ? getAgeRange(user.age) : undefined;
-      const result = await fetchQuestions(5, undefined, ageRange);
+      const result = await fetchQuestions(5, undefined, ageRange, user?.id);
       setQuestions(result.questions);
       const hasDaily = result.questions.some((q) => q.isDaily);
       setHasDailyQuestions(hasDaily);
       setState('playing');
-    } catch (err) {
-      console.error(err);
+    } catch (err: any) {
+      if (err?.status === 403 && err?.reason) {
+        setParentalBlock({ reason: err.reason, allowedHoursStart: err.allowedHoursStart, allowedHoursEnd: err.allowedHoursEnd });
+      } else {
+        console.error(err);
+      }
     } finally {
       setLoading(false);
     }
@@ -64,22 +72,34 @@ export default function QuizPage() {
     setState('result');
   };
 
-  if (userLoading || !user) return null;
+  if (userLoading || !user) return <QuizSkeleton />;
+
+  if (parentalBlock) {
+    return (
+      <div className="space-y-6 page-enter">
+        <LimitReached
+          type={parentalBlock.reason as any}
+          allowedHoursStart={parentalBlock.allowedHoursStart}
+          allowedHoursEnd={parentalBlock.allowedHoursEnd}
+        />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 page-enter">
       {state === 'start' && (
         <div className="max-w-md mx-auto text-center py-8">
           <span className="text-6xl block mb-4">🧠</span>
           <h2 className="font-[family-name:var(--font-poppins)] text-3xl font-bold text-[var(--color-text)] mb-2">
             {t('quiz.title', locale)}
           </h2>
-          <p className="text-gray-500 mb-6">
+          <p className="text-[var(--color-muted)] mb-6">
             {t('quiz.subtitle', locale)}
           </p>
 
           <div className="bg-[var(--color-yellow)]/10 rounded-2xl p-6 mb-6">
-            <p className="text-sm text-gray-500">{t('quiz.total_score', locale)}</p>
+            <p className="text-sm text-[var(--color-muted)]">{t('quiz.total_score', locale)}</p>
             <p className="text-4xl font-bold text-[var(--color-yellow)] font-[family-name:var(--font-poppins)]">
               {totalPoints} {t('quiz.pts', locale)}
             </p>
@@ -98,7 +118,7 @@ export default function QuizPage() {
       {state === 'playing' && questions.length > 0 && (
         <>
           {!hasDailyQuestions && (
-            <div className="max-w-lg mx-auto mb-4 text-center text-sm text-gray-400 bg-gray-50 rounded-xl px-4 py-2">
+            <div className="max-w-lg mx-auto mb-4 text-center text-sm text-[var(--color-muted)] bg-[var(--color-background)] rounded-xl px-4 py-2">
               {t('quiz.no_daily', locale)}
             </div>
           )}
@@ -119,21 +139,21 @@ export default function QuizPage() {
           </h2>
 
           <div className="bg-[var(--color-green)]/10 rounded-2xl p-6 mb-4">
-            <p className="text-sm text-gray-500">{t('quiz.points_earned', locale)}</p>
+            <p className="text-sm text-[var(--color-muted)]">{t('quiz.points_earned', locale)}</p>
             <p className="text-5xl font-bold text-[var(--color-green)] font-[family-name:var(--font-poppins)]">
               +{roundPoints}
             </p>
           </div>
 
-          <div className="bg-gray-50 rounded-2xl p-4 mb-6">
-            <p className="text-sm text-gray-500">{t('quiz.total_score', locale)}</p>
+          <div className="bg-[var(--color-background)] rounded-2xl p-4 mb-6">
+            <p className="text-sm text-[var(--color-muted)]">{t('quiz.total_score', locale)}</p>
             <p className="text-2xl font-bold text-[var(--color-text)]">{totalPoints} {t('quiz.pts', locale)}</p>
           </div>
 
           <div className="flex gap-3">
             <button
               onClick={() => { setState('start'); setRoundPoints(0); }}
-              className="flex-1 py-3 bg-gray-100 text-gray-600 rounded-xl font-medium hover:bg-gray-200 transition-colors"
+              className="flex-1 py-3 bg-[var(--color-background)] text-[var(--color-muted)] rounded-xl font-medium hover:bg-[var(--color-border)] transition-colors"
             >
               {t('buttons.back', locale)}
             </button>

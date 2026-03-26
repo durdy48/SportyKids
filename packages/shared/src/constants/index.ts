@@ -1,4 +1,6 @@
 // Shared constants
+export { KID_FRIENDLY_ERRORS, getErrorType } from './errors';
+export type { KidFriendlyError } from './errors';
 
 export const SPORTS = [
   'football',

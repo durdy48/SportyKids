@@ -15,9 +15,7 @@ import type {
   PushPreferences,
 } from '@sportykids/shared';
 
-// Change this IP to match your local network for device testing
-// Change this IP to your local network IP for physical device testing
-const API_BASE = 'http://192.168.1.147:3001/api';
+import { API_BASE } from '../config';
 
 // ---------------------------------------------------------------------------
 // News
@@ -36,6 +34,7 @@ export interface NewsFilters {
   age?: number;
   source?: string;
   userId?: string;
+  q?: string;
   page?: number;
   limit?: number;
 }
@@ -47,6 +46,7 @@ export async function fetchNews(filters: NewsFilters = {}): Promise<NewsResponse
   if (filters.age) params.set('age', String(filters.age));
   if (filters.source) params.set('source', filters.source);
   if (filters.userId) params.set('userId', filters.userId);
+  if (filters.q) params.set('q', filters.q);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
 
@@ -66,6 +66,24 @@ export async function fetchNewsSummary(
 }
 
 // ---------------------------------------------------------------------------
+// Trending
+// ---------------------------------------------------------------------------
+
+export interface TrendingResponse {
+  trendingIds: string[];
+}
+
+export async function fetchTrending(): Promise<TrendingResponse> {
+  try {
+    const res = await fetch(`${API_BASE}/news/trending`);
+    if (!res.ok) return { trendingIds: [] };
+    return res.json();
+  } catch {
+    return { trendingIds: [] };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // RSS Sources
 // ---------------------------------------------------------------------------
 
@@ -76,7 +94,7 @@ export interface RssSourceInfo {
 }
 
 export async function fetchSources(): Promise<RssSourceInfo[]> {
-  const res = await fetch(`${API_BASE}/news/sources/list`);
+  const res = await fetch(`${API_BASE}/news/fuentes/listado`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
 }
@@ -228,23 +246,44 @@ export async function setupParentalPin(
   return res.json();
 }
 
+// Parental session token management
+let parentalSessionToken: string | null = null;
+
+export function setParentalSessionToken(token: string | null): void {
+  parentalSessionToken = token;
+}
+
+function parentalHeaders(extra?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = { ...extra };
+  if (parentalSessionToken) {
+    headers['X-Parental-Session'] = parentalSessionToken;
+  }
+  return headers;
+}
+
 export async function verifyPin(
   userId: string,
   pin: string,
-): Promise<{ verified: boolean; exists: boolean; profile?: ParentalProfile }> {
+): Promise<{ verified: boolean; exists: boolean; profile?: ParentalProfile; sessionToken?: string }> {
   const res = await fetch(`${API_BASE}/parents/verificar-pin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, pin }),
   });
   if (!res.ok) throw new Error(`Error ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  if (data.sessionToken) {
+    parentalSessionToken = data.sessionToken;
+  }
+  return data;
 }
 
 export async function getParentalProfile(
   userId: string,
 ): Promise<{ exists: boolean; profile?: ParentalProfile }> {
-  const res = await fetch(`${API_BASE}/parents/perfil/${userId}`);
+  const res = await fetch(`${API_BASE}/parents/perfil/${userId}`, {
+    headers: parentalHeaders(),
+  });
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
 }
@@ -255,7 +294,7 @@ export async function updateParentalProfile(
 ): Promise<ParentalProfile> {
   const res = await fetch(`${API_BASE}/parents/perfil/${userId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: parentalHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Error ${res.status}`);
@@ -270,7 +309,9 @@ export async function fetchActivity(
   quizzes_played: number;
   totalPoints: number;
 }> {
-  const res = await fetch(`${API_BASE}/parents/actividad/${userId}`);
+  const res = await fetch(`${API_BASE}/parents/actividad/${userId}`, {
+    headers: parentalHeaders(),
+  });
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
 }
@@ -291,6 +332,7 @@ export async function fetchActivityDetail(
 }> {
   const res = await fetch(
     `${API_BASE}/parents/actividad/${userId}/detalle?from=${from}&to=${to}`,
+    { headers: parentalHeaders() },
   );
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
@@ -375,12 +417,52 @@ export async function fetchTeamStats(teamName: string): Promise<TeamStats | null
 }
 
 // ---------------------------------------------------------------------------
+// Reading history (B-EN4)
+// ---------------------------------------------------------------------------
+
+export async function fetchReadingHistory(
+  userId: string,
+  page = 1,
+  limit = 10,
+): Promise<{ history: NewsItem[]; total: number }> {
+  try {
+    const res = await fetch(`${API_BASE}/news/historial?userId=${userId}&page=${page}&limit=${limit}`);
+    if (!res.ok) return { history: [], total: 0 };
+    return res.json();
+  } catch {
+    return { history: [], total: 0 };
+  }
+}
+
+// ---------------------------------------------------------------------------
+// Content recommendations (B-CP4)
+// ---------------------------------------------------------------------------
+
+export async function fetchRelatedArticles(
+  newsId: string,
+  limit = 5,
+): Promise<{ related: NewsItem[] }> {
+  try {
+    const res = await fetch(`${API_BASE}/news/${newsId}/relacionados?limit=${limit}`);
+    if (!res.ok) return { related: [] };
+    return res.json();
+  } catch {
+    return { related: [] };
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Notifications
 // ---------------------------------------------------------------------------
 
 export async function subscribeNotifications(
   userId: string,
-  data: { enabled: boolean; preferences: PushPreferences },
+  data: {
+    enabled: boolean;
+    preferences: PushPreferences;
+    pushToken?: string;
+    platform?: 'expo' | 'web';
+  },
 ): Promise<void> {
   const res = await fetch(`${API_BASE}/users/${userId}/notifications/subscribe`, {
     method: 'POST',

@@ -4,7 +4,10 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database';
 import { awardPointsForActivity } from '../services/gamification';
+import { checkMissionProgress } from '../services/mission-generator';
 import { invalidateProfileCache } from '../middleware/parental-guard';
+import { safeJsonParse } from '../utils/safe-json-parse';
+import { generateDigestData, renderDigestHtml, renderDigestPdf } from '../services/digest-generator';
 
 const router = Router();
 
@@ -15,7 +18,7 @@ const parentSessions = new Map<string, { userId: string; expiresAt: number }>();
 
 const SESSION_TTL_MS = 5 * 60 * 1000; // 5 minutes
 
-// Clean up expired sessions every 60 seconds
+// Clean up expired sessions every 5 minutes to prevent memory leaks
 setInterval(() => {
   const now = Date.now();
   for (const [token, session] of parentSessions) {
@@ -23,13 +26,28 @@ setInterval(() => {
       parentSessions.delete(token);
     }
   }
-}, 60_000);
+}, 5 * 60_000);
 
 function createSession(userId: string): { sessionToken: string; expiresAt: number } {
   const sessionToken = crypto.randomUUID();
   const expiresAt = Date.now() + SESSION_TTL_MS;
   parentSessions.set(sessionToken, { userId, expiresAt });
   return { sessionToken, expiresAt };
+}
+
+/**
+ * Validate a parental session token from X-Parental-Session header.
+ * Returns the userId if valid, null otherwise.
+ */
+export function verifyParentalSession(token: string | undefined): string | null {
+  if (!token) return null;
+  const session = parentSessions.get(token);
+  if (!session) return null;
+  if (session.expiresAt <= Date.now()) {
+    parentSessions.delete(token);
+    return null;
+  }
+  return session.userId;
 }
 
 /** Check if a stored hash is a legacy SHA-256 hex string (64 hex chars) */
@@ -50,6 +68,12 @@ const configureSchema = z.object({
   allowedSports: z.array(z.string()).optional(),
   allowedFormats: z.array(z.enum(['news', 'reels', 'quiz'])).optional(),
   maxDailyTimeMinutes: z.number().int().min(0).max(480).optional(),
+  maxNewsMinutes: z.number().int().min(0).max(480).optional().nullable(),
+  maxReelsMinutes: z.number().int().min(0).max(480).optional().nullable(),
+  maxQuizMinutes: z.number().int().min(0).max(480).optional().nullable(),
+  allowedHoursStart: z.number().int().min(0).max(23).optional(),
+  allowedHoursEnd: z.number().int().min(0).max(24).optional(),
+  timezone: z.string().optional(),
 });
 
 router.post('/configurar', async (req: Request, res: Response) => {
@@ -59,7 +83,7 @@ router.post('/configurar', async (req: Request, res: Response) => {
     return;
   }
 
-  const { userId, pin, allowedSports, allowedFormats, maxDailyTimeMinutes } = parsed.data;
+  const { userId, pin, allowedSports, allowedFormats, maxDailyTimeMinutes, maxNewsMinutes, maxReelsMinutes, maxQuizMinutes, allowedHoursStart, allowedHoursEnd, timezone } = parsed.data;
 
   const hashedPin = await bcrypt.hash(pin, 10);
 
@@ -69,7 +93,13 @@ router.post('/configurar', async (req: Request, res: Response) => {
       pin: hashedPin,
       ...(allowedSports && { allowedSports: JSON.stringify(allowedSports) }),
       ...(allowedFormats && { allowedFormats: JSON.stringify(allowedFormats) }),
-      ...(maxDailyTimeMinutes !== undefined && maxDailyTimeMinutes !== null && { maxDailyTimeMinutes }),
+      ...(maxDailyTimeMinutes !== undefined && { maxDailyTimeMinutes }),
+      ...(maxNewsMinutes !== undefined && { maxNewsMinutes }),
+      ...(maxReelsMinutes !== undefined && { maxReelsMinutes }),
+      ...(maxQuizMinutes !== undefined && { maxQuizMinutes }),
+      ...(allowedHoursStart !== undefined && { allowedHoursStart }),
+      ...(allowedHoursEnd !== undefined && { allowedHoursEnd }),
+      ...(timezone !== undefined && { timezone }),
     },
     create: {
       userId,
@@ -77,6 +107,12 @@ router.post('/configurar', async (req: Request, res: Response) => {
       allowedSports: JSON.stringify(allowedSports ?? []),
       allowedFormats: JSON.stringify(allowedFormats ?? ['news', 'reels', 'quiz']),
       maxDailyTimeMinutes: maxDailyTimeMinutes ?? 60,
+      maxNewsMinutes: maxNewsMinutes ?? null,
+      maxReelsMinutes: maxReelsMinutes ?? null,
+      maxQuizMinutes: maxQuizMinutes ?? null,
+      allowedHoursStart: allowedHoursStart ?? 7,
+      allowedHoursEnd: allowedHoursEnd ?? 21,
+      timezone: timezone ?? 'Europe/Madrid',
     },
   });
 
@@ -151,12 +187,20 @@ router.post('/verificar-pin', async (req: Request, res: Response) => {
 // GET /api/parents/perfil/:userId — Get parental profile
 // ---------------------------------------------------------------------------
 router.get('/perfil/:userId', async (req: Request, res: Response) => {
+  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+
   const profile = await prisma.parentalProfile.findUnique({
     where: { userId: req.params.userId },
   });
 
   if (!profile) {
     res.json({ exists: false });
+    return;
+  }
+
+  // Without a valid session, only confirm existence (no sensitive data)
+  if (!sessionUserId) {
+    res.json({ exists: true });
     return;
   }
 
@@ -170,20 +214,38 @@ const updateSchema = z.object({
   allowedSports: z.array(z.string()).optional(),
   allowedFormats: z.array(z.enum(['news', 'reels', 'quiz'])).optional(),
   maxDailyTimeMinutes: z.number().int().min(0).max(480).optional(),
+  maxNewsMinutes: z.number().int().min(0).max(480).optional().nullable(),
+  maxReelsMinutes: z.number().int().min(0).max(480).optional().nullable(),
+  maxQuizMinutes: z.number().int().min(0).max(480).optional().nullable(),
+  allowedHoursStart: z.number().int().min(0).max(23).optional(),
+  allowedHoursEnd: z.number().int().min(0).max(24).optional(),
+  timezone: z.string().optional(),
 });
 
 router.put('/perfil/:userId', async (req: Request, res: Response) => {
+  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  if (!sessionUserId) {
+    res.status(401).json({ error: 'Parental session required' });
+    return;
+  }
+
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'Invalid data' });
     return;
   }
 
-  const { allowedSports, allowedFormats, maxDailyTimeMinutes } = parsed.data;
+  const { allowedSports, allowedFormats, maxDailyTimeMinutes, maxNewsMinutes, maxReelsMinutes, maxQuizMinutes, allowedHoursStart, allowedHoursEnd, timezone } = parsed.data;
   const data: Record<string, unknown> = {};
   if (allowedSports) data.allowedSports = JSON.stringify(allowedSports);
   if (allowedFormats) data.allowedFormats = JSON.stringify(allowedFormats);
-  if (maxDailyTimeMinutes !== undefined && maxDailyTimeMinutes !== null) data.maxDailyTimeMinutes = maxDailyTimeMinutes;
+  if (maxDailyTimeMinutes !== undefined) data.maxDailyTimeMinutes = maxDailyTimeMinutes;
+  if (maxNewsMinutes !== undefined) data.maxNewsMinutes = maxNewsMinutes;
+  if (maxReelsMinutes !== undefined) data.maxReelsMinutes = maxReelsMinutes;
+  if (maxQuizMinutes !== undefined) data.maxQuizMinutes = maxQuizMinutes;
+  if (allowedHoursStart !== undefined) data.allowedHoursStart = allowedHoursStart;
+  if (allowedHoursEnd !== undefined) data.allowedHoursEnd = allowedHoursEnd;
+  if (timezone !== undefined) data.timezone = timezone;
 
   const profile = await prisma.parentalProfile.update({
     where: { userId: req.params.userId },
@@ -200,6 +262,12 @@ router.put('/perfil/:userId', async (req: Request, res: Response) => {
 // GET /api/parents/actividad/:userId — Weekly summary
 // ---------------------------------------------------------------------------
 router.get('/actividad/:userId', async (req: Request, res: Response) => {
+  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  if (!sessionUserId) {
+    res.status(401).json({ error: 'Parental session required' });
+    return;
+  }
+
   const oneWeekAgo = new Date();
   oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
 
@@ -243,6 +311,12 @@ const detailQuerySchema = z.object({
 });
 
 router.get('/actividad/:userId/detalle', async (req: Request, res: Response) => {
+  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  if (!sessionUserId) {
+    res.status(401).json({ error: 'Parental session required' });
+    return;
+  }
+
   const parsed = detailQuerySchema.safeParse(req.query);
   if (!parsed.success) {
     res.status(400).json({ error: 'Invalid parameters', details: parsed.error.flatten() });
@@ -367,32 +441,198 @@ router.post('/actividad/registrar', async (req: Request, res: Response) => {
     parsed.data.type,
   );
 
+  // Check daily mission progress
+  const missionResult = await checkMissionProgress(
+    parsed.data.userId,
+    parsed.data.type,
+    parsed.data.sport,
+  );
+
   res.json({
     ok: true,
     pointsAwarded: gamificationResult.pointsAwarded,
     newAchievements: gamificationResult.newAchievements,
+    mission: missionResult.missionUpdated ? missionResult : undefined,
   });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/parents/preview/:userId — "See What My Kid Sees" parent preview
+// ---------------------------------------------------------------------------
+router.get('/preview/:userId', async (req: Request, res: Response) => {
+  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  if (!sessionUserId) {
+    res.status(401).json({ error: 'Parental session required' });
+    return;
+  }
+
+  const userId = req.params.userId;
+  const profile = await prisma.parentalProfile.findUnique({ where: { userId } });
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+
+  if (!profile || !user) {
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+
+  const allowedFormats: string[] = safeJsonParse(profile.allowedFormats as string, []);
+  const allowedSports: string[] = safeJsonParse(profile.allowedSports as string, []);
+  const favoriteSports: string[] = safeJsonParse(user.favoriteSports as string, []);
+
+  // Fetch news if format allowed
+  let news: unknown[] = [];
+  if (allowedFormats.includes('news')) {
+    const sportFilter = allowedSports.length > 0
+      ? { sport: { in: allowedSports } }
+      : (favoriteSports.length > 0 ? { sport: { in: favoriteSports } } : {});
+    news = await prisma.newsItem.findMany({
+      where: { safetyStatus: 'approved', ...sportFilter },
+      orderBy: { publishedAt: 'desc' },
+      take: 5,
+    });
+  }
+
+  // Fetch reels if format allowed
+  let reels: unknown[] = [];
+  if (allowedFormats.includes('reels')) {
+    reels = await prisma.reel.findMany({
+      orderBy: { createdAt: 'desc' },
+      take: 3,
+    });
+  }
+
+  const quizAvailable = allowedFormats.includes('quiz');
+
+  res.json({ news, reels, quizAvailable });
+});
+
+// ---------------------------------------------------------------------------
+// PUT /api/parents/digest/:userId — Update digest preferences
+// ---------------------------------------------------------------------------
+const digestSchema = z.object({
+  digestEnabled: z.boolean().optional(),
+  digestEmail: z.string().email().optional().nullable(),
+  digestDay: z.number().int().min(0).max(6).optional(),
+});
+
+router.put('/digest/:userId', async (req: Request, res: Response) => {
+  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  if (!sessionUserId) {
+    res.status(401).json({ error: 'Parental session required' });
+    return;
+  }
+
+  const parsed = digestSchema.safeParse(req.body);
+  if (!parsed.success) {
+    res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten() });
+    return;
+  }
+
+  const userId = req.params.userId;
+  const profile = await prisma.parentalProfile.findUnique({ where: { userId } });
+  if (!profile) {
+    res.status(404).json({ error: 'Parental profile not found' });
+    return;
+  }
+
+  const updated = await prisma.parentalProfile.update({
+    where: { userId },
+    data: parsed.data,
+  });
+
+  res.json(formatProfile(updated));
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/parents/digest/:userId — Get digest preferences
+// ---------------------------------------------------------------------------
+router.get('/digest/:userId', async (req: Request, res: Response) => {
+  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  if (!sessionUserId) {
+    res.status(401).json({ error: 'Parental session required' });
+    return;
+  }
+
+  const profile = await prisma.parentalProfile.findUnique({
+    where: { userId: req.params.userId },
+  });
+
+  if (!profile) {
+    res.status(404).json({ error: 'Parental profile not found' });
+    return;
+  }
+
+  res.json({
+    digestEnabled: profile.digestEnabled,
+    digestEmail: profile.digestEmail,
+    digestDay: profile.digestDay,
+    lastDigestSentAt: profile.lastDigestSentAt?.toISOString() ?? null,
+  });
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/parents/digest/:userId/preview — Preview digest data (JSON)
+// ---------------------------------------------------------------------------
+router.get('/digest/:userId/preview', async (req: Request, res: Response) => {
+  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  if (!sessionUserId) {
+    res.status(401).json({ error: 'Parental session required' });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.params.userId } });
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+
+  const data = await generateDigestData(req.params.userId);
+  res.json(data);
+});
+
+// ---------------------------------------------------------------------------
+// GET /api/parents/digest/:userId/download — Download digest as PDF
+// ---------------------------------------------------------------------------
+router.get('/digest/:userId/download', async (req: Request, res: Response) => {
+  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  if (!sessionUserId) {
+    res.status(401).json({ error: 'Parental session required' });
+    return;
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: req.params.userId } });
+  if (!user) {
+    res.status(404).json({ error: 'User not found' });
+    return;
+  }
+
+  const locale = (req.query.locale === 'en' ? 'en' : 'es') as 'es' | 'en';
+  const data = await generateDigestData(req.params.userId);
+  const pdfBuffer = await renderDigestPdf(data, locale);
+
+  res.setHeader('Content-Type', 'application/pdf');
+  res.setHeader('Content-Disposition', `attachment; filename="sportykids-digest-${req.params.userId}.pdf"`);
+  res.send(pdfBuffer);
 });
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function safeJsonParse(value: unknown, fallback: unknown[] = []): unknown {
-  if (typeof value !== 'string') return fallback;
-  try {
-    return JSON.parse(value);
-  } catch {
-    return fallback;
-  }
-}
-
-function formatProfile(profile: Record<string, unknown>) {
+function formatProfile({ pin, ...rest }: Record<string, unknown>) {
   return {
-    ...profile,
-    pin: undefined, // Never return the PIN
-    allowedSports: safeJsonParse(profile.allowedSports),
-    allowedFeeds: safeJsonParse(profile.allowedFeeds),
-    allowedFormats: safeJsonParse(profile.allowedFormats),
+    ...rest,
+    allowedSports: safeJsonParse(rest.allowedSports as string, []),
+    allowedFeeds: safeJsonParse(rest.allowedFeeds as string, []),
+    allowedFormats: safeJsonParse(rest.allowedFormats as string, []),
+    digestEnabled: rest.digestEnabled ?? false,
+    digestEmail: rest.digestEmail ?? null,
+    digestDay: rest.digestDay ?? 1,
+    lastDigestSentAt: rest.lastDigestSentAt instanceof Date
+      ? (rest.lastDigestSentAt as Date).toISOString()
+      : (rest.lastDigestSentAt ?? null),
+    allowedHoursStart: rest.allowedHoursStart ?? 7,
+    allowedHoursEnd: rest.allowedHoursEnd ?? 21,
+    timezone: rest.timezone ?? 'Europe/Madrid',
   };
 }
 

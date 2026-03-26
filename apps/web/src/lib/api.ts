@@ -15,6 +15,7 @@ export interface NewsFilters {
   age?: number;
   source?: string;
   userId?: string;
+  q?: string;
   page?: number;
   limit?: number;
 }
@@ -36,11 +37,23 @@ export async function fetchNews(filters: NewsFilters = {}): Promise<NewsResponse
   if (filters.age) params.set('age', String(filters.age));
   if (filters.source) params.set('source', filters.source);
   if (filters.userId) params.set('userId', filters.userId);
+  if (filters.q) params.set('q', filters.q);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
 
   const res = await fetch(`${API_BASE}/news?${params.toString()}`);
-  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    if (res.status === 403) {
+      const body = await res.json().catch(() => ({}));
+      const err: any = new Error(body.error || 'forbidden');
+      err.reason = body.error;
+      err.allowedHoursStart = body.allowedHoursStart;
+      err.allowedHoursEnd = body.allowedHoursEnd;
+      err.status = 403;
+      throw err;
+    }
+    throw new Error(`Error ${res.status}: ${res.statusText}`);
+  }
   return res.json();
 }
 
@@ -85,7 +98,7 @@ export interface RssSourceInfo {
 }
 
 export async function fetchSources(): Promise<RssSourceInfo[]> {
-  const res = await fetch(`${API_BASE}/news/sources/list`);
+  const res = await fetch(`${API_BASE}/news/fuentes/listado`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
 }
@@ -114,6 +127,21 @@ export async function deleteCustomSource(sourceId: string, userId?: string): Pro
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
 }
 
+// Trending
+export interface TrendingResponse {
+  trendingIds: string[];
+}
+
+export async function fetchTrending(): Promise<TrendingResponse> {
+  try {
+    const res = await fetch(`${API_BASE}/news/trending`);
+    if (!res.ok) return { trendingIds: [] };
+    return res.json();
+  } catch {
+    return { trendingIds: [] };
+  }
+}
+
 // Reels
 export interface ReelsResponse {
   reels: Reel[];
@@ -122,23 +150,47 @@ export interface ReelsResponse {
   totalPages: number;
 }
 
-export async function fetchReels(filters: { sport?: string; page?: number; limit?: number } = {}): Promise<ReelsResponse> {
+export async function fetchReels(filters: { sport?: string; page?: number; limit?: number; userId?: string } = {}): Promise<ReelsResponse> {
   const params = new URLSearchParams();
   if (filters.sport) params.set('sport', filters.sport);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
+  if (filters.userId) params.set('userId', filters.userId);
   const res = await fetch(`${API_BASE}/reels?${params.toString()}`);
-  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    if (res.status === 403) {
+      const body = await res.json().catch(() => ({}));
+      const err: any = new Error(body.error || 'forbidden');
+      err.reason = body.error;
+      err.allowedHoursStart = body.allowedHoursStart;
+      err.allowedHoursEnd = body.allowedHoursEnd;
+      err.status = 403;
+      throw err;
+    }
+    throw new Error(`Error ${res.status}: ${res.statusText}`);
+  }
   return res.json();
 }
 
 // Quiz
-export async function fetchQuestions(count: number = 5, sport?: string, age?: string): Promise<{ questions: QuizQuestion[] }> {
+export async function fetchQuestions(count: number = 5, sport?: string, age?: string, userId?: string): Promise<{ questions: QuizQuestion[] }> {
   const params = new URLSearchParams({ count: String(count) });
   if (sport) params.set('sport', sport);
   if (age) params.set('age', age);
+  if (userId) params.set('userId', userId);
   const res = await fetch(`${API_BASE}/quiz/questions?${params.toString()}`);
-  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    if (res.status === 403) {
+      const body = await res.json().catch(() => ({}));
+      const err: any = new Error(body.error || 'forbidden');
+      err.reason = body.error;
+      err.allowedHoursStart = body.allowedHoursStart;
+      err.allowedHoursEnd = body.allowedHoursEnd;
+      err.status = 403;
+      throw err;
+    }
+    throw new Error(`Error ${res.status}: ${res.statusText}`);
+  }
   return res.json();
 }
 
@@ -158,7 +210,25 @@ export async function fetchScore(userId: string): Promise<{ name: string; totalP
   return res.json();
 }
 
-// Parental controls
+// Parental controls — session token management
+let parentalSessionToken: string | null = null;
+
+export function getParentalSessionToken(): string | null {
+  return parentalSessionToken;
+}
+
+export function setParentalSessionToken(token: string | null): void {
+  parentalSessionToken = token;
+}
+
+function parentalHeaders(extra?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = { ...extra };
+  if (parentalSessionToken) {
+    headers['X-Parental-Session'] = parentalSessionToken;
+  }
+  return headers;
+}
+
 export async function setupParentalPin(userId: string, pin: string, options?: { allowedFormats?: string[]; maxDailyTimeMinutes?: number }): Promise<ParentalProfile> {
   const res = await fetch(`${API_BASE}/parents/configurar`, {
     method: 'POST',
@@ -169,18 +239,24 @@ export async function setupParentalPin(userId: string, pin: string, options?: { 
   return res.json();
 }
 
-export async function verifyPin(userId: string, pin: string): Promise<{ verified: boolean; exists: boolean; profile?: ParentalProfile }> {
+export async function verifyPin(userId: string, pin: string): Promise<{ verified: boolean; exists: boolean; profile?: ParentalProfile; sessionToken?: string }> {
   const res = await fetch(`${API_BASE}/parents/verificar-pin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, pin }),
   });
   if (!res.ok) throw new Error(`Error ${res.status}`);
-  return res.json();
+  const data = await res.json();
+  if (data.sessionToken) {
+    parentalSessionToken = data.sessionToken;
+  }
+  return data;
 }
 
 export async function getParentalProfile(userId: string): Promise<{ exists: boolean; profile?: ParentalProfile }> {
-  const res = await fetch(`${API_BASE}/parents/perfil/${userId}`);
+  const res = await fetch(`${API_BASE}/parents/perfil/${userId}`, {
+    headers: parentalHeaders(),
+  });
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
 }
@@ -188,7 +264,7 @@ export async function getParentalProfile(userId: string): Promise<{ exists: bool
 export async function updateParentalProfile(userId: string, data: Partial<ParentalProfile>): Promise<ParentalProfile> {
   const res = await fetch(`${API_BASE}/parents/perfil/${userId}`, {
     method: 'PUT',
-    headers: { 'Content-Type': 'application/json' },
+    headers: parentalHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Error ${res.status}`);
@@ -196,7 +272,9 @@ export async function updateParentalProfile(userId: string, data: Partial<Parent
 }
 
 export async function fetchActivity(userId: string): Promise<{ news_viewed: number; reels_viewed: number; quizzes_played: number; totalPoints: number }> {
-  const res = await fetch(`${API_BASE}/parents/actividad/${userId}`);
+  const res = await fetch(`${API_BASE}/parents/actividad/${userId}`, {
+    headers: parentalHeaders(),
+  });
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
 }
@@ -210,9 +288,24 @@ export async function recordActivity(userId: string, type: string, durationSecon
 }
 
 export async function fetchActivityDetail(userId: string, from: string, to: string): Promise<{ days: { date: string; news_viewed: number; reels_viewed: number; quizzes_played: number; totalMinutes: number }[]; mostViewed: string }> {
-  const res = await fetch(`${API_BASE}/parents/actividad/${userId}/detalle?from=${from}&to=${to}`);
+  const res = await fetch(`${API_BASE}/parents/actividad/${userId}/detalle?from=${from}&to=${to}`, { headers: parentalHeaders() });
   if (!res.ok) throw new Error(`Error ${res.status}`);
-  return res.json();
+  const data = await res.json();
+
+  // Map API response shape to the format expected by ParentalPanel
+  const days = (data.dailyBreakdown ?? []).map((d: { date: string; totalSeconds: number; counts: Record<string, number>; sports: Record<string, number> }) => ({
+    date: d.date,
+    news_viewed: d.counts?.news_viewed ?? 0,
+    reels_viewed: d.counts?.reels_viewed ?? 0,
+    quizzes_played: d.counts?.quizzes_played ?? 0,
+    totalMinutes: Math.round((d.totalSeconds ?? 0) / 60),
+  }));
+
+  // Find most viewed sport from totals
+  const bySport = data.totals?.bySport ?? {};
+  const mostViewed = Object.entries(bySport).sort((a, b) => (b[1] as number) - (a[1] as number))[0]?.[0] ?? '';
+
+  return { days, mostViewed };
 }
 
 // Gamification
@@ -257,6 +350,54 @@ export async function checkIn(userId: string): Promise<CheckInResponse> {
   return res.json();
 }
 
+// Feed preview (parental)
+export async function fetchFeedPreview(userId: string): Promise<{ news: NewsItem[]; reels: Reel[]; quizAvailable: boolean }> {
+  const res = await fetch(`${API_BASE}/parents/preview/${userId}`, { headers: parentalHeaders() });
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+// Content reports
+export async function submitReport(data: { userId: string; contentType: 'news' | 'reel'; contentId: string; reason: string; comment?: string }): Promise<void> {
+  const res = await fetch(`${API_BASE}/reports`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err.error || 'Failed');
+  }
+}
+
+export interface ContentReportWithTitle {
+  id: string;
+  contentType: 'news' | 'reel';
+  contentId: string;
+  contentTitle: string | null;
+  reason: string;
+  comment?: string;
+  status: string;
+  reviewedAt: string | null;
+  createdAt: string;
+}
+
+export async function fetchReports(userId: string): Promise<ContentReportWithTitle[]> {
+  const res = await fetch(`${API_BASE}/reports/parent/${userId}`);
+  if (!res.ok) throw new Error('Failed');
+  const data = await res.json();
+  return Array.isArray(data) ? data : data.reports ?? [];
+}
+
+export async function updateReportStatus(reportId: string, status: 'reviewed' | 'dismissed' | 'actioned'): Promise<void> {
+  const res = await fetch(`${API_BASE}/reports/${reportId}`, {
+    method: 'PUT',
+    headers: parentalHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify({ status }),
+  });
+  if (!res.ok) throw new Error('Failed');
+}
+
 // Team stats
 export async function fetchTeamStats(teamName: string): Promise<TeamStats | null> {
   try {
@@ -284,5 +425,68 @@ export async function subscribeNotifications(
 export async function getNotifications(userId: string): Promise<{ enabled: boolean; preferences: PushPreferences }> {
   const res = await fetch(`${API_BASE}/users/${userId}/notifications`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+// Weekly Digest (B-PT1)
+export async function getDigestPreferences(userId: string) {
+  const res = await fetch(`${API_BASE}/parents/digest/${userId}`, { headers: parentalHeaders() });
+  if (!res.ok) throw new Error('Failed');
+  return res.json();
+}
+
+export async function updateDigestPreferences(userId: string, data: { digestEnabled?: boolean; digestEmail?: string | null; digestDay?: number }) {
+  const res = await fetch(`${API_BASE}/parents/digest/${userId}`, { method: 'PUT', headers: parentalHeaders({ 'Content-Type': 'application/json' }), body: JSON.stringify(data) });
+  if (!res.ok) throw new Error('Failed');
+  return res.json();
+}
+
+export async function previewDigest(userId: string) {
+  const res = await fetch(`${API_BASE}/parents/digest/${userId}/preview`, { headers: parentalHeaders() });
+  if (!res.ok) throw new Error('Failed');
+  return res.json();
+}
+
+export async function downloadDigestPdf(userId: string) {
+  const res = await fetch(`${API_BASE}/parents/digest/${userId}/download`, { headers: parentalHeaders() });
+  if (!res.ok) throw new Error('Failed');
+  return res.blob();
+}
+
+// Reading history (B-EN4)
+export async function fetchReadingHistory(userId: string, page = 1, limit = 10): Promise<{ history: NewsItem[]; total: number }> {
+  const res = await fetch(`${API_BASE}/news/historial?userId=${userId}&page=${page}&limit=${limit}`);
+  if (!res.ok) return { history: [], total: 0 };
+  return res.json();
+}
+
+// Content recommendations (B-CP4)
+export async function fetchRelatedArticles(newsId: string, limit = 5): Promise<{ related: NewsItem[] }> {
+  try {
+    const res = await fetch(`${API_BASE}/news/${newsId}/relacionados?limit=${limit}`);
+    if (!res.ok) return { related: [] };
+    return res.json();
+  } catch {
+    return { related: [] };
+  }
+}
+
+// Team stats sync (B-CP3)
+export async function syncTeamStats(): Promise<{ synced: number; failed: number }> {
+  const res = await fetch(`${API_BASE}/teams/sync`, { method: 'POST' });
+  if (!res.ok) throw new Error('Failed');
+  return res.json();
+}
+
+// Missions (B-EN1)
+export async function fetchTodayMission(userId: string) {
+  const res = await fetch(`${API_BASE}/missions/today/${userId}`);
+  if (!res.ok) throw new Error('Failed');
+  return res.json();
+}
+
+export async function claimMission(userId: string) {
+  const res = await fetch(`${API_BASE}/missions/claim`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
+  if (!res.ok) throw new Error('Failed');
   return res.json();
 }

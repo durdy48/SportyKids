@@ -2,6 +2,7 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/database';
 import { checkAndUpdateStreak } from '../services/gamification';
+import { withCache, CACHE_TTL, apiCache } from '../services/cache';
 
 const router = Router();
 
@@ -9,7 +10,7 @@ const router = Router();
 // GET /api/gamification/stickers — All stickers catalog
 // ---------------------------------------------------------------------------
 
-router.get('/stickers', async (_req: Request, res: Response) => {
+router.get('/stickers', withCache('stickers:catalog:', CACHE_TTL.STICKERS_CATALOG), async (_req: Request, res: Response) => {
   const stickers = await prisma.sticker.findMany({
     orderBy: [{ rarity: 'asc' }, { sport: 'asc' }, { name: 'asc' }],
   });
@@ -147,6 +148,8 @@ router.post('/check-in', async (req: Request, res: Response) => {
   }
 
   const result = await checkAndUpdateStreak(userId);
+  // Invalidate behavioral signals cache after check-in
+  apiCache.invalidate(`behavioral:${userId}`);
   res.json(result);
 });
 

@@ -1,0 +1,365 @@
+{
+  "stickers": [
+    {
+      "id": "cmn534vij001d26g2p219wbws",
+      "name": "Athletics Icon",
+      "nameKey": "sticker.athletics_icon",
+      "imageUrl": "/stickers/athletics-icon.png",
+      "sport": "athletics",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.035Z"
+    },
+    {
+      "id": "cmn534vj5001l26g2zxmiz2mn",
+      "name": "Running Shoes",
+      "nameKey": "sticker.running_shoes",
+      "imageUrl": "/stickers/athletics-shoes.png",
+      "sport": "athletics",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.057Z"
+    },
+    {
+      "id": "cmn534vix001i26g2qxs356mn",
+      "name": "Basketball",
+      "nameKey": "sticker.basketball",
+      "imageUrl": "/stickers/basketball-ball.png",
+      "sport": "basketball",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.049Z"
+    },
+    {
+      "id": "cmn534vic001a26g2cqtfd9tv",
+      "name": "Basketball Icon",
+      "nameKey": "sticker.basketball_icon",
+      "imageUrl": "/stickers/basketball-icon.png",
+      "sport": "basketball",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.029Z"
+    },
+    {
+      "id": "cmn534vj7001m26g2fhw5mf99",
+      "name": "Bicycle",
+      "nameKey": "sticker.bicycle",
+      "imageUrl": "/stickers/cycling-bicycle.png",
+      "sport": "cycling",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.059Z"
+    },
+    {
+      "id": "cmn534vil001e26g2twql0zhi",
+      "name": "Cycling Icon",
+      "nameKey": "sticker.cycling_icon",
+      "imageUrl": "/stickers/cycling-icon.png",
+      "sport": "cycling",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.037Z"
+    },
+    {
+      "id": "cmn534viu001h26g2lbtflvkb",
+      "name": "Football",
+      "nameKey": "sticker.football",
+      "imageUrl": "/stickers/football-ball.png",
+      "sport": "football",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.046Z"
+    },
+    {
+      "id": "cmn534vi7001926g2qe5i4kwr",
+      "name": "Football Icon",
+      "nameKey": "sticker.football_icon",
+      "imageUrl": "/stickers/football-icon.png",
+      "sport": "football",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.024Z"
+    },
+    {
+      "id": "cmn534vin001f26g242pwo3mt",
+      "name": "Formula 1 Icon",
+      "nameKey": "sticker.formula1_icon",
+      "imageUrl": "/stickers/formula1-icon.png",
+      "sport": "formula1",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.040Z"
+    },
+    {
+      "id": "cmn534vj9001n26g2gdvvb1o7",
+      "name": "Racing Helmet",
+      "nameKey": "sticker.racing_helmet",
+      "imageUrl": "/stickers/formula1-helmet.png",
+      "sport": "formula1",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.061Z"
+    },
+    {
+      "id": "cmn534vir001g26g271mpgwz9",
+      "name": "Padel Icon",
+      "nameKey": "sticker.padel_icon",
+      "imageUrl": "/stickers/padel-icon.png",
+      "sport": "padel",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.043Z"
+    },
+    {
+      "id": "cmn534vjb001o26g2818vba5a",
+      "name": "Padel Racket",
+      "nameKey": "sticker.padel_racket",
+      "imageUrl": "/stickers/padel-racket.png",
+      "sport": "padel",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.063Z"
+    },
+    {
+      "id": "cmn534vj2001k26g2u9y9z85j",
+      "name": "Swimming Goggles",
+      "nameKey": "sticker.swimming_goggles",
+      "imageUrl": "/stickers/swimming-goggles.png",
+      "sport": "swimming",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.055Z"
+    },
+    {
+      "id": "cmn534vig001c26g2pmlfuzg1",
+      "name": "Swimming Icon",
+      "nameKey": "sticker.swimming_icon",
+      "imageUrl": "/stickers/swimming-icon.png",
+      "sport": "swimming",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.033Z"
+    },
+    {
+      "id": "cmn534vie001b26g2wuwaghux",
+      "name": "Tennis Icon",
+      "nameKey": "sticker.tennis_icon",
+      "imageUrl": "/stickers/tennis-icon.png",
+      "sport": "tennis",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.031Z"
+    },
+    {
+      "id": "cmn534viz001j26g2tgs4qvae",
+      "name": "Tennis Racket",
+      "nameKey": "sticker.tennis_racket",
+      "imageUrl": "/stickers/tennis-racket.png",
+      "sport": "tennis",
+      "team": null,
+      "rarity": "common",
+      "createdAt": "2026-03-24T20:46:41.052Z"
+    },
+    {
+      "id": "cmn534vkc002426g20rpdmtyu",
+      "name": "Pogacar Climber",
+      "nameKey": "sticker.pogacar_climber",
+      "imageUrl": "/stickers/cycling-pogacar.png",
+      "sport": "cycling",
+      "team": null,
+      "rarity": "epic",
+      "createdAt": "2026-03-24T20:46:41.101Z"
+    },
+    {
+      "id": "cmn534vk0001z26g2xapdus1x",
+      "name": "Messi Legend",
+      "nameKey": "sticker.messi_legend",
+      "imageUrl": "/stickers/football-messi.png",
+      "sport": "football",
+      "team": "Inter Miami",
+      "rarity": "epic",
+      "createdAt": "2026-03-24T20:46:41.088Z"
+    },
+    {
+      "id": "cmn534vk8002226g2bvh1h2gt",
+      "name": "Alonso Racer",
+      "nameKey": "sticker.alonso_racer",
+      "imageUrl": "/stickers/formula1-alonso.png",
+      "sport": "formula1",
+      "team": "Fernando Alonso",
+      "rarity": "epic",
+      "createdAt": "2026-03-24T20:46:41.096Z"
+    },
+    {
+      "id": "cmn534vka002326g2f47wpmud",
+      "name": "Phelps Aquaman",
+      "nameKey": "sticker.phelps_aquaman",
+      "imageUrl": "/stickers/swimming-phelps.png",
+      "sport": "swimming",
+      "team": null,
+      "rarity": "epic",
+      "createdAt": "2026-03-24T20:46:41.099Z"
+    },
+    {
+      "id": "cmn534vk2002026g2h05kg8t3",
+      "name": "Alcaraz Champion",
+      "nameKey": "sticker.alcaraz_champion",
+      "imageUrl": "/stickers/tennis-alcaraz.png",
+      "sport": "tennis",
+      "team": "Carlos Alcaraz",
+      "rarity": "epic",
+      "createdAt": "2026-03-24T20:46:41.091Z"
+    },
+    {
+      "id": "cmn534vk5002126g2s8hapxj5",
+      "name": "Nadal King of Clay",
+      "nameKey": "sticker.nadal_king",
+      "imageUrl": "/stickers/tennis-nadal.png",
+      "sport": "tennis",
+      "team": "Rafael Nadal",
+      "rarity": "epic",
+      "createdAt": "2026-03-24T20:46:41.093Z"
+    },
+    {
+      "id": "cmn534vki002626g288snc7rt",
+      "name": "Golden Basketball",
+      "nameKey": "sticker.golden_basketball",
+      "imageUrl": "/stickers/basketball-golden.png",
+      "sport": "basketball",
+      "team": null,
+      "rarity": "legendary",
+      "createdAt": "2026-03-24T20:46:41.107Z"
+    },
+    {
+      "id": "cmn534vkf002526g272q29s22",
+      "name": "Golden Football",
+      "nameKey": "sticker.golden_football",
+      "imageUrl": "/stickers/football-golden.png",
+      "sport": "football",
+      "team": null,
+      "rarity": "legendary",
+      "createdAt": "2026-03-24T20:46:41.103Z"
+    },
+    {
+      "id": "cmn534vkm002826g2ochi27x5",
+      "name": "Golden Trophy",
+      "nameKey": "sticker.golden_trophy",
+      "imageUrl": "/stickers/trophy-golden.png",
+      "sport": "football",
+      "team": null,
+      "rarity": "legendary",
+      "createdAt": "2026-03-24T20:46:41.110Z"
+    },
+    {
+      "id": "cmn534vkk002726g26pmbdbtx",
+      "name": "Golden Tennis",
+      "nameKey": "sticker.golden_tennis",
+      "imageUrl": "/stickers/tennis-golden.png",
+      "sport": "tennis",
+      "team": null,
+      "rarity": "legendary",
+      "createdAt": "2026-03-24T20:46:41.109Z"
+    },
+    {
+      "id": "cmn534vjy001y26g21wii5dyd",
+      "name": "Lakers Badge",
+      "nameKey": "sticker.lakers_badge",
+      "imageUrl": "/stickers/basketball-lakers.png",
+      "sport": "basketball",
+      "team": "Los Angeles Lakers",
+      "rarity": "rare",
+      "createdAt": "2026-03-24T20:46:41.086Z"
+    },
+    {
+      "id": "cmn534vjm001t26g2mpj849gp",
+      "name": "Athletic Club Crest",
+      "nameKey": "sticker.athletic_club_crest",
+      "imageUrl": "/stickers/football-athletic.png",
+      "sport": "football",
+      "team": "Athletic Club",
+      "rarity": "rare",
+      "createdAt": "2026-03-24T20:46:41.075Z"
+    },
+    {
+      "id": "cmn534vji001r26g2qs7jdin9",
+      "name": "Atletico Madrid Crest",
+      "nameKey": "sticker.atletico_madrid_crest",
+      "imageUrl": "/stickers/football-atletico.png",
+      "sport": "football",
+      "team": "Atlético de Madrid",
+      "rarity": "rare",
+      "createdAt": "2026-03-24T20:46:41.070Z"
+    },
+    {
+      "id": "cmn534vjg001q26g2s1nkspdv",
+      "name": "Barcelona Crest",
+      "nameKey": "sticker.barcelona_crest",
+      "imageUrl": "/stickers/football-barcelona.png",
+      "sport": "football",
+      "team": "Barcelona",
+      "rarity": "rare",
+      "createdAt": "2026-03-24T20:46:41.068Z"
+    },
+    {
+      "id": "cmn534vjv001x26g2zy8s7fw4",
+      "name": "Real Betis Crest",
+      "nameKey": "sticker.real_betis_crest",
+      "imageUrl": "/stickers/football-betis.png",
+      "sport": "football",
+      "team": "Real Betis",
+      "rarity": "rare",
+      "createdAt": "2026-03-24T20:46:41.084Z"
+    },
+    {
+      "id": "cmn534vjd001p26g2oqx8gsc8",
+      "name": "Real Madrid Crest",
+      "nameKey": "sticker.real_madrid_crest",
+      "imageUrl": "/stickers/football-real_madrid.png",
+      "sport": "football",
+      "team": "Real Madrid",
+      "rarity": "rare",
+      "createdAt": "2026-03-24T20:46:41.066Z"
+    },
+    {
+      "id": "cmn534vjp001u26g2dmu6cy2n",
+      "name": "Real Sociedad Crest",
+      "nameKey": "sticker.real_sociedad_crest",
+      "imageUrl": "/stickers/football-real_sociedad.png",
+      "sport": "football",
+      "team": "Real Sociedad",
+      "rarity": "rare",
+      "createdAt": "2026-03-24T20:46:41.077Z"
+    },
+    {
+      "id": "cmn534vjk001s26g2iv2b377g",
+      "name": "Sevilla Crest",
+      "nameKey": "sticker.sevilla_crest",
+      "imageUrl": "/stickers/football-sevilla.png",
+      "sport": "football",
+      "team": "Sevilla FC",
+      "rarity": "rare",
+      "createdAt": "2026-03-24T20:46:41.072Z"
+    },
+    {
+      "id": "cmn534vjr001v26g2uf2luvwq",
+      "name": "Valencia Crest",
+      "nameKey": "sticker.valencia_crest",
+      "imageUrl": "/stickers/football-valencia.png",
+      "sport": "football",
+      "team": "Valencia CF",
+      "rarity": "rare",
+      "createdAt": "2026-03-24T20:46:41.080Z"
+    },
+    {
+      "id": "cmn534vjt001w26g2069lrto0",
+      "name": "Villarreal Crest",
+      "nameKey": "sticker.villarreal_crest",
+      "imageUrl": "/stickers/football-villarreal.png",
+      "sport": "football",
+      "team": "Villarreal",
+      "rarity": "rare",
+      "createdAt": "2026-03-24T20:46:41.082Z"
+    }
+  ],
+  "total": 36
+}

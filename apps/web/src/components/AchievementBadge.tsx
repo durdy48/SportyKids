@@ -18,13 +18,13 @@ export function AchievementBadge({ achievement, unlocked, locale }: AchievementB
     <div
       className={`flex items-center gap-3 rounded-xl px-4 py-3 border transition-colors ${
         unlocked
-          ? 'bg-white border-[var(--color-green)]/30 shadow-sm'
-          : 'bg-gray-50 border-gray-200 opacity-60'
+          ? 'bg-[var(--color-surface)] border-[var(--color-green)]/30 shadow-sm'
+          : 'bg-[var(--color-background)] border-[var(--color-border)] opacity-60'
       }`}
     >
       <div
         className={`w-10 h-10 rounded-full flex items-center justify-center text-lg ${
-          unlocked ? 'bg-[var(--color-green)]/10' : 'bg-gray-200'
+          unlocked ? 'bg-[var(--color-green)]/10' : 'bg-[var(--color-border)]'
         }`}
       >
         {unlocked ? achievement.icon : '🔒'}
@@ -32,12 +32,12 @@ export function AchievementBadge({ achievement, unlocked, locale }: AchievementB
       <div className="flex-1 min-w-0">
         <p
           className={`text-sm font-semibold truncate ${
-            unlocked ? 'text-[var(--color-text)]' : 'text-gray-400'
+            unlocked ? 'text-[var(--color-text)]' : 'text-[var(--color-muted)]'
           }`}
         >
           {unlocked ? name : t('collection.locked', locale)}
         </p>
-        <p className="text-xs text-gray-400 truncate">{unlocked ? description : '???'}</p>
+        <p className="text-xs text-[var(--color-muted)] truncate">{unlocked ? description : '???'}</p>
       </div>
       {unlocked && (
         <span className="text-[var(--color-green)] text-sm">&#10003;</span>

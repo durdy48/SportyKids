@@ -8,6 +8,7 @@ import { verifyPin, setupParentalPin, getParentalProfile } from '@/lib/api';
 import { useUser } from '@/lib/user-context';
 import { PinInput } from '@/components/PinInput';
 import { ParentalPanel } from '@/components/ParentalPanel';
+import { ParentalTour } from '@/components/ParentalTour';
 
 type State = 'loading' | 'create-pin' | 'confirm-pin' | 'verify-pin' | 'panel';
 
@@ -87,7 +88,7 @@ export default function ParentsPage() {
   if (userLoading || !user || state === 'loading') return null;
 
   return (
-    <div>
+    <div className="page-enter">
       {state === 'create-pin' && (
         <PinInput
           title={t('parental.create_pin', locale)}
@@ -120,7 +121,10 @@ export default function ParentsPage() {
       )}
 
       {state === 'panel' && profile && (
-        <ParentalPanel profile={profile} />
+        <>
+          <ParentalTour />
+          <ParentalPanel profile={profile} />
+        </>
       )}
     </div>
   );

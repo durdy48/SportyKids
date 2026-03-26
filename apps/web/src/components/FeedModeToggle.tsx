@@ -19,15 +19,15 @@ const MODES: { key: FeedMode; icon: string; labelKey: string }[] = [
 
 export function FeedModeToggle({ mode, onChange, locale }: FeedModeToggleProps) {
   return (
-    <div className="inline-flex items-center bg-gray-100 rounded-full p-1 gap-1">
+    <div className="inline-flex items-center bg-[var(--color-background)] rounded-full p-1 gap-1">
       {MODES.map(({ key, icon, labelKey }) => (
         <button
           key={key}
           onClick={() => onChange(key)}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
             mode === key
-              ? 'bg-white text-[var(--color-text)] shadow-sm'
-              : 'text-gray-500 hover:text-gray-700'
+              ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'
+              : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
           }`}
         >
           <span>{icon}</span>

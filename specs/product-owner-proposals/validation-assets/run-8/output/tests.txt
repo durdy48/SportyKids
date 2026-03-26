@@ -1,0 +1,11 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+[1m[46m RUN [49m[22m [36mv4.1.1 [39m[90m/Users/antonioduarteruiz/personal/sportykids/apps/api[39m
+
+
+[2m Test Files [22m [1m[32m14 passed[39m[22m[90m (14)[39m
+[2m      Tests [22m [1m[32m136 passed[39m[22m[90m (136)[39m
+[2m   Start at [22m 23:56:36
+[2m   Duration [22m 1.19s[2m (transform 859ms, setup 0ms, import 1.87s, tests 1.29s, environment 1ms)[22m
+

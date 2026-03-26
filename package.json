@@ -13,9 +13,15 @@
     "build:web": "npm run build --workspace=apps/web",
     "lint": "eslint . --ext .ts,.tsx",
     "db:migrate": "npm run db:migrate --workspace=apps/api",
-    "db:generate": "npm run db:generate --workspace=apps/api"
+    "db:generate": "npm run db:generate --workspace=apps/api",
+    "test": "npm run test --workspace=apps/api",
+    "test:api": "npm run test --workspace=apps/api"
   },
   "engines": {
     "node": ">=20"
+  },
+  "devDependencies": {
+    "@types/supertest": "^7.2.0",
+    "supertest": "^7.2.2"
   }
 }

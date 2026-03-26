@@ -132,6 +132,7 @@
     "tab_restrictions": "Restrictions",
     "tab_activity": "Activity",
     "tab_pin": "PIN",
+    "tab_digest": "Digest",
     "daily_usage": "Daily usage (minutes)",
     "average_daily": "Daily average",
     "limit_alerts": "Limit alerts",
@@ -152,6 +153,17 @@
     "day_fri": "F",
     "day_sat": "S",
     "day_sun": "S"
+  },
+  "restrictions": {
+    "time_limits": "Time limits",
+    "total_limit": "Total daily limit",
+    "per_type": "Or set per content type:",
+    "news_limit": "News limit",
+    "reels_limit": "Reels limit",
+    "quiz_limit": "Quiz limit",
+    "per_type_tip": "Per-type limits override the total. Set 0 for no limit.",
+    "minutes": "{n} min",
+    "no_specific_limit": "No specific limit"
   },
   "limit": {
     "reached_title": "See you tomorrow!",
@@ -264,5 +276,190 @@
     "points_earned": "+{{points}} points",
     "sticker_earned": "New sticker!",
     "perfect_quiz": "Perfect quiz!"
+  },
+  "search": {
+    "placeholder": "Search news...",
+    "no_results": "We couldn't find news about \"{query}\"",
+    "suggested": "Popular searches",
+    "clear": "Clear"
+  },
+  "favorites": {
+    "title": "Saved",
+    "empty": "You haven't saved any news yet",
+    "save": "Save",
+    "unsave": "Remove from saved",
+    "see_all": "See all"
+  },
+  "preview": {
+    "title": "Preview: {name}'s feed",
+    "description": "This is exactly what your child sees with current restrictions.",
+    "button": "See what {name} sees",
+    "quiz_available": "Quiz: Available",
+    "quiz_blocked": "Quiz: Blocked",
+    "no_content": "No content with current restrictions.",
+    "close": "Close",
+    "news_section": "News",
+    "reels_section": "Reels"
+  },
+  "news": {
+    "trending": "Trending"
+  },
+  "report": {
+    "flag": "Report",
+    "why": "Why are you reporting this?",
+    "inappropriate": "Inappropriate",
+    "scary": "Scary",
+    "confusing": "Confusing",
+    "other": "Other",
+    "send": "Send report",
+    "sent": "Report sent",
+    "error": "Error sending",
+    "title": "Content Reports",
+    "pending_count": "{count} pending",
+    "mark_reviewed": "Mark reviewed",
+    "dismiss": "Dismiss",
+    "reviewed": "Reviewed",
+    "dismissed": "Dismissed"
+  },
+  "mission": {
+    "read_news": "Read {target} news articles",
+    "read_news_desc": "Read {target} sports news today to earn a reward!",
+    "watch_reels": "Watch {target} reels",
+    "watch_reels_desc": "Watch {target} sports videos today!",
+    "quiz_master": "Answer {target} quiz questions correctly",
+    "quiz_master_desc": "Get {target} correct answers in the quiz!",
+    "quiz_perfect": "Get a perfect quiz round",
+    "quiz_perfect_desc": "Answer all questions correctly in one round!",
+    "read_and_quiz": "Read news and play quiz",
+    "read_and_quiz_desc": "Read some news and play a quiz today!",
+    "multi_sport": "Explore {target} different sports",
+    "multi_sport_desc": "Read news from {target} different sports today!",
+    "streak_keeper": "Keep your streak alive",
+    "streak_keeper_desc": "Log in today to maintain your streak!",
+    "first_report": "Report content",
+    "first_report_desc": "Report something that doesn't seem right!",
+    "today": "Today's Mission",
+    "completed": "Mission completed!",
+    "claim": "Claim reward",
+    "claimed": "Reward claimed!",
+    "progress": "{progress} of {target}"
+  },
+  "empty": {
+    "news_title": "No news yet",
+    "news_description": "Try changing the filters",
+    "stickers_title": "Your collection is empty",
+    "stickers_description": "Play the quiz to earn your first stickers",
+    "stickers_cta": "Play the quiz",
+    "quiz_title": "Loading questions...",
+    "team_title": "Choose your favorite team",
+    "team_description": "Select a team to see their news and stats",
+    "reels_title": "No videos available",
+    "reels_description": "Try a different sport",
+    "search_title": "No results",
+    "search_description": "Try different keywords"
+  },
+  "digest": {
+    "title": "Weekly Digest",
+    "enable": "Enable weekly digest",
+    "email_label": "Email (optional)",
+    "email_placeholder": "parent@email.com",
+    "send_on": "Send on",
+    "preview": "Preview this week's digest",
+    "download_pdf": "Download PDF",
+    "no_email_note": "Without email, digest is available as PDF download.",
+    "days": {
+      "0": "Sun",
+      "1": "Mon",
+      "2": "Tue",
+      "3": "Wed",
+      "4": "Thu",
+      "5": "Fri",
+      "6": "Sat"
+    }
+  },
+  "theme": {
+    "toggle": "Toggle theme",
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Create account",
+    "email": "Email",
+    "password": "Password",
+    "name": "Name",
+    "continue_anonymous": "Continue without account",
+    "role_parent": "I'm a parent",
+    "role_child": "I'm a kid",
+    "login_error": "Invalid email or password",
+    "register_error": "Could not create account",
+    "logout": "Log out",
+    "upgrade_prompt": "Create an account to save your progress"
+  },
+  "history": {
+    "title": "Recently Read",
+    "empty": "You haven't read any articles yet",
+    "see_all": "See all"
+  },
+  "related": {
+    "title": "You might also like",
+    "empty": "No related articles"
+  },
+  "schedule": {
+    "title": "Usage Schedule",
+    "start_time": "Start time",
+    "end_time": "End time",
+    "timezone": "Timezone",
+    "locked_title": "Time to rest!",
+    "locked_message": "SportyKids is available from {start}:00 to {end}:00. Come back later!",
+    "all_day": "All day"
+  },
+  "kid_errors": {
+    "network_title": "Oops! The ball went out of bounds!",
+    "network_message": "We can't reach the server right now. Check your internet and try again!",
+    "not_found_title": "Goal missed!",
+    "not_found_message": "We couldn't find what you were looking for. Try something else!",
+    "server_title": "Halftime break!",
+    "server_message": "Our servers are taking a quick break. Try again in a moment!",
+    "timeout_title": "The referee blew the whistle!",
+    "timeout_message": "That took too long. Let's try again!",
+    "empty_title": "Empty stadium!",
+    "empty_message": "Nothing here yet. Try different filters or come back later!",
+    "offline_title": "No signal!",
+    "offline_message": "You're offline. Connect to the internet to see the latest news!",
+    "schedule_locked_title": "Time to rest!",
+    "schedule_locked_message": "SportyKids is sleeping now. Come back during the day!",
+    "generic_title": "Foul play!",
+    "generic_message": "Something went wrong. Let's try again!",
+    "retry": "Try again"
+  },
+  "offline": {
+    "banner": "You're offline. Showing saved articles.",
+    "saved_count": "{count} articles available offline",
+    "save_for_offline": "Save for offline"
+  },
+  "tour": {
+    "step1_title": "Welcome to Parental Controls!",
+    "step1_message": "Here you can manage your child's content, set time limits, and review activity.",
+    "step2_title": "Set Time Limits",
+    "step2_message": "Control daily screen time and set bedtime schedules.",
+    "step3_title": "Review Activity",
+    "step3_message": "Check weekly reports and get digest summaries.",
+    "next": "Next",
+    "done": "Got it!",
+    "skip": "Skip tour"
+  },
+  "push": {
+    "quiz_ready_title": "Today's quiz is ready!",
+    "quiz_ready_body": "Test your sports knowledge today.",
+    "team_news_title": "{team} news",
+    "team_news_body": "There's new news about your favorite team.",
+    "streak_warning_title": "Don't lose your streak!",
+    "streak_warning_body": "You're on a {days}-day streak. Open SportyKids to keep it!",
+    "sticker_earned_title": "New sticker!",
+    "sticker_earned_body": "You earned a {rarity} sticker: {name}",
+    "mission_ready_title": "Today's mission is ready!",
+    "mission_ready_body": "Complete your mission for a {rarity} sticker."
   }
 }

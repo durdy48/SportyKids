@@ -1,0 +1,225 @@
+{
+  "achievements": [
+    {
+      "id": "cmn534vlb002m26g2100t6wdz",
+      "key": "all_sports",
+      "nameKey": "achievement.all_sports",
+      "descriptionKey": "achievement.all_sports_desc",
+      "icon": "🌍",
+      "threshold": 5,
+      "type": "all_sports",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.136Z"
+    },
+    {
+      "id": "cmn534vlj002q26g2msawp86s",
+      "key": "daily_login_7",
+      "nameKey": "achievement.daily_login_7",
+      "descriptionKey": "achievement.daily_login_7_desc",
+      "icon": "📅",
+      "threshold": 7,
+      "type": "daily_login",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.143Z"
+    },
+    {
+      "id": "cmn534vko002926g2ojhsd5qc",
+      "key": "first_read",
+      "nameKey": "achievement.first_read",
+      "descriptionKey": "achievement.first_read_desc",
+      "icon": "📰",
+      "threshold": 1,
+      "type": "news_read",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.112Z"
+    },
+    {
+      "id": "cmn534vkq002a26g2m5m2x6rb",
+      "key": "news_10",
+      "nameKey": "achievement.news_10",
+      "descriptionKey": "achievement.news_10_desc",
+      "icon": "📚",
+      "threshold": 10,
+      "type": "news_read",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.114Z"
+    },
+    {
+      "id": "cmn534vkr002b26g2gt326b4m",
+      "key": "news_50",
+      "nameKey": "achievement.news_50",
+      "descriptionKey": "achievement.news_50_desc",
+      "icon": "🗞️",
+      "threshold": 50,
+      "type": "news_read",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.116Z"
+    },
+    {
+      "id": "cmn534vkt002c26g27rqa6z9p",
+      "key": "news_100",
+      "nameKey": "achievement.news_100",
+      "descriptionKey": "achievement.news_100_desc",
+      "icon": "🏆",
+      "threshold": 100,
+      "type": "news_read",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.118Z"
+    },
+    {
+      "id": "cmn534vll002r26g2elz3kvmc",
+      "key": "points_500",
+      "nameKey": "achievement.points_500",
+      "descriptionKey": "achievement.points_500_desc",
+      "icon": "⭐",
+      "threshold": 500,
+      "type": "points",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.145Z"
+    },
+    {
+      "id": "cmn534vln002s26g2en81ukix",
+      "key": "points_1000",
+      "nameKey": "achievement.points_1000",
+      "descriptionKey": "achievement.points_1000_desc",
+      "icon": "🌟",
+      "threshold": 1000,
+      "type": "points",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.147Z"
+    },
+    {
+      "id": "cmn534vl1002g26g2o836hi28",
+      "key": "quiz_perfect",
+      "nameKey": "achievement.quiz_perfect",
+      "descriptionKey": "achievement.quiz_perfect_desc",
+      "icon": "💯",
+      "threshold": 1,
+      "type": "quiz_perfect",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.125Z"
+    },
+    {
+      "id": "cmn534vl3002h26g2twrc7qd7",
+      "key": "quiz_10_perfect",
+      "nameKey": "achievement.quiz_10_perfect",
+      "descriptionKey": "achievement.quiz_10_perfect_desc",
+      "icon": "🧠",
+      "threshold": 10,
+      "type": "quiz_perfect",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.127Z"
+    },
+    {
+      "id": "cmn534vkz002f26g2fr241q69",
+      "key": "first_quiz",
+      "nameKey": "achievement.first_quiz",
+      "descriptionKey": "achievement.first_quiz_desc",
+      "icon": "❓",
+      "threshold": 1,
+      "type": "quizzes_played",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.124Z"
+    },
+    {
+      "id": "cmn534vkv002d26g2zsd0ueb5",
+      "key": "first_reel",
+      "nameKey": "achievement.first_reel",
+      "descriptionKey": "achievement.first_reel_desc",
+      "icon": "🎬",
+      "threshold": 1,
+      "type": "reels_watched",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.120Z"
+    },
+    {
+      "id": "cmn534vkx002e26g2jjjg80tm",
+      "key": "reels_20",
+      "nameKey": "achievement.reels_20",
+      "descriptionKey": "achievement.reels_20_desc",
+      "icon": "📹",
+      "threshold": 20,
+      "type": "reels_watched",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.121Z"
+    },
+    {
+      "id": "cmn534vld002n26g2w0o463ly",
+      "key": "first_sticker",
+      "nameKey": "achievement.first_sticker",
+      "descriptionKey": "achievement.first_sticker_desc",
+      "icon": "🏷️",
+      "threshold": 1,
+      "type": "stickers_collected",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.138Z"
+    },
+    {
+      "id": "cmn534vlf002o26g2g0dzamoq",
+      "key": "stickers_10",
+      "nameKey": "achievement.stickers_10",
+      "descriptionKey": "achievement.stickers_10_desc",
+      "icon": "🎯",
+      "threshold": 10,
+      "type": "stickers_collected",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.140Z"
+    },
+    {
+      "id": "cmn534vlh002p26g2lzzps6lw",
+      "key": "stickers_25",
+      "nameKey": "achievement.stickers_25",
+      "descriptionKey": "achievement.stickers_25_desc",
+      "icon": "💎",
+      "threshold": 25,
+      "type": "stickers_collected",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.142Z"
+    },
+    {
+      "id": "cmn534vl4002i26g2m29ppoy4",
+      "key": "streak_3",
+      "nameKey": "achievement.streak_3",
+      "descriptionKey": "achievement.streak_3_desc",
+      "icon": "🔥",
+      "threshold": 3,
+      "type": "streak",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.129Z"
+    },
+    {
+      "id": "cmn534vl6002j26g2ibv6e9ad",
+      "key": "streak_7",
+      "nameKey": "achievement.streak_7",
+      "descriptionKey": "achievement.streak_7_desc",
+      "icon": "🔥",
+      "threshold": 7,
+      "type": "streak",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.131Z"
+    },
+    {
+      "id": "cmn534vl8002k26g259c03t2o",
+      "key": "streak_14",
+      "nameKey": "achievement.streak_14",
+      "descriptionKey": "achievement.streak_14_desc",
+      "icon": "🔥",
+      "threshold": 14,
+      "type": "streak",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.132Z"
+    },
+    {
+      "id": "cmn534vla002l26g2oll1zlup",
+      "key": "streak_30",
+      "nameKey": "achievement.streak_30",
+      "descriptionKey": "achievement.streak_30_desc",
+      "icon": "🌟",
+      "threshold": 30,
+      "type": "streak",
+      "rewardStickerId": null,
+      "createdAt": "2026-03-24T20:46:41.134Z"
+    }
+  ],
+  "total": 20
+}

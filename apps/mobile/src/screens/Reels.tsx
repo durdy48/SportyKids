@@ -9,6 +9,7 @@ import type { Reel } from '@sportykids/shared';
 import { SPORTS, COLORS, sportToEmoji, t, getSportLabel } from '@sportykids/shared';
 import { fetchReels } from '../lib/api';
 import { useUser } from '../lib/user-context';
+import { SkeletonPlaceholder } from '../components/SkeletonPlaceholder';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const REEL_HEIGHT = SCREEN_HEIGHT - 160;
@@ -103,7 +104,11 @@ export function ReelsScreen() {
       />
 
       {loading ? (
-        <ActivityIndicator size="large" color={COLORS.blue} style={{ flex: 1 }} />
+        <View style={{ flex: 1, padding: 8, gap: 16 }}>
+          <SkeletonPlaceholder width="100%" height={REEL_HEIGHT * 0.7} borderRadius={16} />
+          <SkeletonPlaceholder width="75%" height={18} borderRadius={8} />
+          <SkeletonPlaceholder width="40%" height={14} borderRadius={8} />
+        </View>
       ) : (
         <FlatList
           data={reels}

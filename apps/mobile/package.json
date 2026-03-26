@@ -16,6 +16,8 @@
     "@react-navigation/native-stack": "^7.14.7",
     "@sportykids/shared": "*",
     "expo": "^54.0.33",
+    "expo-device": "^55.0.10",
+    "expo-notifications": "^55.0.13",
     "expo-status-bar": "^55.0.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

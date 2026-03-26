@@ -1,4 +1,6 @@
 import { prisma } from '../config/database';
+import { safeJsonParse } from '../utils/safe-json-parse';
+import { checkMissionProgress } from './mission-generator';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -168,6 +170,9 @@ export async function checkAndUpdateStreak(userId: string): Promise<StreakResult
   // Evaluate achievements
   newAchievements = await evaluateAchievements(userId);
 
+  // Check daily mission progress for check-in
+  await checkMissionProgress(userId, 'check_in');
+
   return {
     currentStreak: result.currentStreak,
     longestStreak: result.longestStreak,
@@ -187,21 +192,19 @@ export async function awardSticker(
   source: string,
   rarity?: string,
 ): Promise<AwardedSticker | null> {
-  // Get sticker IDs the user already owns
-  const ownedStickers = await prisma.userSticker.findMany({
+  // Find available stickers not already owned using NOT IN subquery
+  const ownedIds = (await prisma.userSticker.findMany({
     where: { userId },
     select: { stickerId: true },
-  });
-  const ownedIds = ownedStickers.map((us) => us.stickerId);
+  })).map((us) => us.stickerId);
 
-  // Find available stickers not already owned (optionally filtered by rarity)
   const where: Record<string, unknown> = {};
   if (rarity) where.rarity = rarity;
   if (ownedIds.length > 0) {
     where.id = { notIn: ownedIds };
   }
 
-  const available = await prisma.sticker.findMany({ where });
+  const available = await prisma.sticker.findMany({ where, take: 50 });
 
   if (available.length === 0) return null;
 
@@ -222,7 +225,7 @@ export async function awardSticker(
     return null;
   }
 
-  return {
+  const awarded: AwardedSticker = {
     id: picked.id,
     name: picked.name,
     nameKey: picked.nameKey,
@@ -230,6 +233,39 @@ export async function awardSticker(
     sport: picked.sport,
     rarity: picked.rarity,
   };
+
+  // Send push notification (non-blocking, uses user locale)
+  Promise.all([import('./push-sender'), import('@sportykids/shared'), import('../config/database')])
+    .then(async ([{ sendPushToUser }, { t }, { prisma: db }]) => {
+      const u = await db.user.findUnique({ where: { id: userId }, select: { locale: true } });
+      const locale = (u?.locale === 'en' ? 'en' : 'es') as 'es' | 'en';
+      await sendPushToUser(userId, {
+        title: t('push.sticker_earned_title', locale),
+        body: t('push.sticker_earned_body', locale)
+          .replace('{rarity}', picked.rarity)
+          .replace('{name}', picked.name),
+        data: { screen: 'Collection' },
+      });
+    })
+    .catch(() => {}); // Non-blocking
+
+  return awarded;
+}
+
+// ---------------------------------------------------------------------------
+// Achievement definition cache (60s TTL to reduce DB overhead)
+// ---------------------------------------------------------------------------
+
+let achievementCache: { data: Array<Record<string, unknown>>; fetchedAt: number } | null = null;
+const ACHIEVEMENT_CACHE_TTL = 60_000;
+
+async function getCachedAchievements() {
+  if (achievementCache && Date.now() - achievementCache.fetchedAt < ACHIEVEMENT_CACHE_TTL) {
+    return achievementCache.data;
+  }
+  const data = await prisma.achievement.findMany();
+  achievementCache = { data, fetchedAt: Date.now() };
+  return data;
 }
 
 // ---------------------------------------------------------------------------
@@ -264,16 +300,11 @@ export async function evaluateAchievements(userId: string): Promise<UnlockedAchi
   const stickerCount = await prisma.userSticker.count({ where: { userId } });
 
   // Count distinct sports from activity (we approximate via news items viewed)
-  let favoriteSports: string[] = [];
-  try {
-    favoriteSports = JSON.parse(user.favoriteSports);
-  } catch {
-    // Invalid JSON — default to empty array
-  }
+  const favoriteSports: string[] = safeJsonParse(user.favoriteSports, []);
   const distinctSportsCount = favoriteSports.length;
 
-  // Get all achievements and user's already-unlocked ones
-  const allAchievements = await prisma.achievement.findMany();
+  // Get all achievements (cached) and user's already-unlocked ones
+  const allAchievements = await getCachedAchievements();
   const unlockedAchievements = await prisma.userAchievement.findMany({
     where: { userId },
     select: { achievementId: true },

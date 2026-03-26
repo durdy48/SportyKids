@@ -147,17 +147,101 @@ gantt
 **Decision**: New PINs use bcrypt. On verification, if a legacy SHA-256 hash is detected and the PIN is correct, it is transparently re-hashed with bcrypt.
 **Advantage**: Zero-downtime migration, no data migration script needed.
 
+### 13. JWT authentication with non-blocking middleware (B-TF3)
+**Context**: The MVP had no real authentication; users were identified by ID only.
+**Decision**: Implement JWT access tokens (15-min TTL) + refresh tokens (7 days, rotated). Auth middleware is non-blocking to maintain backward compatibility with anonymous users.
+**Advantage**: Secures user accounts while keeping the anonymous onboarding flow intact. Refresh token rotation prevents token reuse attacks.
+
+### 14. Expo push notifications with expo-server-sdk (B-MP5)
+**Context**: Notification preferences were stored but never delivered.
+**Decision**: Use `expo-server-sdk` to deliver push notifications to Expo-managed mobile apps. Five trigger types cover the main engagement use cases.
+**Trade-off**: Only works with Expo-managed apps (not bare React Native). Acceptable for the current Expo SDK 54 setup.
+
 ### 12. Server-side parental enforcement (M5)
 **Context**: MVP enforced parental restrictions only on the frontend (hiding tabs).
 **Decision**: Add parental guard middleware that enforces restrictions at the API level.
 **Advantage**: Cannot be bypassed by direct API calls or modified frontends.
 
+## Product Owner Proposals — Sprint 1-2 (completed)
+
+| ID | Item | Status |
+|----|------|--------|
+| B-TF2 | Fix critical code review issues | Done — 7 critical fixes, 8 warning fixes |
+| B-MP2 | Centralize API_BASE in mobile | Done — `apps/mobile/src/config.ts` with 3 environments |
+| B-UX1 | Skeleton loading | Done — 5 web + 3 mobile skeleton components |
+| B-CP1 | Search functionality | Done — `?q=` param on API, SearchBar web + mobile |
+| B-TF1 | Test infrastructure | Done — Vitest + 4 test files + 36 tests |
+| B-UX2 | Celebration animations | Done — canvas-confetti, 4 celebration types |
+| B-UX3 | Page transitions | Done — CSS fade-in/slide-up on 6 pages |
+| B-UX5 | Empty states | Done — EmptyState with 6 SVG illustrations |
+| B-UX6 | PIN visual feedback | Done — pin-pop and pin-shake CSS animations |
+| B-EN2 | Favorites/bookmarks | Done — localStorage/AsyncStorage, heart on NewsCard |
+| B-EN3 | Trending badge | Done — API endpoint, trending pill on NewsCard |
+
+Key new files:
+- `apps/api/src/utils/safe-json-parse.ts` — Generic safe JSON parser with fallback
+- `apps/api/src/utils/url-validator.ts` — SSRF prevention, validates public URLs
+- `apps/web/src/components/SearchBar.tsx` — Debounced search with suggestions
+- `apps/web/src/components/EmptyState.tsx` — 6 SVG illustrations with CTAs
+- `apps/web/src/lib/celebrations.ts` — Confetti functions
+- `apps/web/src/lib/favorites.ts` — localStorage favorites
+- `apps/mobile/src/config.ts` — Centralized API config
+
+## Product Owner Proposals — Sprint 3-4 (completed)
+
+| ID | Item | Status |
+|----|------|--------|
+| B-PT3 | Granular per-type time limits | Done — independent sliders for news/reels/quiz, `maxNewsMinutes`, `maxReelsMinutes`, `maxQuizMinutes` fields on ParentalProfile |
+| B-PT2 | Feed preview for parents | Done — `GET /api/parents/preview/:userId`, `FeedPreviewModal` in parental panel |
+| B-PT5 | Content reports | Done — `ContentReport` model, 3 endpoints (`POST /api/reports`, `GET /api/reports/parent/:userId`, `PUT /api/reports/:reportId`), `ReportButton` and `ContentReportList` components |
+
+Key new files:
+- `apps/api/src/routes/reports.ts` — Content report routes
+- `apps/web/src/components/ReportButton.tsx` — Report dropdown on NewsCard/ReelCard
+- `apps/web/src/components/ContentReportList.tsx` — Report list in parental panel
+- `apps/web/src/components/FeedPreviewModal.tsx` — Feed preview modal for parents
+
+## Product Owner Proposals — Sprint 5-6 (completed)
+
+| ID | Item | Status |
+|----|------|--------|
+| B-PT1 | Weekly Digest (weekly summary for parents) | Done — digest fields on ParentalProfile, 4 endpoints (`PUT/GET /api/parents/digest/:userId`, preview JSON, download PDF), `digest-generator.ts` service, `send-weekly-digests.ts` cron job (08:00 UTC daily), jspdf + nodemailer |
+| B-EN1 | Daily Missions | Done — `DailyMission` model, 2 endpoints (`GET /api/missions/today/:userId`, `POST /api/missions/claim`), `mission-generator.ts` service, `generate-daily-missions.ts` cron job (05:00 UTC), automatic progress via `checkMissionProgress()` |
+| B-UX4 | Dark Mode | Done — `.dark` CSS variables, 3 modes (system/light/dark), NavBar toggle, anti-flash script in layout, localStorage persistence, `UserContext` exposes `theme`/`setTheme`/`resolvedTheme` |
+
+Key new files:
+- `apps/api/src/services/digest-generator.ts` — Digest generator (data, HTML, PDF)
+- `apps/api/src/services/mission-generator.ts` — Daily mission generator and evaluator
+- `apps/api/src/routes/missions.ts` — Daily mission routes
+- `apps/api/src/jobs/send-weekly-digests.ts` — Weekly digest cron job
+- `apps/api/src/jobs/generate-daily-missions.ts` — Daily mission cron job
+- `apps/web/src/components/MissionCard.tsx` — Daily mission card (3 states)
+
+## Product Owner Proposals — Sprint 7-8 (completed)
+
+| ID | Item | Status |
+|----|------|--------|
+| B-TF3 | Authentication (JWT + Email/Password) | Done — `/api/auth/` routes (register, login, refresh, logout, me, upgrade, link-child), JWT access tokens (15min) + refresh tokens (7 days, rotated), bcrypt password hashing, non-blocking auth middleware, new Prisma models (`RefreshToken`, User fields: `email`, `passwordHash`, `authProvider`, `role`, `parentUserId`), mobile Login/Register screens, web auth lib |
+| B-MP1 | Mobile Feature Parity (RSS Catalog + Check-in) | Done — `RssCatalog` mobile screen (browse/toggle RSS sources by sport), `StreakCounter` component on HomeFeed header, enhanced check-in (Alert on sticker/achievement, loads streak on init), gear icon on HomeFeed navigates to RssCatalog |
+| B-MP5 | Push Notifications (Complete) | Done — `PushToken` Prisma model, `expo-server-sdk` for Expo push delivery, 5 push triggers (quiz ready, team news, streak reminder at 20:00 UTC, sticker earned, mission ready), mobile push registration via `expo-notifications`, deep linking on notification tap, streak reminder cron job, `User.locale` field for per-user localization |
+
+Key new files:
+- `apps/api/src/routes/auth.ts` — Authentication routes (register, login, refresh, logout, me, upgrade, link-child)
+- `apps/api/src/middleware/auth.ts` — Non-blocking JWT authentication middleware
+- `apps/api/src/services/push-notifications.ts` — Push notification service (expo-server-sdk)
+- `apps/api/src/jobs/streak-reminder.ts` — Streak reminder cron job (20:00 UTC)
+- `apps/web/src/lib/auth.ts` — Web authentication library (token management)
+- `apps/mobile/src/screens/Login.tsx` — Mobile login screen
+- `apps/mobile/src/screens/Register.tsx` — Mobile register screen
+- `apps/mobile/src/screens/RssCatalog.tsx` — Mobile RSS source catalog screen
+- `apps/mobile/src/components/StreakCounter.tsx` — Streak counter component for HomeFeed header
+
 ## Known technical debt
 
 | Item | Priority | Status | Description |
 |------|----------|--------|-------------|
-| Authentication | High | Pending | Implement JWT or real sessions |
-| Tests | High | Pending | No unit or integration tests |
+| ~~Authentication~~ | ~~High~~ | Done (Sprint 7-8) | ~~Implement JWT or real sessions~~ — JWT + email/password auth with refresh tokens |
+| ~~Tests~~ | ~~High~~ | Started (Sprint 1-2) | ~~No unit or integration tests~~ — Vitest + 36 tests |
 | ~~PIN hash~~ | ~~Medium~~ | Done (M5) | ~~Change SHA-256 to bcrypt~~ |
 | ~~Server-side validation~~ | ~~Medium~~ | Done (M5) | ~~Parental restrictions enforced only on frontend~~ |
 | News images | Low | Pending | Many news items lack images (limited RSS feeds) |
@@ -166,9 +250,11 @@ gantt
 | ~~Gamification~~ | ~~Medium~~ | Done (M4) | ~~Trading cards, badges, streaks~~ |
 | ~~Auto-generated quizzes~~ | ~~Medium~~ | Done (M3) | ~~Quizzes generated from news~~ |
 | ~~Content moderation~~ | ~~High~~ | Done (M1) | ~~AI safety classification~~ |
+| ~~API_BASE mobile~~ | ~~Low~~ | Done (Sprint 1-2) | ~~Hardcoded IPs in each screen~~ — centralized in config.ts |
+| ~~Critical code review fixes~~ | ~~High~~ | Done (Sprint 1-2) | ~~SSRF, ownership, session auth~~ |
 | PIN lockout | Medium | Pending | No lockout after failed PIN attempts |
 | Rate limiting | Medium | Pending | No API rate limiting |
-| Push notifications | Low | Pending | Preferences stored but notifications not sent |
+| ~~Push notifications~~ | ~~Low~~ | Done (Sprint 7-8) | ~~Preferences stored but notifications not sent~~ — 5 push triggers via expo-server-sdk |
 | API route consistency | Low | Pending | Mix of Spanish and English route paths |
 
 ## Next steps (post-Phase 5)
@@ -176,13 +262,14 @@ gantt
 ### Short term (1-2 weeks)
 - [ ] Internal test with 5-10 families
 - [ ] Fix reported bugs
-- [ ] Add automated tests (unit + integration)
+- [x] Automated tests — Vitest infrastructure + 36 initial tests (Sprint 1-2)
+- [ ] Expand test coverage (integration tests, API routes)
 - [ ] Implement PIN lockout after 5 failed attempts
 - [ ] Add rate limiting to API endpoints
 
 ### Medium term (1-2 months)
-- [ ] Real authentication with JWT
-- [ ] Implement push notifications (use stored preferences)
+- [x] Real authentication with JWT — B-TF3 (Sprint 7-8)
+- [x] Implement push notifications — B-MP5 (Sprint 7-8)
 - [ ] Analytics dashboard for the team
 - [ ] Add more locales (fr, de, pt)
 - [ ] Human review queue for AI-moderated content

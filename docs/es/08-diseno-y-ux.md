@@ -42,6 +42,80 @@ graph LR
 
 ## Componentes clave
 
+### Pantallas de Login y Registro (mobile)
+
+```
+┌─────────────────────────────┐
+│                             │
+│       SportyKids            │
+│       (logo)                │
+│                             │
+│  ┌───────────────────────┐  │
+│  │  Email                │  │
+│  └───────────────────────┘  │
+│  ┌───────────────────────┐  │
+│  │  Contrasena           │  │
+│  └───────────────────────┘  │
+│                             │
+│  ┌─ Iniciar sesion ──────┐  │
+│  └───────────────────────┘  │
+│                             │
+│  No tienes cuenta?          │
+│  Registrate aqui            │
+│                             │
+│  ─── o continuar sin ───    │
+│        cuenta               │
+└─────────────────────────────┘
+```
+
+- Login y registro son pantallas independientes en la app movil
+- Soporte para continuar como usuario anonimo (compatible con el flujo existente)
+- Validacion de email y contrasena con feedback inline
+- Opcion de "upgrade" desde usuario anonimo a cuenta con email
+
+### Contador de racha en Home Feed (`StreakCounter`)
+
+El componente `StreakCounter` se muestra en el header del Home Feed (mobile), junto al icono de configuracion.
+
+```
+┌──────────────────────────────────┐
+│  SportyKids      🔥 5 dias  ⚙   │
+├──────────────────────────────────┤
+│  [Feed content...]               │
+```
+
+- Muestra la racha actual del usuario con icono de fuego
+- Se carga al iniciar la pantalla (`GET /api/gamification/streaks/:userId`)
+- Al hacer check-in, si se gana un sticker o logro, muestra un Alert nativo
+
+### Catalogo RSS (mobile) (`RssCatalog`)
+
+Pantalla accesible desde el icono de engranaje en el Home Feed. Permite explorar y activar/desactivar fuentes RSS por deporte.
+
+```
+┌─────────────────────────────┐
+│  < Fuentes RSS               │
+├─────────────────────────────┤
+│  [Todos] [Futbol] [Basket]  │
+│                              │
+│  ┌────────────────────────┐ │
+│  │ AS - Futbol        [✓] │ │
+│  │ es · ES                 │ │
+│  ├────────────────────────┤ │
+│  │ BBC Sport          [✓] │ │
+│  │ en · GB                 │ │
+│  ├────────────────────────┤ │
+│  │ ESPN Deportes      [ ] │ │
+│  │ es · US                 │ │
+│  └────────────────────────┘ │
+└─────────────────────────────┘
+```
+
+- Filtros por deporte (chips horizontales)
+- Toggle para activar/desactivar cada fuente
+- Muestra idioma y pais de cada fuente
+- Usa `GET /api/news/fuentes/catalogo` para obtener el catalogo
+
 ### Tarjeta de noticia (`NewsCard`)
 ```
 ┌─────────────────────────────┐
@@ -68,6 +142,14 @@ graph LR
 ```
 
 El boton "Explica facil" abre el componente `AgeAdaptedSummary` que muestra un resumen generado por IA adaptado a la edad del nino.
+
+Ademas, cada tarjeta incluye:
+- **Boton de favorito (corazon)**: En la esquina superior derecha. Vacio/gris cuando no esta guardado, relleno/rojo (#EF4444) cuando esta guardado. Animacion de escala al pulsar. Los favoritos se guardan en localStorage (web) / AsyncStorage (mobile), sin backend.
+- **Badge de tendencia**: Pill naranja con icono de fuego que aparece junto a la fecha si la noticia tiene >5 vistas en las ultimas 24h. Texto: "Tendencia" (i18n).
+
+En el modo `headlines` (`HeadlineRow`), se muestra un corazon pequeno al final de la fila y un badge de fuego si es trending.
+
+En la pantalla Home, si hay noticias guardadas, se muestra una **tira horizontal de guardados** (max 5 cards pequenas) debajo del buscador y encima de los filtros, con enlace "Ver todos" si hay mas de 5.
 
 ### Reel card (grid layout)
 ```
@@ -132,6 +214,47 @@ Layout de grid con miniaturas de YouTube, duracion, titulo, iconos de like y sha
 │  └───────────────────────────┘  │
 └─────────────────────────────────┘
 ```
+
+### Boton de reporte (`ReportButton`)
+Dropdown inline en cada NewsCard y ReelCard (icono de bandera). Al pulsar, despliega un menu con razones predefinidas (inapropiado, no es deporte, otro) y un campo opcional de texto. El dropdown se cierra al enviar o al hacer clic fuera.
+
+### Lista de reportes (`ContentReportList`)
+En la pestana de Actividad del panel parental, lista los reportes enviados por el nino con fecha, tipo de contenido, razon y estado (pendiente/revisado/descartado/accionado).
+
+### Modal de preview del feed (`FeedPreviewModal`)
+Modal a pantalla completa que muestra el feed filtrado del hijo. Incluye un banner superior con las restricciones activas (formatos, deportes, limites por tipo). Se abre desde un boton "Ver feed del nino" en el panel parental.
+
+### Tarjeta de mision diaria (`MissionCard`)
+```
+┌─────────────────────────────────┐
+│  Mision del dia                  │
+│  ┌─────────────────────────┐    │
+│  │ Lector curioso           │    │
+│  │ Lee 3 noticias hoy      │    │
+│  │                          │    │
+│  │ ██████████░░░░  2/3      │    │
+│  │                          │    │
+│  │ Recompensa: cromo raro   │    │
+│  │ + 15 puntos              │    │
+│  └─────────────────────────┘    │
+│  [ Reclamar recompensa ]         │
+└─────────────────────────────────┘
+```
+
+3 estados visuales:
+- **En progreso**: barra de progreso animada, boton deshabilitado
+- **Completada**: barra llena verde, boton "Reclamar" habilitado con brillo
+- **Reclamada**: badge de check verde, recompensa mostrada, sin boton
+
+### Pestana Digest en panel parental
+En el panel parental, una pestana adicional "Digest" permite:
+- Toggle para activar/desactivar el digest semanal
+- Campo de email para recibir el resumen
+- Selector de dia de envio (lunes por defecto)
+- Boton "Previsualizar" y "Descargar PDF"
+
+### Sliders de limites por tipo de contenido
+En la pestana de Restricciones del panel parental, tres sliders independientes para limitar minutos diarios de noticias, reels y quiz. Cada slider muestra el valor actual y permite rango de 5-60 minutos (o desactivado). Se complementan con el limite global `maxDailyMinutes`.
 
 ### Panel parental (5 pestanas)
 ```
@@ -216,6 +339,22 @@ Las funciones `sportToColor()` y `sportToEmoji()` de `@sportykids/shared` devuel
 | **Cards** | Tarjeta completa con imagen, resumen, fuente (default) |
 | **Explain** | Cards + boton "Explica facil" para resumen adaptado por edad |
 
+## Animaciones de celebracion
+
+Los eventos de gamificacion disparan animaciones de confeti via `canvas-confetti` (utilidad: `apps/web/src/lib/celebrations.ts`). Todas las animaciones respetan `prefers-reduced-motion`.
+
+| Evento | Animacion | Disparador |
+|--------|-----------|------------|
+| Cromo obtenido | Explosion de confeti (azul/verde/amarillo) | `RewardToast` al montar con tipo `sticker` |
+| Logro desbloqueado | Explosion de confeti bilateral | `RewardToast` al montar con tipo `achievement` |
+| Hito de racha (7/14/30 dias) | Confeti color fuego | Check-in diario en `UserProvider` |
+| Quiz perfecto | Explosion sostenida de estrellas (1.5s) | Todas las preguntas correctas en `QuizGame` |
+
+El componente `RewardToast` tambien incluye animaciones CSS:
+- **toast-enter**: deslizamiento desde abajo (0.4s)
+- **toast-glow**: brillo pulsante para toasts de cromos (1s, se repite 2 veces)
+- **toast-shake**: sacudida horizontal para toasts de logros (0.4s)
+
 ## Responsive
 
 - **Mobile-first**: diseno base para pantallas < 640px
@@ -243,3 +382,25 @@ Todos los textos visibles en la UI se gestionan a traves del sistema i18n (`pack
 - Descripciones de rarezas
 
 Los valores de deporte en el codigo son en ingles (`football`, `basketball`, etc.) y se traducen al idioma del usuario mediante `t('sports.football', locale)`.
+
+## Dark mode
+
+La webapp soporta 3 modos de tema: `system` (por defecto), `light`, `dark`.
+
+### Variables CSS
+
+| Variable | Light | Dark |
+|----------|-------|------|
+| `--color-background` | `#F8FAFC` | `#0F172A` |
+| `--color-text` | `#1E293B` | `#F1F5F9` |
+| `--color-surface` | `#FFFFFF` | `#1E293B` |
+| `--color-border` | `#E5E7EB` | `#334155` |
+| `--color-muted` | `#6B7280` | `#94A3B8` |
+
+### Implementacion
+- La clase `.dark` en `<html>` activa los tokens oscuros
+- Toggle en NavBar: icono sol/luna que cicla system -> dark -> light
+- Preferencia en `localStorage` (`sportykids-theme`)
+- Script inline en `layout.tsx` previene flash de tema incorrecto al cargar
+- `UserContext` expone `theme`, `setTheme`, `resolvedTheme`
+- Escucha cambios de `prefers-color-scheme` en modo system

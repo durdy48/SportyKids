@@ -19,6 +19,125 @@ Verifies that the API is running and checks AI provider availability.
 
 ---
 
+## Authentication
+
+### `POST /api/auth/register`
+Register a new user with email and password.
+
+**Body:**
+```json
+{
+  "email": "parent@example.com",
+  "password": "securePassword123",
+  "name": "Pablo",
+  "role": "child"
+}
+```
+
+**Response:**
+```json
+{
+  "user": { "id": "clx...", "email": "parent@example.com", "name": "Pablo", "role": "child" },
+  "accessToken": "eyJhbG...",
+  "refreshToken": "abc123..."
+}
+```
+
+### `POST /api/auth/login`
+Login with email and password.
+
+**Body:**
+```json
+{
+  "email": "parent@example.com",
+  "password": "securePassword123"
+}
+```
+
+**Response:**
+```json
+{
+  "user": { "id": "clx...", "email": "parent@example.com", "name": "Pablo", "role": "child" },
+  "accessToken": "eyJhbG...",
+  "refreshToken": "abc123..."
+}
+```
+
+### `POST /api/auth/refresh`
+Refresh an expired access token using a valid refresh token. Refresh tokens are rotated on each use.
+
+**Body:**
+```json
+{
+  "refreshToken": "abc123..."
+}
+```
+
+**Response:**
+```json
+{
+  "accessToken": "eyJhbG...",
+  "refreshToken": "newToken123..."
+}
+```
+
+### `POST /api/auth/logout`
+Revoke a refresh token.
+
+**Body:**
+```json
+{
+  "refreshToken": "abc123..."
+}
+```
+
+### `GET /api/auth/me`
+Get the currently authenticated user's profile. Requires a valid access token in the `Authorization: Bearer <token>` header.
+
+**Response:**
+```json
+{
+  "id": "clx...",
+  "email": "parent@example.com",
+  "name": "Pablo",
+  "role": "child"
+}
+```
+
+### `POST /api/auth/upgrade`
+Upgrade an anonymous user to an authenticated account by linking an email and password.
+
+**Body:**
+```json
+{
+  "userId": "clx...",
+  "email": "parent@example.com",
+  "password": "securePassword123"
+}
+```
+
+### `POST /api/auth/link-child`
+Link a child user to a parent account.
+
+**Body:**
+```json
+{
+  "parentUserId": "clx...",
+  "childUserId": "clx..."
+}
+```
+
+> **Note**: The auth middleware is non-blocking -- anonymous users (without a token) can still access the API for backward compatibility. Authenticated requests include the user in `req.user`.
+
+### Token details
+
+| Token | TTL | Storage |
+|-------|-----|---------|
+| Access token (JWT) | 15 minutes | Memory / HTTP header |
+| Refresh token | 7 days | Database (`RefreshToken` model), rotated on each refresh |
+
+---
+
 ## Articles
 
 > **Note**: Several news sub-routes use Spanish paths (`/fuentes/`, `/sincronizar`, `/resumen`). Always verify against `apps/api/src/routes/news.ts`.
@@ -35,6 +154,7 @@ List of articles with filters and pagination. Results are ranked by the feed ran
 | `age` | number | -- | Filter articles appropriate for this age |
 | `source` | string | -- | Filter by source (partial match) |
 | `userId` | string | -- | User ID for personalized feed ranking |
+| `q` | string | -- | Search query (matches title and summary via SQL LIKE) |
 | `mode` | string | `cards` | Display mode: `headlines`, `cards`, `explain` |
 | `page` | number | 1 | Page number |
 | `limit` | number | 20 | Results per page (max 50) |
@@ -86,6 +206,16 @@ Get an age-adapted AI summary of a news article.
   "ageRange": "6-8",
   "locale": "es",
   "newsItemId": "clx..."
+}
+```
+
+### `GET /api/news/trending`
+IDs of trending news (most viewed in the last 24h). Threshold: >5 views.
+
+**Response:**
+```json
+{
+  "trendingIds": ["clx...", "clx..."]
 }
 ```
 
@@ -293,6 +423,26 @@ Update notification preferences.
 ### `GET /api/users/:id/notifications`
 Get current notification preferences.
 
+### `POST /api/users/:id/notifications/subscribe`
+Register a push notification token (Expo push token) for the user.
+
+**Body:**
+```json
+{
+  "pushToken": "ExponentPushToken[xxxxxxxxxxxxxx]"
+}
+```
+
+**Response:**
+```json
+{
+  "success": true,
+  "pushToken": "ExponentPushToken[xxxxxxxxxxxxxx]"
+}
+```
+
+> Push tokens are stored in the `PushToken` model and used by the server to deliver notifications via `expo-server-sdk`.
+
 ---
 
 ## Parental Control
@@ -375,6 +525,187 @@ Log a user action with optional duration and content details.
 }
 ```
 
+### `GET /api/parents/preview/:userId`
+Preview the child's feed with parental restrictions applied. Lets parents see exactly what the child sees.
+
+**Response:**
+```json
+{
+  "news": [ ... ],
+  "reels": [ ... ],
+  "restrictions": {
+    "allowedFormats": ["news", "quiz"],
+    "allowedSports": ["football", "basketball"],
+    "maxNewsMinutes": 20,
+    "maxReelsMinutes": 10,
+    "maxQuizMinutes": 15
+  }
+}
+```
+
+### `PUT /api/parents/digest/:userId`
+Configure weekly digest preferences.
+
+**Body:**
+```json
+{
+  "digestEnabled": true,
+  "digestEmail": "parent@example.com",
+  "digestDay": 1
+}
+```
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `digestEnabled` | boolean | Enable/disable digest |
+| `digestEmail` | string (email) | Email to send digest to (nullable) |
+| `digestDay` | number (0-6) | Day of week (0=Sunday, 1=Monday, ...) |
+
+### `GET /api/parents/digest/:userId`
+Get digest preferences.
+
+**Response:**
+```json
+{
+  "digestEnabled": true,
+  "digestEmail": "parent@example.com",
+  "digestDay": 1
+}
+```
+
+### `GET /api/parents/digest/:userId/preview`
+Preview the digest data as JSON.
+
+**Response:**
+```json
+{
+  "childName": "Pablo",
+  "period": "2026-03-19 — 2026-03-26",
+  "activity": { "news_viewed": 12, "reels_viewed": 5, "quizzes_played": 3, "totalMinutes": 47 },
+  "topSports": ["football", "basketball"],
+  "achievements": [],
+  "streakDays": 5
+}
+```
+
+### `GET /api/parents/digest/:userId/download`
+Download the digest as a PDF file. Returns `Content-Type: application/pdf`.
+
+---
+
+## Daily Missions
+
+### `GET /api/missions/today/:userId`
+Get the user's daily mission. If none exists for today, one is generated automatically.
+
+**Query params:**
+
+| Param | Type | Default | Description |
+|-------|------|---------|-------------|
+| `locale` | string | `es` | Language: `es`, `en` |
+
+**Response:**
+```json
+{
+  "id": "clx...",
+  "userId": "clx...",
+  "date": "2026-03-26",
+  "type": "read_news",
+  "title": "Curious Reader",
+  "description": "Read 3 news articles today",
+  "target": 3,
+  "progress": 1,
+  "completed": false,
+  "rewardType": "sticker",
+  "rewardRarity": "rare",
+  "rewardPoints": 15,
+  "claimed": false
+}
+```
+
+### `POST /api/missions/claim`
+Claim the reward for a completed mission.
+
+**Body:**
+```json
+{ "userId": "clx..." }
+```
+
+**Response:**
+```json
+{
+  "claimed": true,
+  "pointsAwarded": 15,
+  "stickerAwarded": { "id": "clx...", "name": "...", "rarity": "rare" }
+}
+```
+
+---
+
+## Content Reports
+
+### `POST /api/reports`
+Submit a content report (child flags content as inappropriate).
+
+**Body:**
+```json
+{
+  "userId": "clx...",
+  "contentType": "news",
+  "contentId": "clx...",
+  "reason": "inappropriate",
+  "details": "Optional text with more context"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "clx...",
+  "status": "pending",
+  "createdAt": "2026-03-26T10:00:00.000Z"
+}
+```
+
+### `GET /api/reports/parent/:userId`
+Get reports submitted by the child, for parental review.
+
+**Response:**
+```json
+{
+  "reports": [
+    {
+      "id": "clx...",
+      "contentType": "news",
+      "contentId": "clx...",
+      "reason": "inappropriate",
+      "details": null,
+      "status": "pending",
+      "createdAt": "2026-03-26T10:00:00.000Z"
+    }
+  ]
+}
+```
+
+### `PUT /api/reports/:reportId`
+Update a report's status (parental review).
+
+**Body:**
+```json
+{
+  "status": "reviewed"
+}
+```
+
+**Response:**
+```json
+{
+  "id": "clx...",
+  "status": "reviewed",
+  "updatedAt": "2026-03-26T12:00:00.000Z"
+}
+```
+
 ---
 
 ## Gamification
@@ -439,6 +770,42 @@ Get team statistics by team name.
   "updatedAt": "2026-03-24T00:00:00.000Z"
 }
 ```
+
+---
+
+## Data Models (new)
+
+### RefreshToken
+Stores refresh tokens for JWT authentication.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Primary key |
+| `token` | string | Unique refresh token string |
+| `userId` | string | FK to User |
+| `expiresAt` | DateTime | Expiration date (7 days from creation) |
+| `revoked` | boolean | Whether the token has been revoked |
+
+### PushToken
+Stores Expo push notification tokens per user.
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string | Primary key |
+| `userId` | string | FK to User |
+| `token` | string | Expo push token (`ExponentPushToken[...]`) |
+| `createdAt` | DateTime | When the token was registered |
+
+### User (new fields)
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `email` | string? | Email for authentication (nullable for anonymous users) |
+| `passwordHash` | string? | bcrypt-hashed password |
+| `authProvider` | string | Auth provider: `local` or `anonymous` |
+| `role` | string | User role: `child`, `parent`, or `admin` |
+| `parentUserId` | string? | FK to parent User (for linked accounts) |
+| `locale` | string | User locale for per-user localization (default: `es`) |
 
 ---
 

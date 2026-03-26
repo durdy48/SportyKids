@@ -4,8 +4,10 @@ import { useState, useEffect, useMemo } from 'react';
 import type { ParentalProfile } from '@sportykids/shared';
 import { SPORTS, sportToEmoji, t, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
 import type { AgeRange } from '@sportykids/shared';
-import { updateParentalProfile, fetchActivity, fetchActivityDetail, verifyPin, setupParentalPin, updateUser } from '@/lib/api';
+import { updateParentalProfile, fetchActivity, fetchActivityDetail, verifyPin, setupParentalPin, updateUser, getDigestPreferences, updateDigestPreferences, previewDigest, downloadDigestPdf } from '@/lib/api';
 import { useUser } from '@/lib/user-context';
+import { FeedPreviewModal } from './FeedPreviewModal';
+import { ContentReportList } from './ContentReportList';
 
 const FORMATS = [
   { id: 'news', key: 'nav.news', emoji: '\u{1F4F0}' },
@@ -13,9 +15,24 @@ const FORMATS = [
   { id: 'quiz', key: 'nav.quiz', emoji: '\u{1F9E0}' },
 ] as const;
 
-type Tab = 'profile' | 'content' | 'restrictions' | 'activity' | 'pin';
+interface DigestPreview {
+  userName: string;
+  period: { from: string; to: string };
+  totalMinutes: number;
+  dailyAverage: number;
+  byType: { news_viewed: number; reels_viewed: number; quizzes_played: number };
+  topSports: Array<{ sport: string; count: number }>;
+  quizPerformance: { total: number; correctPercent: number; perfectCount: number };
+  moderationBlocked: number;
+  streak: { current: number; longest: number };
+  weekRange?: string;
+  summary?: string;
+  highlights?: string[];
+}
 
-const TABS: Tab[] = ['profile', 'content', 'restrictions', 'activity', 'pin'];
+type Tab = 'profile' | 'content' | 'restrictions' | 'activity' | 'pin' | 'digest';
+
+const TABS: Tab[] = ['profile', 'content', 'restrictions', 'activity', 'pin', 'digest'];
 
 interface ParentalPanelProps {
   profile: ParentalProfile;
@@ -66,6 +83,15 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
   const [confirmPin, setConfirmPin] = useState('');
   const [pinMessage, setPinMessage] = useState('');
   const [pinError, setPinError] = useState('');
+  const [showPreview, setShowPreview] = useState(false);
+
+  // Digest state
+  const [digestEnabled, setDigestEnabled] = useState(false);
+  const [digestEmail, setDigestEmail] = useState('');
+  const [digestDay, setDigestDay] = useState(1);
+  const [digestLoaded, setDigestLoaded] = useState(false);
+  const [digestPreview, setDigestPreview] = useState<DigestPreview | null>(null);
+  const [digestSaving, setDigestSaving] = useState(false);
 
   // Content state
   const [allowedSports, setAllowedSports] = useState<string[]>(
@@ -87,6 +113,59 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
         .catch(console.error);
     }
   }, [user, activeTab, week]);
+
+  // Load digest preferences when tab activates
+  useEffect(() => {
+    if (user && activeTab === 'digest' && !digestLoaded) {
+      getDigestPreferences(user.id)
+        .then((prefs) => {
+          setDigestEnabled(prefs.digestEnabled ?? false);
+          setDigestEmail(prefs.digestEmail ?? '');
+          setDigestDay(prefs.digestDay ?? 1);
+          setDigestLoaded(true);
+        })
+        .catch(() => setDigestLoaded(true));
+    }
+  }, [user, activeTab, digestLoaded]);
+
+  const handleDigestChange = async (data: { digestEnabled?: boolean; digestEmail?: string | null; digestDay?: number }) => {
+    if (!user) return;
+    setDigestSaving(true);
+    try {
+      await updateDigestPreferences(user.id, data);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setDigestSaving(false);
+    }
+  };
+
+  const handleDigestPreview = async () => {
+    if (!user) return;
+    try {
+      const data = await previewDigest(user.id);
+      setDigestPreview(data);
+    } catch (err) {
+      console.error(err);
+    }
+  };
+
+  const handleDigestDownload = async () => {
+    if (!user) return;
+    try {
+      const blob = await downloadDigestPdf(user.id);
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `digest-${user.name}-${new Date().toISOString().split('T')[0]}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const saveProfile = async (data: Partial<ParentalProfile>) => {
     if (!user) return;
@@ -207,25 +286,25 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
           <h2 className="font-[family-name:var(--font-poppins)] text-2xl font-bold text-[var(--color-text)]">
             {'\u{1F512}'} {t('parental.control', locale)}
           </h2>
-          <p className="text-gray-500 text-sm mt-1">
+          <p className="text-[var(--color-muted)] text-sm mt-1">
             {t('parental.manage_content', locale, { name: user?.name ?? '' })}
           </p>
         </div>
         {saving && (
-          <span className="text-xs text-gray-400">{t('buttons.saving', locale)}</span>
+          <span className="text-xs text-[var(--color-muted)]">{t('buttons.saving', locale)}</span>
         )}
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-gray-100 rounded-xl p-1 overflow-x-auto">
+      <div className="flex gap-1 bg-[var(--color-background)] rounded-xl p-1 overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab}
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
               activeTab === tab
-                ? 'bg-white text-[var(--color-blue)] shadow-sm'
-                : 'text-gray-500 hover:text-gray-700'
+                ? 'bg-[var(--color-surface)] text-[var(--color-blue)] shadow-sm'
+                : 'text-[var(--color-muted)] hover:text-[var(--color-text)]'
             }`}
           >
             {t(`parental.tab_${tab}`, locale)}
@@ -235,7 +314,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
 
       {/* Tab: Profile */}
       {activeTab === 'profile' && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+        <div className="bg-[var(--color-surface)] rounded-2xl p-6 shadow-sm border border-[var(--color-border)] space-y-5">
           <div>
             <label className="text-sm font-medium text-[var(--color-text)] block mb-2">
               {t('onboarding.step1_title', locale).replace(/[!?]/g, '')}
@@ -245,7 +324,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                 type="text"
                 value={editName}
                 onChange={(e) => setEditName(e.target.value)}
-                className="flex-1 px-4 py-3 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
+                className="flex-1 px-4 py-3 rounded-xl border border-[var(--color-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
                 maxLength={50}
               />
               <button
@@ -269,7 +348,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                   className={`flex-1 py-3 rounded-xl text-sm font-medium text-center ${
                     user && getAgeRange(user.age) === range
                       ? 'bg-[var(--color-blue)] text-white'
-                      : 'bg-gray-100 text-gray-500'
+                      : 'bg-[var(--color-background)] text-[var(--color-muted)]'
                   }`}
                 >
                   {getAgeRangeLabel(range, locale)}
@@ -283,28 +362,46 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
               <div className="bg-blue-50 rounded-xl p-3 text-center">
                 <p className="text-xl font-bold text-[var(--color-blue)]">{activity.news_viewed}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{t('parental.news_read', locale)}</p>
+                <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('parental.news_read', locale)}</p>
               </div>
               <div className="bg-purple-50 rounded-xl p-3 text-center">
                 <p className="text-xl font-bold text-purple-600">{activity.reels_viewed}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{t('parental.reels_viewed', locale)}</p>
+                <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('parental.reels_viewed', locale)}</p>
               </div>
               <div className="bg-green-50 rounded-xl p-3 text-center">
                 <p className="text-xl font-bold text-[var(--color-green)]">{activity.quizzes_played}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{t('parental.quizzes_played', locale)}</p>
+                <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('parental.quizzes_played', locale)}</p>
               </div>
               <div className="bg-yellow-50 rounded-xl p-3 text-center">
                 <p className="text-xl font-bold text-[var(--color-yellow)]">{activity.totalPoints}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{t('parental.total_points', locale)}</p>
+                <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('parental.total_points', locale)}</p>
               </div>
             </div>
           )}
+
+          {/* Feed preview button */}
+          <button
+            onClick={() => setShowPreview(true)}
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border-2 border-[var(--color-blue)] text-[var(--color-blue)] hover:bg-blue-50 transition-colors"
+          >
+            {'\u{1F441}'} {t('preview.button', locale, { name: user?.name ?? '' })}
+          </button>
         </div>
+      )}
+
+      {/* Feed preview modal */}
+      {showPreview && user && (
+        <FeedPreviewModal
+          userId={user.id}
+          userName={user.name}
+          locale={locale}
+          onClose={() => setShowPreview(false)}
+        />
       )}
 
       {/* Tab: Content */}
       {activeTab === 'content' && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+        <div className="bg-[var(--color-surface)] rounded-2xl p-6 shadow-sm border border-[var(--color-border)] space-y-5">
           <h3 className="font-semibold text-[var(--color-text)]">
             {t('onboarding.step2_title', locale)}
           </h3>
@@ -316,7 +413,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                 className={`py-3 px-4 rounded-xl text-sm font-medium transition-colors ${
                   allowedSports.includes(sport)
                     ? 'bg-[var(--color-green)] text-white'
-                    : 'bg-gray-100 text-gray-500'
+                    : 'bg-[var(--color-background)] text-[var(--color-muted)]'
                 }`}
               >
                 {sportToEmoji(sport)} {getSportLabel(sport, locale)}
@@ -330,7 +427,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
       {activeTab === 'restrictions' && (
         <div className="space-y-5">
           {/* Allowed formats */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-[var(--color-surface)] rounded-2xl p-6 shadow-sm border border-[var(--color-border)]">
             <h3 className="font-semibold text-[var(--color-text)] mb-4">
               {t('parental.allowed_formats', locale)}
             </h3>
@@ -344,7 +441,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-colors ${
                       active
                         ? 'border-[var(--color-green)] bg-green-50'
-                        : 'border-gray-200 bg-gray-50'
+                        : 'border-[var(--color-border)] bg-[var(--color-background)]'
                     }`}
                   >
                     <span className="text-sm font-medium">
@@ -368,10 +465,15 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
           </div>
 
           {/* Max daily time */}
-          <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+          <div className="bg-[var(--color-surface)] rounded-2xl p-6 shadow-sm border border-[var(--color-border)]">
             <h3 className="font-semibold text-[var(--color-text)] mb-4">
-              {t('parental.max_daily_time', locale)}
+              {t('restrictions.time_limits', locale)}
             </h3>
+
+            {/* Total daily limit */}
+            <p className="text-sm text-[var(--color-muted)] mb-3">
+              {t('restrictions.total_limit', locale)}
+            </p>
             <div className="flex gap-3 flex-wrap">
               {[15, 30, 60, 90, 120].map((min) => (
                 <button
@@ -380,7 +482,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                   className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                     profile.maxDailyTimeMinutes === min
                       ? 'bg-[var(--color-blue)] text-white'
-                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      : 'bg-[var(--color-background)] text-[var(--color-muted)] hover:bg-[var(--color-border)]'
                   }`}
                 >
                   {min} min
@@ -391,11 +493,97 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                 className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${
                   !profile.maxDailyTimeMinutes || profile.maxDailyTimeMinutes === 0
                     ? 'bg-[var(--color-blue)] text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    : 'bg-[var(--color-background)] text-[var(--color-muted)] hover:bg-[var(--color-border)]'
                 }`}
               >
                 {t('onboarding.no_limit', locale)}
               </button>
+            </div>
+
+            {/* Per content type limits */}
+            <div className="mt-6 pt-5 border-t border-[var(--color-border)]">
+              <p className="text-sm text-[var(--color-muted)] mb-4">
+                {t('restrictions.per_type', locale)}
+              </p>
+              <div className="space-y-4">
+                {([
+                  { field: 'maxNewsMinutes' as const, label: 'restrictions.news_limit', emoji: '\u{1F4F0}' },
+                  { field: 'maxReelsMinutes' as const, label: 'restrictions.reels_limit', emoji: '\u{1F3AC}' },
+                  { field: 'maxQuizMinutes' as const, label: 'restrictions.quiz_limit', emoji: '\u{1F9E0}' },
+                ] as const).map(({ field, label, emoji }) => {
+                  const value = profile[field] ?? 0;
+                  return (
+                    <div key={field}>
+                      <div className="flex items-center justify-between mb-1">
+                        <span className="text-sm font-medium text-[var(--color-text)]">
+                          {emoji} {t(label, locale)}
+                        </span>
+                        <span className="text-sm text-[var(--color-muted)] min-w-[120px] text-right">
+                          {value === 0
+                            ? t('restrictions.no_specific_limit', locale)
+                            : t('restrictions.minutes', locale, { n: String(value) })}
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={0}
+                        max={120}
+                        step={5}
+                        value={value}
+                        onChange={(e) => {
+                          const num = parseInt(e.target.value, 10);
+                          saveProfile({ [field]: num === 0 ? null : num });
+                        }}
+                        className="w-full h-2 bg-[var(--color-border)] rounded-lg appearance-none cursor-pointer accent-[var(--color-blue)]"
+                      />
+                    </div>
+                  );
+                })}
+              </div>
+              <p className="text-xs text-[var(--color-muted)] mt-3">
+                {t('restrictions.per_type_tip', locale)}
+              </p>
+            </div>
+
+            {/* Schedule lock (B-PT4) */}
+            <div className="border-t border-[var(--color-border)] pt-4 mt-4">
+              <h4 className="font-[family-name:var(--font-poppins)] font-semibold text-[var(--color-text)] mb-3">
+                {t('schedule.title', locale)}
+              </h4>
+              <div className="grid grid-cols-2 gap-4">
+                <label className="text-sm text-[var(--color-muted)]">
+                  {t('schedule.start_time', locale)}
+                  <input
+                    type="number"
+                    min={0}
+                    max={23}
+                    value={profile.allowedHoursStart ?? 7}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (!isNaN(val) && val >= 0 && val <= 23) {
+                        updateParentalProfile(user!.id, { allowedHoursStart: val } as Partial<ParentalProfile>);
+                      }
+                    }}
+                    className="mt-1 w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
+                  />
+                </label>
+                <label className="text-sm text-[var(--color-muted)]">
+                  {t('schedule.end_time', locale)}
+                  <input
+                    type="number"
+                    min={0}
+                    max={24}
+                    value={profile.allowedHoursEnd ?? 21}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value);
+                      if (!isNaN(val) && val >= 0 && val <= 24) {
+                        updateParentalProfile(user!.id, { allowedHoursEnd: val } as Partial<ParentalProfile>);
+                      }
+                    }}
+                    className="mt-1 w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
+                  />
+                </label>
+              </div>
             </div>
           </div>
         </div>
@@ -403,7 +591,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
 
       {/* Tab: Activity */}
       {activeTab === 'activity' && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+        <div className="bg-[var(--color-surface)] rounded-2xl p-6 shadow-sm border border-[var(--color-border)] space-y-5">
           {/* Week navigation */}
           <div className="flex items-center justify-between">
             <button
@@ -418,7 +606,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
             <button
               onClick={() => setWeekOffset((o) => Math.min(0, o + 1))}
               disabled={weekOffset >= 0}
-              className="text-sm text-[var(--color-blue)] hover:underline disabled:text-gray-300 disabled:no-underline"
+              className="text-sm text-[var(--color-blue)] hover:underline disabled:text-[var(--color-border)] disabled:no-underline"
             >
               {t('parental.next_week', locale)}
             </button>
@@ -439,12 +627,12 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                   const minutes = 'totalMinutes' in day ? day.totalMinutes : 0;
                   return (
                     <div key={i} className="flex-1 flex flex-col items-center gap-1">
-                      <span className="text-[10px] text-gray-400">{minutes > 0 ? `${minutes}m` : ''}</span>
+                      <span className="text-[10px] text-[var(--color-muted)]">{minutes > 0 ? `${minutes}m` : ''}</span>
                       <div
                         className="w-full rounded-t-lg bg-[var(--color-blue)] transition-all"
                         style={{ height: `${height}%` }}
                       />
-                      <span className="text-[10px] text-gray-500 font-medium">{DAY_LABELS[i]}</span>
+                      <span className="text-[10px] text-[var(--color-muted)] font-medium">{DAY_LABELS[i]}</span>
                     </div>
                   );
                 }
@@ -456,7 +644,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
           <div className="grid grid-cols-2 gap-4">
             <div className="bg-blue-50 rounded-xl p-4 text-center">
               <p className="text-2xl font-bold text-[var(--color-blue)]">{averageDaily}m</p>
-              <p className="text-xs text-gray-500 mt-1">{t('parental.average_daily', locale)}</p>
+              <p className="text-xs text-[var(--color-muted)] mt-1">{t('parental.average_daily', locale)}</p>
             </div>
             <div className="bg-purple-50 rounded-xl p-4 text-center">
               <p className="text-2xl font-bold text-purple-600">
@@ -464,7 +652,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                   ? getSportLabel(activityDetail.mostViewed, locale)
                   : '-'}
               </p>
-              <p className="text-xs text-gray-500 mt-1">{t('parental.most_viewed', locale)}</p>
+              <p className="text-xs text-[var(--color-muted)] mt-1">{t('parental.most_viewed', locale)}</p>
             </div>
           </div>
 
@@ -479,21 +667,141 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                   <p className="text-lg font-bold text-[var(--color-blue)]">
                     {activityDetail.days.reduce((s, d) => s + d.news_viewed, 0)}
                   </p>
-                  <p className="text-xs text-gray-500">{t('parental.news_read', locale)}</p>
+                  <p className="text-xs text-[var(--color-muted)]">{t('parental.news_read', locale)}</p>
                 </div>
                 <div className="bg-purple-50 rounded-xl p-3 text-center">
                   <p className="text-lg font-bold text-purple-600">
                     {activityDetail.days.reduce((s, d) => s + d.reels_viewed, 0)}
                   </p>
-                  <p className="text-xs text-gray-500">{t('parental.reels_viewed', locale)}</p>
+                  <p className="text-xs text-[var(--color-muted)]">{t('parental.reels_viewed', locale)}</p>
                 </div>
                 <div className="bg-green-50 rounded-xl p-3 text-center">
                   <p className="text-lg font-bold text-[var(--color-green)]">
                     {activityDetail.days.reduce((s, d) => s + d.quizzes_played, 0)}
                   </p>
-                  <p className="text-xs text-gray-500">{t('parental.quizzes_played', locale)}</p>
+                  <p className="text-xs text-[var(--color-muted)]">{t('parental.quizzes_played', locale)}</p>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* Content Reports */}
+          {user && (
+            <div className="pt-4 mt-4 border-t border-[var(--color-border)]">
+              <ContentReportList userId={user.id} locale={locale} />
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Tab: Digest */}
+      {activeTab === 'digest' && (
+        <div className="bg-[var(--color-surface)] rounded-2xl p-6 shadow-sm border border-[var(--color-border)] space-y-5">
+          <h3 className="font-semibold text-[var(--color-text)]">
+            {t('digest.title', locale)}
+          </h3>
+
+          {/* Enable toggle */}
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={digestEnabled}
+              onChange={(e) => {
+                setDigestEnabled(e.target.checked);
+                handleDigestChange({ digestEnabled: e.target.checked });
+              }}
+              className="w-5 h-5 rounded accent-[var(--color-blue)]"
+            />
+            <span className="text-sm font-medium text-[var(--color-text)]">
+              {t('digest.enable', locale)}
+            </span>
+            {digestSaving && <span className="text-xs text-[var(--color-muted)]">{t('buttons.saving', locale)}</span>}
+          </label>
+
+          {digestEnabled && (
+            <div className="space-y-5">
+              {/* Email input */}
+              <div>
+                <label className="text-sm text-[var(--color-muted)] block mb-1">
+                  {t('digest.email_label', locale)}
+                </label>
+                <input
+                  type="email"
+                  value={digestEmail}
+                  onChange={(e) => setDigestEmail(e.target.value)}
+                  onBlur={() => handleDigestChange({ digestEmail: digestEmail.trim() || null })}
+                  placeholder={t('digest.email_placeholder', locale)}
+                  className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
+                />
+                {!digestEmail.trim() && (
+                  <p className="text-xs text-[var(--color-muted)] mt-1">
+                    {t('digest.no_email_note', locale)}
+                  </p>
+                )}
+              </div>
+
+              {/* Day selector */}
+              <div>
+                <label className="text-sm text-[var(--color-muted)] block mb-2">
+                  {t('digest.send_on', locale)}
+                </label>
+                <div className="flex gap-2">
+                  {[1, 2, 3, 4, 5, 6, 0].map((day) => (
+                    <button
+                      key={day}
+                      onClick={() => {
+                        setDigestDay(day);
+                        handleDigestChange({ digestDay: day });
+                      }}
+                      className={`flex-1 py-2 px-1 rounded-lg text-xs font-medium transition-colors ${
+                        digestDay === day
+                          ? 'bg-[var(--color-blue)] text-white'
+                          : 'bg-[var(--color-background)] text-[var(--color-muted)] hover:bg-[var(--color-border)]'
+                      }`}
+                    >
+                      {t(`digest.days.${day}`, locale)}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Action buttons */}
+              <div className="flex gap-3">
+                <button
+                  onClick={handleDigestPreview}
+                  className="flex-1 py-3 rounded-xl text-sm font-medium border-2 border-[var(--color-blue)] text-[var(--color-blue)] hover:bg-blue-50 transition-colors"
+                >
+                  {t('digest.preview', locale)}
+                </button>
+                <button
+                  onClick={handleDigestDownload}
+                  className="flex-1 py-3 rounded-xl text-sm font-medium bg-[var(--color-blue)] text-white hover:bg-blue-700 transition-colors"
+                >
+                  {t('digest.download_pdf', locale)}
+                </button>
+              </div>
+
+              {/* Preview section */}
+              {digestPreview && (
+                <div className="bg-[var(--color-background)] rounded-xl p-4 space-y-3">
+                  <h4 className="text-sm font-semibold text-[var(--color-text)]">
+                    {t('digest.title', locale)} — {digestPreview.weekRange ?? ''}
+                  </h4>
+                  {digestPreview.summary && (
+                    <p className="text-sm text-[var(--color-muted)]">{digestPreview.summary}</p>
+                  )}
+                  {digestPreview.highlights && Array.isArray(digestPreview.highlights) && (
+                    <ul className="text-sm text-[var(--color-text)] space-y-1">
+                      {digestPreview.highlights.map((h: string, i: number) => (
+                        <li key={i} className="flex items-start gap-2">
+                          <span className="text-[var(--color-blue)] mt-0.5">&#8226;</span>
+                          <span>{h}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -501,14 +809,14 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
 
       {/* Tab: PIN */}
       {activeTab === 'pin' && (
-        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+        <div className="bg-[var(--color-surface)] rounded-2xl p-6 shadow-sm border border-[var(--color-border)] space-y-5">
           <h3 className="font-semibold text-[var(--color-text)]">
             {t('parental.change_pin', locale)}
           </h3>
 
           <div className="space-y-4 max-w-xs">
             <div>
-              <label className="text-sm text-gray-500 block mb-1">
+              <label className="text-sm text-[var(--color-muted)] block mb-1">
                 {t('parental.current_pin', locale)}
               </label>
               <input
@@ -517,13 +825,13 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                 maxLength={4}
                 value={currentPin}
                 onChange={(e) => setCurrentPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
+                className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] text-center text-xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
                 placeholder="----"
               />
             </div>
 
             <div>
-              <label className="text-sm text-gray-500 block mb-1">
+              <label className="text-sm text-[var(--color-muted)] block mb-1">
                 {t('parental.new_pin', locale)}
               </label>
               <input
@@ -532,13 +840,13 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                 maxLength={4}
                 value={newPin}
                 onChange={(e) => setNewPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
+                className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] text-center text-xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
                 placeholder="----"
               />
             </div>
 
             <div>
-              <label className="text-sm text-gray-500 block mb-1">
+              <label className="text-sm text-[var(--color-muted)] block mb-1">
                 {t('parental.confirm_pin', locale)}
               </label>
               <input
@@ -547,7 +855,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                 maxLength={4}
                 value={confirmPin}
                 onChange={(e) => setConfirmPin(e.target.value.replace(/\D/g, '').slice(0, 4))}
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
+                className="w-full px-4 py-3 rounded-xl border border-[var(--color-border)] text-center text-xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
                 placeholder="----"
               />
             </div>
