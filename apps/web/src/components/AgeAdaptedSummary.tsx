@@ -51,25 +51,25 @@ export function AgeAdaptedSummary({ newsId, locale, userAge, isOpen }: AgeAdapte
       <div
         className="mt-3"
         style={{
-          background: '#F8FAFC',
-          borderLeft: '3px solid #2563EB',
+          background: 'var(--color-background)',
+          borderLeft: '3px solid var(--color-blue)',
           borderRadius: '8px',
           padding: '12px 16px',
         }}
       >
         {loading && (
           <div className="space-y-2">
-            <div className="h-3 bg-gray-200 rounded animate-pulse w-3/4" />
-            <div className="h-3 bg-gray-200 rounded animate-pulse w-full" />
-            <div className="h-3 bg-gray-200 rounded animate-pulse w-2/3" />
-            <p className="text-xs text-gray-400 mt-2">
+            <div className="h-3 bg-[var(--color-border)] rounded animate-pulse w-3/4" />
+            <div className="h-3 bg-[var(--color-border)] rounded animate-pulse w-full" />
+            <div className="h-3 bg-[var(--color-border)] rounded animate-pulse w-2/3" />
+            <p className="text-xs text-[var(--color-muted)] mt-2">
               {t('summary.loading', locale)}
             </p>
           </div>
         )}
 
         {error && (
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-[var(--color-muted)]">
             {t('summary.error', locale)}
           </p>
         )}
@@ -78,7 +78,7 @@ export function AgeAdaptedSummary({ newsId, locale, userAge, isOpen }: AgeAdapte
           <div>
             <span
               className="inline-block text-xs font-medium text-white px-2 py-0.5 rounded-full mb-2"
-              style={{ backgroundColor: '#22C55E' }}
+              style={{ backgroundColor: 'var(--color-green)' }}
             >
               {t('summary.adapted_for_age', locale, { range: summaryData.ageRange })}
             </span>

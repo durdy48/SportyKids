@@ -1,0 +1,17 @@
+{
+  "collected": 1,
+  "total": 36,
+  "stickers": [
+    {
+      "id": "cmn534vic001a26g2cqtfd9tv",
+      "name": "Basketball Icon",
+      "nameKey": "sticker.basketball_icon",
+      "imageUrl": "/stickers/basketball-icon.png",
+      "sport": "basketball",
+      "team": null,
+      "rarity": "common",
+      "obtainedAt": "2026-03-24T20:51:10.300Z",
+      "source": "daily_login"
+    }
+  ]
+}

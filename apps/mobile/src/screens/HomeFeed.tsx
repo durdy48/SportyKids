@@ -1,14 +1,17 @@
-import { useState, useEffect, useCallback } from 'react';
-import { View, FlatList, ActivityIndicator, Text, StyleSheet, RefreshControl, TouchableOpacity, Alert } from 'react-native';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import { View, FlatList, ActivityIndicator, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
 import type { NewsItem } from '@sportykids/shared';
 import { COLORS, t } from '@sportykids/shared';
-import { fetchNews, fetchNewsSummary } from '../lib/api';
+import { fetchNews, fetchNewsSummary, fetchTrending } from '../lib/api';
+import { BrandedRefreshControl } from '../components/BrandedRefreshControl';
 import { NewsCard } from '../components/NewsCard';
+import { NewsCardSkeleton } from '../components/NewsCardSkeleton';
 import { FiltersBar } from '../components/FiltersBar';
+import { StreakCounter } from '../components/StreakCounter';
 import { useUser } from '../lib/user-context';
 
-export function HomeFeedScreen() {
-  const { user, locale } = useUser();
+export function HomeFeedScreen({ navigation }: { navigation: any }) {
+  const { user, locale, streakInfo } = useUser();
   const [news, setNews] = useState<NewsItem[]>([]);
   const [activeSport, setActiveSport] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -17,12 +20,33 @@ export function HomeFeedScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [expandedSummaries, setExpandedSummaries] = useState<Record<string, string>>({});
   const [loadingSummary, setLoadingSummary] = useState<string | null>(null);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchInput, setSearchInput] = useState('');
+  const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [trendingIds, setTrendingIds] = useState<Set<string>>(new Set());
+
+  const handleSearchChange = useCallback((text: string) => {
+    setSearchInput(text);
+    if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    searchTimerRef.current = setTimeout(() => {
+      setSearchQuery(text.trim());
+      setPage(1);
+    }, 300);
+  }, []);
+
+  useEffect(() => {
+    fetchTrending().then((res) => setTrendingIds(new Set(res.trendingIds)));
+    return () => {
+      if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
+    };
+  }, []);
 
   const loadNews = useCallback(async (p: number, accumulate: boolean = false) => {
     try {
       const result = await fetchNews({
         sport: activeSport ?? undefined,
         userId: user?.id,
+        q: searchQuery || undefined,
         page: p,
         limit: 20,
       });
@@ -34,7 +58,7 @@ export function HomeFeedScreen() {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeSport, user?.id]);
+  }, [activeSport, user?.id, searchQuery]);
 
   useEffect(() => {
     setLoading(true);
@@ -82,7 +106,7 @@ export function HomeFeedScreen() {
 
   const renderItem = ({ item }: { item: NewsItem }) => (
     <View>
-      <NewsCard item={item} />
+      <NewsCard item={item} isTrending={trendingIds.has(item.id)} />
       <View style={styles.explainRow}>
         <TouchableOpacity
           style={styles.explainButton}
@@ -114,25 +138,73 @@ export function HomeFeedScreen() {
         renderItem={renderItem}
         ListHeaderComponent={
           <View style={styles.header}>
-            <Text style={styles.title}>{t('home.latest_news', locale)}</Text>
-            <Text style={styles.subtitle}>
-              {user ? t('feed.personalized', locale) : t('home.subtitle', locale)}
-            </Text>
+            <View style={styles.titleRow}>
+              <View style={{ flex: 1 }}>
+                <Text style={styles.title}>{t('home.latest_news', locale)}</Text>
+                <Text style={styles.subtitle}>
+                  {user ? t('feed.personalized', locale) : t('home.subtitle', locale)}
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => navigation.navigate('RssCatalog')}
+                style={styles.settingsButton}
+              >
+                <Text style={styles.settingsIcon}>{'\u2699\uFE0F'}</Text>
+              </TouchableOpacity>
+            </View>
+            {streakInfo && streakInfo.currentStreak > 0 && (
+              <StreakCounter
+                currentStreak={streakInfo.currentStreak}
+                longestStreak={streakInfo.longestStreak}
+                locale={locale}
+              />
+            )}
+            {/* Search bar */}
+            <View style={styles.searchContainer}>
+              <Text style={styles.searchIcon}>{'\u{1F50D}'}</Text>
+              <TextInput
+                style={styles.searchInput}
+                value={searchInput}
+                onChangeText={handleSearchChange}
+                placeholder={t('search.placeholder', locale)}
+                placeholderTextColor="#9CA3AF"
+                returnKeyType="search"
+                clearButtonMode="while-editing"
+              />
+              {searchInput.length > 0 && (
+                <TouchableOpacity
+                  onPress={() => { setSearchInput(''); setSearchQuery(''); setPage(1); }}
+                  style={styles.searchClear}
+                >
+                  <Text style={styles.searchClearText}>{'\u2715'}</Text>
+                </TouchableOpacity>
+              )}
+            </View>
             <FiltersBar activeSport={activeSport} onSportChange={setActiveSport} />
           </View>
         }
         ListEmptyComponent={
           !loading ? (
             <View style={styles.empty}>
-              <Text style={styles.emptyEmoji}>🏟️</Text>
-              <Text style={styles.emptyText}>{t('home.no_news', locale)}</Text>
+              <Text style={styles.emptyEmoji}>{searchQuery ? '\u{1F50D}' : '\u{1F3DF}\uFE0F'}</Text>
+              <Text style={styles.emptyText}>
+                {searchQuery
+                  ? t('search.no_results', locale).replace('{query}', searchQuery)
+                  : t('home.no_news', locale)}
+              </Text>
             </View>
           ) : null
         }
         ListFooterComponent={
-          loading ? <ActivityIndicator size="large" color={COLORS.blue} style={{ padding: 20 }} /> : null
+          loading ? (
+            <View>
+              {Array.from({ length: news.length === 0 ? 4 : 1 }).map((_, i) => (
+                <NewsCardSkeleton key={i} />
+              ))}
+            </View>
+          ) : null
         }
-        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={COLORS.blue} />}
+        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         contentContainerStyle={{ paddingBottom: 20 }}
@@ -161,6 +233,52 @@ const styles = StyleSheet.create({
     color: '#9CA3AF',
     marginTop: 4,
     marginBottom: 12,
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    marginBottom: 4,
+  },
+  settingsButton: {
+    padding: 8,
+    marginTop: 2,
+  },
+  settingsIcon: {
+    fontSize: 22,
+  },
+  searchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF',
+    borderRadius: 24,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    paddingHorizontal: 12,
+    marginBottom: 12,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.05,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  searchIcon: {
+    fontSize: 14,
+    marginRight: 8,
+  },
+  searchInput: {
+    flex: 1,
+    height: 40,
+    fontSize: 14,
+    color: '#1E293B',
+  },
+  searchClear: {
+    padding: 4,
+    marginLeft: 4,
+  },
+  searchClearText: {
+    fontSize: 14,
+    color: '#9CA3AF',
   },
   empty: {
     alignItems: 'center',

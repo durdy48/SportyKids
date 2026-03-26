@@ -10,6 +10,7 @@ import {
 import { t, sportToEmoji, getSportLabel, SPORTS, COLORS } from '@sportykids/shared';
 import type { Sticker, UserSticker, Achievement, UserAchievement } from '@sportykids/shared';
 import { useUser } from '../lib/user-context';
+import { SkeletonPlaceholder } from '../components/SkeletonPlaceholder';
 import {
   getStickers,
   getUserStickers,
@@ -96,8 +97,22 @@ export function CollectionScreen() {
 
   if (userLoading || loadingData) {
     return (
-      <View style={styles.centered}>
-        <ActivityIndicator size="large" color={COLORS.blue} />
+      <View style={styles.container}>
+        <View style={[styles.content, { gap: 12 }]}>
+          {/* Header skeleton */}
+          <SkeletonPlaceholder width="60%" height={24} borderRadius={8} />
+          <SkeletonPlaceholder width="40%" height={14} borderRadius={6} />
+          {/* Progress bar skeleton */}
+          <SkeletonPlaceholder width="100%" height={10} borderRadius={5} />
+          {/* Grid skeleton */}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 8 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <View key={i} style={{ width: '47%' }}>
+                <SkeletonPlaceholder width="100%" height={120} borderRadius={12} />
+              </View>
+            ))}
+          </View>
+        </View>
       </View>
     );
   }

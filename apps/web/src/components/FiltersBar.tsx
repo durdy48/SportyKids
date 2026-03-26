@@ -21,7 +21,7 @@ export function FiltersBar({ activeSport, activeAge, onSportChange, onAgeChange,
           className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
             !activeSport
               ? 'bg-[var(--color-blue)] text-white'
-              : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              : 'bg-[var(--color-surface)] text-[var(--color-muted)] hover:bg-[var(--color-background)] border border-[var(--color-border)]'
           }`}
         >
           {t('filters.all', locale)}
@@ -33,7 +33,7 @@ export function FiltersBar({ activeSport, activeAge, onSportChange, onAgeChange,
             className={`shrink-0 px-4 py-2 rounded-full text-sm font-medium transition-colors ${
               sport === activeSport
                 ? 'bg-[var(--color-blue)] text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                : 'bg-[var(--color-surface)] text-[var(--color-muted)] hover:bg-[var(--color-background)] border border-[var(--color-border)]'
             }`}
           >
             {sportToEmoji(sport)} {getSportLabel(sport, locale)}
@@ -43,13 +43,13 @@ export function FiltersBar({ activeSport, activeAge, onSportChange, onAgeChange,
 
       {/* Age filter */}
       <div className="flex gap-2">
-        <span className="text-sm text-gray-500 py-2">{t('filters.age', locale)}</span>
+        <span className="text-sm text-[var(--color-muted)] py-2">{t('filters.age', locale)}</span>
         <button
           onClick={() => onAgeChange(null)}
           className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
             !activeAge
               ? 'bg-[var(--color-green)] text-white'
-              : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+              : 'bg-[var(--color-surface)] text-[var(--color-muted)] hover:bg-[var(--color-background)] border border-[var(--color-border)]'
           }`}
         >
           {t('filters.all_ages', locale)}
@@ -61,7 +61,7 @@ export function FiltersBar({ activeSport, activeAge, onSportChange, onAgeChange,
             className={`px-3 py-1.5 rounded-full text-xs font-medium transition-colors ${
               range === activeAge
                 ? 'bg-[var(--color-green)] text-white'
-                : 'bg-white text-gray-600 hover:bg-gray-100 border border-gray-200'
+                : 'bg-[var(--color-surface)] text-[var(--color-muted)] hover:bg-[var(--color-background)] border border-[var(--color-border)]'
             }`}
           >
             {getAgeRangeLabel(range, locale)}

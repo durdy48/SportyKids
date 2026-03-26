@@ -4,12 +4,18 @@ import { createContext, useContext, useState, useEffect, useCallback, type React
 import type { User, ParentalProfile } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
 import { getUser, getParentalProfile, checkIn } from './api';
+import { celebrateSticker, celebrateAchievement, celebrateStreak } from './celebrations';
+
+type Theme = 'system' | 'light' | 'dark';
 
 interface UserContextType {
   user: User | null;
   parentalProfile: ParentalProfile | null;
   loading: boolean;
   locale: Locale;
+  theme: Theme;
+  setTheme: (theme: Theme) => void;
+  resolvedTheme: 'light' | 'dark';
   setUser: (user: User) => void;
   setParentalProfile: (profile: ParentalProfile) => void;
   reloadParentalProfile: () => Promise<void>;
@@ -22,6 +28,9 @@ const UserContext = createContext<UserContextType>({
   parentalProfile: null,
   loading: true,
   locale: 'es',
+  theme: 'system',
+  setTheme: () => {},
+  resolvedTheme: 'light',
   setUser: () => {},
   setParentalProfile: () => {},
   reloadParentalProfile: async () => {},
@@ -32,12 +41,29 @@ const UserContext = createContext<UserContextType>({
 const STORAGE_KEY = 'sportykids_usuario_id';
 const LOCALE_KEY = 'sportykids_locale';
 const CHECKIN_DATE_KEY = 'sportykids_last_checkin';
+const THEME_KEY = 'sportykids-theme';
+
+function getSystemTheme(): 'light' | 'dark' {
+  if (typeof window === 'undefined') return 'light';
+  return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+}
+
+function applyThemeClass(resolved: 'light' | 'dark') {
+  if (typeof document === 'undefined') return;
+  if (resolved === 'dark') {
+    document.documentElement.classList.add('dark');
+  } else {
+    document.documentElement.classList.remove('dark');
+  }
+}
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [parentalProfile, setParentalProfileState] = useState<ParentalProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [locale, setLocaleState] = useState<Locale>('es');
+  const [theme, setThemeState] = useState<Theme>('system');
+  const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
 
   const loadParentalProfile = useCallback(async (userId: string) => {
     try {
@@ -48,6 +74,31 @@ export function UserProvider({ children }: { children: ReactNode }) {
     } catch {
       // No parental profile — that's fine
     }
+  }, []);
+
+  // Theme initialization and system preference listener
+  useEffect(() => {
+    const savedTheme = localStorage.getItem(THEME_KEY) as Theme | null;
+    const currentTheme = savedTheme === 'light' || savedTheme === 'dark' || savedTheme === 'system'
+      ? savedTheme
+      : 'system';
+    setThemeState(currentTheme);
+
+    const resolved = currentTheme === 'system' ? getSystemTheme() : currentTheme;
+    setResolvedTheme(resolved);
+    applyThemeClass(resolved);
+
+    const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+    const handleChange = () => {
+      const stored = localStorage.getItem(THEME_KEY) as Theme | null;
+      if (!stored || stored === 'system') {
+        const newResolved = getSystemTheme();
+        setResolvedTheme(newResolved);
+        applyThemeClass(newResolved);
+      }
+    };
+    mediaQuery.addEventListener('change', handleChange);
+    return () => mediaQuery.removeEventListener('change', handleChange);
   }, []);
 
   useEffect(() => {
@@ -71,8 +122,20 @@ export function UserProvider({ children }: { children: ReactNode }) {
         const lastCheckIn = localStorage.getItem(CHECKIN_DATE_KEY);
         if (lastCheckIn !== today) {
           try {
-            await checkIn(u.id);
+            const checkInResult = await checkIn(u.id);
             localStorage.setItem(CHECKIN_DATE_KEY, today);
+
+            // Trigger celebration animations based on check-in rewards
+            if (checkInResult.dailyStickerAwarded) {
+              celebrateSticker();
+            }
+            if (checkInResult.newAchievements.length > 0) {
+              celebrateAchievement();
+            }
+            const streakMilestones = [7, 14, 30];
+            if (streakMilestones.includes(checkInResult.currentStreak)) {
+              celebrateStreak(checkInResult.currentStreak);
+            }
           } catch {
             // Check-in endpoint may not be available yet — ignore
           }
@@ -95,6 +158,14 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (user) await loadParentalProfile(user.id);
   };
 
+  const setTheme = (t: Theme) => {
+    setThemeState(t);
+    localStorage.setItem(THEME_KEY, t);
+    const resolved = t === 'system' ? getSystemTheme() : t;
+    setResolvedTheme(resolved);
+    applyThemeClass(resolved);
+  };
+
   const setLocale = (l: Locale) => {
     setLocaleState(l);
     localStorage.setItem(LOCALE_KEY, l);
@@ -107,7 +178,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   return (
-    <UserContext.Provider value={{ user, parentalProfile, loading, locale, setUser, setParentalProfile, reloadParentalProfile, setLocale, logout }}>
+    <UserContext.Provider value={{ user, parentalProfile, loading, locale, theme, setTheme, resolvedTheme, setUser, setParentalProfile, reloadParentalProfile, setLocale, logout }}>
       {children}
     </UserContext.Provider>
   );

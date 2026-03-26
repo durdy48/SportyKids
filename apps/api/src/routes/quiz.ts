@@ -3,7 +3,9 @@ import { z } from 'zod';
 import { prisma } from '../config/database';
 import { generateDailyQuiz } from '../jobs/generate-daily-quiz';
 import { awardSticker, evaluateAchievements } from '../services/gamification';
+import { checkMissionProgress } from '../services/mission-generator';
 import { parentalGuard } from '../middleware/parental-guard';
+import { verifyParentalSession } from './parents';
 
 const router = Router();
 
@@ -158,6 +160,14 @@ router.post('/answer', parentalGuard, async (req: Request, res: Response) => {
 
     // Evaluate achievements after point changes
     await evaluateAchievements(userId);
+
+    // Check daily mission progress for correct answer
+    await checkMissionProgress(userId, 'quiz_correct');
+
+    // If perfect streak reached, also track quiz_perfect for missions
+    if (newStreak >= 5) {
+      await checkMissionProgress(userId, 'quiz_perfect');
+    }
   } else {
     // Wrong answer — reset quiz correct streak
     await prisma.user.update({
@@ -202,6 +212,14 @@ const generateSchema = z.object({
 });
 
 router.post('/generate', async (req: Request, res: Response) => {
+  // Require parental session verification
+  const sessionToken = req.headers['x-parental-session'] as string | undefined;
+  const sessionUserId = verifyParentalSession(sessionToken);
+  if (!sessionUserId) {
+    res.status(401).json({ error: 'Parental session required' });
+    return;
+  }
+
   const parsed = generateSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'userId is required' });

@@ -32,6 +32,10 @@ DATABASE_URL="file:./dev.db"
 PORT=3001
 NODE_ENV=development
 
+# JWT (requerido para autenticacion)
+JWT_SECRET=tu-secreto-jwt-aqui
+JWT_REFRESH_SECRET=tu-secreto-refresh-aqui
+
 # AI Provider (opcional - default: ollama)
 AI_PROVIDER=ollama
 # Para OpenRouter:
@@ -83,6 +87,8 @@ Para la app movil (requiere Expo CLI):
 npm run dev:mobile
 ```
 
+La configuracion de la URL del API en mobile esta centralizada en `apps/mobile/src/config.ts` con 3 entornos (dev, preview, production). No hardcodear URLs en screens individuales.
+
 ### Servicios de IA (opcional)
 
 Para habilitar moderacion de contenido, resumenes y quiz dinamicos:
@@ -112,6 +118,8 @@ Sin Ollama, los servicios AI operan en modo **fail-open**: la moderacion aprueba
 | `npm run db:migrate` | Ejecuta migraciones de Prisma |
 | `npm run db:generate` | Regenera el cliente Prisma |
 | `npm run lint` | Ejecuta ESLint en todo el monorepo |
+| `npm run test` | Ejecuta todos los tests del monorepo |
+| `npm run test:api` | Ejecuta tests de la API (Vitest) |
 
 ## Estructura de una nueva ruta API
 
@@ -186,11 +194,43 @@ t('sports.football', 'en');  // -> "Football"
 | `formatearFecha()` | `formatDate()` | `packages/shared/src/utils/` |
 | `truncarTexto()` | `truncateText()` | `packages/shared/src/utils/` |
 
+## Dependencias clave anadidas (Sprint 7-8)
+
+| Paquete | Capa | Uso |
+|---------|------|-----|
+| `jsonwebtoken` | API | Firma y verificacion de JWT (access + refresh tokens) |
+| `expo-server-sdk` | API | Envio de push notifications a dispositivos Expo |
+| `expo-notifications` | Mobile | Registro de push tokens y recepcion de notificaciones |
+| `expo-device` | Mobile | Deteccion de dispositivo fisico (push solo en fisico, no en emulador) |
+
 ## Cron Jobs
 
-El sistema tiene dos jobs programados:
+El sistema tiene los siguientes jobs programados:
 
 | Job | Fichero | Frecuencia | Descripcion |
 |-----|---------|------------|-------------|
 | Sync Feeds | `sync-feeds.ts` | Cada 30 min + al arrancar | Sincroniza feeds RSS, modera contenido |
 | Daily Quiz | `generate-daily-quiz.ts` | 06:00 UTC | Genera preguntas diarias con IA |
+| Daily Missions | `generate-daily-missions.ts` | 05:00 UTC | Genera misiones diarias |
+| Weekly Digests | `send-weekly-digests.ts` | 08:00 UTC diario | Envia digests semanales |
+| Streak Reminder | (push-notifications) | 20:00 UTC diario | Recordatorio de racha a usuarios que no han hecho check-in |
+
+## Tests
+
+El proyecto usa **Vitest** como framework de testing para la API:
+
+```bash
+# Ejecutar todos los tests de la API
+cd apps/api && npx vitest run
+
+# Ejecutar tests en modo watch
+cd apps/api && npx vitest
+```
+
+Ficheros de test existentes:
+- `apps/api/src/utils/safe-json-parse.test.ts` — 6 tests (parser JSON seguro)
+- `apps/api/src/utils/url-validator.test.ts` — 16 tests (validacion SSRF)
+- `apps/api/src/services/gamification.test.ts` — 7 tests (rachas, stickers, logros)
+- `apps/api/src/services/feed-ranker.test.ts` — 7 tests (ranking personalizado)
+
+Configuracion en `apps/api/vitest.config.ts`. Se usa `vi.mock` para Prisma y `vi.useFakeTimers` para tests de tiempo.

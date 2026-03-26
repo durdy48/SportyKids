@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { celebrateSticker, celebrateAchievement } from '@/lib/celebrations';
 
 interface RewardToastProps {
   message: string;
@@ -15,6 +16,13 @@ export function RewardToast({ message, type = 'achievement', onClose }: RewardTo
     // Trigger slide-in
     const showTimer = setTimeout(() => setVisible(true), 50);
 
+    // Fire celebration confetti on mount
+    if (type === 'sticker') {
+      celebrateSticker();
+    } else {
+      celebrateAchievement();
+    }
+
     // Auto-dismiss after 4s
     const dismissTimer = setTimeout(() => {
       setVisible(false);
@@ -25,14 +33,15 @@ export function RewardToast({ message, type = 'achievement', onClose }: RewardTo
       clearTimeout(showTimer);
       clearTimeout(dismissTimer);
     };
-  }, [onClose]);
+  }, [onClose, type]);
 
   const bgColor = type === 'sticker' ? 'bg-[var(--color-yellow)]' : 'bg-[var(--color-green)]';
   const textColor = type === 'sticker' ? 'text-[var(--color-text)]' : 'text-white';
+  const glowOrShake = type === 'sticker' ? 'toast-glow' : 'toast-shake';
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-[100] max-w-sm px-5 py-3 rounded-xl shadow-lg transition-all duration-300 ${bgColor} ${textColor} ${
+      className={`fixed bottom-6 right-6 z-[100] max-w-sm px-5 py-3 rounded-xl shadow-lg transition-all duration-300 toast-enter ${glowOrShake} ${bgColor} ${textColor} ${
         visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       }`}
     >

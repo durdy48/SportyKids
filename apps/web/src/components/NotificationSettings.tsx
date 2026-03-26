@@ -60,7 +60,7 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
   };
 
   return (
-    <div className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 space-y-5">
+    <div className="bg-[var(--color-surface)] rounded-2xl shadow-sm border border-[var(--color-border)] p-6 space-y-5">
       <h3 className="font-[family-name:var(--font-poppins)] text-lg font-semibold text-[var(--color-text)]">
         {t('notifications.title', locale)}
       </h3>
@@ -73,7 +73,7 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
         <button
           onClick={handleToggleEnabled}
           className={`relative w-12 h-7 rounded-full transition-colors ${
-            enabled ? 'bg-[var(--color-blue)]' : 'bg-gray-300'
+            enabled ? 'bg-[var(--color-blue)]' : 'bg-[var(--color-border)]'
           }`}
           aria-label={t('notifications.enable', locale)}
         >
@@ -100,7 +100,7 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
               setPreferences(newPrefs);
               save(enabled, newPrefs);
             }}
-            className="w-5 h-5 rounded border-gray-300 text-[var(--color-blue)] focus:ring-[var(--color-blue)]"
+            className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-blue)] focus:ring-[var(--color-blue)]"
           />
           <span className="text-sm text-[var(--color-text)]">{t('notifications.sports', locale)}</span>
         </label>
@@ -111,7 +111,7 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
             type="checkbox"
             checked={preferences.dailyQuiz}
             onChange={() => handleTogglePref('dailyQuiz')}
-            className="w-5 h-5 rounded border-gray-300 text-[var(--color-blue)] focus:ring-[var(--color-blue)]"
+            className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-blue)] focus:ring-[var(--color-blue)]"
           />
           <span className="text-sm text-[var(--color-text)]">{t('notifications.daily_quiz', locale)}</span>
         </label>
@@ -122,7 +122,7 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
             type="checkbox"
             checked={preferences.teamUpdates}
             onChange={() => handleTogglePref('teamUpdates')}
-            className="w-5 h-5 rounded border-gray-300 text-[var(--color-blue)] focus:ring-[var(--color-blue)]"
+            className="w-5 h-5 rounded border-[var(--color-border)] text-[var(--color-blue)] focus:ring-[var(--color-blue)]"
           />
           <span className="text-sm text-[var(--color-text)]">{t('notifications.team_updates', locale)}</span>
         </label>
@@ -136,12 +136,12 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
       )}
 
       {saving && (
-        <p className="text-sm text-gray-400">{t('buttons.saving', locale)}</p>
+        <p className="text-sm text-[var(--color-muted)]">{t('buttons.saving', locale)}</p>
       )}
 
       {/* Coming soon note */}
       <div className="bg-[var(--color-yellow)]/10 rounded-xl px-4 py-3">
-        <p className="text-xs text-gray-500">
+        <p className="text-xs text-[var(--color-muted)]">
           {'\u{1F514}'} {t('notifications.mvp_note', locale)}
         </p>
       </div>

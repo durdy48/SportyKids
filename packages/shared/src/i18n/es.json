@@ -132,6 +132,7 @@
     "tab_restrictions": "Restricciones",
     "tab_activity": "Actividad",
     "tab_pin": "PIN",
+    "tab_digest": "Resumen",
     "daily_usage": "Uso diario (minutos)",
     "average_daily": "Media diaria",
     "limit_alerts": "Alertas de l\u00edmite",
@@ -152,6 +153,17 @@
     "day_fri": "V",
     "day_sat": "S",
     "day_sun": "D"
+  },
+  "restrictions": {
+    "time_limits": "Límites de tiempo",
+    "total_limit": "Límite diario total",
+    "per_type": "O establece por tipo de contenido:",
+    "news_limit": "Límite de noticias",
+    "reels_limit": "Límite de reels",
+    "quiz_limit": "Límite de quiz",
+    "per_type_tip": "Los límites por tipo prevalecen sobre el total. Pon 0 para sin límite.",
+    "minutes": "{n} min",
+    "no_specific_limit": "Sin límite específico"
   },
   "limit": {
     "reached_title": "\u00a1Hasta ma\u00f1ana!",
@@ -264,5 +276,190 @@
     "points_earned": "+{{points}} puntos",
     "sticker_earned": "¡Nuevo sticker!",
     "perfect_quiz": "¡Quiz perfecto!"
+  },
+  "search": {
+    "placeholder": "Buscar noticias...",
+    "no_results": "No encontramos noticias sobre \"{query}\"",
+    "suggested": "Búsquedas populares",
+    "clear": "Limpiar"
+  },
+  "favorites": {
+    "title": "Guardados",
+    "empty": "Aún no has guardado ninguna noticia",
+    "save": "Guardar",
+    "unsave": "Quitar de guardados",
+    "see_all": "Ver todos"
+  },
+  "preview": {
+    "title": "Vista previa: feed de {name}",
+    "description": "Esto es exactamente lo que ve tu hijo/a con las restricciones actuales.",
+    "button": "Ver lo que ve {name}",
+    "quiz_available": "Quiz: Disponible",
+    "quiz_blocked": "Quiz: Bloqueado",
+    "no_content": "No hay contenido con las restricciones actuales.",
+    "close": "Cerrar",
+    "news_section": "Noticias",
+    "reels_section": "Reels"
+  },
+  "news": {
+    "trending": "Tendencia"
+  },
+  "report": {
+    "flag": "Reportar",
+    "why": "\u00bfPor qu\u00e9 reportas esto?",
+    "inappropriate": "Inapropiado",
+    "scary": "Da miedo",
+    "confusing": "Confuso",
+    "other": "Otro",
+    "send": "Enviar reporte",
+    "sent": "Reporte enviado",
+    "error": "Error al enviar",
+    "title": "Reportes de contenido",
+    "pending_count": "{count} pendientes",
+    "mark_reviewed": "Marcar revisado",
+    "dismiss": "Descartar",
+    "reviewed": "Revisado",
+    "dismissed": "Descartado"
+  },
+  "mission": {
+    "read_news": "Lee {target} noticias",
+    "read_news_desc": "Lee {target} noticias deportivas hoy para ganar una recompensa!",
+    "watch_reels": "Mira {target} reels",
+    "watch_reels_desc": "Mira {target} videos deportivos hoy!",
+    "quiz_master": "Acierta {target} preguntas del quiz",
+    "quiz_master_desc": "Consigue {target} respuestas correctas en el quiz!",
+    "quiz_perfect": "Consigue un quiz perfecto",
+    "quiz_perfect_desc": "Responde todas las preguntas correctamente en una ronda!",
+    "read_and_quiz": "Lee noticias y juega al quiz",
+    "read_and_quiz_desc": "Lee noticias y juega un quiz hoy!",
+    "multi_sport": "Explora {target} deportes diferentes",
+    "multi_sport_desc": "Lee noticias de {target} deportes diferentes hoy!",
+    "streak_keeper": "Mantiene tu racha",
+    "streak_keeper_desc": "Entra hoy para mantener tu racha!",
+    "first_report": "Reporta contenido",
+    "first_report_desc": "Reporta algo que no te parezca bien!",
+    "today": "Mision del Dia",
+    "completed": "Mision completada!",
+    "claim": "Reclamar recompensa",
+    "claimed": "Recompensa reclamada!",
+    "progress": "{progress} de {target}"
+  },
+  "empty": {
+    "news_title": "No hay noticias aún",
+    "news_description": "Prueba cambiando los filtros",
+    "stickers_title": "Tu colección está vacía",
+    "stickers_description": "Juega al quiz para ganar tus primeros cromos",
+    "stickers_cta": "Jugar al quiz",
+    "quiz_title": "Cargando preguntas...",
+    "team_title": "Elige tu equipo favorito",
+    "team_description": "Selecciona un equipo para ver sus noticias y estadísticas",
+    "reels_title": "No hay vídeos disponibles",
+    "reels_description": "Prueba con otro deporte",
+    "search_title": "Sin resultados",
+    "search_description": "Prueba con otras palabras"
+  },
+  "digest": {
+    "title": "Resumen semanal",
+    "enable": "Activar resumen semanal",
+    "email_label": "Email (opcional)",
+    "email_placeholder": "padre@email.com",
+    "send_on": "Enviar el",
+    "preview": "Vista previa del resumen",
+    "download_pdf": "Descargar PDF",
+    "no_email_note": "Sin email, el resumen estará disponible como PDF.",
+    "days": {
+      "0": "Dom",
+      "1": "Lun",
+      "2": "Mar",
+      "3": "Mié",
+      "4": "Jue",
+      "5": "Vie",
+      "6": "Sáb"
+    }
+  },
+  "theme": {
+    "toggle": "Cambiar tema",
+    "light": "Claro",
+    "dark": "Oscuro",
+    "system": "Sistema"
+  },
+  "auth": {
+    "login": "Iniciar sesion",
+    "register": "Crear cuenta",
+    "email": "Correo electronico",
+    "password": "Contrasena",
+    "name": "Nombre",
+    "continue_anonymous": "Continuar sin cuenta",
+    "role_parent": "Soy padre/madre",
+    "role_child": "Soy un nino/a",
+    "login_error": "Email o contrasena incorrectos",
+    "register_error": "No se pudo crear la cuenta",
+    "logout": "Cerrar sesion",
+    "upgrade_prompt": "Crea una cuenta para guardar tu progreso"
+  },
+  "history": {
+    "title": "Leidos recientemente",
+    "empty": "Aun no has leido ningun articulo",
+    "see_all": "Ver todos"
+  },
+  "related": {
+    "title": "Tambien te puede interesar",
+    "empty": "No hay articulos relacionados"
+  },
+  "schedule": {
+    "title": "Horario de uso",
+    "start_time": "Hora de inicio",
+    "end_time": "Hora de fin",
+    "timezone": "Zona horaria",
+    "locked_title": "Hora de descansar!",
+    "locked_message": "SportyKids esta disponible de {start}:00 a {end}:00. Vuelve mas tarde!",
+    "all_day": "Todo el dia"
+  },
+  "kid_errors": {
+    "network_title": "Ups! El balon se fue fuera!",
+    "network_message": "No podemos conectar con el servidor. Revisa tu internet e intenta de nuevo!",
+    "not_found_title": "Gol fallado!",
+    "not_found_message": "No encontramos lo que buscabas. Prueba otra cosa!",
+    "server_title": "Descanso de medio tiempo!",
+    "server_message": "Nuestros servidores estan tomando un descanso. Intenta en un momento!",
+    "timeout_title": "El arbitro pito!",
+    "timeout_message": "Eso tardo demasiado. Vamos a intentar de nuevo!",
+    "empty_title": "Estadio vacio!",
+    "empty_message": "No hay nada aqui todavia. Prueba otros filtros o vuelve mas tarde!",
+    "offline_title": "Sin senal!",
+    "offline_message": "Estas sin conexion. Conectate a internet para ver las ultimas noticias!",
+    "schedule_locked_title": "Hora de descansar!",
+    "schedule_locked_message": "SportyKids esta durmiendo. Vuelve durante el dia!",
+    "generic_title": "Falta!",
+    "generic_message": "Algo salio mal. Vamos a intentar de nuevo!",
+    "retry": "Intentar de nuevo"
+  },
+  "offline": {
+    "banner": "Estas sin conexion. Mostrando articulos guardados.",
+    "saved_count": "{count} articulos disponibles sin conexion",
+    "save_for_offline": "Guardar para leer sin conexion"
+  },
+  "tour": {
+    "step1_title": "Bienvenido al Control Parental!",
+    "step1_message": "Aqui puedes gestionar el contenido de tu hijo/a, establecer limites de tiempo y revisar la actividad.",
+    "step2_title": "Establece limites de tiempo",
+    "step2_message": "Controla el tiempo de pantalla diario y establece horarios.",
+    "step3_title": "Revisa la actividad",
+    "step3_message": "Consulta los informes semanales y recibe resumenes.",
+    "next": "Siguiente",
+    "done": "Entendido!",
+    "skip": "Saltar tour"
+  },
+  "push": {
+    "quiz_ready_title": "Quiz del dia listo!",
+    "quiz_ready_body": "Pon a prueba tus conocimientos deportivos hoy.",
+    "team_news_title": "Noticias de {team}",
+    "team_news_body": "Hay nuevas noticias sobre tu equipo favorito.",
+    "streak_warning_title": "No pierdas tu racha!",
+    "streak_warning_body": "Llevas {days} dias seguidos. Entra hoy para no perderla!",
+    "sticker_earned_title": "Nuevo sticker!",
+    "sticker_earned_body": "Has ganado un sticker {rarity}: {name}",
+    "mission_ready_title": "Mision del dia lista!",
+    "mission_ready_body": "Completa tu mision para ganar un sticker {rarity}."
   }
 }

@@ -5,6 +5,7 @@ import type { Reel } from '@sportykids/shared';
 import { sportToEmoji, getSportLabel, t } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
 import { getLikedReels, toggleLike } from '@/lib/reel-likes';
+import { ReportButton } from './ReportButton';
 
 interface ReelCardProps {
   reel: Reel;
@@ -53,7 +54,7 @@ export function ReelCard({ reel, locale }: ReelCardProps) {
   const thumbnail = reel.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : '');
 
   return (
-    <div className="group rounded-2xl overflow-hidden bg-white shadow-sm hover:shadow-md transition-shadow border border-gray-100">
+    <div className="group rounded-2xl overflow-hidden bg-[var(--color-surface)] shadow-sm hover:shadow-md transition-shadow border border-[var(--color-border)]">
       {/* Video / Thumbnail area */}
       <div className="relative aspect-video bg-gray-900 cursor-pointer" onClick={() => setPlaying(!playing)}>
         {playing ? (
@@ -104,7 +105,7 @@ export function ReelCard({ reel, locale }: ReelCardProps) {
         </h3>
 
         <div className="flex items-center justify-between mt-2">
-          <div className="flex items-center gap-2 text-xs text-gray-400">
+          <div className="flex items-center gap-2 text-xs text-[var(--color-muted)]">
             <span>{reel.source}</span>
             {reel.team && (
               <>
@@ -117,18 +118,19 @@ export function ReelCard({ reel, locale }: ReelCardProps) {
           <div className="flex items-center gap-1">
             <button
               onClick={handleLike}
-              className={`p-1.5 rounded-full transition-colors ${liked ? 'text-red-500' : 'text-gray-400 hover:text-red-400'}`}
+              className={`p-1.5 rounded-full transition-colors ${liked ? 'text-red-500' : 'text-[var(--color-muted)] hover:text-red-400'}`}
               aria-label={t('reels.like', locale)}
             >
               <span className="text-sm">{liked ? '\u2764\uFE0F' : '\u{1F90D}'}</span>
             </button>
             <button
               onClick={handleShare}
-              className="p-1.5 rounded-full text-gray-400 hover:text-[var(--color-blue)] transition-colors"
+              className="p-1.5 rounded-full text-[var(--color-muted)] hover:text-[var(--color-blue)] transition-colors"
               aria-label={t('reels.share', locale)}
             >
               <span className="text-sm">{copied ? '\u2705' : '\u{1F4E4}'}</span>
             </button>
+            <ReportButton contentType="reel" contentId={reel.id} locale={locale} />
           </div>
         </div>
       </div>

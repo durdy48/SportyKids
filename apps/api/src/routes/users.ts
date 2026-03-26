@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/database';
+import { formatUser } from '../utils/format-user';
 
 const router = Router();
 
@@ -84,6 +85,8 @@ const notificationSubscribeSchema = z.object({
     dailyQuiz: z.boolean().default(true),
     teamUpdates: z.boolean().default(true),
   }).optional(),
+  pushToken: z.string().optional(),
+  platform: z.enum(['expo', 'web']).optional(),
 });
 
 router.post('/:id/notifications/subscribe', async (req: Request, res: Response) => {
@@ -99,7 +102,7 @@ router.post('/:id/notifications/subscribe', async (req: Request, res: Response) 
     return;
   }
 
-  const { enabled, preferences } = parsed.data;
+  const { enabled, preferences, pushToken, platform } = parsed.data;
 
   const updated = await prisma.user.update({
     where: { id: req.params.id },
@@ -108,6 +111,23 @@ router.post('/:id/notifications/subscribe', async (req: Request, res: Response) 
       pushPreferences: preferences ? JSON.stringify(preferences) : user.pushPreferences,
     },
   });
+
+  // Upsert push token if provided
+  if (pushToken && platform) {
+    await prisma.pushToken.upsert({
+      where: { token: pushToken },
+      create: { userId: req.params.id, token: pushToken, platform, active: enabled },
+      update: { active: enabled, userId: req.params.id },
+    });
+  }
+
+  // If disabling, deactivate all push tokens for this user
+  if (!enabled) {
+    await prisma.pushToken.updateMany({
+      where: { userId: req.params.id },
+      data: { active: false },
+    });
+  }
 
   res.json({
     pushEnabled: updated.pushEnabled,
@@ -129,13 +149,5 @@ router.get('/:id/notifications', async (req: Request, res: Response) => {
   });
 });
 
-// Converts JSON string fields to arrays for the response
-function formatUser(user: Record<string, unknown>) {
-  return {
-    ...user,
-    favoriteSports: JSON.parse(user.favoriteSports as string),
-    selectedFeeds: JSON.parse(user.selectedFeeds as string),
-  };
-}
 
 export default router;

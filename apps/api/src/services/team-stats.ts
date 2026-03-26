@@ -1,4 +1,5 @@
 import { prisma } from '../config/database';
+import { safeJsonParse } from '../utils/safe-json-parse';
 
 /**
  * Retrieves team statistics from the database.
@@ -12,21 +13,8 @@ export async function getTeamStats(teamName: string) {
   if (!stats) return null;
 
   // Parse JSON fields for the response
-  let recentResults = [];
-  try {
-    recentResults = JSON.parse(stats.recentResults);
-  } catch {
-    // Invalid JSON — default to empty array
-  }
-
-  let nextMatch = null;
-  if (stats.nextMatch) {
-    try {
-      nextMatch = JSON.parse(stats.nextMatch);
-    } catch {
-      // Invalid JSON — default to null
-    }
-  }
+  const recentResults = safeJsonParse(stats.recentResults, []);
+  const nextMatch = safeJsonParse(stats.nextMatch, null);
 
   return {
     ...stats,

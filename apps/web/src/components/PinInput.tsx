@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 
 interface PinInputProps {
   onSubmit: (pin: string) => void;
@@ -9,11 +9,43 @@ interface PinInputProps {
   buttonText?: string;
   loading?: boolean;
   error?: string | null;
+  shake?: boolean;
 }
 
-export function PinInput({ onSubmit, title, subtitle, buttonText = 'Confirm', loading, error }: PinInputProps) {
+export function PinInput({ onSubmit, title, subtitle, buttonText = 'Confirm', loading, error, shake }: PinInputProps) {
   const [digits, setDigits] = useState(['', '', '', '']);
+  const [popIndex, setPopIndex] = useState<number | null>(null);
+  const [shaking, setShaking] = useState(false);
   const refs = [useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null), useRef<HTMLInputElement>(null)];
+
+  const clearInputs = useCallback(() => {
+    setDigits(['', '', '', '']);
+    refs[0].current?.focus();
+  }, []);
+
+  // Handle external shake trigger
+  useEffect(() => {
+    if (shake) {
+      setShaking(true);
+      const timer = setTimeout(() => {
+        setShaking(false);
+        clearInputs();
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [shake, clearInputs]);
+
+  // Handle error-based shake (when error changes to a truthy value)
+  useEffect(() => {
+    if (error) {
+      setShaking(true);
+      const timer = setTimeout(() => {
+        setShaking(false);
+        clearInputs();
+      }, 400);
+      return () => clearTimeout(timer);
+    }
+  }, [error, clearInputs]);
 
   const handleChange = (index: number, value: string) => {
     if (!/^\d?$/.test(value)) return;
@@ -21,8 +53,14 @@ export function PinInput({ onSubmit, title, subtitle, buttonText = 'Confirm', lo
     newDigits[index] = value;
     setDigits(newDigits);
 
-    if (value && index < 3) {
-      refs[index + 1].current?.focus();
+    if (value) {
+      // Trigger pop animation on this digit
+      setPopIndex(index);
+      setTimeout(() => setPopIndex(null), 200);
+
+      if (index < 3) {
+        refs[index + 1].current?.focus();
+      }
     }
   };
 
@@ -36,14 +74,14 @@ export function PinInput({ onSubmit, title, subtitle, buttonText = 'Confirm', lo
   const complete = pin.length === 4;
 
   return (
-    <div className="max-w-sm mx-auto text-center py-12">
-      <span className="text-5xl block mb-4">🔒</span>
+    <div className="max-w-sm mx-auto text-center py-12 page-enter">
+      <span className="text-5xl block mb-4">&#x1F512;</span>
       <h2 className="font-[family-name:var(--font-poppins)] text-2xl font-bold text-[var(--color-text)] mb-2">
         {title}
       </h2>
-      {subtitle && <p className="text-gray-500 text-sm mb-8">{subtitle}</p>}
+      {subtitle && <p className="text-[var(--color-muted)] text-sm mb-8">{subtitle}</p>}
 
-      <div className="flex justify-center gap-4 mb-6">
+      <div className={`flex justify-center gap-4 mb-6 ${shaking ? 'pin-shake' : ''}`}>
         {digits.map((d, i) => (
           <input
             key={i}
@@ -54,7 +92,7 @@ export function PinInput({ onSubmit, title, subtitle, buttonText = 'Confirm', lo
             value={d}
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
-            className="w-14 h-14 text-center text-2xl font-bold rounded-xl border-2 border-gray-200 focus:border-[var(--color-blue)] focus:outline-none transition-colors"
+            className={`w-14 h-14 text-center text-2xl font-bold rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-blue)] focus:outline-none transition-colors ${popIndex === i ? 'pin-pop' : ''}`}
           />
         ))}
       </div>

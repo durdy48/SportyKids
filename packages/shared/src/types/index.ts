@@ -1,7 +1,7 @@
 // Shared types between API, web and mobile
 
 export interface PushPreferences {
-  sports: string[];
+  sports: boolean;
   dailyQuiz: boolean;
   teamUpdates: boolean;
 }
@@ -10,6 +10,10 @@ export interface User {
   id: string;
   name: string;
   age: number;
+  email?: string;
+  authProvider?: string;
+  role?: 'child' | 'parent';
+  parentUserId?: string;
   favoriteSports: string[];
   favoriteTeam?: string;
   selectedFeeds: string[];
@@ -17,6 +21,23 @@ export interface User {
   pushEnabled?: boolean;
   pushPreferences?: PushPreferences;
   createdAt: Date;
+}
+
+export interface AuthResponse {
+  accessToken: string;
+  refreshToken: string;
+  user: User;
+}
+
+export interface LoginRequest {
+  email: string;
+  password: string;
+}
+
+export interface RegisterRequest extends LoginRequest {
+  name: string;
+  age?: number;
+  role?: 'child' | 'parent';
 }
 
 export type SafetyStatus = 'pending' | 'approved' | 'rejected';
@@ -80,6 +101,16 @@ export interface ParentalProfile {
   allowedFeeds: string[];
   allowedFormats: ('news' | 'reels' | 'quiz')[];
   maxDailyTimeMinutes?: number;
+  maxNewsMinutes?: number | null;
+  maxReelsMinutes?: number | null;
+  maxQuizMinutes?: number | null;
+  digestEnabled?: boolean;
+  digestEmail?: string | null;
+  digestDay?: number;
+  lastDigestSentAt?: string;
+  allowedHoursStart?: number;
+  allowedHoursEnd?: number;
+  timezone?: string;
 }
 
 export type AgeRange = '6-8' | '9-11' | '12-14';
@@ -177,6 +208,41 @@ export interface TeamStats {
   topScorer?: string;
   nextMatch?: NextMatch;
   updatedAt: string;
+}
+
+// Content reporting types
+
+export type ReportReason = 'inappropriate' | 'scary' | 'confusing' | 'other';
+export type ReportStatus = 'pending' | 'reviewed' | 'dismissed' | 'actioned';
+
+export interface ContentReport {
+  id: string;
+  userId: string;
+  contentType: 'news' | 'reel';
+  contentId: string;
+  reason: ReportReason;
+  comment?: string;
+  status: ReportStatus;
+  reviewedAt?: string;
+  createdAt: string;
+}
+
+export interface DailyMission {
+  id: string;
+  userId: string;
+  date: string;
+  type: string;
+  title: string;
+  description: string;
+  target: number;
+  progress: number;
+  completed: boolean;
+  completedAt?: string;
+  rewardType: string;
+  rewardRarity?: string;
+  rewardPoints: number;
+  claimed: boolean;
+  claimedAt?: string;
 }
 
 export interface CheckInResponse {
