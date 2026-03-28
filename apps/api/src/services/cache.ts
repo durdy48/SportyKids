@@ -1,12 +1,49 @@
 /**
- * In-memory cache with TTL support for API responses.
+ * Cache system with pluggable providers (InMemory or Redis).
  *
  * Features:
  * - Per-key TTL (time-to-live)
- * - Max entries eviction (LRU-like, evicts oldest)
+ * - Max entries eviction (LRU-like, evicts oldest) — InMemory only
  * - Pattern-based invalidation
  * - Statistics tracking
+ * - CacheProvider interface for swappable backends
+ *
+ * Configuration:
+ *   CACHE_PROVIDER=memory (default) — uses InMemoryCache
+ *   CACHE_PROVIDER=redis            — uses RedisCache (requires REDIS_URL)
  */
+
+// ---------------------------------------------------------------------------
+// CacheProvider interface & CacheStats type
+// ---------------------------------------------------------------------------
+
+export interface CacheStats {
+  size: number;
+  maxEntries: number;
+  hits: number;
+  misses: number;
+  hitRate: string;
+}
+
+/**
+ * Abstract cache provider interface.
+ * All methods may return a Promise (for async backends like Redis)
+ * or a plain value (for sync backends like InMemory).
+ */
+export interface CacheProvider {
+  get<T>(key: string): T | undefined | Promise<T | undefined>;
+  set<T>(key: string, value: T, ttlMs: number): void | Promise<void>;
+  has(key: string): boolean | Promise<boolean>;
+  invalidate(key: string): boolean | Promise<boolean>;
+  invalidatePattern(prefix: string): number | Promise<number>;
+  clear(): void | Promise<void>;
+  readonly size: number | Promise<number>;
+  readonly stats: CacheStats | Promise<CacheStats>;
+}
+
+// ---------------------------------------------------------------------------
+// InMemoryCache
+// ---------------------------------------------------------------------------
 
 interface CacheEntry<T> {
   value: T;
@@ -14,7 +51,7 @@ interface CacheEntry<T> {
   createdAt: number;
 }
 
-export class InMemoryCache {
+export class InMemoryCache implements CacheProvider {
   private store = new Map<string, CacheEntry<unknown>>();
   private maxEntries: number;
   private hits = 0;
@@ -93,7 +130,7 @@ export class InMemoryCache {
     return this.store.size;
   }
 
-  get stats() {
+  get stats(): CacheStats {
     return {
       size: this.store.size,
       maxEntries: this.maxEntries,
@@ -106,8 +143,33 @@ export class InMemoryCache {
   }
 }
 
+// ---------------------------------------------------------------------------
+// Cache factory — picks provider based on CACHE_PROVIDER env var
+// ---------------------------------------------------------------------------
+
+export function createCache(): CacheProvider {
+  const provider = process.env.CACHE_PROVIDER ?? 'memory';
+
+  if (provider === 'redis') {
+    try {
+      // Dynamic import to avoid requiring ioredis when not using Redis
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { RedisCache } = require('./redis-cache');
+      const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
+      const cache = new RedisCache(redisUrl);
+      console.log(`[cache] Using RedisCache at ${redisUrl}`);
+      return cache;
+    } catch (err) {
+      console.warn('[cache] Failed to initialize RedisCache, falling back to InMemoryCache:', (err as Error).message);
+      return new InMemoryCache(10_000);
+    }
+  }
+
+  return new InMemoryCache(10_000);
+}
+
 // Singleton cache instance
-export const apiCache = new InMemoryCache(10_000);
+export const apiCache: CacheProvider = createCache();
 
 // Predefined TTLs (in ms)
 export const CACHE_TTL = {
@@ -134,18 +196,26 @@ export const CACHE_KEYS = {
 
 /**
  * Express middleware factory that caches JSON responses.
+ * Supports both sync (InMemory) and async (Redis) cache providers.
  * Usage: router.get('/path', withCache('prefix:', CACHE_TTL.NEWS), handler)
  */
 import type { Request, Response, NextFunction } from 'express';
 
 export function withCache(keyPrefix: string, ttlMs: number) {
-  return (req: Request, res: Response, next: NextFunction) => {
+  return async (req: Request, res: Response, next: NextFunction) => {
     const cacheKey = keyPrefix + req.originalUrl;
-    const cached = apiCache.get<{ body: unknown; status: number }>(cacheKey);
 
-    if (cached) {
-      res.status(cached.status).json(cached.body);
-      return;
+    try {
+      const cached = await Promise.resolve(
+        apiCache.get<{ body: unknown; status: number }>(cacheKey),
+      );
+
+      if (cached) {
+        res.status(cached.status).json(cached.body);
+        return;
+      }
+    } catch {
+      // Cache read failed — proceed without cache
     }
 
     // Monkey-patch res.json to intercept and cache the response
@@ -154,7 +224,8 @@ export function withCache(keyPrefix: string, ttlMs: number) {
       // Only cache successful responses
       const statusCode = res.statusCode || 200;
       if (statusCode >= 200 && statusCode < 300) {
-        apiCache.set(cacheKey, { body, status: statusCode }, ttlMs);
+        // Fire-and-forget: don't await cache writes to avoid blocking the response
+        Promise.resolve(apiCache.set(cacheKey, { body, status: statusCode }, ttlMs)).catch(() => {});
       }
       return originalJson(body);
     };

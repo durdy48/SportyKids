@@ -18,11 +18,13 @@ import missionRoutes from './routes/missions';
 import authRouter from './routes/auth';
 import { errorHandler } from './middleware/error-handler';
 import { authMiddleware } from './middleware/auth';
+import { authLimiter, pinLimiter, contentLimiter, syncLimiter, defaultLimiter } from './middleware/rate-limiter';
 import { startSyncJob, runManualSync } from './jobs/sync-feeds';
 import { startWeeklyDigestJob } from './jobs/send-weekly-digests';
 import { startDailyMissionsJob } from './jobs/generate-daily-missions';
 import { startStreakReminderJob } from './jobs/streak-reminder';
 import { startTeamStatsSyncJob } from './jobs/sync-team-stats';
+import { startVideoSyncJob, runManualVideoSync } from './jobs/sync-videos';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -31,6 +33,25 @@ const PORT = process.env.PORT || 3001;
 app.use(cors());
 app.use(express.json());
 app.use(authMiddleware);
+
+// Health check (before rate limiters so monitoring is never throttled)
+app.get('/api/health', (_req, res) => {
+  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// Rate limiters — specific tiers before default (defense-in-depth).
+// Note: a request to e.g. /api/news matches both contentLimiter AND defaultLimiter,
+// consuming quota from both. This is intentional as defense-in-depth.
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/register', authLimiter);
+app.use('/api/parents/verify-pin', pinLimiter);
+app.use('/api/news/sync', syncLimiter);
+app.use('/api/reels/sync', syncLimiter);
+app.use('/api/teams/sync', syncLimiter);
+app.use('/api/news', contentLimiter);
+app.use('/api/reels', contentLimiter);
+app.use('/api/quiz', contentLimiter);
+app.use('/api', defaultLimiter);
 
 // Routes
 app.use('/api/auth', authRouter);
@@ -43,11 +64,6 @@ app.use('/api/gamification', gamificationRouter);
 app.use('/api/teams', teamsRouter);
 app.use('/api/reports', reportRoutes);
 app.use('/api/missions', missionRoutes);
-
-// Health check
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 // Global error handler
 app.use(errorHandler);
@@ -73,4 +89,8 @@ app.listen(PORT, () => {
 
   // Schedule daily team stats sync from TheSportsDB
   startTeamStatsSyncJob();
+
+  // Initial video sync on startup + schedule periodic sync
+  runManualVideoSync().catch(console.error);
+  startVideoSyncJob();
 });

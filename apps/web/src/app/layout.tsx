@@ -17,13 +17,13 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: 'SportyKids - Noticias deportivas para niños',
-  description: 'Noticias deportivas personalizadas, vídeos cortos y quizzes interactivos para niños.',
+  title: 'SportyKids - Sports news for kids',
+  description: 'Personalized sports news, short videos and interactive quizzes for kids.',
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="es" className={`${poppins.variable} ${inter.variable}`} suppressHydrationWarning>
+    <html lang="en" className={`${poppins.variable} ${inter.variable}`} suppressHydrationWarning>
       <head>
         <script dangerouslySetInnerHTML={{ __html: `
           (function() {

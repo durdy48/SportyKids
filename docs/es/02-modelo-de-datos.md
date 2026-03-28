@@ -23,6 +23,8 @@ erDiagram
         int streak "dias consecutivos"
         datetime lastActiveDate "nullable"
         string notificationPreferences "JSON, nullable"
+        string locale "es|en, default es"
+        string country "ES|GB|US|FR|IT|DE, default ES"
         datetime createdAt
         datetime updatedAt
     }
@@ -64,9 +66,30 @@ erDiagram
         int minAge
         int maxAge
         int durationSeconds
-        string videoType "youtube|native"
+        string videoType "youtube_embed|instagram_embed|tiktok_embed|mp4"
         string aspectRatio "16:9|9:16|1:1"
         string previewGifUrl "nullable"
+        string rssGuid "unique, nullable"
+        string videoSourceId "nullable"
+        string safetyStatus "approved|rejected|pending"
+        string safetyReason "nullable"
+        datetime moderatedAt "nullable"
+        datetime publishedAt "nullable"
+        datetime createdAt
+    }
+
+    VideoSource {
+        string id PK
+        string name
+        string platform "youtube_channel|youtube_playlist"
+        string feedUrl "unique"
+        string channelId "nullable"
+        string playlistId "nullable"
+        string sport
+        boolean active
+        boolean isCustom
+        string addedBy "nullable"
+        datetime lastSyncedAt "nullable"
         datetime createdAt
     }
 
@@ -94,6 +117,8 @@ erDiagram
         int maxDailyMinutes
         string sessionToken "nullable"
         datetime sessionExpiresAt "nullable"
+        int failedAttempts "default 0"
+        datetime lockedUntil "nullable"
     }
 
     ActivityLog {
@@ -186,9 +211,21 @@ Resumen adaptado por edad de una noticia. Unico por combinacion de `newsItemId` 
 
 ### Reel
 Video corto deportivo. Campos extendidos para soporte de distintos formatos:
-- `videoType`: `youtube` (embed) o `native` (video directo)
+- `videoType`: `youtube_embed`, `instagram_embed`, `tiktok_embed`, `mp4`
 - `aspectRatio`: `16:9`, `9:16` (vertical/stories), `1:1` (cuadrado)
 - `previewGifUrl`: miniatura animada opcional
+- `rssGuid`: identificador unico del video en el feed RSS (para deduplicacion)
+- `videoSourceId`: referencia a la fuente VideoSource que importo el reel
+- `safetyStatus`: estado de moderacion (`approved`, `rejected`, `pending`)
+- `publishedAt`: fecha de publicacion del video original
+
+### VideoSource
+Fuente de video (canales o playlists de YouTube). Se sincronizan cada 6 horas via cron job.
+- `platform`: `youtube_channel` o `youtube_playlist`
+- `feedUrl`: URL del feed Atom de YouTube (unique)
+- `channelId`/`playlistId`: identificadores de YouTube
+- `isCustom`: si fue anadida por un usuario (vs. catalogo predefinido)
+- 182 fuentes predefinidas cubriendo los 8 deportes (45 RSS directas + 10 Google News outlets + 127 team/athlete news)
 
 ### QuizQuestion
 Pregunta de trivia deportiva con 4 opciones. Soporta tanto preguntas estaticas (seed) como generadas dinamicamente por IA:
@@ -200,6 +237,7 @@ Pregunta de trivia deportiva con 4 opciones. Soporta tanto preguntas estaticas (
 ### ParentalProfile
 Configuracion del control parental, vinculada 1:1 con User.
 - **PIN**: almacenado como hash **bcrypt** (migracion transparente desde SHA-256 para usuarios existentes)
+- **Bloqueo por intentos fallidos**: `failedAttempts` (Int, default 0) cuenta intentos consecutivos incorrectos; `lockedUntil` (DateTime, nullable) almacena cuando expira el bloqueo. Tras 5 intentos fallidos, la cuenta se bloquea 15 minutos.
 - **Sesiones**: `sessionToken` + `sessionExpiresAt` (TTL 5 minutos) para evitar re-verificacion constante del PIN
 - `allowedFormats`: controla que secciones de la app son visibles
 - `allowedSports`: filtra deportes permitidos
@@ -211,10 +249,11 @@ Evento de tracking extendido. Registra acciones del nino con informacion detalla
 - `sport`: deporte del contenido para filtrado en panel parental
 
 ### RssSource
-Feed RSS configurable. Extendido con soporte para fuentes personalizadas:
+Feed RSS configurable. 55 fuentes totales en el seed, incluyendo 10 fuentes Google News RSS para medios espanoles sin RSS nativo (Estadio Deportivo, Mucho Deporte, El Desmarque, El Correo de Andalucia). Extendido con soporte para fuentes personalizadas:
 - `isCustom`: indica si fue anadida por un usuario
 - `addedByUserId`: quien anadio la fuente
 - `language` / `country`: metadatos para clasificacion
+- `category`: tipo de fuente (`general`, `league`, `official`, `google_news`)
 
 ### Sticker
 Cromo coleccionable. 36 stickers en el seed, distribuidos por deporte y rareza:

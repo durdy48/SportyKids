@@ -1,0 +1,24 @@
+{
+  "request": {
+    "name": "Validation Test Source",
+    "feedUrl": "https://www.instagram.com/sportykids_test_1774646242504",
+    "platform": "instagram_account",
+    "sport": "athletics",
+    "userId": "cmn9ejb62000226w9txgrxced"
+  },
+  "status": 201,
+  "response": {
+    "id": "cmn9ejwek000526w9wgork8y0",
+    "name": "Validation Test Source",
+    "platform": "instagram_account",
+    "feedUrl": "https://www.instagram.com/sportykids_test_1774646242504",
+    "channelId": null,
+    "playlistId": null,
+    "sport": "athletics",
+    "active": true,
+    "isCustom": true,
+    "addedBy": "cmn9ejb62000226w9txgrxced",
+    "lastSyncedAt": null,
+    "createdAt": "2026-03-27T21:17:22.508Z"
+  }
+}

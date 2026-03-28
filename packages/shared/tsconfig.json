@@ -6,8 +6,9 @@
     "strict": true,
     "composite": true,
     "declaration": true,
+    "resolveJsonModule": true,
     "outDir": "dist",
     "rootDir": "src"
   },
-  "include": ["src"]
+  "include": ["src", "src/**/*.json"]
 }

@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 export const navigationRef = createNavigationContainerRef();
-import { Text } from 'react-native';
+import { View, Text, TouchableOpacity } from 'react-native';
 import { t } from '@sportykids/shared';
 import { useUser } from '../lib/user-context';
 import { HomeFeedScreen } from '../screens/HomeFeed';
@@ -20,13 +20,30 @@ import { RegisterScreen } from '../screens/Register';
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
+function LanguageToggle() {
+  const { locale, setLocale } = useUser();
+  const nextLocale = locale === 'es' ? 'en' : 'es';
+  const flag = locale === 'es' ? '🇪🇸' : '🇬🇧';
+  return (
+    <TouchableOpacity
+      onPress={() => setLocale(nextLocale)}
+      style={{ marginRight: 12, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F3F4F6' }}
+    >
+      <Text style={{ fontSize: 16 }}>{flag}</Text>
+      <Text style={{ fontSize: 12, fontWeight: '600', color: '#4B5563', marginLeft: 4 }}>{locale.toUpperCase()}</Text>
+    </TouchableOpacity>
+  );
+}
+
 function MainTabs() {
   const { locale } = useUser();
 
   return (
     <Tab.Navigator
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        headerTitleStyle: { fontWeight: '600', fontSize: 18 },
+        headerRight: () => <LanguageToggle />,
         tabBarActiveTintColor: '#2563EB',
         tabBarInactiveTintColor: '#9CA3AF',
         tabBarStyle: { borderTopColor: '#F1F5F9' },
@@ -45,6 +62,8 @@ function MainTabs() {
         component={ReelsScreen}
         options={{
           title: t('nav.reels', locale),
+          headerStyle: { backgroundColor: '#000' },
+          headerTintColor: '#fff',
           tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🎬</Text>,
         }}
       />

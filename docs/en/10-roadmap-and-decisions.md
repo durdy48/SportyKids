@@ -40,7 +40,7 @@ gantt
 ### M1: AI Infrastructure + Content Safety
 - Multi-provider AI client (`ai-client.ts`) supporting Ollama (free, default), OpenRouter, and Anthropic Claude
 - Content moderator (`content-moderator.ts`) classifies news as safe/unsafe with fail-open policy
-- Expanded from 4 to 47 RSS sources across 8 sports
+- Expanded from 4 to 182 RSS sources across 8 sports with global coverage
 - Custom RSS sources via API (`POST/DELETE /api/news/fuentes/custom`)
 - `safetyStatus` field on NewsItem (`pending`/`approved`/`rejected`)
 - Health check for AI provider availability

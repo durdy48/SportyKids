@@ -1,11 +1,20 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert,
 } from 'react-native';
-import { SPORTS, TEAMS, AGE_RANGES, COLORS, sportToEmoji, t, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
-import type { AgeRange } from '@sportykids/shared';
-import { createUser, fetchSources, setupParentalPin } from '../lib/api';
+import { SPORTS, TEAMS, AGE_RANGES, COLORS, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale } from '@sportykids/shared';
+import type { AgeRange, RssSource } from '@sportykids/shared';
+import { createUser, fetchSourceCatalog, setupParentalPin } from '../lib/api';
 import { useUser } from '../lib/user-context';
+
+const COUNTRY_FLAGS: Record<string, string> = {
+  ES: '\u{1F1EA}\u{1F1F8}',
+  GB: '\u{1F1EC}\u{1F1E7}',
+  US: '\u{1F1FA}\u{1F1F8}',
+  FR: '\u{1F1EB}\u{1F1F7}',
+  IT: '\u{1F1EE}\u{1F1F9}',
+  DE: '\u{1F1E9}\u{1F1EA}',
+};
 
 const TOTAL_STEPS = 5;
 
@@ -24,8 +33,13 @@ const FORMAT_OPTIONS = [
   { id: 'quiz', emoji: '🧠', labelKey: 'nav.quiz' },
 ];
 
+const LOCALE_OPTIONS = [
+  { value: 'es' as const, flag: '\u{1F1EA}\u{1F1F8}', label: 'Espa\u00f1ol' },
+  { value: 'en' as const, flag: '\u{1F1EC}\u{1F1E7}', label: 'English' },
+];
+
 export function OnboardingScreen() {
-  const { setUser, setParentalProfile, locale } = useUser();
+  const { setUser, setParentalProfile, locale, setLocale } = useUser();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
@@ -40,8 +54,9 @@ export function OnboardingScreen() {
   const [team, setTeam] = useState('');
 
   // Step 4 - Sources
-  const [sources, setSources] = useState<{ id: string; name: string; sport: string }[]>([]);
+  const [sources, setSources] = useState<RssSource[]>([]);
   const [selectedFeeds, setSelectedFeeds] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
 
   // Step 5 - Parental PIN
   const [parentalPin, setParentalPin] = useState('');
@@ -51,10 +66,54 @@ export function OnboardingScreen() {
   const [maxDailyTime, setMaxDailyTime] = useState(0); // 0 = no limit
 
   useEffect(() => {
-    fetchSources()
-      .then(setSources)
+    fetchSourceCatalog()
+      .then((catalog) => setSources(catalog.sources))
       .catch(console.error);
   }, []);
+
+  // Auto-pre-select sources matching selected sports when entering step 4
+  useEffect(() => {
+    if (step === 4 && selectedFeeds.length === 0 && sources.length > 0 && sports.length > 0) {
+      const matching = sources
+        .filter((s) => s.active && sports.includes(s.sport))
+        .map((s) => s.id);
+      setSelectedFeeds(matching);
+    }
+  }, [step, sources, sports]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Group sources by country, filtered by selected sports and search query
+  const groupedSources = useMemo(() => {
+    const sportsSet = new Set(sports);
+    const query = searchQuery.toLowerCase().trim();
+
+    const filtered = sources.filter((s) => {
+      if (!s.active) return false;
+      if (!sportsSet.has(s.sport)) return false;
+      if (query && !s.name.toLowerCase().includes(query)) return false;
+      return true;
+    });
+
+    const byCountry: Record<string, RssSource[]> = {};
+    for (const source of filtered) {
+      const country = source.country || 'OTHER';
+      if (!byCountry[country]) byCountry[country] = [];
+      byCountry[country].push(source);
+    }
+
+    // Sort countries: user's locale country first, then alphabetically
+    const countryOrder = Object.keys(byCountry).sort((a, b) => {
+      const userCountry = inferCountryFromLocale(locale);
+      if (a === userCountry) return -1;
+      if (b === userCountry) return 1;
+      return a.localeCompare(b);
+    });
+
+    return countryOrder.map((country) => ({
+      country,
+      title: `${COUNTRY_FLAGS[country] || '\u{1F30D}'} ${t(`sources.country_${country}`, locale) || country}`,
+      data: byCountry[country],
+    }));
+  }, [sources, sports, searchQuery, locale]);
 
   const toggleSport = (sport: string) =>
     setSports((prev) => prev.includes(sport) ? prev.filter((x) => x !== sport) : [...prev, sport]);
@@ -100,12 +159,15 @@ export function OnboardingScreen() {
 
     setSubmitting(true);
     try {
+      const inferredCountry = inferCountryFromLocale(locale);
       const newUser = await createUser({
         name: name.trim(),
         age: AGE_RANGES[ageRange].min,
         favoriteSports: sports,
         favoriteTeam: team || undefined,
         selectedFeeds,
+        locale,
+        country: inferredCountry,
       });
 
       // Set up parental PIN if provided
@@ -144,8 +206,25 @@ export function OnboardingScreen() {
           <View style={s.stepContainer}>
             <Text style={s.emoji}>👋</Text>
             <Text style={s.title}>{t('onboarding.step1_title', locale)}</Text>
+
+            {/* Language selector */}
+            <Text style={s.label}>{t('settings.language', locale)}</Text>
+            <View style={s.row}>
+              {LOCALE_OPTIONS.map((opt) => (
+                <TouchableOpacity
+                  key={opt.value}
+                  style={[s.chip, locale === opt.value && s.chipActive]}
+                  onPress={() => setLocale(opt.value)}
+                >
+                  <Text style={[s.chipText, locale === opt.value && s.chipTextActive]}>
+                    {opt.flag} {opt.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
             <TextInput
-              style={s.input}
+              style={[s.input, { marginTop: 16 }]}
               value={name}
               onChangeText={setName}
               placeholder={t('onboarding.name_placeholder', locale)}
@@ -210,17 +289,64 @@ export function OnboardingScreen() {
         {step === 4 && (
           <View style={s.stepContainer}>
             <Text style={s.emoji}>📰</Text>
-            <Text style={s.title}>{t('onboarding.step4_title', locale)}</Text>
-            <Text style={s.subtitle}>{t('onboarding.step4_subtitle', locale)}</Text>
-            {sources.map((source) => (
-              <TouchableOpacity
-                key={source.id}
-                style={[s.sourceChip, selectedFeeds.includes(source.id) && s.sourceActive]}
-                onPress={() => toggleFeed(source.id)}
-              >
-                <Text style={s.chipText}>{source.name}</Text>
-              </TouchableOpacity>
+            <Text style={s.title}>{t('sources.catalog_title', locale)}</Text>
+            <Text style={s.subtitle}>{t('sources.catalog_subtitle', locale)}</Text>
+
+            {/* Selected count badge */}
+            <View style={s.selectedBadge}>
+              <Text style={s.selectedBadgeText}>
+                {t('sources.selected_count', locale, { count: String(selectedFeeds.length) })}
+              </Text>
+            </View>
+
+            {/* Search input */}
+            <TextInput
+              style={s.searchInput}
+              value={searchQuery}
+              onChangeText={setSearchQuery}
+              placeholder={t('search.placeholder', locale)}
+              placeholderTextColor="#9CA3AF"
+              autoCorrect={false}
+              clearButtonMode="while-editing"
+            />
+
+            {/* Grouped source list */}
+            {groupedSources.map((section) => (
+              <View key={section.country} style={s.countrySection}>
+                <Text style={s.countrySectionTitle}>{section.title}</Text>
+                {section.data.map((source) => {
+                  const selected = selectedFeeds.includes(source.id);
+                  return (
+                    <TouchableOpacity
+                      key={source.id}
+                      style={[s.sourceChip, selected && s.sourceActive]}
+                      onPress={() => toggleFeed(source.id)}
+                    >
+                      <View style={s.sourceRow}>
+                        <View style={s.sourceInfo}>
+                          <Text style={[s.sourceNameText, selected && s.sourceNameSelected]}>
+                            {source.name}
+                          </Text>
+                          {source.description ? (
+                            <Text style={s.sourceDesc} numberOfLines={1}>
+                              {source.description}
+                            </Text>
+                          ) : null}
+                        </View>
+                        <View style={[s.sourceSportBadge, { backgroundColor: selected ? COLORS.yellow : '#E5E7EB' }]}>
+                          <Text style={s.sourceSportText}>
+                            {sportToEmoji(source.sport)}
+                          </Text>
+                        </View>
+                      </View>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
             ))}
+            {groupedSources.length === 0 && searchQuery.length > 0 && (
+              <Text style={s.noResults}>{t('search.no_results', locale, { query: searchQuery })}</Text>
+            )}
           </View>
         )}
 
@@ -358,8 +484,27 @@ const s = StyleSheet.create({
   chipGreen: { backgroundColor: COLORS.green },
   chipText: { fontSize: 14, fontWeight: '500', color: '#4B5563', textAlign: 'center' },
   chipTextActive: { color: '#fff' },
-  sourceChip: { width: '100%', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, backgroundColor: '#F3F4F6', marginTop: 8, borderWidth: 2, borderColor: 'transparent' },
+  selectedBadge: {
+    backgroundColor: COLORS.blue, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6,
+    alignSelf: 'center', marginBottom: 12,
+  },
+  selectedBadgeText: { color: '#fff', fontSize: 13, fontWeight: '600' },
+  searchInput: {
+    width: '100%', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12,
+    borderWidth: 1, borderColor: '#E5E7EB', fontSize: 15, backgroundColor: '#fff', marginBottom: 16,
+  },
+  countrySection: { width: '100%', marginBottom: 12 },
+  countrySectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.darkText, marginBottom: 6, marginTop: 4 },
+  sourceChip: { width: '100%', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12, backgroundColor: '#F3F4F6', marginTop: 6, borderWidth: 2, borderColor: 'transparent' },
   sourceActive: { borderColor: COLORS.yellow, backgroundColor: '#FEFCE8' },
+  sourceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
+  sourceInfo: { flex: 1, marginRight: 8 },
+  sourceNameText: { fontSize: 14, fontWeight: '500', color: '#4B5563' },
+  sourceNameSelected: { fontWeight: '600', color: COLORS.darkText },
+  sourceDesc: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+  sourceSportBadge: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  sourceSportText: { fontSize: 14 },
+  noResults: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', marginTop: 20 },
   pinInput: {
     fontSize: 32, fontWeight: '700', textAlign: 'center', letterSpacing: 16,
     width: 200, paddingVertical: 14, borderBottomWidth: 3, borderBottomColor: '#E5E7EB',

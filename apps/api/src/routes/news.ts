@@ -9,11 +9,20 @@ import type { AgeRange } from '../services/summarizer';
 import type { Locale } from '@sportykids/shared';
 import { parentalGuard } from '../middleware/parental-guard';
 import { requireAuth } from '../middleware/auth';
+// Note: this file reads ActivityLog but does not create entries.
+// All activity logging goes through POST /api/parents/activity/log (parents.ts),
+// which calls invalidateBehavioralCache. If a future code path here creates
+// ActivityLog entries, it must also call invalidateBehavioralCache.
 import { rankFeed, getBehavioralSignals } from '../services/feed-ranker';
 import { isPublicUrl } from '../utils/url-validator';
 import { apiCache, CACHE_TTL, CACHE_KEYS, withCache } from '../services/cache';
 
 const router = Router();
+
+/** Strip diacritics and lowercase for accent-insensitive comparison */
+function normalizeText(s: string): string {
+  return s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+}
 
 const parser = new Parser({
   timeout: 10000,
@@ -48,7 +57,11 @@ router.get('/', parentalGuard, async (req: Request, res: Response) => {
     { safetyStatus: 'approved' },
   ];
   if (sport) conditions.push({ sport });
-  if (team) conditions.push({ team: { contains: team } });
+  // Team filter applied post-query with accent-insensitive matching (SQLite lacks collation support).
+  // We require team to be non-null in the DB query and filter in JS after fetching.
+  if (team) {
+    conditions.push({ team: { not: null } });
+  }
   if (source) conditions.push({ source: { contains: source } });
 
   // Text search — use OR for title/summary/team wrapped inside AND with other filters
@@ -100,13 +113,17 @@ router.get('/', parentalGuard, async (req: Request, res: Response) => {
   // items first so the ranker can score and reorder them, then paginate the result.
   // This is acceptable for MVP but should be replaced with DB-level scoring for scale.
   let userPrefs: { favoriteSports: string[]; favoriteTeam?: string | null } | null = null;
+  let userLocale: string | undefined = locale;
+  let userCountry: string | undefined;
 
   if (userId) {
     const prefUser = await prisma.user.findUnique({
       where: { id: userId },
-      select: { favoriteSports: true, favoriteTeam: true },
+      select: { favoriteSports: true, favoriteTeam: true, locale: true, country: true },
     });
     if (prefUser) {
+      userLocale = userLocale || prefUser.locale;
+      userCountry = prefUser.country;
       try {
         const sports: string[] = JSON.parse(prefUser.favoriteSports);
         if (sports.length > 0) {
@@ -118,17 +135,41 @@ router.get('/', parentalGuard, async (req: Request, res: Response) => {
     }
   }
 
+  // Accent-insensitive team filter applied in JS (SQLite lacks Unicode collation)
+  const teamNorm = team ? normalizeText(team) : null;
+  const matchesTeam = (item: { team?: string | null }) =>
+    !teamNorm || (item.team && normalizeText(item.team).includes(teamNorm));
+
   if (userPrefs) {
     // Fetch matching items (with safety limit) so ranker can reorder
-    const allNews = await prisma.newsItem.findMany({
+    let allNews = await prisma.newsItem.findMany({
       where,
       orderBy: { publishedAt: 'desc' },
-      take: 500,
+      take: team ? 2000 : 500, // wider fetch when team-filtering in JS
+    });
+
+    // Apply accent-insensitive team filter
+    if (teamNorm) {
+      allNews = allNews.filter(matchesTeam);
+    }
+
+    // Enrich news items with source language/country from RssSource for ranking
+    const sourceNames = [...new Set(allNews.map((n) => n.source))];
+    const rssSources = sourceNames.length > 0
+      ? await prisma.rssSource.findMany({
+          where: { name: { in: sourceNames } },
+          select: { name: true, language: true, country: true },
+        })
+      : [];
+    const sourceMetaMap = new Map(rssSources.map((s) => [s.name, { language: s.language, country: s.country }]));
+    const enrichedNews = allNews.map((item) => {
+      const meta = sourceMetaMap.get(item.source);
+      return { ...item, language: meta?.language ?? null, country: meta?.country ?? null };
     });
 
     // B-CP2: Get behavioral signals for personalized ranking
-    const behavioral = userId ? await getBehavioralSignals(userId, locale) : undefined;
-    const ranked = rankFeed(allNews, userPrefs, behavioral);
+    const behavioral = userId ? await getBehavioralSignals(userId, userLocale, userCountry) : undefined;
+    const ranked = rankFeed(enrichedNews, userPrefs, behavioral);
     const total = ranked.length;
     const paginated = ranked.slice((page - 1) * limit, page * limit);
 
@@ -140,15 +181,22 @@ router.get('/', parentalGuard, async (req: Request, res: Response) => {
     });
   } else {
     // No user prefs — standard DB pagination
-    const [news, total] = await Promise.all([
+    let [news, total] = await Promise.all([
       prisma.newsItem.findMany({
         where,
         orderBy: { publishedAt: 'desc' },
-        skip: (page - 1) * limit,
-        take: limit,
+        skip: teamNorm ? 0 : (page - 1) * limit,
+        take: teamNorm ? 500 : limit,
       }),
       prisma.newsItem.count({ where }),
     ]);
+
+    // Apply accent-insensitive team filter
+    if (teamNorm) {
+      news = news.filter(matchesTeam);
+      total = news.length;
+      news = news.slice((page - 1) * limit, page * limit);
+    }
 
     res.json({
       news,
@@ -202,8 +250,8 @@ router.get('/trending', withCache('trending:', CACHE_TTL.TRENDING), async (_req:
   }
 });
 
-// GET /api/news/fuentes/listado — List active RSS sources
-router.get('/fuentes/listado', withCache('sources:', CACHE_TTL.SOURCES), async (_req: Request, res: Response) => {
+// GET /api/news/sources/list — List active RSS sources
+router.get('/sources/list', withCache('sources:', CACHE_TTL.SOURCES), async (_req: Request, res: Response) => {
   const sources = await prisma.rssSource.findMany({
     where: { active: true },
     orderBy: { name: 'asc' },
@@ -211,8 +259,8 @@ router.get('/fuentes/listado', withCache('sources:', CACHE_TTL.SOURCES), async (
   res.json(sources);
 });
 
-// GET /api/news/fuentes/catalogo — All sources with metadata and bySport counts
-router.get('/fuentes/catalogo', async (_req: Request, res: Response) => {
+// GET /api/news/sources/catalog — All sources with metadata and bySport counts
+router.get('/sources/catalog', async (_req: Request, res: Response) => {
   const sources = await prisma.rssSource.findMany({
     orderBy: { name: 'asc' },
   });
@@ -230,8 +278,8 @@ router.get('/fuentes/catalogo', async (_req: Request, res: Response) => {
   });
 });
 
-// POST /api/news/fuentes/custom — Add a custom RSS source
-router.post('/fuentes/custom', async (req: Request, res: Response) => {
+// POST /api/news/sources/custom — Add a custom RSS source
+router.post('/sources/custom', requireAuth, async (req: Request, res: Response) => {
   const bodySchema = z.object({
     name: z.string().min(1).max(200),
     url: z.string().url(),
@@ -310,8 +358,8 @@ router.post('/fuentes/custom', async (req: Request, res: Response) => {
   });
 });
 
-// DELETE /api/news/fuentes/custom/:id — Delete a custom source only
-router.delete('/fuentes/custom/:id', requireAuth, async (req: Request, res: Response) => {
+// DELETE /api/news/sources/custom/:id — Delete a custom source only
+router.delete('/sources/custom/:id', requireAuth, async (req: Request, res: Response) => {
   // Prefer JWT userId, fall back to query/body for backward compat
   const userId = req.auth?.userId || (req.query.userId as string) || (req.body?.userId as string);
   if (!userId) {
@@ -349,8 +397,8 @@ router.delete('/fuentes/custom/:id', requireAuth, async (req: Request, res: Resp
   res.json({ message: 'Custom source deleted', id: source.id });
 });
 
-// POST /api/news/sincronizar — Manual synchronization with moderation stats
-router.post('/sincronizar', requireAuth, async (_req: Request, res: Response) => {
+// POST /api/news/sync — Manual synchronization with moderation stats
+router.post('/sync', requireAuth, async (_req: Request, res: Response) => {
   const result = await runManualSync();
   // Invalidate news-related caches after sync
   apiCache.invalidatePattern('news:');
@@ -375,8 +423,8 @@ router.post('/sincronizar', requireAuth, async (_req: Request, res: Response) =>
   });
 });
 
-// GET /api/news/:id/resumen — Age-adapted summary
-router.get('/:id/resumen', async (req: Request, res: Response) => {
+// GET /api/news/:id/summary — Age-adapted summary
+router.get('/:id/summary', async (req: Request, res: Response) => {
   const summaryParamsSchema = z.object({
     age: z.coerce.number().int().min(4).max(18).default(10),
     locale: z.enum(['es', 'en']).default('es'),
@@ -469,8 +517,8 @@ router.get('/:id/resumen', async (req: Request, res: Response) => {
   });
 });
 
-// GET /api/news/historial — Reading history for a user (B-EN4)
-router.get('/historial', async (req: Request, res: Response) => {
+// GET /api/news/history — Reading history for a user (B-EN4)
+router.get('/history', async (req: Request, res: Response) => {
   const historySchema = z.object({
     userId: z.string(),
     page: z.coerce.number().int().min(1).default(1),
@@ -531,8 +579,8 @@ router.get('/historial', async (req: Request, res: Response) => {
   res.json({ history, total: history.length });
 });
 
-// GET /api/news/:id/relacionados — Content recommendations (B-CP4)
-router.get('/:id/relacionados', async (req: Request, res: Response) => {
+// GET /api/news/:id/related — Content recommendations (B-CP4)
+router.get('/:id/related', async (req: Request, res: Response) => {
   const limitParam = parseInt(req.query.limit as string) || 5;
   const limit = Math.min(limitParam, 10);
 

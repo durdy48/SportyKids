@@ -70,7 +70,7 @@ graph LR
 Servidor Express que expone la API REST. Punto de entrada unico para todos los clientes.
 
 - **Puerto**: 3001 (configurable via `PORT`)
-- **Middleware**: CORS, JSON parser, error handler global, parental-guard
+- **Middleware**: CORS, JSON parser, rate limiting (`express-rate-limit`, 5 niveles), error handler global, parental-guard
 - **Rutas**: `/api/news`, `/api/reels`, `/api/quiz`, `/api/users`, `/api/parents`, `/api/gamification`, `/api/teams`
 - **Health check**: `GET /api/health` (incluye estado del proveedor AI)
 
@@ -130,8 +130,17 @@ Gestiona puntos, rachas, cromos y logros.
 ### Feed Ranker (`apps/api/src/services/feed-ranker.ts`)
 Personaliza el orden del feed de noticias para cada usuario.
 
-- **Scoring**: +5 equipo favorito, +3 deporte favorito
-- **Filtrado**: excluye fuentes no seguidas por el usuario
+- **Scoring base**: +5 equipo favorito, +3 deporte favorito
+- **Filtrado**: excluye deportes no seguidos por el usuario
+- **Scoring behavioral** (cuando el usuario tiene historial de actividad):
+  - `sportFrequencyBoost` — proporcional a la frecuencia de engagement (escala 0-5)
+  - `sourceBoost` — afinidad con fuentes leidas (escala 0-2)
+  - `recencyDecay` — curva exponencial con half-life de 12h (escala 0-3)
+  - `-8` penalizacion por articulos ya leidos (sin peso configurable)
+  - `+2` match de idioma/locale, `+1` match de pais
+- **Diversity injection**: cada 5ta posicion intercambia deporte dominante (>40% engagement) con deporte no dominante para evitar burbujas de filtro
+- **Pesos configurables**: constante `RANKING_WEIGHTS` controla la importancia relativa de cada signal (todos default 1.0)
+- **Cache invalidation**: `invalidateBehavioralCache(userId)` evicta signals stale al registrar nueva actividad (TTL de 5 min como fallback)
 - **3 modos de vista**: Headlines, Cards, Explain
 - **Ejecutado**: al servir `GET /api/news` con `userId`
 
@@ -151,6 +160,24 @@ Servicio que consume feeds RSS externos y los convierte en registros de la base 
 - **Post-proceso**: pasa cada item por classifier y content-moderator
 - **Fuentes custom**: los usuarios pueden anadir fuentes propias via API
 - **Resiliencia**: si un feed falla, continua con el siguiente
+
+### Agregador de Video (`apps/api/src/services/video-aggregator.ts`)
+Servicio que consume feeds Atom de YouTube y los convierte en registros Reel.
+
+- **Entrada**: URLs de feeds Atom desde la tabla `VideoSource` (22+ fuentes, 8 deportes)
+- **Proceso**: parsea XML Atom, extrae videoId de `yt:video:...`, genera embed URL y thumbnail URL
+- **Salida**: registros `Reel` en la BD (upsert por `rssGuid` para evitar duplicados)
+- **Post-proceso**: pasa cada item por classifier y content-moderator
+- **Helpers exportados**: `buildFeedUrl`, `extractYouTubeVideoId`, `buildEmbedUrl`, `buildThumbnailUrl`
+- **Solo YouTube**: filtra fuentes cuyo `platform` empieza con `youtube_`
+- **Resiliencia**: si un feed falla, continua con el siguiente; moderation fail-open
+
+### Cron: Sync Videos (`apps/api/src/jobs/sync-videos.ts`)
+Job programado que ejecuta la sincronizacion de fuentes de video.
+
+- **Frecuencia**: cada 6 horas (`0 */6 * * *`)
+- **Tambien se ejecuta**: al arrancar el servidor
+- **Funcion**: `syncAllVideoSources()` -> consume feeds YouTube Atom de fuentes activas
 
 ### Clasificador de contenido (`apps/api/src/services/classifier.ts`)
 Etiqueta cada noticia con equipo detectado y rango de edad.
@@ -277,4 +304,11 @@ flowchart TB
 | `AI_PROVIDER` | API | Proveedor AI: `ollama`, `openrouter`, `anthropic` | `ollama` |
 | `OPENROUTER_API_KEY` | API | API key de OpenRouter | — |
 | `ANTHROPIC_API_KEY` | API | API key de Anthropic | — |
+| `RATE_LIMIT_AUTH` | API | Limite rate auth (req/min) | `5` |
+| `RATE_LIMIT_PIN` | API | Limite rate PIN (req/min) | `10` |
+| `RATE_LIMIT_CONTENT` | API | Limite rate contenido (req/min) | `60` |
+| `RATE_LIMIT_SYNC` | API | Limite rate sync (req/min) | `2` |
+| `RATE_LIMIT_DEFAULT` | API | Limite rate default (req/min) | `100` |
+| `CACHE_PROVIDER` | API | Backend de cache: `memory` o `redis` | `memory` |
+| `REDIS_URL` | API | URL de conexion Redis | `redis://localhost:6379` |
 | `NEXT_PUBLIC_API_URL` | Web | URL base de la API | `http://localhost:3001/api` |

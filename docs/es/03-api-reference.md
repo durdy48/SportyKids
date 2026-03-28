@@ -130,6 +130,26 @@ Vincular un perfil de nino a una cuenta de padre autenticada.
 
 > **Nota**: El middleware de autenticacion es **no bloqueante** — compatible con usuarios anonimos existentes. Si se proporciona un token JWT valido, se adjunta el usuario al request; si no, el request continua sin autenticacion.
 
+### OAuth (Planificado)
+
+Los siguientes endpoints estan registrados pero devuelven `501 Not Implemented`:
+
+| Ruta | Proveedor | Estado |
+|------|-----------|--------|
+| `GET /api/auth/google` | Google OAuth 2.0 | Planificado |
+| `GET /api/auth/google/callback` | Google OAuth 2.0 | Planificado |
+| `GET /api/auth/apple` | Apple Sign In | Planificado |
+| `GET /api/auth/apple/callback` | Apple Sign In | Planificado |
+
+Formato de respuesta para todos:
+```json
+{
+  "error": "<provider> not yet implemented",
+  "provider": "google|apple",
+  "status": "planned"
+}
+```
+
 ---
 
 ## Noticias (News)
@@ -240,7 +260,7 @@ Catalogo completo de fuentes disponibles (activas e inactivas), incluyendo fuent
 ```
 
 ### `POST /api/news/fuentes/custom`
-Anadir una fuente RSS personalizada.
+Anadir una fuente RSS personalizada. **Requiere autenticacion JWT** (`Authorization: Bearer <token>`).
 
 **Body:**
 ```json
@@ -277,7 +297,7 @@ Ejecuta sincronizacion manual de todos los feeds.
 Protegido por middleware `parental-guard`.
 
 ### `GET /api/reels`
-Feed de videos cortos.
+Feed de videos cortos. Solo devuelve reels con `safetyStatus: "approved"`, ordenados por `publishedAt` descendente.
 
 **Query params:**
 
@@ -296,17 +316,21 @@ Feed de videos cortos.
       "id": "clx...",
       "title": "Top 10 goles de La Liga",
       "videoUrl": "https://www.youtube.com/embed/...",
-      "thumbnailUrl": "https://img.youtube.com/vi/.../maxresdefault.jpg",
-      "source": "SportyKids",
+      "thumbnailUrl": "https://img.youtube.com/vi/.../mqdefault.jpg",
+      "source": "La Liga Official",
       "sport": "football",
-      "team": null,
+      "team": "Real Madrid",
       "minAge": 6,
       "maxAge": 14,
-      "durationSeconds": 120,
-      "videoType": "youtube",
+      "durationSeconds": 60,
+      "videoType": "youtube_embed",
       "aspectRatio": "16:9",
       "previewGifUrl": null,
-      "createdAt": "2026-03-22T18:00:00.000Z"
+      "rssGuid": "yt:video:abc123def45",
+      "videoSourceId": "clx...",
+      "safetyStatus": "approved",
+      "publishedAt": "2026-03-25T10:00:00.000Z",
+      "createdAt": "2026-03-25T12:00:00.000Z"
     }
   ],
   "total": 10,
@@ -317,6 +341,42 @@ Feed de videos cortos.
 
 ### `GET /api/reels/:id`
 Detalle de un reel por ID.
+
+### `GET /api/reels/sources/list`
+Fuentes de video activas.
+
+### `GET /api/reels/sources/catalog`
+Catalogo completo de fuentes de video con conteo por deporte.
+
+**Respuesta:**
+```json
+{
+  "sources": [...],
+  "total": 22,
+  "bySport": { "football": 5, "basketball": 3, ... }
+}
+```
+
+### `POST /api/reels/sources/custom`
+Anadir fuente de video personalizada.
+
+**Body:**
+```json
+{
+  "name": "Mi Canal",
+  "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=UC...",
+  "platform": "youtube_channel",
+  "sport": "football",
+  "userId": "user-id",
+  "channelId": "UC..."
+}
+```
+
+### `DELETE /api/reels/sources/custom/:id`
+Eliminar fuente de video personalizada. Requiere autenticacion. Solo el usuario que la creo puede eliminarla.
+
+### `POST /api/reels/sync`
+Sincronizacion manual de todas las fuentes de video. Requiere autenticacion.
 
 ---
 
@@ -570,14 +630,16 @@ Crear o actualizar perfil parental con PIN. El PIN se hashea con bcrypt.
 ```
 
 ### `POST /api/parents/verificar-pin`
-Verificar PIN de acceso. Devuelve un token de sesion (TTL 5 minutos).
+Verificar PIN de acceso. Devuelve un token de sesion (TTL 5 minutos). Migra transparentemente hashes SHA-256 legacy a bcrypt.
+
+**Bloqueo por intentos fallidos**: tras 5 intentos consecutivos incorrectos, la cuenta se bloquea durante 15 minutos.
 
 **Body:**
 ```json
 { "userId": "clx...", "pin": "1234" }
 ```
 
-**Respuesta:**
+**Respuesta (exito):**
 ```json
 {
   "verified": true,
@@ -585,6 +647,23 @@ Verificar PIN de acceso. Devuelve un token de sesion (TTL 5 minutos).
   "profile": { ... },
   "sessionToken": "abc123...",
   "sessionExpiresAt": "2026-03-24T18:05:00.000Z"
+}
+```
+
+**Respuesta (PIN incorrecto -- 401):**
+```json
+{
+  "error": "PIN incorrecto",
+  "attemptsRemaining": 3
+}
+```
+
+**Respuesta (cuenta bloqueada -- 423):**
+```json
+{
+  "error": "Cuenta bloqueada por demasiados intentos fallidos",
+  "lockedUntil": "2026-03-27T18:15:00.000Z",
+  "remainingSeconds": 900
 }
 ```
 
@@ -881,6 +960,22 @@ El sistema envia notificaciones push reales mediante `expo-server-sdk` en 5 esce
 | Mision lista | Al generarse la mision diaria (05:00 UTC) | "Tu mision del dia te espera" |
 
 Las notificaciones respetan las preferencias del usuario (`dailyQuiz`, `teamNews`, `newStickers`). Al tocar una notificacion, la app navega a la pantalla correspondiente (deep linking).
+
+---
+
+## Rate Limiting
+
+Todos los endpoints de la API estan protegidos por rate limiting (`express-rate-limit`). Las peticiones que excedan el limite reciben una respuesta `429 Too Many Requests` con headers estandar de rate-limit (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After`).
+
+| Tier | Rutas | Limite | Variable de entorno |
+|------|-------|--------|---------------------|
+| Auth | `/api/auth/login`, `/api/auth/register` | 5 req/min | `RATE_LIMIT_AUTH` |
+| PIN | `/api/parents/verify-pin` | 10 req/min | `RATE_LIMIT_PIN` |
+| Content | `/api/news/*`, `/api/reels/*`, `/api/quiz/*` | 60 req/min | `RATE_LIMIT_CONTENT` |
+| Sync | `/api/news/sync`, `/api/reels/sync`, `/api/teams/sync` | 2 req/min | `RATE_LIMIT_SYNC` |
+| Default | Todos los demas `/api/*` | 100 req/min | `RATE_LIMIT_DEFAULT` |
+
+Todos los limites son configurables via las variables de entorno correspondientes.
 
 ---
 

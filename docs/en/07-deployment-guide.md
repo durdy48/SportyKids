@@ -139,6 +139,17 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: .
@@ -148,10 +159,13 @@ services:
       PORT: 3001
       AI_PROVIDER: openrouter
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      CACHE_PROVIDER: redis
+      REDIS_URL: redis://redis:6379
     ports:
       - "3001:3001"
     depends_on:
       - db
+      - redis
 
 volumes:
   pgdata:
@@ -159,14 +173,16 @@ volumes:
 
 ## Pre-production checklist
 
-- [ ] Migrate to PostgreSQL
+- [x] Migrate to PostgreSQL (script: `bash apps/api/scripts/migrate-to-postgres.sh`)
 - [ ] Configure HTTPS
 - [ ] Configure CORS with specific domains
-- [ ] Implement rate limiting
-- [ ] Add real authentication (JWT)
+- [x] Implement rate limiting (5 tiers: auth/pin/content/sync/default)
+- [x] Add real authentication (JWT access + refresh tokens)
 - [ ] Configure structured logging
 - [ ] Verify RSS feeds work in production
 - [ ] Configure database backups
+- [x] Redis cache support (optional, `CACHE_PROVIDER=redis`)
+- [ ] OAuth (Google, Apple) — placeholder routes ready
 - [ ] Configure monitoring/alerts
 - [x] ~~Review PIN security (bcrypt instead of SHA-256)~~ -- Done (M5)
 - [x] ~~Server-side parental enforcement~~ -- Done (M5, parental guard middleware)

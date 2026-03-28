@@ -237,7 +237,13 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
     try {
       const check = await verifyPin(user.id, currentPin);
       if (!check.verified) {
-        setPinError(t('errors.incorrect_pin', locale));
+        if (check.status === 423) {
+          setPinError(check.error ?? t('parental.pin_locked', locale, { minutes: '15' }));
+        } else if (check.status === 429) {
+          setPinError(t('errors.rate_limited', locale));
+        } else {
+          setPinError(check.error ?? t('errors.incorrect_pin', locale));
+        }
         return;
       }
       await setupParentalPin(user.id, newPin);
@@ -561,7 +567,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                     onChange={(e) => {
                       const val = parseInt(e.target.value);
                       if (!isNaN(val) && val >= 0 && val <= 23) {
-                        updateParentalProfile(user!.id, { allowedHoursStart: val } as Partial<ParentalProfile>);
+                        saveProfile({ allowedHoursStart: val } as Partial<ParentalProfile>);
                       }
                     }}
                     className="mt-1 w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
@@ -577,7 +583,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                     onChange={(e) => {
                       const val = parseInt(e.target.value);
                       if (!isNaN(val) && val >= 0 && val <= 24) {
-                        updateParentalProfile(user!.id, { allowedHoursEnd: val } as Partial<ParentalProfile>);
+                        saveProfile({ allowedHoursEnd: val } as Partial<ParentalProfile>);
                       }
                     }}
                     className="mt-1 w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"

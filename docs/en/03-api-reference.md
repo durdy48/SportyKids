@@ -129,6 +129,26 @@ Link a child user to a parent account.
 
 > **Note**: The auth middleware is non-blocking -- anonymous users (without a token) can still access the API for backward compatibility. Authenticated requests include the user in `req.user`.
 
+### OAuth (Planned)
+
+The following endpoints are registered but return `501 Not Implemented`:
+
+| Route | Provider | Status |
+|-------|----------|--------|
+| `GET /api/auth/google` | Google OAuth 2.0 | Planned |
+| `GET /api/auth/google/callback` | Google OAuth 2.0 | Planned |
+| `GET /api/auth/apple` | Apple Sign In | Planned |
+| `GET /api/auth/apple/callback` | Apple Sign In | Planned |
+
+Response format for all:
+```json
+{
+  "error": "<provider> not yet implemented",
+  "provider": "google|apple",
+  "status": "planned"
+}
+```
+
 ### Token details
 
 | Token | TTL | Storage |
@@ -226,7 +246,7 @@ List of active RSS sources.
 Full catalog of all RSS sources (active and inactive), including custom sources.
 
 ### `POST /api/news/fuentes/custom`
-Add a custom RSS source.
+Add a custom RSS source. **Requires JWT authentication** (`Authorization: Bearer <token>`).
 
 **Body:**
 ```json
@@ -262,7 +282,7 @@ Triggers manual synchronization of all feeds.
 ## Reels
 
 ### `GET /api/reels`
-Short video feed.
+Short video feed. Only returns reels with `safetyStatus: "approved"`, ordered by `publishedAt` descending.
 
 **Query params:**
 
@@ -281,17 +301,20 @@ Short video feed.
       "id": "clx...",
       "title": "Top 10 goals of La Liga",
       "videoUrl": "https://www.youtube.com/embed/...",
-      "thumbnailUrl": "https://img.youtube.com/vi/.../hqdefault.jpg",
-      "source": "SportyKids",
+      "thumbnailUrl": "https://img.youtube.com/vi/.../mqdefault.jpg",
+      "source": "La Liga Official",
       "sport": "football",
-      "team": null,
+      "team": "Real Madrid",
       "minAge": 6,
       "maxAge": 14,
-      "durationSeconds": 120,
-      "videoType": "youtube",
+      "durationSeconds": 60,
+      "videoType": "youtube_embed",
       "aspectRatio": "16:9",
-      "previewGifUrl": null,
-      "createdAt": "2026-03-22T18:00:00.000Z"
+      "rssGuid": "yt:video:abc123def45",
+      "videoSourceId": "clx...",
+      "safetyStatus": "approved",
+      "publishedAt": "2026-03-25T10:00:00.000Z",
+      "createdAt": "2026-03-25T12:00:00.000Z"
     }
   ],
   "total": 10,
@@ -302,6 +325,21 @@ Short video feed.
 
 ### `GET /api/reels/:id`
 Reel detail by ID.
+
+### `GET /api/reels/sources/list`
+Active video sources.
+
+### `GET /api/reels/sources/catalog`
+Full video source catalog with per-sport counts.
+
+### `POST /api/reels/sources/custom`
+Add a custom video source. Body: `{ name, feedUrl, platform, sport, userId, channelId?, playlistId? }`.
+
+### `DELETE /api/reels/sources/custom/:id`
+Delete a custom video source. Requires auth. Only the user who created it can delete it.
+
+### `POST /api/reels/sync`
+Manual video sync of all active video sources. Requires auth.
 
 ---
 
@@ -466,18 +504,37 @@ Create or update parental profile with PIN. PIN is hashed with bcrypt.
 ### `POST /api/parents/verificar-pin`
 Verify access PIN. Returns a session token (5-minute TTL) on success. Transparently migrates legacy SHA-256 hashes to bcrypt.
 
+**PIN lockout**: after 5 consecutive failed attempts, the account is locked for 15 minutes.
+
 **Body:**
 ```json
 { "userId": "clx...", "pin": "1234" }
 ```
 
-**Response:**
+**Response (success):**
 ```json
 {
   "verified": true,
   "exists": true,
   "sessionToken": "abc123...",
   "profile": { ... }
+}
+```
+
+**Response (wrong PIN -- 401):**
+```json
+{
+  "error": "Incorrect PIN",
+  "attemptsRemaining": 3
+}
+```
+
+**Response (locked out -- 423):**
+```json
+{
+  "error": "Account locked due to too many failed attempts",
+  "lockedUntil": "2026-03-27T18:15:00.000Z",
+  "remainingSeconds": 900
 }
 ```
 
@@ -806,6 +863,22 @@ Stores Expo push notification tokens per user.
 | `role` | string | User role: `child`, `parent`, or `admin` |
 | `parentUserId` | string? | FK to parent User (for linked accounts) |
 | `locale` | string | User locale for per-user localization (default: `es`) |
+
+---
+
+## Rate Limiting
+
+All API endpoints are protected by rate limiting (`express-rate-limit`). Requests exceeding the limit receive a `429 Too Many Requests` response with standard rate-limit headers (`X-RateLimit-Limit`, `X-RateLimit-Remaining`, `X-RateLimit-Reset`, `Retry-After`).
+
+| Tier | Routes | Limit | Env var |
+|------|--------|-------|---------|
+| Auth | `/api/auth/login`, `/api/auth/register` | 5 req/min | `RATE_LIMIT_AUTH` |
+| PIN | `/api/parents/verify-pin` | 10 req/min | `RATE_LIMIT_PIN` |
+| Content | `/api/news/*`, `/api/reels/*`, `/api/quiz/*` | 60 req/min | `RATE_LIMIT_CONTENT` |
+| Sync | `/api/news/sync`, `/api/reels/sync`, `/api/teams/sync` | 2 req/min | `RATE_LIMIT_SYNC` |
+| Default | All other `/api/*` | 100 req/min | `RATE_LIMIT_DEFAULT` |
+
+All limits are configurable via the corresponding environment variables.
 
 ---
 

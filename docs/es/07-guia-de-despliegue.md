@@ -127,6 +127,17 @@ services:
     volumes:
       - pgdata:/var/lib/postgresql/data
 
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api:
     build:
       context: .
@@ -136,10 +147,13 @@ services:
       PORT: 3001
       AI_PROVIDER: openrouter
       OPENROUTER_API_KEY: ${OPENROUTER_API_KEY}
+      CACHE_PROVIDER: redis
+      REDIS_URL: redis://redis:6379
     ports:
       - "3001:3001"
     depends_on:
       - db
+      - redis
 
 volumes:
   pgdata:
@@ -147,14 +161,16 @@ volumes:
 
 ## Checklist pre-produccion
 
-- [ ] Migrar a PostgreSQL
+- [x] Migrar a PostgreSQL (script: `bash apps/api/scripts/migrate-to-postgres.sh`)
 - [ ] Configurar HTTPS
 - [ ] Configurar CORS con dominios especificos
-- [ ] Implementar rate limiting
-- [ ] Anadir autenticacion real (JWT)
+- [x] Implementar rate limiting (5 tiers: auth/pin/content/sync/default)
+- [x] Anadir autenticacion real (JWT access + refresh tokens)
 - [ ] Configurar proveedor AI de produccion (OpenRouter/Anthropic)
 - [ ] Configurar logs estructurados
 - [ ] Verificar feeds RSS funcionan en produccion
+- [x] Soporte cache Redis (opcional, `CACHE_PROVIDER=redis`)
+- [ ] OAuth (Google, Apple) — rutas placeholder listas
 - [ ] Configurar backups de base de datos
 - [ ] Configurar monitoring/alertas
 - [x] ~~Revisar seguridad del PIN (bcrypt en vez de SHA-256)~~ — Implementado (bcrypt con migracion transparente)

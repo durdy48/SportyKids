@@ -11,6 +11,7 @@ import {
   getAchievements,
   getUserAchievements,
   getStreakInfo,
+  fetchScore,
   fetchNews,
 } from '@/lib/api';
 import { StickerCard } from '@/components/StickerCard';
@@ -40,6 +41,8 @@ export default function CollectionPage() {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [longestStreak, setLongestStreak] = useState(0);
 
+  const [totalPoints, setTotalPoints] = useState(0);
+
   const [sportFilter, setSportFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<Tab>('stickers');
   const [loadingData, setLoadingData] = useState(true);
@@ -58,13 +61,14 @@ export default function CollectionPage() {
         // Pre-check parental guard by making a minimal news request with userId
         await fetchNews({ userId: user!.id, limit: 1 });
 
-        const [stickersRes, userStickersRes, achievementsRes, userAchievementsRes, streakRes] =
+        const [stickersRes, userStickersRes, achievementsRes, userAchievementsRes, streakRes, scoreRes] =
           await Promise.all([
             getStickers(),
             getUserStickers(user!.id),
             getAchievements(),
             getUserAchievements(user!.id),
             getStreakInfo(user!.id),
+            fetchScore(user!.id),
           ]);
 
         setAllStickers(stickersRes.stickers);
@@ -79,6 +83,7 @@ export default function CollectionPage() {
 
         setCurrentStreak(streakRes.currentStreak);
         setLongestStreak(streakRes.longestStreak);
+        setTotalPoints(scoreRes.totalPoints ?? 0);
       } catch (err: any) {
         if (err?.status === 403 && err?.reason) {
           setParentalBlock({ reason: err.reason, allowedHoursStart: err.allowedHoursStart, allowedHoursEnd: err.allowedHoursEnd });
@@ -164,13 +169,11 @@ export default function CollectionPage() {
       </div>
 
       {/* Points */}
-      {user?.totalPoints != null && (
-        <div className="mb-4 flex items-center gap-2">
-          <span className="text-[var(--color-yellow)] text-lg">&#9733;</span>
-          <span className="font-bold text-[var(--color-text)]">{user.totalPoints}</span>
-          <span className="text-sm text-[var(--color-muted)]">{t('quiz.pts', locale)}</span>
-        </div>
-      )}
+      <div className="mb-4 flex items-center gap-2">
+        <span className="text-[var(--color-yellow)] text-lg">&#9733;</span>
+        <span className="font-bold text-[var(--color-text)]">{totalPoints}</span>
+        <span className="text-sm text-[var(--color-muted)]">{t('quiz.pts', locale)}</span>
+      </div>
 
       {/* Progress bar */}
       <div className="mb-6">

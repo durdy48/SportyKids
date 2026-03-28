@@ -1,6 +1,8 @@
 // Shared constants
 export { KID_FRIENDLY_ERRORS, getErrorType } from './errors';
 export type { KidFriendlyError } from './errors';
+export { SUPPORTED_LOCALES, SUPPORTED_COUNTRIES, inferCountryFromLocale } from './locale';
+export type { SupportedLocale, SupportedCountry } from './locale';
 
 export const SPORTS = [
   'football',
@@ -25,7 +27,7 @@ export const TEAMS = [
   // Football - Spain
   'Real Madrid',
   'Barcelona',
-  'Atletico de Madrid',
+  'Atlético de Madrid',
   'Athletic Club',
   'Real Sociedad',
   'Real Betis',

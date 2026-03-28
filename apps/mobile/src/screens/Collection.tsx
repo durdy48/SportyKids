@@ -1,4 +1,5 @@
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
@@ -22,7 +23,7 @@ import {
 type Tab = 'stickers' | 'achievements';
 
 export function CollectionScreen() {
-  const { user, locale, loading: userLoading } = useUser();
+  const { user, locale, loading: userLoading, refreshUser } = useUser();
 
   const [allStickers, setAllStickers] = useState<Sticker[]>([]);
   const [userStickers, setUserStickers] = useState<UserSticker[]>([]);
@@ -41,42 +42,53 @@ export function CollectionScreen() {
   const [activeTab, setActiveTab] = useState<Tab>('stickers');
   const [loadingData, setLoadingData] = useState(true);
 
-  useEffect(() => {
-    if (userLoading || !user) return;
+  // Load collection data and refresh user when screen gains focus
+  useFocusEffect(
+    useCallback(() => {
+      if (userLoading || !user) return;
 
-    async function loadData() {
-      setLoadingData(true);
-      try {
-        const [stickersRes, userStickersRes, achievementsRes, userAchievementsRes, streakRes] =
-          await Promise.all([
-            getStickers(),
-            getUserStickers(user!.id),
-            getAchievements(),
-            getUserAchievements(user!.id),
-            getStreakInfo(user!.id),
-          ]);
+      let cancelled = false;
 
-        setAllStickers(stickersRes.stickers);
-        setUserStickers(userStickersRes.stickers);
-        setCollected(userStickersRes.collected);
-        setTotalStickers(userStickersRes.total);
+      async function loadData() {
+        setLoadingData(true);
+        try {
+          // Refresh user points from server
+          await refreshUser();
 
-        setAllAchievements(achievementsRes.achievements);
-        setUserAchievements(userAchievementsRes.achievements);
-        setTotalAchievements(userAchievementsRes.total);
-        setUnlockedCount(userAchievementsRes.unlocked);
+          const [stickersRes, userStickersRes, achievementsRes, userAchievementsRes, streakRes] =
+            await Promise.all([
+              getStickers(),
+              getUserStickers(user!.id),
+              getAchievements(),
+              getUserAchievements(user!.id),
+              getStreakInfo(user!.id),
+            ]);
 
-        setCurrentStreak(streakRes.currentStreak);
-        setLongestStreak(streakRes.longestStreak);
-      } catch {
-        // API not available yet — show empty state
-      } finally {
-        setLoadingData(false);
+          if (cancelled) return;
+
+          setAllStickers(stickersRes.stickers);
+          setUserStickers(userStickersRes.stickers);
+          setCollected(userStickersRes.collected);
+          setTotalStickers(userStickersRes.total);
+
+          setAllAchievements(achievementsRes.achievements);
+          setUserAchievements(userAchievementsRes.achievements);
+          setTotalAchievements(userAchievementsRes.total);
+          setUnlockedCount(userAchievementsRes.unlocked);
+
+          setCurrentStreak(streakRes.currentStreak);
+          setLongestStreak(streakRes.longestStreak);
+        } catch {
+          // API not available yet — show empty state
+        } finally {
+          if (!cancelled) setLoadingData(false);
+        }
       }
-    }
 
-    loadData();
-  }, [user, userLoading]);
+      loadData();
+      return () => { cancelled = true; };
+    }, [userLoading])
+  );
 
   const ownedStickerIds = useMemo(
     () => new Set(userStickers.map((us) => us.stickerId)),
@@ -133,12 +145,12 @@ export function CollectionScreen() {
         <Text style={styles.streakEmoji}>🔥</Text>
         <Text style={styles.streakText}>{currentStreak}</Text>
         <Text style={styles.streakLabel}>
-          {locale === 'es' ? 'racha actual' : 'current streak'}
+          {t('streak.current', locale).toLowerCase()}
         </Text>
         <Text style={styles.streakSeparator}>|</Text>
         <Text style={styles.streakText}>{longestStreak}</Text>
         <Text style={styles.streakLabel}>
-          {locale === 'es' ? 'mejor racha' : 'best streak'}
+          {t('streak.longest', locale).toLowerCase()}
         </Text>
       </View>
 
@@ -166,7 +178,7 @@ export function CollectionScreen() {
           onPress={() => setActiveTab('stickers')}
         >
           <Text style={[styles.tabText, activeTab === 'stickers' && styles.tabTextActive]}>
-            🎴 {locale === 'es' ? 'Stickers' : 'Stickers'}
+            🎴 {t('collection.tab_stickers', locale)}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -230,7 +242,7 @@ export function CollectionScreen() {
                     key={sticker.id}
                     style={[styles.stickerCard, !owned && styles.stickerLocked]}
                   >
-                    <Text style={styles.stickerEmoji}>{sticker.imageUrl || '🎴'}</Text>
+                    <Text style={styles.stickerEmoji}>{sportToEmoji(sticker.sport)}</Text>
                     <Text style={styles.stickerName} numberOfLines={1}>
                       {sticker.name}
                     </Text>
@@ -247,7 +259,7 @@ export function CollectionScreen() {
           ) : (
             <View style={styles.emptyState}>
               <Text style={styles.emptyEmoji}>🎴</Text>
-              <Text style={styles.emptyText}>{t('home.no_news', locale)}</Text>
+              <Text style={styles.emptyText}>{t('collection.no_stickers', locale)}</Text>
             </View>
           )}
         </>
@@ -265,9 +277,9 @@ export function CollectionScreen() {
               >
                 <Text style={styles.achievementIcon}>{achievement.icon || '🏆'}</Text>
                 <View style={styles.achievementInfo}>
-                  <Text style={styles.achievementName}>{achievement.name}</Text>
+                  <Text style={styles.achievementName}>{t(achievement.nameKey, locale)}</Text>
                   <Text style={styles.achievementDesc} numberOfLines={2}>
-                    {achievement.description}
+                    {t(achievement.descriptionKey, locale)}
                   </Text>
                 </View>
                 {unlocked ? (

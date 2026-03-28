@@ -8,7 +8,7 @@ import { useUser } from '../lib/user-context';
 type GameState = 'start' | 'playing' | 'result';
 
 export function QuizScreen() {
-  const { user, locale } = useUser();
+  const { user, locale, refreshUser } = useUser();
   const [gameState, setGameState] = useState<GameState>('start');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [index, setIndex] = useState(0);
@@ -30,9 +30,14 @@ export function QuizScreen() {
     if (!user) return;
     setLoading(true);
     try {
-      // Pass age from user profile for age-appropriate questions
-      const ageParam = user.age ? String(user.age) : undefined;
-      const data = await fetchQuestions(5, undefined, ageParam);
+      // Map numeric age to age range for API
+      let ageRange: string | undefined;
+      if (user.age) {
+        if (user.age <= 8) ageRange = '6-8';
+        else if (user.age <= 11) ageRange = '9-11';
+        else ageRange = '12-14';
+      }
+      const data = await fetchQuestions(5, undefined, ageRange);
       setQuestions(data.questions);
       setIndex(0);
       setRoundPoints(0);
@@ -62,6 +67,7 @@ export function QuizScreen() {
     if (index === questions.length - 1) {
       setTotalPoints((p) => p + roundPoints);
       setGameState('result');
+      refreshUser(); // Sync points/stickers from server
       return;
     }
     setIndex(index + 1);
@@ -143,18 +149,18 @@ export function QuizScreen() {
             </View>
           )}
 
-          {/* Related news link for daily questions */}
+          {/* Related news link for daily questions — hidden until navigation is wired up
           {feedback && question.isDaily && question.relatedNewsId && (
             <TouchableOpacity
               style={s.relatedNewsLink}
               onPress={() => {
-                // Open related news - deep link or in-app navigation
-                // For now point to API detail (could be enhanced later)
+                // TODO: Open related news - deep link or in-app navigation
               }}
             >
               <Text style={s.relatedNewsText}>{t('quiz.read_news', locale)}</Text>
             </TouchableOpacity>
           )}
+          */}
 
           {feedback && (
             <TouchableOpacity style={s.buttonBlue} onPress={next}>
