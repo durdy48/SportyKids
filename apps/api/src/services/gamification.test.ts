@@ -72,7 +72,7 @@ describe('gamification', () => {
         currentStreak: 4,
         longestStreak: 5,
         quizPerfectCount: 0,
-        favoriteSports: '["football"]',
+        favoriteSports: ['football'],
       });
       mockPrisma.activityLog.groupBy.mockResolvedValue([]);
       mockPrisma.userSticker.count.mockResolvedValue(1);
@@ -112,7 +112,7 @@ describe('gamification', () => {
         currentStreak: 1,
         longestStreak: 15,
         quizPerfectCount: 0,
-        favoriteSports: '[]',
+        favoriteSports: [],
       });
       mockPrisma.activityLog.groupBy.mockResolvedValue([]);
       mockPrisma.userSticker.count.mockResolvedValue(0);
@@ -217,7 +217,7 @@ describe('gamification', () => {
         currentStreak: 0,
         longestStreak: 0,
         quizPerfectCount: 0,
-        favoriteSports: '[]',
+        favoriteSports: [],
       });
       mockPrisma.activityLog.groupBy.mockResolvedValue([]);
       mockPrisma.userSticker.count.mockResolvedValue(0);

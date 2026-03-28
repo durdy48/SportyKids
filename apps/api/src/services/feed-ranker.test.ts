@@ -1,9 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import {
   rankFeed,
-  sportBoost,
   sourceBoost,
-  recencyBoost,
   languageBoost,
   countryBoost,
   sportFrequencyBoost,
@@ -159,28 +157,6 @@ describe('rankFeed', () => {
   });
 });
 
-// ---------------------------------------------------------------------------
-// Behavioral scoring unit tests (B-CP2) — legacy functions
-// ---------------------------------------------------------------------------
-
-describe('sportBoost (deprecated)', () => {
-  it('returns 0 for no engagement', () => {
-    expect(sportBoost(new Map(), 'football')).toBe(0);
-  });
-  it('returns 1 for 1-4 interactions', () => {
-    expect(sportBoost(new Map([['football', 3]]), 'football')).toBe(1);
-  });
-  it('returns 2 for 5-9 interactions', () => {
-    expect(sportBoost(new Map([['football', 7]]), 'football')).toBe(2);
-  });
-  it('returns 3 for 10-19 interactions', () => {
-    expect(sportBoost(new Map([['football', 15]]), 'football')).toBe(3);
-  });
-  it('returns 4 for 20+ interactions', () => {
-    expect(sportBoost(new Map([['football', 25]]), 'football')).toBe(4);
-  });
-});
-
 describe('sourceBoost', () => {
   it('returns 0 for no engagement', () => {
     expect(sourceBoost(new Map(), 'bbc sport')).toBe(0);
@@ -193,25 +169,6 @@ describe('sourceBoost', () => {
   });
 });
 
-describe('recencyBoost (deprecated)', () => {
-  it('returns 3 for articles less than 3 hours old', () => {
-    const recent = new Date(Date.now() - 1 * 60 * 60 * 1000).toISOString();
-    expect(recencyBoost(recent)).toBe(3);
-  });
-  it('returns 2 for articles 3-12 hours old', () => {
-    const recent = new Date(Date.now() - 6 * 60 * 60 * 1000).toISOString();
-    expect(recencyBoost(recent)).toBe(2);
-  });
-  it('returns 1 for articles 12-24 hours old', () => {
-    const recent = new Date(Date.now() - 18 * 60 * 60 * 1000).toISOString();
-    expect(recencyBoost(recent)).toBe(1);
-  });
-  it('returns 0 for articles older than 24 hours', () => {
-    const old = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString();
-    expect(recencyBoost(old)).toBe(0);
-  });
-});
-
 describe('languageBoost (B-CP5)', () => {
   it('returns 2 for matching language', () => {
     expect(languageBoost('es', 'es')).toBe(2);
@@ -219,9 +176,9 @@ describe('languageBoost (B-CP5)', () => {
   it('returns 0 for non-matching language', () => {
     expect(languageBoost('en', 'es')).toBe(0);
   });
-  it('returns 0 for null/undefined values', () => {
-    expect(languageBoost(null, 'es')).toBe(0);
-    expect(languageBoost('en', undefined)).toBe(0);
+  it('returns 0 for empty string values', () => {
+    expect(languageBoost('', 'es')).toBe(0);
+    expect(languageBoost('en', '')).toBe(0);
   });
 });
 
@@ -412,8 +369,7 @@ describe('diversity injection', () => {
       readContentIds: new Set(),
     };
 
-    // Run without diversity to get reference order
-    const withoutSignals = rankFeed(items, { favoriteSports: ['football', 'basketball'], favoriteTeam: null });
+    // Run with behavioral signals
     const withSignals = rankFeed(items, { favoriteSports: ['football', 'basketball'], favoriteTeam: null }, signals);
 
     // First 4 items should be the same sport (football, the dominant one)

@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { NewsItem } from '@sportykids/shared';
 import { sportToEmoji, formatDate, t, getSportLabel } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
 import { useUser } from '@/lib/user-context';
+import { fetchRelatedArticles } from '@/lib/api';
 import { AgeAdaptedSummary } from './AgeAdaptedSummary';
 import { HeartIcon } from './HeartIcon';
 import { isFavorite, toggleFavorite } from '@/lib/favorites';
@@ -22,7 +23,15 @@ export function NewsCard({ news, locale, showExplainButton = false, isTrending =
   const [showSummary, setShowSummary] = useState(showExplainButton);
   const [liked, setLiked] = useState(() => isFavorite(news.id));
   const [animating, setAnimating] = useState(false);
+  const [related, setRelated] = useState<NewsItem[]>([]);
   const userAge = user?.age ?? 10;
+
+  // Load related articles when summary is shown
+  useEffect(() => {
+    if (showSummary && related.length === 0) {
+      fetchRelatedArticles(news.id, 3).then((res) => setRelated(res.related)).catch(() => {});
+    }
+  }, [showSummary, news.id, related.length]);
 
   const handleToggleFavorite = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -134,6 +143,30 @@ export function NewsCard({ news, locale, showExplainButton = false, isTrending =
           userAge={userAge}
           isOpen={showSummary}
         />
+
+        {/* Related articles (B-CP4) */}
+        {showSummary && related.length > 0 && (
+          <div className="mt-3 pt-3 border-t border-[var(--color-border)]">
+            <p className="text-xs font-semibold text-[var(--color-muted)] mb-2">
+              {t('related.title', locale)}
+            </p>
+            <div className="space-y-2">
+              {related.map((item) => (
+                <a
+                  key={item.id}
+                  href={item.sourceUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="flex items-center gap-2 text-xs hover:bg-[var(--color-background)] rounded-lg p-1.5 -mx-1.5 transition-colors"
+                >
+                  <span>{sportToEmoji(item.sport)}</span>
+                  <span className="text-[var(--color-text)] line-clamp-1 flex-1">{item.title}</span>
+                  <span className="text-[var(--color-muted)] shrink-0">{item.source}</span>
+                </a>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </article>
   );

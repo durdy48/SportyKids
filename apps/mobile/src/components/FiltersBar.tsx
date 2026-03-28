@@ -1,5 +1,6 @@
 import { ScrollView, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import { SPORTS, sportToEmoji, COLORS, t, getSportLabel } from '@sportykids/shared';
+import { SPORTS, sportToEmoji, t, getSportLabel } from '@sportykids/shared';
+import type { ThemeColors } from '../lib/theme';
 import { useUser } from '../lib/user-context';
 
 interface FiltersBarProps {
@@ -8,7 +9,8 @@ interface FiltersBarProps {
 }
 
 export function FiltersBar({ activeSport, onSportChange }: FiltersBarProps) {
-  const { locale } = useUser();
+  const { locale, colors } = useUser();
+  const styles = createStyles(colors);
 
   return (
     <ScrollView
@@ -40,30 +42,32 @@ export function FiltersBar({ activeSport, onSportChange }: FiltersBarProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  chip: {
-    paddingHorizontal: 16,
-    paddingVertical: 8,
-    borderRadius: 20,
-    backgroundColor: '#fff',
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-  },
-  chipActive: {
-    backgroundColor: COLORS.blue,
-    borderColor: COLORS.blue,
-  },
-  chipText: {
-    fontSize: 13,
-    fontWeight: '500',
-    color: '#4B5563',
-  },
-  chipTextActive: {
-    color: '#fff',
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      gap: 8,
+    },
+    chip: {
+      paddingHorizontal: 16,
+      paddingVertical: 8,
+      borderRadius: 20,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    chipActive: {
+      backgroundColor: colors.blue,
+      borderColor: colors.blue,
+    },
+    chipText: {
+      fontSize: 13,
+      fontWeight: '500',
+      color: colors.muted,
+    },
+    chipTextActive: {
+      color: '#fff',
+    },
+  });
+}

@@ -1,7 +1,7 @@
 import { prisma } from '../config/database';
 import { t } from '@sportykids/shared';
 import { awardSticker } from './gamification';
-import { safeJsonParse } from '../utils/safe-json-parse';
+
 
 // ---------------------------------------------------------------------------
 // Mission type definitions
@@ -81,7 +81,7 @@ export async function generateDailyMission(
   });
 
   const allowedFormats: string[] = parentalProfile
-    ? safeJsonParse(parentalProfile.allowedFormats as string, ['news', 'reels', 'quiz'])
+    ? parentalProfile.allowedFormats
     : ['news', 'reels', 'quiz'];
 
   // Filter mission types based on parental restrictions
@@ -132,7 +132,7 @@ export async function generateDailyMission(
 export async function checkMissionProgress(
   userId: string,
   activityType: string,
-  sport?: string,
+  _sport?: string,
 ): Promise<{ missionUpdated: boolean; completed: boolean; mission: Record<string, unknown> | null }> {
   const today = getTodayDate();
 

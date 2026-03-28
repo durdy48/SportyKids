@@ -8,6 +8,7 @@
 import { prisma } from '../config/database';
 import { TEAM_IDS } from './team-ids';
 import { apiCache } from './cache';
+import { logger } from './logger';
 
 const THESPORTSDB_BASE = 'https://www.thesportsdb.com/api/v1/json/3';
 const REQUEST_DELAY_MS = 1000;
@@ -112,14 +113,14 @@ export async function syncTeamStats(teamName: string, sportsDbId: string, sport:
       where: { teamName },
       update: {
         sport,
-        recentResults: JSON.stringify(recentResults),
-        nextMatch: nextMatch ? JSON.stringify(nextMatch) : null,
+        recentResults,
+        nextMatch: nextMatch ?? undefined,
       },
       create: {
         teamName,
         sport,
-        recentResults: JSON.stringify(recentResults),
-        nextMatch: nextMatch ? JSON.stringify(nextMatch) : null,
+        recentResults,
+        nextMatch: nextMatch ?? undefined,
       },
     });
 
@@ -128,7 +129,7 @@ export async function syncTeamStats(teamName: string, sportsDbId: string, sport:
 
     return true;
   } catch (err) {
-    console.error(`Error syncing team stats for ${teamName}:`, err);
+    logger.error({ err, teamName }, 'Error syncing team stats');
     return false;
   }
 }

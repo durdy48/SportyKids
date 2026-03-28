@@ -1,0 +1,105 @@
+API:
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/api
+
+[13:41:32] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "La Liga YouTube"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[13:41:32] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[13:41:32] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 0
+    [35mrejected[39m: 1
+[13:41:32] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[13:41:32] [31mERROR[39m: [36mError syncing video source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Broken Channel"
+    err: "Network timeout"
+[13:41:32] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[13:41:32] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:32] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "YouTube Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[13:41:33] [32mINFO[39m: [36mVideo sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35mcreated[39m: 0
+    [35msources[39m: 1
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+    [35merrors[39m: 0
+[13:41:33] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:33] [32mINFO[39m: [36mNo active video sources found.[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:33] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:33] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Channel A"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[13:41:35] [32mINFO[39m: [36mParental session created[39m
+    [35mservice[39m: "sportykids-api"
+    [35muserId[39m: "cmnadplvi000026jbnrunktpc"
+[13:41:36] [32mINFO[39m: [36mParental session created[39m
+    [35mservice[39m: "sportykids-api"
+    [35muserId[39m: "cmnadpmfo000c26jbn17qhy44"
+[13:41:36] [32mINFO[39m: [36mParental session created[39m
+    [35mservice[39m: "sportykids-api"
+    [35muserId[39m: "cmnadpmj0000f26jbrdesu1gq"
+
+ Test Files  35 passed (35)
+      Tests  379 passed (379)
+   Start at  14:41:32
+   Duration  11.63s (transform 589ms, setup 0ms, import 3.49s, tests 4.53s, environment 1ms)
+
+Web:
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/web
+
+
+ Test Files  12 passed (12)
+      Tests  57 passed (57)
+   Start at  14:41:44
+   Duration  2.31s (transform 594ms, setup 2.52s, import 2.74s, tests 345ms, environment 18.96s)
+
+Mobile:
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/mobile
+
+
+ Test Files  10 passed (10)
+      Tests  60 passed (60)
+   Start at  14:41:47
+   Duration  349ms (transform 566ms, setup 275ms, import 836ms, tests 324ms, environment 0ms)

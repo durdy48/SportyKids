@@ -9,7 +9,7 @@ import { useUser } from '@/lib/user-context';
 import { useActivityTracker } from '@/lib/use-activity-tracker';
 import { QuizGame } from '@/components/QuizGame';
 import { QuizSkeleton } from '@/components/skeletons';
-import { LimitReached } from '@/components/LimitReached';
+import { LimitReached, type LimitType } from '@/components/LimitReached';
 
 type State = 'start' | 'playing' | 'result';
 
@@ -41,6 +41,7 @@ export default function QuizPage() {
     if (user) {
       fetchScore(user.id)
         .then((r) => setTotalPoints(r.totalPoints))
+        // eslint-disable-next-line no-console
         .catch(console.error);
     }
   }, [user]);
@@ -55,10 +56,12 @@ export default function QuizPage() {
       const hasDaily = result.questions.some((q) => q.isDaily);
       setHasDailyQuestions(hasDaily);
       setState('playing');
-    } catch (err: any) {
-      if (err?.status === 403 && err?.reason) {
-        setParentalBlock({ reason: err.reason, allowedHoursStart: err.allowedHoursStart, allowedHoursEnd: err.allowedHoursEnd });
+    } catch (err: unknown) {
+      const e = err as Record<string, unknown>;
+      if (e?.status === 403 && e?.reason) {
+        setParentalBlock({ reason: e.reason as string, allowedHoursStart: e.allowedHoursStart as number, allowedHoursEnd: e.allowedHoursEnd as number });
       } else {
+        // eslint-disable-next-line no-console
         console.error(err);
       }
     } finally {
@@ -78,7 +81,7 @@ export default function QuizPage() {
     return (
       <div className="space-y-6 page-enter">
         <LimitReached
-          type={parentalBlock.reason as any}
+          type={parentalBlock.reason as LimitType}
           allowedHoursStart={parentalBlock.allowedHoursStart}
           allowedHoursEnd={parentalBlock.allowedHoursEnd}
         />

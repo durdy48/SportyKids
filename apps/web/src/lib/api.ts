@@ -2,6 +2,24 @@ import type { NewsItem, Reel, QuizQuestion, User, ParentalProfile, RssSource, Rs
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
+/**
+ * Parse a 403 response from the parental guard into a rich error.
+ *
+ * The centralized error handler returns `{ error: { code, message, details } }`.
+ * Schedule lock details are in `body.error.details`.
+ */
+function parseParentalBlockError(body: Record<string, unknown>): Error {
+  const errorObj = body.error as Record<string, unknown> | undefined;
+  const details = (errorObj?.details ?? {}) as Record<string, unknown>;
+  const message = (errorObj?.message as string) ?? (typeof body.error === 'string' ? body.error : 'forbidden');
+  return Object.assign(new Error(message), {
+    reason: details.error ?? errorObj?.code ?? 'forbidden',
+    allowedHoursStart: details.allowedHoursStart,
+    allowedHoursEnd: details.allowedHoursEnd,
+    status: 403,
+  });
+}
+
 export interface NewsResponse {
   news: NewsItem[];
   total: number;
@@ -16,6 +34,7 @@ export interface NewsFilters {
   source?: string;
   userId?: string;
   q?: string;
+  locale?: string;
   page?: number;
   limit?: number;
 }
@@ -38,6 +57,7 @@ export async function fetchNews(filters: NewsFilters = {}): Promise<NewsResponse
   if (filters.source) params.set('source', filters.source);
   if (filters.userId) params.set('userId', filters.userId);
   if (filters.q) params.set('q', filters.q);
+  if (filters.locale) params.set('locale', filters.locale);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
 
@@ -45,12 +65,7 @@ export async function fetchNews(filters: NewsFilters = {}): Promise<NewsResponse
   if (!res.ok) {
     if (res.status === 403) {
       const body = await res.json().catch(() => ({}));
-      const err: any = new Error(body.error || 'forbidden');
-      err.reason = body.error;
-      err.allowedHoursStart = body.allowedHoursStart;
-      err.allowedHoursEnd = body.allowedHoursEnd;
-      err.status = 403;
-      throw err;
+      throw parseParentalBlockError(body);
     }
     throw new Error(`Error ${res.status}: ${res.statusText}`);
   }
@@ -162,12 +177,7 @@ export async function fetchReels(filters: { sport?: string; page?: number; limit
   if (!res.ok) {
     if (res.status === 403) {
       const body = await res.json().catch(() => ({}));
-      const err: any = new Error(body.error || 'forbidden');
-      err.reason = body.error;
-      err.allowedHoursStart = body.allowedHoursStart;
-      err.allowedHoursEnd = body.allowedHoursEnd;
-      err.status = 403;
-      throw err;
+      throw parseParentalBlockError(body);
     }
     throw new Error(`Error ${res.status}: ${res.statusText}`);
   }
@@ -184,12 +194,7 @@ export async function fetchQuestions(count: number = 5, sport?: string, age?: st
   if (!res.ok) {
     if (res.status === 403) {
       const body = await res.json().catch(() => ({}));
-      const err: any = new Error(body.error || 'forbidden');
-      err.reason = body.error;
-      err.allowedHoursStart = body.allowedHoursStart;
-      err.allowedHoursEnd = body.allowedHoursEnd;
-      err.status = 403;
-      throw err;
+      throw parseParentalBlockError(body);
     }
     throw new Error(`Error ${res.status}: ${res.statusText}`);
   }
@@ -311,6 +316,10 @@ export async function recordActivity(userId: string, type: string, durationSecon
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, type, durationSeconds, contentId, sport }),
   });
+  // Dispatch custom event so MissionCard can refresh progress
+  if (typeof window !== 'undefined') {
+    window.dispatchEvent(new CustomEvent('sportykids:activity-logged', { detail: { type, sport } }));
+  }
 }
 
 export async function fetchActivityDetail(userId: string, from: string, to: string): Promise<{ days: { date: string; news_viewed: number; reels_viewed: number; quizzes_played: number; totalMinutes: number }[]; mostViewed: string }> {
@@ -479,6 +488,18 @@ export async function downloadDigestPdf(userId: string) {
   return res.blob();
 }
 
+export async function sendTestDigestEmail(userId: string): Promise<{ ok: boolean; sentTo: string }> {
+  const res = await fetch(`${API_BASE}/parents/digest/${userId}/test`, {
+    method: 'POST',
+    headers: parentalHeaders({ 'Content-Type': 'application/json' }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    throw new Error(data.error || 'Failed');
+  }
+  return res.json();
+}
+
 // Reading history (B-EN4)
 export async function fetchReadingHistory(userId: string, page = 1, limit = 10): Promise<{ history: NewsItem[]; total: number }> {
   const res = await fetch(`${API_BASE}/news/history?userId=${userId}&page=${page}&limit=${limit}`);
@@ -494,6 +515,17 @@ export async function fetchRelatedArticles(newsId: string, limit = 5): Promise<{
     return res.json();
   } catch {
     return { related: [] };
+  }
+}
+
+// Auth providers
+export async function fetchAuthProviders(): Promise<{ google: boolean; apple: boolean }> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/providers`);
+    if (!res.ok) return { google: false, apple: false };
+    return res.json();
+  } catch {
+    return { google: false, apple: false };
   }
 }
 

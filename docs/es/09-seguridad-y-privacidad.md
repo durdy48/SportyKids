@@ -27,7 +27,8 @@ El servicio `content-moderator.ts` clasifica automaticamente cada noticia agrega
 - PIN de 4 digitos almacenado como **hash bcrypt** con salt
 - **Migracion transparente** desde SHA-256: usuarios existentes se migran automaticamente al verificar PIN
 - **Bloqueo por intentos fallidos**: tras 5 intentos consecutivos incorrectos, la cuenta se bloquea durante 15 minutos. El modelo `ParentalProfile` registra `failedAttempts` (Int, default 0) y `lockedUntil` (DateTime, nullable). Intentos fallidos devuelven 401 con `attemptsRemaining`; cuentas bloqueadas devuelven 423 con `lockedUntil` y `remainingSeconds`.
-- Sesiones con **token temporal** (TTL 5 minutos) para evitar re-verificacion constante
+- Sesiones con **token temporal** persistido en BD (modelo `ParentalSession`, TTL 5 minutos) para evitar re-verificacion constante. Las sesiones sobreviven reinicios del servidor. Limpieza automatica de sesiones expiradas.
+- **Schedule lock (horario nocturno)**: Los padres pueden configurar horas permitidas (`allowedHoursStart`/`allowedHoursEnd`, default 0-24 = sin restriccion) con soporte de zona horaria (`timezone`, default `Europe/Madrid`). Enforced server-side por el middleware parental-guard -- las peticiones fuera del horario permitido devuelven 403.
 
 #### Enforcement server-side (parental-guard middleware)
 Las restricciones parentales se aplican en **dos niveles**:
@@ -52,6 +53,18 @@ Las restricciones parentales se aplican en **dos niveles**:
 - **Actividad**: resumen semanal con duraciones, desglose por dia y deporte
 - **PIN**: cambiar PIN de acceso
 
+### Seguridad OAuth
+- **Google OAuth 2.0**: Proteccion CSRF via parametro `state` validado en callback. ID tokens verificados contra las claves publicas de Google.
+- **Apple Sign In**: Validacion CSRF de `state`, `id_token` verificado contra el endpoint JWKS de Apple, verificacion de `nonce` para prevenir ataques de replay. El callback de Apple usa POST (segun la especificacion de Apple).
+- **Flujos mobile**: Endpoints `/token` dedicados para SDKs nativos (verificacion server-side de Google ID token / Apple identity token).
+- **Vinculacion de cuentas**: Las cuentas OAuth se vinculan por email. Los usuarios con email/password existentes que inician sesion via OAuth se fusionan (no se duplican).
+
+### Autenticacion JWT
+- **Access tokens**: TTL de 15 minutos, firmados con `JWT_SECRET`. Se incluyen en el header `Authorization: Bearer <token>`.
+- **Refresh tokens**: TTL de 7 dias, rotados en cada uso (el token viejo se elimina, se emite uno nuevo). Almacenados en el modelo `RefreshToken` en la base de datos.
+- **Middleware no bloqueante**: Los usuarios anonimos (sin token) pueden seguir accediendo a la API por compatibilidad. Las peticiones autenticadas incluyen el usuario en `req.user`.
+- **Revocacion de tokens**: `POST /api/auth/logout` revoca el refresh token. Los access tokens expiran naturalmente (sin lista de revocacion server-side).
+
 ### Rate limiting
 Todos los endpoints de la API estan protegidos por middleware `express-rate-limit` con 5 niveles:
 
@@ -66,14 +79,13 @@ Todos los endpoints de la API estan protegidos por middleware `express-rate-limi
 Todos los limites son configurables via variables de entorno. Las peticiones que excedan el limite reciben `429 Too Many Requests` con headers estandar de rate-limit.
 
 ### Datos del usuario
-- No se recopilan emails ni contrasenas
-- No se requiere verificacion de identidad
+- Email y contrasena se recopilan solo para cuentas autenticadas (opcional; los usuarios anonimos siguen siendo soportados)
 - El perfil (`User`) se crea con: nombre, edad, preferencias deportivas
 - Los datos se almacenan localmente (localStorage / AsyncStorage) + BD del servidor
-- Las preferencias de notificacion se almacenan pero no se envian (MVP)
+- Notificaciones push enviadas via `expo-server-sdk` con 5 triggers (quiz listo, noticia del equipo, recordatorio de racha, cromo obtenido, mision lista)
 
 ### Contenido externo
-- Las noticias provienen de **47 fuentes RSS de prensa deportiva verificada** (AS, Marca, Mundo Deportivo, etc.)
+- Las noticias provienen de **182 fuentes RSS de prensa deportiva verificada** (AS, Marca, Mundo Deportivo, BBC Sport, ESPN, etc.) con cobertura global
 - Los usuarios pueden anadir fuentes custom via API (sujetas a moderacion)
 - Los reels son curados (YouTube embeds verificados)
 - No hay contenido generado por usuarios
@@ -105,7 +117,7 @@ flowchart TD
     end
 
     subgraph "Pipeline de contenido"
-        K["47 fuentes RSS verificadas"] --> L["aggregator.ts"]
+        K["182+ fuentes RSS verificadas"] --> L["aggregator.ts"]
         L --> M["classifier.ts<br/>(edad + deporte)"]
         M --> MOD["content-moderator.ts<br/>(AI safety check)"]
         MOD -->|approved| N["BD (NewsItem)"]
@@ -136,7 +148,8 @@ flowchart TD
 ## Mejoras recomendadas para produccion
 
 ### Autenticacion
-- Implementar JWT con refresh tokens
+- ~~Implementar JWT con refresh tokens~~ -- **Implementado**: JWT access tokens (15 min) + refresh tokens (7 dias, rotados). Middleware no bloqueante para compatibilidad.
+- ~~OAuth social login~~ -- **Implementado**: Google OAuth 2.0 + Apple Sign In con validacion CSRF/JWKS/nonce. Endpoints mobile para SDKs nativos.
 - Autenticacion biometrica (TouchID/FaceID) para control parental en movil
 - ~~Bloqueo tras 5 intentos fallidos de PIN~~ -- **Implementado**: 5 intentos fallidos = bloqueo de 15 minutos con campos `failedAttempts` y `lockedUntil` en `ParentalProfile`
 

@@ -1,0 +1,2 @@
+inPanel: false
+inPage: true

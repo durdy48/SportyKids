@@ -1,6 +1,7 @@
 import { getAIClient, isProviderAvailable } from './ai-client';
 import type { AIMessage } from './ai-client';
 import type { Locale } from '@sportykids/shared';
+import { logger } from './logger';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -94,10 +95,7 @@ export async function generateSummary(
 
     return response.content.trim();
   } catch (err) {
-    console.warn(
-      `[Summarizer] Failed to generate summary (ageRange=${ageRange}, locale=${locale}):`,
-      err instanceof Error ? err.message : err,
-    );
+    logger.warn({ ageRange, locale, err: err instanceof Error ? err.message : err }, 'Failed to generate summary');
     return '';
   }
 }

@@ -1,0 +1,76 @@
+import cron from 'node-cron';
+import { prisma } from '../config/database';
+import { logger } from '../services/logger';
+import { sendPushToUser } from '../services/push-sender';
+import { t } from '@sportykids/shared';
+
+// ---------------------------------------------------------------------------
+// Send reminder push for users close to completing their daily mission
+// ---------------------------------------------------------------------------
+
+export async function sendMissionReminders(): Promise<{ sent: number; errors: number }> {
+  const result = { sent: 0, errors: 0 };
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Find missions that are >50% progress and not yet completed
+  const missions = await prisma.dailyMission.findMany({
+    where: {
+      date: today,
+      completed: false,
+    },
+    include: {
+      user: {
+        select: { id: true, locale: true },
+      },
+    },
+  });
+
+  for (const mission of missions) {
+    // Only remind if >50% progress
+    if (mission.target <= 0 || mission.progress / mission.target <= 0.5) continue;
+
+    try {
+      const locale = mission.user.locale || 'es';
+      await sendPushToUser(mission.user.id, {
+        title: t('push.mission_almost_title', locale),
+        body: t('push.mission_almost_body', locale),
+        data: { screen: 'HomeFeed' },
+      });
+      result.sent++;
+    } catch (err) {
+      result.errors++;
+      logger.error(
+        { err: err instanceof Error ? err : new Error(String(err)), userId: mission.userId },
+        'Error sending mission reminder',
+      );
+    }
+  }
+
+  logger.info(
+    { sent: result.sent, errors: result.errors },
+    'Mission reminders finished',
+  );
+
+  return result;
+}
+
+// ---------------------------------------------------------------------------
+// Cron job: daily at 18:00 UTC
+// ---------------------------------------------------------------------------
+
+let activeJob: ReturnType<typeof cron.schedule> | null = null;
+
+export function startMissionReminderJob(): void {
+  if (activeJob) {
+    logger.info('Mission reminder job is already active.');
+    return;
+  }
+
+  activeJob = cron.schedule('0 18 * * *', async () => {
+    logger.info('Running mission reminders...');
+    await sendMissionReminders();
+  });
+
+  logger.info('Mission reminder job scheduled: daily at 18:00 UTC.');
+}

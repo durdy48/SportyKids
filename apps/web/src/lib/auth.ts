@@ -94,3 +94,13 @@ function clearTokens(): void {
 export function isAuthenticated(): boolean {
   return getAccessToken() !== null;
 }
+
+export function getGoogleLoginUrl(): string {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  return `${apiUrl}/auth/google`;
+}
+
+export function getAppleLoginUrl(): string {
+  const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+  return `${apiUrl}/auth/apple`;
+}

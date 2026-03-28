@@ -1,0 +1,41 @@
+{
+  "status": 201,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "507",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 20:05:51 GMT",
+    "etag": "W/\"1fb-q7KNxPm/LvVyBsUeWQRDlFVHOPw\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "605f3a0d-3551-4e7f-a0a2-9d455e91e5fb"
+  },
+  "body": {
+    "id": "cmnarfs7m00002668w3fi8qr4",
+    "name": "Validation Kid R5",
+    "age": 10,
+    "email": null,
+    "authProvider": "anonymous",
+    "role": "child",
+    "parentUserId": null,
+    "lastLoginAt": null,
+    "favoriteSports": [
+      "football"
+    ],
+    "favoriteTeam": null,
+    "selectedFeeds": [],
+    "pushEnabled": false,
+    "pushPreferences": null,
+    "totalPoints": 0,
+    "currentStreak": 0,
+    "longestStreak": 0,
+    "lastActiveDate": null,
+    "currentQuizCorrectStreak": 0,
+    "quizPerfectCount": 0,
+    "createdAt": "2026-03-28T20:05:51.635Z",
+    "updatedAt": "2026-03-28T20:05:51.635Z",
+    "locale": "es",
+    "country": "ES"
+  }
+}

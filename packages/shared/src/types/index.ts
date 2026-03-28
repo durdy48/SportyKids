@@ -12,6 +12,7 @@ export interface User {
   age: number;
   email?: string;
   authProvider?: string;
+  socialId?: string;
   role?: 'child' | 'parent';
   parentUserId?: string;
   favoriteSports: string[];
@@ -49,6 +50,12 @@ export interface RegisterRequest extends LoginRequest {
   name: string;
   age?: number;
   role?: 'child' | 'parent';
+}
+
+export interface SocialAuthRequest {
+  idToken: string;
+  provider: 'google' | 'apple';
+  name?: string;
 }
 
 export type SafetyStatus = 'pending' | 'approved' | 'rejected';

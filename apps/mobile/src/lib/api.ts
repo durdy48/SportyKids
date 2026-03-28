@@ -35,6 +35,7 @@ export interface NewsFilters {
   source?: string;
   userId?: string;
   q?: string;
+  locale?: string;
   page?: number;
   limit?: number;
 }
@@ -47,6 +48,7 @@ export async function fetchNews(filters: NewsFilters = {}): Promise<NewsResponse
   if (filters.source) params.set('source', filters.source);
   if (filters.userId) params.set('userId', filters.userId);
   if (filters.q) params.set('q', filters.q);
+  if (filters.locale) params.set('locale', filters.locale);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
 
@@ -496,6 +498,71 @@ export async function subscribeNotifications(
   });
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
 }
+
+// ---------------------------------------------------------------------------
+// Digest (Parental)
+// ---------------------------------------------------------------------------
+
+export async function getDigestPreferences(userId: string): Promise<{
+  digestEnabled: boolean;
+  digestEmail: string | null;
+  digestDay: number;
+}> {
+  const res = await fetch(`${API_BASE}/parents/digest/${userId}`, {
+    headers: parentalHeaders(),
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  return res.json();
+}
+
+export async function updateDigestPreferences(
+  userId: string,
+  data: { digestEnabled?: boolean; digestEmail?: string | null; digestDay?: number },
+): Promise<unknown> {
+  const res = await fetch(`${API_BASE}/parents/digest/${userId}`, {
+    method: 'PUT',
+    headers: parentalHeaders({ 'Content-Type': 'application/json' }),
+    body: JSON.stringify(data),
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Missions
+// ---------------------------------------------------------------------------
+
+export async function fetchTodayMission(userId: string): Promise<{ mission: Record<string, unknown> | null; expired?: boolean }> {
+  const res = await fetch(`${API_BASE}/missions/today/${userId}`);
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  return res.json();
+}
+
+export async function claimMission(userId: string): Promise<{ claimed: boolean; sticker: unknown; pointsAwarded: number }> {
+  const res = await fetch(`${API_BASE}/missions/claim`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ userId }),
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Feed Preview (parental)
+// ---------------------------------------------------------------------------
+
+export async function fetchFeedPreview(userId: string): Promise<{ news: NewsItem[]; reels: Reel[]; quizAvailable: boolean }> {
+  const res = await fetch(`${API_BASE}/parents/preview/${userId}`, {
+    headers: parentalHeaders(),
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Notifications
+// ---------------------------------------------------------------------------
 
 export async function getNotifications(
   userId: string,

@@ -726,7 +726,7 @@ async function main() {
     const existing = await prisma.quizQuestion.findFirst({ where: { question: q.question } });
     if (!existing) {
       await prisma.quizQuestion.create({
-        data: { ...q, options: JSON.stringify(q.options) },
+        data: { ...q, options: q.options },
       });
       console.log(`  + ${q.question.substring(0, 50)}...`);
     }
@@ -766,17 +766,17 @@ async function main() {
       update: {
         sport: ts.sport,
         leaguePosition: ts.leaguePosition,
-        recentResults: JSON.stringify(ts.recentResults),
+        recentResults: ts.recentResults,
         topScorer: ts.topScorer,
-        nextMatch: ts.nextMatch ? JSON.stringify(ts.nextMatch) : null,
+        nextMatch: ts.nextMatch ?? undefined,
       },
       create: {
         teamName: ts.teamName,
         sport: ts.sport,
         leaguePosition: ts.leaguePosition,
-        recentResults: JSON.stringify(ts.recentResults),
+        recentResults: ts.recentResults,
         topScorer: ts.topScorer,
-        nextMatch: ts.nextMatch ? JSON.stringify(ts.nextMatch) : null,
+        nextMatch: ts.nextMatch ?? undefined,
       },
     });
     console.log(`  + ${ts.teamName} (${ts.sport})`);

@@ -1,0 +1,17 @@
+{
+  "status": 500,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "37",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 20:05:52 GMT",
+    "etag": "W/\"25-ktU+HgOhuvYmb7vV4O8XNeJji8c\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "9ab8daae-1144-477a-a3b0-50c034640d98"
+  },
+  "body": {
+    "error": "Failed to send test email"
+  }
+}

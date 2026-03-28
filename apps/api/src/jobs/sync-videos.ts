@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import { syncAllVideoSources, VideoSyncAllResult } from '../services/video-aggregator';
+import { logger } from '../services/logger';
 
 let activeJob: cron.ScheduledTask | null = null;
 
@@ -8,22 +9,22 @@ let activeJob: cron.ScheduledTask | null = null;
  */
 export function startVideoSyncJob(): void {
   if (activeJob) {
-    console.log('Video sync job is already active.');
+    logger.info('Video sync job is already active.');
     return;
   }
 
   activeJob = cron.schedule('0 */6 * * *', async () => {
-    console.log(`[${new Date().toISOString()}] Running scheduled video synchronization...`);
+    logger.info('Running scheduled video synchronization...');
     await syncAllVideoSources();
   });
 
-  console.log('Video sync job scheduled: every 6 hours.');
+  logger.info('Video sync job scheduled: every 6 hours.');
 }
 
 /**
  * Manual video sync (on startup or from admin route).
  */
 export async function runManualVideoSync(): Promise<VideoSyncAllResult> {
-  console.log(`[${new Date().toISOString()}] Running manual video synchronization...`);
+  logger.info('Running manual video synchronization...');
   return syncAllVideoSources();
 }

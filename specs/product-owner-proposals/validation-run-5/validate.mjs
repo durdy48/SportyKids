@@ -22,7 +22,8 @@ function check(id, name, fn) {
   }
 }
 
-function skip(id, name, reason) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _skip(id, name, reason) {
   results.push({ id, name, status: 'SKIP', detail: reason });
   console.log(`SKIP ${id}: ${name} -- ${reason}`);
 }
@@ -51,7 +52,8 @@ function fileContains(relPath, pattern) {
   return content;
 }
 
-function fileNotContains(relPath, pattern) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _fileNotContains(relPath, pattern) {
   const full = join(ROOT, relPath);
   if (!existsSync(full)) return; // file doesn't exist, so it doesn't contain the pattern
   const content = readFileSync(full, 'utf8');
@@ -224,9 +226,9 @@ check('S10', 'API tests pass (vitest)', () => {
     writeFileSync(join(OUTPUT, 'tests.txt'), output);
     // Check if it's just a "no tests found" scenario
     if (output.includes('no test files found') || output.includes('No test files found')) {
-      throw new Error('No test files found');
+      throw new Error('No test files found', { cause: e });
     }
-    throw new Error(`Tests failed. Output saved to validation-assets/run-${RUN}/output/tests.txt`);
+    throw new Error(`Tests failed. Output saved to validation-assets/run-${RUN}/output/tests.txt`, { cause: e });
   }
 });
 
@@ -631,7 +633,7 @@ check('C13', 'API tests pass with 91+ tests', () => {
     const rawOut = e.stdout?.toString() || e.stderr?.toString() || e.message;
     const output = rawOut.replace(/\x1B\[[0-9;]*[a-zA-Z]/g, '');
     writeFileSync(join(OUTPUT, 'tests-c13.txt'), output);
-    throw new Error(`Tests failed or count < 91. Output saved to validation-assets/run-${RUN}/output/tests-c13.txt`);
+    throw new Error(`Tests failed or count < 91. Output saved to validation-assets/run-${RUN}/output/tests-c13.txt`, { cause: e });
   }
 });
 

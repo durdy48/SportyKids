@@ -4,7 +4,7 @@
  * Run 6 (PRD1+2+3 + all fixes)
  */
 
-import { writeFileSync, existsSync } from 'fs';
+import { writeFileSync } from 'fs';
 import { execSync } from 'child_process';
 import { join, dirname } from 'path';
 import { fileURLToPath } from 'url';

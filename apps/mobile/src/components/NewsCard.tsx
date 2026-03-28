@@ -2,10 +2,11 @@ import { useState, useEffect, useRef } from 'react';
 import { View, Text, Image, TouchableOpacity, Linking, StyleSheet, Animated } from 'react-native';
 import type { NewsItem } from '@sportykids/shared';
 import { sportToEmoji, formatDate, COLORS, t } from '@sportykids/shared';
-import type { Locale } from '@sportykids/shared';
+import type { ThemeColors } from '../lib/theme';
 import { useUser } from '../lib/user-context';
 import { getSportLabel } from '@sportykids/shared';
 import { isFavorite, toggleFavorite } from '../lib/favorites';
+import { fetchRelatedArticles } from '../lib/api';
 
 interface NewsCardProps {
   item: NewsItem;
@@ -13,8 +14,11 @@ interface NewsCardProps {
 }
 
 export function NewsCard({ item, isTrending = false }: NewsCardProps) {
-  const { locale } = useUser();
+  const { locale, colors } = useUser();
+  const styles = createStyles(colors);
   const [liked, setLiked] = useState(false);
+  const [related, setRelated] = useState<NewsItem[]>([]);
+  const [showRelated, setShowRelated] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
@@ -82,18 +86,45 @@ export function NewsCard({ item, isTrending = false }: NewsCardProps) {
 
         <TouchableOpacity
           style={styles.button}
-          onPress={() => Linking.openURL(item.sourceUrl)}
+          onPress={() => {
+            Linking.openURL(item.sourceUrl);
+            // Load related articles on first read
+            if (!showRelated && related.length === 0) {
+              fetchRelatedArticles(item.id, 3).then((res) => {
+                setRelated(res.related);
+                if (res.related.length > 0) setShowRelated(true);
+              }).catch(() => {});
+            }
+          }}
         >
           <Text style={styles.buttonText}>{t('buttons.read_more', locale)}</Text>
         </TouchableOpacity>
+
+        {/* Related articles (B-CP4) */}
+        {showRelated && related.length > 0 && (
+          <View style={styles.relatedSection}>
+            <Text style={styles.relatedTitle}>{t('related.title', locale)}</Text>
+            {related.map((r) => (
+              <TouchableOpacity
+                key={r.id}
+                style={styles.relatedItem}
+                onPress={() => Linking.openURL(r.sourceUrl)}
+              >
+                <Text style={styles.relatedEmoji}>{sportToEmoji(r.sport)}</Text>
+                <Text style={styles.relatedText} numberOfLines={1}>{r.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   card: {
-    backgroundColor: '#fff',
+    backgroundColor: colors.surface,
     borderRadius: 16,
     marginHorizontal: 16,
     marginBottom: 12,
@@ -132,7 +163,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 16,
     fontWeight: '600',
-    color: COLORS.darkText,
+    color: colors.text,
     marginBottom: 6,
     lineHeight: 22,
   },
@@ -204,4 +235,31 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     color: '#EA580C',
   },
-});
+  relatedSection: {
+    marginTop: 12,
+    paddingTop: 10,
+    borderTopWidth: 1,
+    borderTopColor: colors.border,
+  },
+  relatedTitle: {
+    fontSize: 11,
+    fontWeight: '600',
+    color: '#6B7280',
+    marginBottom: 6,
+  },
+  relatedItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+    gap: 6,
+  },
+  relatedEmoji: {
+    fontSize: 12,
+  },
+  relatedText: {
+    fontSize: 12,
+    color: colors.text,
+    flex: 1,
+  },
+  });
+}

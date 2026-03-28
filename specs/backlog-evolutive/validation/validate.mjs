@@ -40,7 +40,8 @@ function readFile(relPath) {
   return readFileSync(join(ROOT, relPath), 'utf-8');
 }
 
-function grepFile(relPath, pattern) {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+function _grepFile(relPath, pattern) {
   const content = readFile(relPath);
   return content.split('\n').filter(l => l.match(pattern));
 }
@@ -205,7 +206,7 @@ try {
   } else {
     record('J1', 'API: reels sources catalog', 'FAIL', `total=${catalog.total}`);
   }
-} catch (e) {
+} catch {
   record('J1', 'API: reels sources catalog', 'SKIP', 'API not running');
 }
 
@@ -223,17 +224,17 @@ try {
   } else {
     record('J2', 'API: reels list (approved only)', 'FAIL');
   }
-} catch (e) {
+} catch {
   record('J2', 'API: reels list', 'SKIP', 'API not running');
 }
 
 try {
-  const healthRaw = execSync(
+  execSync(
     'curl -sf http://localhost:3001/api/health 2>&1',
     { encoding: 'utf-8', timeout: 5000 }
   );
   record('J3', 'API: health check', 'PASS');
-} catch (e) {
+} catch {
   record('J3', 'API: health check', 'SKIP', 'API not running');
 }
 

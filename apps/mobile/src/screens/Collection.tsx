@@ -1,16 +1,17 @@
-import { useEffect, useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
 import {
   View,
   Text,
   ScrollView,
   TouchableOpacity,
-  ActivityIndicator,
   StyleSheet,
 } from 'react-native';
 import { t, sportToEmoji, getSportLabel, SPORTS, COLORS } from '@sportykids/shared';
 import type { Sticker, UserSticker, Achievement, UserAchievement } from '@sportykids/shared';
 import { useUser } from '../lib/user-context';
+import { haptic } from '../lib/haptics';
+import { BrandedRefreshControl } from '../components/BrandedRefreshControl';
 import { SkeletonPlaceholder } from '../components/SkeletonPlaceholder';
 import {
   getStickers,
@@ -41,6 +42,7 @@ export function CollectionScreen() {
   const [sportFilter, setSportFilter] = useState<string>('all');
   const [activeTab, setActiveTab] = useState<Tab>('stickers');
   const [loadingData, setLoadingData] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
 
   // Load collection data and refresh user when screen gains focus
   useFocusEffect(
@@ -87,6 +89,7 @@ export function CollectionScreen() {
 
       loadData();
       return () => { cancelled = true; };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userLoading])
   );
 
@@ -130,7 +133,38 @@ export function CollectionScreen() {
   }
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={
+        <BrandedRefreshControl
+          refreshing={refreshing}
+          onRefresh={() => {
+            if (userLoading || !user) return;
+            setRefreshing(true);
+            Promise.all([
+              getStickers(),
+              getUserStickers(user.id),
+              getAchievements(),
+              getUserAchievements(user.id),
+              getStreakInfo(user.id),
+            ]).then(([stickersRes, userStickersRes, achievementsRes, userAchievementsRes, streakRes]) => {
+              setAllStickers(stickersRes.stickers);
+              setUserStickers(userStickersRes.stickers);
+              setCollected(userStickersRes.collected);
+              setTotalStickers(userStickersRes.total);
+              setAllAchievements(achievementsRes.achievements);
+              setUserAchievements(userAchievementsRes.achievements);
+              setTotalAchievements(userAchievementsRes.total);
+              setUnlockedCount(userAchievementsRes.unlocked);
+              setCurrentStreak(streakRes.currentStreak);
+              setLongestStreak(streakRes.longestStreak);
+            }).catch(() => {}).finally(() => setRefreshing(false));
+          }}
+          locale={locale}
+        />
+      }
+    >
       {/* Header */}
       <Text style={styles.title}>{t('collection.title', locale)}</Text>
       <Text style={styles.subtitle}>
@@ -238,9 +272,11 @@ export function CollectionScreen() {
               {filteredStickers.map((sticker) => {
                 const owned = ownedStickerIds.has(sticker.id);
                 return (
-                  <View
+                  <TouchableOpacity
                     key={sticker.id}
                     style={[styles.stickerCard, !owned && styles.stickerLocked]}
+                    activeOpacity={0.7}
+                    onPress={() => haptic('light')}
                   >
                     <Text style={styles.stickerEmoji}>{sportToEmoji(sticker.sport)}</Text>
                     <Text style={styles.stickerName} numberOfLines={1}>
@@ -252,7 +288,7 @@ export function CollectionScreen() {
                     {!owned && (
                       <Text style={styles.lockedLabel}>{t('collection.locked', locale)}</Text>
                     )}
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </View>

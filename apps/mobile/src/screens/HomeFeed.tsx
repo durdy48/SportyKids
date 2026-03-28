@@ -1,17 +1,20 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { View, FlatList, ActivityIndicator, Text, StyleSheet, TouchableOpacity, Alert, TextInput } from 'react-native';
+import { View, FlatList, ActivityIndicator, Text, StyleSheet, TouchableOpacity, Alert, TextInput, Linking, ScrollView as HScrollView } from 'react-native';
 import type { NewsItem } from '@sportykids/shared';
-import { COLORS, t } from '@sportykids/shared';
-import { fetchNews, fetchNewsSummary, fetchTrending } from '../lib/api';
+import { COLORS, t, sportToEmoji, getSportLabel } from '@sportykids/shared';
+import type { ThemeColors } from '../lib/theme';
+import { fetchNews, fetchNewsSummary, fetchTrending, fetchReadingHistory } from '../lib/api';
 import { BrandedRefreshControl } from '../components/BrandedRefreshControl';
 import { NewsCard } from '../components/NewsCard';
 import { NewsCardSkeleton } from '../components/NewsCardSkeleton';
 import { FiltersBar } from '../components/FiltersBar';
 import { StreakCounter } from '../components/StreakCounter';
+import { MissionCard } from '../components/MissionCard';
 import { useUser } from '../lib/user-context';
 
-export function HomeFeedScreen({ navigation }: { navigation: any }) {
-  const { user, locale, streakInfo } = useUser();
+export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen: string) => void } }) {
+  const { user, locale, streakInfo, colors } = useUser();
+  const styles = createStyles(colors);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [activeSport, setActiveSport] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -24,6 +27,7 @@ export function HomeFeedScreen({ navigation }: { navigation: any }) {
   const [searchInput, setSearchInput] = useState('');
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [trendingIds, setTrendingIds] = useState<Set<string>>(new Set());
+  const [recentlyRead, setRecentlyRead] = useState<NewsItem[]>([]);
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchInput(text);
@@ -36,10 +40,16 @@ export function HomeFeedScreen({ navigation }: { navigation: any }) {
 
   useEffect(() => {
     fetchTrending().then((res) => setTrendingIds(new Set(res.trendingIds)));
+    if (user?.id) {
+      fetchReadingHistory(user.id, 1, 5).then((res) => setRecentlyRead(res.history)).catch((e) => {
+        // eslint-disable-next-line no-console
+        __DEV__ && console.warn('Failed to fetch reading history:', e);
+      });
+    }
     return () => {
       if (searchTimerRef.current) clearTimeout(searchTimerRef.current);
     };
-  }, []);
+  }, [user?.id]);
 
   const loadNews = useCallback(async (p: number, accumulate: boolean = false) => {
     try {
@@ -47,18 +57,20 @@ export function HomeFeedScreen({ navigation }: { navigation: any }) {
         sport: activeSport ?? undefined,
         userId: user?.id,
         q: searchQuery || undefined,
+        locale,
         page: p,
         limit: 20,
       });
       setNews((prev) => accumulate ? [...prev, ...result.news] : result.news);
       setTotalPages(result.totalPages);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Error loading news:', err);
     } finally {
       setLoading(false);
       setRefreshing(false);
     }
-  }, [activeSport, user?.id, searchQuery]);
+  }, [activeSport, user?.id, searchQuery, locale]);
 
   useEffect(() => {
     setLoading(true);
@@ -159,6 +171,9 @@ export function HomeFeedScreen({ navigation }: { navigation: any }) {
                 locale={locale}
               />
             )}
+            {user && (
+              <MissionCard userId={user.id} locale={locale} colors={colors} />
+            )}
             {/* Search bar */}
             <View style={styles.searchContainer}>
               <Text style={styles.searchIcon}>{'\u{1F50D}'}</Text>
@@ -180,6 +195,27 @@ export function HomeFeedScreen({ navigation }: { navigation: any }) {
                 </TouchableOpacity>
               )}
             </View>
+            {/* Recently Read (B-EN4) */}
+            {recentlyRead.length > 0 && (
+              <View style={styles.recentlyReadSection}>
+                <Text style={styles.recentlyReadTitle}>{t('history.title', locale)}</Text>
+                <HScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10 }}>
+                  {recentlyRead.map((item) => (
+                    <TouchableOpacity
+                      key={item.id}
+                      style={styles.recentlyReadCard}
+                      onPress={() => Linking.openURL(item.sourceUrl)}
+                    >
+                      <Text style={styles.recentlyReadSport}>
+                        {sportToEmoji(item.sport)} {getSportLabel(item.sport, locale)}
+                      </Text>
+                      <Text style={styles.recentlyReadCardTitle} numberOfLines={2}>{item.title}</Text>
+                    </TouchableOpacity>
+                  ))}
+                </HScrollView>
+              </View>
+            )}
+
             <FiltersBar activeSport={activeSport} onSportChange={setActiveSport} />
           </View>
         }
@@ -204,7 +240,7 @@ export function HomeFeedScreen({ navigation }: { navigation: any }) {
             </View>
           ) : null
         }
-        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
+        refreshControl={<BrandedRefreshControl refreshing={refreshing} onRefresh={onRefresh} locale={locale} />}
         onEndReached={loadMore}
         onEndReachedThreshold={0.5}
         contentContainerStyle={{ paddingBottom: 20 }}
@@ -213,114 +249,144 @@ export function HomeFeedScreen({ navigation }: { navigation: any }) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#F8FAFC',
-  },
-  header: {
-    paddingHorizontal: 16,
-    paddingTop: 16,
-    paddingBottom: 8,
-  },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: COLORS.darkText,
-  },
-  subtitle: {
-    fontSize: 14,
-    color: '#9CA3AF',
-    marginTop: 4,
-    marginBottom: 12,
-  },
-  titleRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    justifyContent: 'space-between',
-    marginBottom: 4,
-  },
-  settingsButton: {
-    padding: 8,
-    marginTop: 2,
-  },
-  settingsIcon: {
-    fontSize: 22,
-  },
-  searchContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#FFFFFF',
-    borderRadius: 24,
-    borderWidth: 1,
-    borderColor: '#E5E7EB',
-    paddingHorizontal: 12,
-    marginBottom: 12,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  searchIcon: {
-    fontSize: 14,
-    marginRight: 8,
-  },
-  searchInput: {
-    flex: 1,
-    height: 40,
-    fontSize: 14,
-    color: '#1E293B',
-  },
-  searchClear: {
-    padding: 4,
-    marginLeft: 4,
-  },
-  searchClearText: {
-    fontSize: 14,
-    color: '#9CA3AF',
-  },
-  empty: {
-    alignItems: 'center',
-    paddingVertical: 60,
-  },
-  emptyEmoji: {
-    fontSize: 48,
-    marginBottom: 8,
-  },
-  emptyText: {
-    fontSize: 16,
-    color: '#9CA3AF',
-  },
-  explainRow: {
-    paddingHorizontal: 16,
-    marginTop: -4,
-    marginBottom: 8,
-  },
-  explainButton: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#EFF6FF',
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 12,
-  },
-  explainText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.blue,
-  },
-  summaryBox: {
-    marginHorizontal: 16,
-    marginBottom: 12,
-    padding: 14,
-    backgroundColor: '#EFF6FF',
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-  },
-  summaryText: {
-    fontSize: 14,
-    color: COLORS.darkText,
-    lineHeight: 20,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    header: {
+      paddingHorizontal: 16,
+      paddingTop: 16,
+      paddingBottom: 8,
+    },
+    title: {
+      fontSize: 24,
+      fontWeight: '700',
+      color: colors.text,
+    },
+    subtitle: {
+      fontSize: 14,
+      color: colors.muted,
+      marginTop: 4,
+      marginBottom: 12,
+    },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      justifyContent: 'space-between',
+      marginBottom: 4,
+    },
+    settingsButton: {
+      padding: 8,
+      marginTop: 2,
+    },
+    settingsIcon: {
+      fontSize: 22,
+    },
+    searchContainer: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      backgroundColor: colors.surface,
+      borderRadius: 24,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 12,
+      marginBottom: 12,
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 1 },
+      shadowOpacity: 0.05,
+      shadowRadius: 2,
+      elevation: 1,
+    },
+    searchIcon: {
+      fontSize: 14,
+      marginRight: 8,
+    },
+    searchInput: {
+      flex: 1,
+      height: 40,
+      fontSize: 14,
+      color: colors.text,
+    },
+    searchClear: {
+      padding: 4,
+      marginLeft: 4,
+    },
+    searchClearText: {
+      fontSize: 14,
+      color: colors.muted,
+    },
+    empty: {
+      alignItems: 'center',
+      paddingVertical: 60,
+    },
+    emptyEmoji: {
+      fontSize: 48,
+      marginBottom: 8,
+    },
+    emptyText: {
+      fontSize: 16,
+      color: colors.muted,
+    },
+    explainRow: {
+      paddingHorizontal: 16,
+      marginTop: -4,
+      marginBottom: 8,
+    },
+    explainButton: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.blue + '15',
+      paddingHorizontal: 14,
+      paddingVertical: 8,
+      borderRadius: 12,
+    },
+    explainText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.blue,
+    },
+    summaryBox: {
+      marginHorizontal: 16,
+      marginBottom: 12,
+      padding: 14,
+      backgroundColor: colors.blue + '15',
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.blue + '30',
+    },
+    summaryText: {
+      fontSize: 14,
+      color: colors.text,
+      lineHeight: 20,
+    },
+    recentlyReadSection: {
+      marginBottom: 12,
+    },
+    recentlyReadTitle: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.muted,
+      marginBottom: 8,
+    },
+    recentlyReadCard: {
+      width: 160,
+      backgroundColor: colors.surface,
+      borderRadius: 12,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 10,
+    },
+    recentlyReadSport: {
+      fontSize: 11,
+      color: colors.muted,
+      marginBottom: 4,
+    },
+    recentlyReadCardTitle: {
+      fontSize: 12,
+      fontWeight: '500',
+      color: colors.text,
+      lineHeight: 16,
+    },
+  });
+}

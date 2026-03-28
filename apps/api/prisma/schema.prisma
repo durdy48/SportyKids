@@ -4,32 +4,24 @@
 //
 // Database Provider Configuration
 // --------------------------------
-// Default: SQLite (for local development)
-// Production: PostgreSQL (recommended)
+// Provider: PostgreSQL (migrated from SQLite)
 //
-// To switch to PostgreSQL:
+// Setup:
 //   1. Start PostgreSQL:
-//        docker compose -f apps/api/docker-compose.yml up -d
-//   2. Update .env:
+//        docker compose -f apps/api/docker-compose.yml up -d postgres
+//   2. Ensure .env has:
 //        DATABASE_URL="postgresql://sportykids:sportykids@localhost:5432/sportykids"
-//   3. Change provider below from "sqlite" to "postgresql"
-//   4. Run migrations:
-//        npx prisma migrate dev --name postgres_migration
-//   5. Seed data:
+//   3. Run migrations:
+//        npx prisma migrate dev
+//   4. Seed data:
 //        npx tsx prisma/seed.ts
 //
-// Or use the migration script:
-//   bash apps/api/scripts/migrate-to-postgres.sh
-//
-// To revert to SQLite:
-//   1. Change provider below back to "sqlite"
-//   2. Update .env: DATABASE_URL="file:./dev.db"
-//   3. npx prisma migrate dev
-//
 // Notes:
-//   - JSON arrays (favoriteSports, selectedFeeds, options) are stored as
-//     JSON strings in SQLite. In PostgreSQL, they remain as text but could
-//     be migrated to native Json/String[] types in the future.
+//   - Array fields (favoriteSports, selectedFeeds, options, allowedSports,
+//     allowedFeeds, allowedFormats) use native PostgreSQL String[] arrays.
+//   - JSON fields (recentResults, nextMatch, pushPreferences) use native
+//     PostgreSQL Json/Json? types.
+//   - Composite indexes on NewsItem, Reel, and ActivityLog for query performance.
 //   - Prisma v6 is required (v7 breaks datasource url config).
 // ===========================================================================
 
@@ -38,7 +30,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -60,6 +52,8 @@ model NewsItem {
   safetyReason String?
   moderatedAt  DateTime?
   summaries    NewsSummary[]
+
+  @@index([sport, safetyStatus, publishedAt])
 }
 
 model NewsSummary {
@@ -80,16 +74,17 @@ model User {
   email                    String?           @unique
   passwordHash             String?
   authProvider             String            @default("anonymous")
+  socialId                 String?
   role                     String            @default("child")
   parentUserId             String?
   parentUser               User?             @relation("ParentChild", fields: [parentUserId], references: [id])
   children                 User[]            @relation("ParentChild")
   lastLoginAt              DateTime?
-  favoriteSports           String            @default("[]")
+  favoriteSports           String[]          @default([])
   favoriteTeam             String?
-  selectedFeeds            String            @default("[]")
+  selectedFeeds            String[]          @default([])
   pushEnabled              Boolean           @default(false)
-  pushPreferences          String?
+  pushPreferences          Json?
   totalPoints              Int               @default(0)
   currentStreak            Int               @default(0)
   longestStreak            Int               @default(0)
@@ -106,6 +101,9 @@ model User {
   userAchievements         UserAchievement[]
   pushTokens               PushToken[]
   refreshTokens            RefreshToken[]
+  parentalSessions         ParentalSession[]
+
+  @@index([authProvider, socialId])
 }
 
 model Reel {
@@ -123,12 +121,14 @@ model Reel {
   aspectRatio     String?
   previewGifUrl   String?
   rssGuid         String?   @unique
-  videoSourceId   String?   // Logical FK to VideoSource.id (no Prisma relation — SQLite doesn't enforce FKs reliably)
+  videoSourceId   String?   // Logical FK to VideoSource.id (no Prisma relation for flexibility)
   safetyStatus    String    @default("approved")
   safetyReason    String?
   moderatedAt     DateTime?
   publishedAt     DateTime?
   createdAt       DateTime  @default(now())
+
+  @@index([sport, safetyStatus, publishedAt])
 }
 
 model VideoSource {
@@ -149,7 +149,7 @@ model VideoSource {
 model QuizQuestion {
   id              String    @id @default(cuid())
   question        String
-  options         String
+  options         String[]
   correctAnswer   Int
   sport           String
   points          Int       @default(10)
@@ -166,9 +166,9 @@ model ParentalProfile {
   userId             String @unique
   user               User   @relation(fields: [userId], references: [id])
   pin                String
-  allowedSports      String @default("[]")
-  allowedFeeds       String @default("[]")
-  allowedFormats     String @default("[\"news\",\"reels\",\"quiz\"]")
+  allowedSports      String[] @default([])
+  allowedFeeds       String[] @default([])
+  allowedFormats     String[] @default(["news", "reels", "quiz"])
   maxDailyTimeMinutes Int   @default(60)
   maxNewsMinutes      Int?
   maxReelsMinutes     Int?
@@ -208,6 +208,8 @@ model ActivityLog {
   contentId       String?
   sport           String?
   createdAt       DateTime @default(now())
+
+  @@index([userId, type, createdAt])
 }
 
 model Sticker {
@@ -261,9 +263,9 @@ model TeamStats {
   teamName       String   @unique
   sport          String
   leaguePosition Int?
-  recentResults  String   // JSON array of {opponent, score, result, date}
+  recentResults  Json     // Array of {opponent, score, result, date}
   topScorer      String?
-  nextMatch      String?  // JSON object {opponent, date, competition}
+  nextMatch      Json?    // Object {opponent, date, competition}
   updatedAt      DateTime @updatedAt
 }
 
@@ -328,4 +330,17 @@ model DailyMission {
 
   @@unique([userId, date])
   @@index([userId, completed])
+}
+
+model ParentalSession {
+  id        String   @id @default(uuid())
+  userId    String
+  token     String   @unique
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([token])
+  @@index([expiresAt])
 }

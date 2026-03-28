@@ -2,7 +2,8 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../config/database';
 import { checkMissionProgress } from '../services/mission-generator';
-import { verifyParentalSession } from './parents';
+import { verifyParentalSession } from '../services/parental-session';
+import { ValidationError, NotFoundError, ConflictError, RateLimitError, AuthenticationError } from '../errors';
 
 const router = Router();
 
@@ -23,8 +24,7 @@ const RATE_LIMIT_WINDOW_MS = 24 * 60 * 60 * 1000; // 24 hours
 router.post('/', async (req: Request, res: Response) => {
   const parsed = reportSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   const { userId, contentType, contentId, reason, comment } = parsed.data;
@@ -39,8 +39,7 @@ router.post('/', async (req: Request, res: Response) => {
   });
 
   if (recentCount >= RATE_LIMIT_MAX) {
-    res.status(429).json({ error: 'rate_limit_exceeded' });
-    return;
+    throw new RateLimitError('rate_limit_exceeded');
   }
 
   // Duplicate check: same user + contentType + contentId
@@ -49,8 +48,7 @@ router.post('/', async (req: Request, res: Response) => {
   });
 
   if (existing) {
-    res.status(409).json({ error: 'already_reported' });
-    return;
+    throw new ConflictError('already_reported');
   }
 
   const report = await prisma.contentReport.create({
@@ -136,16 +134,14 @@ const updateReportSchema = z.object({
 });
 
 router.put('/:reportId', async (req: Request, res: Response) => {
-  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
-    res.status(401).json({ error: 'Parental session required' });
-    return;
+    throw new AuthenticationError('Parental session required');
   }
 
   const parsed = updateReportSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   const report = await prisma.contentReport.findUnique({
@@ -153,8 +149,7 @@ router.put('/:reportId', async (req: Request, res: Response) => {
   });
 
   if (!report) {
-    res.status(404).json({ error: 'Report not found' });
-    return;
+    throw new NotFoundError('Report not found');
   }
 
   const updated = await prisma.contentReport.update({

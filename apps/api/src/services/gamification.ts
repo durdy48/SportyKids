@@ -1,6 +1,7 @@
 import { prisma } from '../config/database';
-import { safeJsonParse } from '../utils/safe-json-parse';
+
 import { checkMissionProgress } from './mission-generator';
+import { trackEvent } from './monitoring';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -234,6 +235,8 @@ export async function awardSticker(
     rarity: picked.rarity,
   };
 
+  trackEvent('sticker_earned', { userId, stickerId: picked.id, rarity: picked.rarity });
+
   // Send push notification (non-blocking, uses user locale)
   Promise.all([import('./push-sender'), import('@sportykids/shared'), import('../config/database')])
     .then(async ([{ sendPushToUser }, { t }, { prisma: db }]) => {
@@ -299,9 +302,8 @@ export async function evaluateAchievements(userId: string): Promise<UnlockedAchi
   // Count user stickers
   const stickerCount = await prisma.userSticker.count({ where: { userId } });
 
-  // Count distinct sports from activity (we approximate via news items viewed)
-  const favoriteSports: string[] = safeJsonParse(user.favoriteSports, []);
-  const distinctSportsCount = favoriteSports.length;
+  // Count distinct sports from user's favorites (native PostgreSQL array)
+  const distinctSportsCount = user.favoriteSports.length;
 
   // Get all achievements (cached) and user's already-unlocked ones
   const allAchievements = await getCachedAchievements();

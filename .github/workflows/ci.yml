@@ -1,0 +1,194 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    name: Setup
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Generate Prisma client
+        run: cd apps/api && npx prisma generate
+      - name: Cache node_modules with Prisma client
+        uses: actions/cache/save@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/mobile/node_modules
+            packages/shared/node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+
+  lint:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    needs: [setup]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/mobile/node_modules
+            packages/shared/node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Lint
+        run: npx eslint . --max-warnings 0
+      - name: Typecheck API
+        run: cd apps/api && npx tsc --noEmit
+      - name: Typecheck Web
+        run: cd apps/web && npx tsc --noEmit
+      - name: Typecheck Mobile
+        run: cd apps/mobile && npx tsc --noEmit
+
+  test:
+    name: API Tests
+    runs-on: ubuntu-latest
+    needs: [setup]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/mobile/node_modules
+            packages/shared/node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Run API tests
+        run: cd apps/api && npx vitest run
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: api-coverage
+          path: apps/api/coverage/
+          retention-days: 7
+
+  test-web:
+    name: Web Tests
+    runs-on: ubuntu-latest
+    needs: [setup]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/mobile/node_modules
+            packages/shared/node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Run Web tests
+        run: cd apps/web && npx vitest run
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-coverage
+          path: apps/web/coverage/
+          retention-days: 7
+
+  test-mobile:
+    name: Mobile Tests
+    runs-on: ubuntu-latest
+    needs: [setup]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/mobile/node_modules
+            packages/shared/node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Run Mobile tests
+        run: cd apps/mobile && npx vitest run
+      - name: Upload coverage
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: mobile-coverage
+          path: apps/mobile/coverage/
+          retention-days: 7
+
+  build-api:
+    name: Build API
+    runs-on: ubuntu-latest
+    needs: [lint, test, test-web, test-mobile]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/mobile/node_modules
+            packages/shared/node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Build
+        run: cd apps/api && npx tsc
+
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    needs: [lint, test, test-web, test-mobile]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/mobile/node_modules
+            packages/shared/node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Build
+        run: cd apps/web && npm run build

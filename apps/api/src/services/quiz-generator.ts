@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { getAIClient, isProviderAvailable } from './ai-client';
+import { logger } from './logger';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -134,20 +135,14 @@ export async function generateQuizFromNews(
         return result.data;
       }
 
-      console.warn(
-        `[QuizGenerator] Validation failed (attempt ${attempt + 1}):`,
-        result.error.issues,
-      );
+      logger.warn({ attempt: attempt + 1, issues: result.error.issues }, 'Quiz generation validation failed');
 
       if (attempt === 0) {
         // Wait 1 second before retry
         await new Promise((resolve) => setTimeout(resolve, 1000));
       }
     } catch (err) {
-      console.warn(
-        `[QuizGenerator] Error generating quiz (attempt ${attempt + 1}):`,
-        err instanceof Error ? err.message : err,
-      );
+      logger.warn({ attempt: attempt + 1, err: err instanceof Error ? err.message : err }, 'Error generating quiz');
 
       if (attempt === 0) {
         await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -156,6 +151,6 @@ export async function generateQuizFromNews(
   }
 
   // Both attempts failed
-  console.warn('[QuizGenerator] Failed to generate quiz after 2 attempts, returning null.');
+  logger.warn('Failed to generate quiz after 2 attempts, returning null');
   return null;
 }

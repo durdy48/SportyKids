@@ -1,0 +1,100 @@
+API:
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/api
+
+[20:41:37] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "La Liga YouTube"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[20:41:37] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[20:41:37] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 0
+    [35mrejected[39m: 1
+[20:41:37] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[20:41:37] [31mERROR[39m: [36mError syncing video source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Broken Channel"
+    err: "Network timeout"
+[20:41:37] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[20:41:37] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[20:41:37] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "YouTube Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[20:41:38] [32mINFO[39m: [36mVideo sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35mcreated[39m: 0
+    [35msources[39m: 1
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+    [35merrors[39m: 0
+[20:41:38] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[20:41:38] [32mINFO[39m: [36mNo active video sources found.[39m
+    [35mservice[39m: "sportykids-api"
+[20:41:38] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[20:41:38] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Channel A"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[20:41:40] [32mINFO[39m: [36mParental session created[39m
+    [35mservice[39m: "sportykids-api"
+    [35muserId[39m: "cmnaspu350000266sr4ehh3dy"
+Sourcemap for "/Users/antonioduarteruiz/personal/sportykids/node_modules/node-cron/dist/esm/node-cron.js" points to missing source files
+
+ Test Files  38 passed (38)
+      Tests  393 passed (393)
+   Start at  21:41:37
+   Duration  12.84s (transform 699ms, setup 0ms, import 4.41s, tests 4.48s, environment 2ms)
+
+Web:
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/web
+
+
+ Test Files  14 passed (14)
+      Tests  69 passed (69)
+   Start at  21:41:50
+   Duration  3.06s (transform 882ms, setup 3.57s, import 2.81s, tests 451ms, environment 23.86s)
+
+Mobile:
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/mobile
+
+
+ Test Files  11 passed (11)
+      Tests  69 passed (69)
+   Start at  21:41:54
+   Duration  322ms (transform 767ms, setup 300ms, import 1.12s, tests 414ms, environment 1ms)

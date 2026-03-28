@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert,
+  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView,
 } from 'react-native';
-import { SPORTS, TEAMS, AGE_RANGES, COLORS, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale } from '@sportykids/shared';
+import { SPORTS, TEAMS, AGE_RANGES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale } from '@sportykids/shared';
+import type { ThemeColors } from '../lib/theme';
 import type { AgeRange, RssSource } from '@sportykids/shared';
 import { createUser, fetchSourceCatalog, setupParentalPin } from '../lib/api';
 import { useUser } from '../lib/user-context';
@@ -39,7 +40,8 @@ const LOCALE_OPTIONS = [
 ];
 
 export function OnboardingScreen() {
-  const { setUser, setParentalProfile, locale, setLocale } = useUser();
+  const { setUser, setParentalProfile, locale, setLocale, colors } = useUser();
+  const s = createStyles(colors);
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
@@ -68,6 +70,7 @@ export function OnboardingScreen() {
   useEffect(() => {
     fetchSourceCatalog()
       .then((catalog) => setSources(catalog.sources))
+      // eslint-disable-next-line no-console
       .catch(console.error);
   }, []);
 
@@ -180,12 +183,14 @@ export function OnboardingScreen() {
           setParentalProfile(profile);
         } catch {
           // PIN setup failed but user was created — continue
+          // eslint-disable-next-line no-console
           console.error('Parental PIN setup failed');
         }
       }
 
       setUser(newUser);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Error creating user:', err);
     } finally {
       setSubmitting(false);
@@ -333,7 +338,7 @@ export function OnboardingScreen() {
                             </Text>
                           ) : null}
                         </View>
-                        <View style={[s.sourceSportBadge, { backgroundColor: selected ? COLORS.yellow : '#E5E7EB' }]}>
+                        <View style={[s.sourceSportBadge, { backgroundColor: selected ? colors.yellow : colors.border }]}>
                           <Text style={s.sourceSportText}>
                             {sportToEmoji(source.sport)}
                           </Text>
@@ -465,71 +470,73 @@ export function OnboardingScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   scroll: { padding: 24, paddingBottom: 40 },
   progress: { flexDirection: 'row', gap: 8, marginBottom: 32 },
-  bar: { flex: 1, height: 6, borderRadius: 3, backgroundColor: '#E5E7EB' },
-  barActive: { backgroundColor: COLORS.blue },
+  bar: { flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.border },
+  barActive: { backgroundColor: colors.blue },
   stepContainer: { alignItems: 'center' },
   emoji: { fontSize: 48, marginBottom: 12 },
-  title: { fontSize: 22, fontWeight: '700', color: COLORS.darkText, textAlign: 'center', marginBottom: 8 },
-  subtitle: { fontSize: 14, color: '#9CA3AF', marginBottom: 16, textAlign: 'center' },
-  label: { fontSize: 14, color: '#6B7280', marginTop: 16, marginBottom: 8, alignSelf: 'flex-start' },
-  input: { width: '100%', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#E5E7EB', fontSize: 16, backgroundColor: '#fff' },
+  title: { fontSize: 22, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 8 },
+  subtitle: { fontSize: 14, color: colors.muted, marginBottom: 16, textAlign: 'center' },
+  label: { fontSize: 14, color: colors.muted, marginTop: 16, marginBottom: 8, alignSelf: 'flex-start' },
+  input: { width: '100%', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: colors.border, fontSize: 16, backgroundColor: colors.surface, color: colors.text },
   row: { flexDirection: 'row', gap: 10, width: '100%' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, width: '100%', marginTop: 8 },
-  chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: '#F3F4F6', flex: 1, minWidth: '40%' },
-  chipActive: { backgroundColor: COLORS.blue },
-  chipGreen: { backgroundColor: COLORS.green },
-  chipText: { fontSize: 14, fontWeight: '500', color: '#4B5563', textAlign: 'center' },
+  chip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: colors.border, flex: 1, minWidth: '40%' },
+  chipActive: { backgroundColor: colors.blue },
+  chipGreen: { backgroundColor: colors.green },
+  chipText: { fontSize: 14, fontWeight: '500', color: colors.muted, textAlign: 'center' },
   chipTextActive: { color: '#fff' },
   selectedBadge: {
-    backgroundColor: COLORS.blue, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6,
+    backgroundColor: colors.blue, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6,
     alignSelf: 'center', marginBottom: 12,
   },
   selectedBadgeText: { color: '#fff', fontSize: 13, fontWeight: '600' },
   searchInput: {
     width: '100%', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12,
-    borderWidth: 1, borderColor: '#E5E7EB', fontSize: 15, backgroundColor: '#fff', marginBottom: 16,
+    borderWidth: 1, borderColor: colors.border, fontSize: 15, backgroundColor: colors.surface, color: colors.text, marginBottom: 16,
   },
   countrySection: { width: '100%', marginBottom: 12 },
-  countrySectionTitle: { fontSize: 15, fontWeight: '700', color: COLORS.darkText, marginBottom: 6, marginTop: 4 },
-  sourceChip: { width: '100%', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12, backgroundColor: '#F3F4F6', marginTop: 6, borderWidth: 2, borderColor: 'transparent' },
-  sourceActive: { borderColor: COLORS.yellow, backgroundColor: '#FEFCE8' },
+  countrySectionTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 6, marginTop: 4 },
+  sourceChip: { width: '100%', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.border, marginTop: 6, borderWidth: 2, borderColor: 'transparent' },
+  sourceActive: { borderColor: colors.yellow, backgroundColor: colors.yellow + '15' },
   sourceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   sourceInfo: { flex: 1, marginRight: 8 },
-  sourceNameText: { fontSize: 14, fontWeight: '500', color: '#4B5563' },
-  sourceNameSelected: { fontWeight: '600', color: COLORS.darkText },
-  sourceDesc: { fontSize: 12, color: '#9CA3AF', marginTop: 2 },
+  sourceNameText: { fontSize: 14, fontWeight: '500', color: colors.muted },
+  sourceNameSelected: { fontWeight: '600', color: colors.text },
+  sourceDesc: { fontSize: 12, color: colors.muted, marginTop: 2 },
   sourceSportBadge: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   sourceSportText: { fontSize: 14 },
-  noResults: { fontSize: 14, color: '#9CA3AF', textAlign: 'center', marginTop: 20 },
+  noResults: { fontSize: 14, color: colors.muted, textAlign: 'center', marginTop: 20 },
   pinInput: {
     fontSize: 32, fontWeight: '700', textAlign: 'center', letterSpacing: 16,
-    width: 200, paddingVertical: 14, borderBottomWidth: 3, borderBottomColor: '#E5E7EB',
-    marginBottom: 4,
+    width: 200, paddingVertical: 14, borderBottomWidth: 3, borderBottomColor: colors.border,
+    marginBottom: 4, color: colors.text,
   },
   pinError: { color: '#EF4444', fontSize: 13, marginTop: 4 },
   formatGrid: { flexDirection: 'row', gap: 10, width: '100%' },
   formatChip: {
     flex: 1, alignItems: 'center', paddingVertical: 14, borderRadius: 12,
-    backgroundColor: '#F3F4F6', borderWidth: 2, borderColor: 'transparent',
+    backgroundColor: colors.border, borderWidth: 2, borderColor: 'transparent',
   },
-  formatChipActive: { backgroundColor: COLORS.green, borderColor: COLORS.green },
-  formatLabel: { fontSize: 12, fontWeight: '600', color: '#4B5563', marginTop: 4 },
+  formatChipActive: { backgroundColor: colors.green, borderColor: colors.green },
+  formatLabel: { fontSize: 12, fontWeight: '600', color: colors.muted, marginTop: 4 },
   timeLimitGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, width: '100%' },
   timeLimitChip: {
     paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12,
-    backgroundColor: '#F3F4F6', minWidth: '28%', alignItems: 'center',
+    backgroundColor: colors.border, minWidth: '28%', alignItems: 'center',
   },
-  timeLimitActive: { backgroundColor: COLORS.blue },
-  timeLimitText: { fontSize: 13, fontWeight: '600', color: '#4B5563' },
+  timeLimitActive: { backgroundColor: colors.blue },
+  timeLimitText: { fontSize: 13, fontWeight: '600', color: colors.muted },
   buttons: { flexDirection: 'row', gap: 12, marginTop: 32 },
-  buttonPrimary: { flex: 1, backgroundColor: COLORS.blue, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  buttonGreen: { flex: 1, backgroundColor: COLORS.green, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
-  buttonSecondary: { flex: 1, backgroundColor: '#F3F4F6', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  buttonPrimary: { flex: 1, backgroundColor: colors.blue, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  buttonGreen: { flex: 1, backgroundColor: colors.green, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+  buttonSecondary: { flex: 1, backgroundColor: colors.border, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   buttonPrimaryText: { color: '#fff', fontSize: 15, fontWeight: '600' },
-  buttonSecondaryText: { color: '#6B7280', fontSize: 15, fontWeight: '600' },
+  buttonSecondaryText: { color: colors.muted, fontSize: 15, fontWeight: '600' },
   buttonDisabled: { opacity: 0.4 },
-});
+  });
+}

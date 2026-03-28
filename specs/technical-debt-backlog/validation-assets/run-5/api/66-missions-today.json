@@ -1,0 +1,34 @@
+{
+  "status": 200,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "397",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 20:05:52 GMT",
+    "etag": "W/\"18d-zOoMHZpp0+f3Em/PCSc6/37aCUg\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "29ad30ad-ecd7-40cf-87c1-d3fb8e6e9c52"
+  },
+  "body": {
+    "mission": {
+      "id": "cmnarfsib00042668dyl7qh70",
+      "userId": "cmnarfs7m00002668w3fi8qr4",
+      "date": "2026-03-28",
+      "type": "streak_keeper",
+      "title": "Mantiene tu racha",
+      "description": "Entra hoy para mantener tu racha!",
+      "target": 1,
+      "progress": 0,
+      "completed": false,
+      "completedAt": null,
+      "rewardType": "points",
+      "rewardRarity": null,
+      "rewardPoints": 25,
+      "claimed": false,
+      "claimedAt": null,
+      "createdAt": "2026-03-28T20:05:52.019Z"
+    }
+  }
+}

@@ -1,0 +1,20 @@
+{
+  "status": 200,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "80",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 20:41:59 GMT",
+    "etag": "W/\"50-wID2Ly1wz/MEcZgylxcZ7DHCvPQ\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "10e0392b-753c-4625-b7d7-c2724670d2aa"
+  },
+  "body": {
+    "digestEnabled": false,
+    "digestEmail": null,
+    "digestDay": 1,
+    "lastDigestSentAt": null
+  }
+}

@@ -1,0 +1,177 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+[dotenv@17.3.1] injecting env (0) from .env -- tip: 🔐 encrypt with Dotenvx: https://dotenvx.com
+[13:41:49] [32mINFO[39m: [36mSentry DSN not configured — error tracking disabled[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mSportyKids API running at http://localhost:3099[39m
+    [35mservice[39m: "sportykids-api"
+    [35mport[39m: "3099"
+[13:41:49] [32mINFO[39m: [36mRunning manual synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mStarting feed synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mSync job scheduled: every 30 minutes.[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mDaily quiz job scheduled: daily at 06:00.[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mWeekly digest job scheduled: daily at 08:00 UTC.[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mDaily missions job scheduled: daily at 05:00 UTC.[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mStreak reminder job scheduled: daily at 20:00 UTC.[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mTeam stats sync job scheduled: daily at 04:00 UTC[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mRunning manual video synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [32mINFO[39m: [36mVideo sync job scheduled: every 6 hours.[39m
+    [35mservice[39m: "sportykids-api"
+[13:41:49] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Marca - Football"
+    err: "getaddrinfo ENOTFOUND feeds.marca.com"
+[13:41:49] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Marca - La Liga"
+    err: "getaddrinfo ENOTFOUND feeds.marca.com"
+[13:41:49] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Marca - Champions League"
+    err: "getaddrinfo ENOTFOUND feeds.marca.com"
+[13:41:49] [31mERROR[39m: [36mError syncing video source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "La Liga Official"
+    err: "Status code 404"
+[13:41:49] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Goal.com"
+    err: "Status code 404"
+[13:41:49] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Marca - Basketball"
+    err: "getaddrinfo ENOTFOUND feeds.marca.com"
+[13:41:49] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Marca - Tennis"
+    err: "getaddrinfo ENOTFOUND feeds.marca.com"
+[13:41:49] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Marca - Swimming"
+    err: "getaddrinfo ENOTFOUND feeds.marca.com"
+[13:41:49] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Marca - Athletics"
+    err: "getaddrinfo ENOTFOUND feeds.marca.com"
+[13:41:50] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "World Athletics News"
+    err: "Feed not recognized as RSS 1 or 2."
+[13:41:50] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Marca - Cycling"
+    err: "getaddrinfo ENOTFOUND feeds.marca.com"
+[13:41:50] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Marca - Formula 1"
+    err: "getaddrinfo ENOTFOUND feeds.marca.com"
+[13:41:50] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "AS - Formula 1"
+    err: "Status code 404"
+[13:41:50] [31mERROR[39m: [36mError syncing source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Marca - Padel"
+    err: "getaddrinfo ENOTFOUND feeds.marca.com"
+[13:41:50] [32mINFO[39m: [36mSource sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Mundo Deportivo - Football"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[13:41:50] [31mERROR[39m: [36mError syncing video source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Real Madrid CF"
+    err: "Status code 404"
+[13:41:51] [32mINFO[39m: [36mSource sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "El País - Deportes"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[13:41:51] [32mINFO[39m: [36mSource sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "El Mundo - Deportes"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+(node:85305) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+(Use `node --trace-deprecation ...` to show where the warning was created)
+[13:41:51] [32mINFO[39m: [36mSource sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Diario de Sevilla - Deportes"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[13:41:51] [32mINFO[39m: [36mSource sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "AS - Tennis"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[13:41:52] [32mINFO[39m: [36mAI provider is not available, skipping AI calls[39m
+    [35mservice[39m: "sportykids-api"
+    [35mprovider[39m: "ollama"
+    [35mskipDurationSeconds[39m: 60
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [33mWARN[39m: [36mAI moderation failed, approving by default[39m
+    [35mservice[39m: "sportykids-api"
+    err: "AI provider \"ollama\" is not available"
+[13:41:52] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Premier League"
+    [35mcreated[39m: 15
+    [35mapproved[39m: 15
+    [35mrejected[39m: 0

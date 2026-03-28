@@ -7,6 +7,7 @@ import request from 'supertest';
 // ---------------------------------------------------------------------------
 const mockPrisma = vi.hoisted(() => ({
   parentalProfile: { findUnique: vi.fn(), update: vi.fn() },
+  parentalSession: { create: vi.fn().mockResolvedValue({ token: 'mock-session-token', expiresAt: new Date(Date.now() + 300000) }), findUnique: vi.fn(), deleteMany: vi.fn() },
   user: { findUnique: vi.fn() },
   newsItem: { findMany: vi.fn() },
   reel: { findMany: vi.fn() },
@@ -38,7 +39,32 @@ vi.mock('../services/digest-generator', () => ({
   renderDigestPdf: vi.fn(),
 }));
 
+// Stub logger import
+vi.mock('../services/logger', () => ({
+  logger: { info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn(), child: vi.fn().mockReturnValue({ info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() }) },
+  createRequestLogger: vi.fn().mockReturnValue({ info: vi.fn(), error: vi.fn(), warn: vi.fn(), debug: vi.fn() }),
+}));
+
+// Stub monitoring import
+vi.mock('../services/monitoring', () => ({
+  trackEvent: vi.fn(),
+  captureException: vi.fn(),
+  addBreadcrumb: vi.fn(),
+}));
+
+// Stub parental-session service
+const mockCreateParentalSession = vi.fn().mockResolvedValue({ sessionToken: 'mock-session-token', expiresAt: new Date(Date.now() + 300000) });
+const mockVerifyParentalSession = vi.fn().mockResolvedValue(null);
+vi.mock('../services/parental-session', () => ({
+  createParentalSession: (...args: unknown[]) => mockCreateParentalSession(...args),
+  verifyParentalSession: (...args: unknown[]) => mockVerifyParentalSession(...args),
+  cleanupExpiredSessions: vi.fn().mockResolvedValue(0),
+}));
+
 import parentRouter from './parents';
+import { errorHandler } from '../middleware/error-handler';
+
+const mockLog = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
 
 // ---------------------------------------------------------------------------
 // Setup express app for testing
@@ -46,29 +72,20 @@ import parentRouter from './parents';
 function createApp() {
   const app = express();
   app.use(express.json());
+  app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    (req as express.Request & { log: typeof mockLog; requestId: string }).log = mockLog;
+    (req as express.Request & { requestId: string }).requestId = 'test-req-id';
+    next();
+  });
   app.use('/api/parents', parentRouter);
+  app.use(errorHandler as express.ErrorRequestHandler);
   return app;
 }
 
-// Helper to obtain a valid parental session token via the verify-pin endpoint
-async function getSessionToken(app: express.Express, userId: string): Promise<string> {
-  // Mock parentalProfile.findUnique to return a profile with a bcrypt hash of '1234'
-  // bcrypt hash of '1234' with 10 rounds (pre-computed for test speed)
-  const bcryptHash = '$2b$10$NR/Uj2E5dQfNfXINhA8DnO1UWi/GpEiwgyjlWiQJI4tJCASrlDWYS';
-  mockPrisma.parentalProfile.findUnique.mockResolvedValueOnce({
-    userId,
-    pin: bcryptHash,
-    allowedFormats: '[]',
-    allowedSports: '[]',
-    failedAttempts: 0,
-    lockedUntil: null,
-  });
+const SESSION_TOKEN = 'test-session-token';
 
-  const res = await request(app)
-    .post('/api/parents/verify-pin')
-    .send({ userId, pin: '1234' });
-
-  return res.body.sessionToken;
+function mockSessionForUser(userId: string) {
+  mockVerifyParentalSession.mockResolvedValue(userId);
 }
 
 describe('GET /api/parents/preview/:userId', () => {
@@ -82,37 +99,34 @@ describe('GET /api/parents/preview/:userId', () => {
   it('returns 401 when no parental session is provided', async () => {
     const res = await request(app).get('/api/parents/preview/unknown-user');
     expect(res.status).toBe(401);
-    expect(res.body.error).toBe('Parental session required');
+    expect(res.body.error.code).toBe('AUTHENTICATION_ERROR');
   });
 
   it('returns 404 when user or profile not found', async () => {
-    const sessionToken = await getSessionToken(app, 'unknown-user');
-
+    mockSessionForUser('unknown-user');
     mockPrisma.parentalProfile.findUnique.mockResolvedValue(null);
     mockPrisma.user.findUnique.mockResolvedValue(null);
 
     const res = await request(app)
       .get('/api/parents/preview/unknown-user')
-      .set('X-Parental-Session', sessionToken);
+      .set('X-Parental-Session', SESSION_TOKEN);
     expect(res.status).toBe(404);
-    expect(res.body.error).toBe('Not found');
+    expect(res.body.error.code).toBe('NOT_FOUND');
   });
 
   it('returns 404 when profile exists but user does not', async () => {
-    const sessionToken = await getSessionToken(app, 'u1');
-
-    mockPrisma.parentalProfile.findUnique.mockResolvedValue({ userId: 'u1', allowedFormats: '[]', allowedSports: '[]' });
+    mockSessionForUser('u1');
+    mockPrisma.parentalProfile.findUnique.mockResolvedValue({ userId: 'u1', allowedFormats: [], allowedSports: [] });
     mockPrisma.user.findUnique.mockResolvedValue(null);
 
     const res = await request(app)
       .get('/api/parents/preview/u1')
-      .set('X-Parental-Session', sessionToken);
+      .set('X-Parental-Session', SESSION_TOKEN);
     expect(res.status).toBe(404);
   });
 
   it('returns news and reels when formats are allowed', async () => {
-    const sessionToken = await getSessionToken(app, 'u1');
-
+    mockSessionForUser('u1');
     const fakeNews = [
       { id: 'n1', title: 'Goal!', sport: 'football', safetyStatus: 'approved' },
       { id: 'n2', title: 'Match recap', sport: 'football', safetyStatus: 'approved' },
@@ -123,19 +137,19 @@ describe('GET /api/parents/preview/:userId', () => {
 
     mockPrisma.parentalProfile.findUnique.mockResolvedValue({
       userId: 'u1',
-      allowedFormats: JSON.stringify(['news', 'reels', 'quiz']),
-      allowedSports: '[]',
+      allowedFormats: ['news', 'reels', 'quiz'],
+      allowedSports: [],
     });
     mockPrisma.user.findUnique.mockResolvedValue({
       id: 'u1',
-      favoriteSports: JSON.stringify(['football']),
+      favoriteSports: ['football'],
     });
     mockPrisma.newsItem.findMany.mockResolvedValue(fakeNews);
     mockPrisma.reel.findMany.mockResolvedValue(fakeReels);
 
     const res = await request(app)
       .get('/api/parents/preview/u1')
-      .set('X-Parental-Session', sessionToken);
+      .set('X-Parental-Session', SESSION_TOKEN);
     expect(res.status).toBe(200);
     expect(res.body.news).toHaveLength(2);
     expect(res.body.reels).toHaveLength(1);
@@ -143,65 +157,62 @@ describe('GET /api/parents/preview/:userId', () => {
   });
 
   it('returns empty news when news format is blocked', async () => {
-    const sessionToken = await getSessionToken(app, 'u1');
-
+    mockSessionForUser('u1');
     mockPrisma.parentalProfile.findUnique.mockResolvedValue({
       userId: 'u1',
-      allowedFormats: JSON.stringify(['reels']),
-      allowedSports: '[]',
+      allowedFormats: ['reels'],
+      allowedSports: [],
     });
     mockPrisma.user.findUnique.mockResolvedValue({
       id: 'u1',
-      favoriteSports: '[]',
+      favoriteSports: [],
     });
     mockPrisma.reel.findMany.mockResolvedValue([]);
 
     const res = await request(app)
       .get('/api/parents/preview/u1')
-      .set('X-Parental-Session', sessionToken);
+      .set('X-Parental-Session', SESSION_TOKEN);
     expect(res.status).toBe(200);
     expect(res.body.news).toEqual([]);
     expect(mockPrisma.newsItem.findMany).not.toHaveBeenCalled();
   });
 
   it('returns quizAvailable false when quiz format is blocked', async () => {
-    const sessionToken = await getSessionToken(app, 'u1');
-
+    mockSessionForUser('u1');
     mockPrisma.parentalProfile.findUnique.mockResolvedValue({
       userId: 'u1',
-      allowedFormats: JSON.stringify(['news']),
-      allowedSports: '[]',
+      allowedFormats: ['news'],
+      allowedSports: [],
     });
     mockPrisma.user.findUnique.mockResolvedValue({
       id: 'u1',
-      favoriteSports: '[]',
+      favoriteSports: [],
     });
     mockPrisma.newsItem.findMany.mockResolvedValue([]);
 
     const res = await request(app)
       .get('/api/parents/preview/u1')
-      .set('X-Parental-Session', sessionToken);
+      .set('X-Parental-Session', SESSION_TOKEN);
     expect(res.status).toBe(200);
     expect(res.body.quizAvailable).toBe(false);
   });
 
   it('filters news by allowed sports when configured', async () => {
-    const sessionToken = await getSessionToken(app, 'u1');
-
+    mockSessionForUser('u1');
     mockPrisma.parentalProfile.findUnique.mockResolvedValue({
       userId: 'u1',
-      allowedFormats: JSON.stringify(['news']),
-      allowedSports: JSON.stringify(['basketball', 'tennis']),
+      allowedFormats: ['news'],
+      allowedSports: ['basketball', 'tennis'],
     });
     mockPrisma.user.findUnique.mockResolvedValue({
       id: 'u1',
-      favoriteSports: JSON.stringify(['football']),
+      favoriteSports: ['football'],
     });
     mockPrisma.newsItem.findMany.mockResolvedValue([]);
 
     const res = await request(app)
       .get('/api/parents/preview/u1')
-      .set('X-Parental-Session', sessionToken);
+      .set('X-Parental-Session', SESSION_TOKEN);
     expect(res.status).toBe(200);
 
     // Verify prisma was called with allowedSports filter (not favoriteSports)

@@ -1,5 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import type { Request, Response, NextFunction } from 'express';
+import { AuthorizationError } from '../errors';
 
 // Mock prisma with vi.hoisted so it's available in the vi.mock factory
 const mockPrisma = vi.hoisted(() => ({
@@ -11,11 +12,6 @@ vi.mock('../config/database', () => ({
   prisma: mockPrisma,
 }));
 
-vi.mock('../utils/safe-json-parse', () => ({
-  safeJsonParse: (val: string, fallback: unknown) => {
-    try { return JSON.parse(val); } catch { return fallback; }
-  },
-}));
 
 import { parentalGuard, invalidateProfileCache, getCurrentHourInTimezone, isWithinSchedule } from './parental-guard';
 
@@ -63,8 +59,8 @@ describe('parentalGuard', () => {
   describe('per-type time limits', () => {
     const baseProfile = {
       userId: 'user-1',
-      allowedFormats: JSON.stringify(['news', 'reels', 'quiz']),
-      allowedSports: JSON.stringify([]),
+      allowedFormats: ['news', 'reels', 'quiz'],
+      allowedSports: [],
       maxDailyTimeMinutes: 120,
       maxNewsMinutes: 30,
       maxReelsMinutes: null,
@@ -74,26 +70,32 @@ describe('parentalGuard', () => {
       timezone: 'UTC',
     };
 
-    it('returns 403 with format when per-type news limit is exceeded', async () => {
+    it('throws AuthorizationError with details when per-type news limit is exceeded', async () => {
       mockPrisma.parentalProfile.findUnique.mockResolvedValue(baseProfile);
       // 30 minutes = 1800 seconds of news_viewed
       mockPrisma.activityLog.aggregate.mockResolvedValue({
         _sum: { durationSeconds: 1800 },
       });
 
-      const { req, res, next, status, json } = createMocks({ baseUrl: '/api/news' });
-      await parentalGuard(req, res, next);
+      const { req, res, next } = createMocks({ baseUrl: '/api/news' });
+      await expect(parentalGuard(req, res, next)).rejects.toThrow(AuthorizationError);
+
+      try {
+        await parentalGuard(req, res, next);
+      } catch (err) {
+        expect(err).toBeInstanceOf(AuthorizationError);
+        const authErr = err as AuthorizationError;
+        expect(authErr.details).toEqual(
+          expect.objectContaining({
+            error: 'limit_reached',
+            format: 'news',
+            limit: 30,
+            used: 30,
+          }),
+        );
+      }
 
       expect(next).not.toHaveBeenCalled();
-      expect(status).toHaveBeenCalledWith(403);
-      expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'limit_reached',
-          format: 'news',
-          limit: 30,
-          used: 30,
-        }),
-      );
 
       // Verify the aggregate was called with type filter for per-type limit
       expect(mockPrisma.activityLog.aggregate).toHaveBeenCalledWith(
@@ -112,18 +114,23 @@ describe('parentalGuard', () => {
         _sum: { durationSeconds: 7200 },
       });
 
-      const { req, res, next, status, json } = createMocks({ baseUrl: '/api/reels' });
-      await parentalGuard(req, res, next);
+      const { req, res, next } = createMocks({ baseUrl: '/api/reels' });
+      await expect(parentalGuard(req, res, next)).rejects.toThrow(AuthorizationError);
+
+      try {
+        await parentalGuard(req, res, next);
+      } catch (err) {
+        const authErr = err as AuthorizationError;
+        expect(authErr.details).toEqual(
+          expect.objectContaining({
+            error: 'limit_reached',
+            format: 'reels',
+            limit: 120,
+          }),
+        );
+      }
 
       expect(next).not.toHaveBeenCalled();
-      expect(status).toHaveBeenCalledWith(403);
-      expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'limit_reached',
-          format: 'reels',
-          limit: 120,
-        }),
-      );
 
       // When falling back to global, should NOT filter by type
       expect(mockPrisma.activityLog.aggregate).toHaveBeenCalledWith(
@@ -148,25 +155,30 @@ describe('parentalGuard', () => {
       expect(next).toHaveBeenCalled();
     });
 
-    it('returns 403 with format for quiz per-type limit', async () => {
+    it('throws AuthorizationError for quiz per-type limit', async () => {
       mockPrisma.parentalProfile.findUnique.mockResolvedValue(baseProfile);
       // 15 minutes = 900 seconds of quizzes_played
       mockPrisma.activityLog.aggregate.mockResolvedValue({
         _sum: { durationSeconds: 900 },
       });
 
-      const { req, res, next, status, json } = createMocks({ baseUrl: '/api/quiz' });
-      await parentalGuard(req, res, next);
+      const { req, res, next } = createMocks({ baseUrl: '/api/quiz' });
+      await expect(parentalGuard(req, res, next)).rejects.toThrow(AuthorizationError);
+
+      try {
+        await parentalGuard(req, res, next);
+      } catch (err) {
+        const authErr = err as AuthorizationError;
+        expect(authErr.details).toEqual(
+          expect.objectContaining({
+            error: 'limit_reached',
+            format: 'quiz',
+            limit: 15,
+          }),
+        );
+      }
 
       expect(next).not.toHaveBeenCalled();
-      expect(status).toHaveBeenCalledWith(403);
-      expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'limit_reached',
-          format: 'quiz',
-          limit: 15,
-        }),
-      );
 
       // Should filter by quizzes_played
       expect(mockPrisma.activityLog.aggregate).toHaveBeenCalledWith(
@@ -201,12 +213,15 @@ describe('parentalGuard', () => {
         _sum: { durationSeconds: 1800 },
       });
 
-      const { req, res, next, json } = createMocks({ baseUrl: '/api/news' });
-      await parentalGuard(req, res, next);
+      const { req, res, next } = createMocks({ baseUrl: '/api/news' });
 
-      const response = json.mock.calls[0][0];
-      expect(response.message).toContain('news');
-      expect(response.message).toContain('time limit reached');
+      try {
+        await parentalGuard(req, res, next);
+      } catch (err) {
+        const authErr = err as AuthorizationError;
+        expect(authErr.message).toContain('news');
+        expect(authErr.message).toContain('time limit reached');
+      }
     });
 
     it('message indicates global limit when falling back', async () => {
@@ -215,19 +230,22 @@ describe('parentalGuard', () => {
         _sum: { durationSeconds: 7200 },
       });
 
-      const { req, res, next, json } = createMocks({ baseUrl: '/api/reels' });
-      await parentalGuard(req, res, next);
+      const { req, res, next } = createMocks({ baseUrl: '/api/reels' });
 
-      const response = json.mock.calls[0][0];
-      expect(response.message).toBe('Daily time limit reached');
+      try {
+        await parentalGuard(req, res, next);
+      } catch (err) {
+        const authErr = err as AuthorizationError;
+        expect(authErr.message).toBe('Daily time limit reached');
+      }
     });
   });
 
   describe('schedule lock (B-PT4)', () => {
     const scheduleProfile = {
       userId: 'user-1',
-      allowedFormats: JSON.stringify(['news', 'reels', 'quiz']),
-      allowedSports: JSON.stringify([]),
+      allowedFormats: ['news', 'reels', 'quiz'],
+      allowedSports: [],
       maxDailyTimeMinutes: null,
       maxNewsMinutes: null,
       maxReelsMinutes: null,
@@ -244,18 +262,24 @@ describe('parentalGuard', () => {
       vi.setSystemTime(outsideHour);
 
       mockPrisma.parentalProfile.findUnique.mockResolvedValue(scheduleProfile);
-      const { req, res, next, status, json } = createMocks({ baseUrl: '/api/news' });
-      await parentalGuard(req, res, next);
+      const { req, res, next } = createMocks({ baseUrl: '/api/news' });
+
+      await expect(parentalGuard(req, res, next)).rejects.toThrow(AuthorizationError);
+
+      try {
+        await parentalGuard(req, res, next);
+      } catch (err) {
+        const authErr = err as AuthorizationError;
+        expect(authErr.details).toEqual(
+          expect.objectContaining({
+            error: 'schedule_locked',
+            allowedHoursStart: 8,
+            allowedHoursEnd: 20,
+          }),
+        );
+      }
 
       expect(next).not.toHaveBeenCalled();
-      expect(status).toHaveBeenCalledWith(403);
-      expect(json).toHaveBeenCalledWith(
-        expect.objectContaining({
-          error: 'schedule_locked',
-          allowedHoursStart: 8,
-          allowedHoursEnd: 20,
-        }),
-      );
 
       vi.useRealTimers();
     });

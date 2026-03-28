@@ -1,15 +1,16 @@
 import { useState, useEffect, useCallback } from 'react';
-import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
+import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
 import type { NewsItem, TeamStats } from '@sportykids/shared';
-import { TEAMS, COLORS, t } from '@sportykids/shared';
+import { TEAMS, t } from '@sportykids/shared';
+import type { ThemeColors } from '../lib/theme';
 import { fetchNews, fetchTeamStats, updateUser } from '../lib/api';
 import { useUser } from '../lib/user-context';
 import { NewsCard } from '../components/NewsCard';
-import { NewsCardSkeleton } from '../components/NewsCardSkeleton';
 import { SkeletonPlaceholder } from '../components/SkeletonPlaceholder';
 
 export function FavoriteTeamScreen() {
-  const { user, setUser, locale } = useUser();
+  const { user, setUser, locale, colors } = useUser();
+  const s = createStyles(colors);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [teamStats, setTeamStats] = useState<TeamStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -29,6 +30,7 @@ export function FavoriteTeamScreen() {
       setNews(newsResult.news);
       setTeamStats(stats);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     } finally {
       setLoading(false);
@@ -46,6 +48,7 @@ export function FavoriteTeamScreen() {
       setUser(updated);
       setChanging(false);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     }
   };
@@ -116,8 +119,8 @@ export function FavoriteTeamScreen() {
               <Text style={s.statCardLabel}>{t('team.recent_results', locale)}</Text>
               <View style={s.resultsRow}>
                 {teamStats.recentResults.slice(0, 5).map((result, idx) => {
-                  const bgColor = result.result === 'W' ? COLORS.green
-                    : result.result === 'D' ? '#FACC15'
+                  const bgColor = result.result === 'W' ? colors.green
+                    : result.result === 'D' ? colors.yellow
                     : '#EF4444';
                   const resultLabel = result.result === 'W' ? t('team.win', locale)
                     : result.result === 'D' ? t('team.draw', locale)
@@ -178,49 +181,51 @@ export function FavoriteTeamScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+  container: { flex: 1, backgroundColor: colors.background },
   header: { padding: 16, flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  title: { fontSize: 22, fontWeight: '700', color: COLORS.darkText },
-  change: { fontSize: 14, color: COLORS.blue, fontWeight: '500' },
+  title: { fontSize: 22, fontWeight: '700', color: colors.text },
+  change: { fontSize: 14, color: colors.blue, fontWeight: '500' },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 16 },
-  teamChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: '#F3F4F6', minWidth: '45%' },
-  teamActive: { backgroundColor: COLORS.blue },
-  teamText: { fontSize: 14, fontWeight: '500', color: '#4B5563' },
+  teamChip: { paddingHorizontal: 14, paddingVertical: 10, borderRadius: 12, backgroundColor: colors.border, minWidth: '45%' },
+  teamActive: { backgroundColor: colors.blue },
+  teamText: { fontSize: 14, fontWeight: '500', color: colors.muted },
   cancel: { marginTop: 20, alignItems: 'center' },
-  cancelText: { fontSize: 14, color: '#9CA3AF' },
+  cancelText: { fontSize: 14, color: colors.muted },
 
   // Stats section
   statsContainer: { paddingHorizontal: 16, gap: 10 },
   statCard: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16,
+    backgroundColor: colors.surface, borderRadius: 12, padding: 16,
     flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
   },
-  statCardLabel: { fontSize: 13, color: '#6B7280', fontWeight: '500' },
-  statCardValue: { fontSize: 32, fontWeight: '700', color: COLORS.blue },
-  statCardValueSmall: { fontSize: 16, fontWeight: '600', color: COLORS.darkText },
+  statCardLabel: { fontSize: 13, color: colors.muted, fontWeight: '500' },
+  statCardValue: { fontSize: 32, fontWeight: '700', color: colors.blue },
+  statCardValueSmall: { fontSize: 16, fontWeight: '600', color: colors.text },
 
   resultsCard: {
-    backgroundColor: '#fff', borderRadius: 12, padding: 16,
+    backgroundColor: colors.surface, borderRadius: 12, padding: 16,
     shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1,
   },
   resultsRow: { flexDirection: 'row', gap: 8, marginTop: 10 },
   resultItem: { flex: 1, alignItems: 'center', gap: 4 },
   resultBadge: { width: 28, height: 28, borderRadius: 14, justifyContent: 'center', alignItems: 'center' },
   resultBadgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
-  resultScore: { fontSize: 11, fontWeight: '600', color: COLORS.darkText },
-  resultOpponent: { fontSize: 9, color: '#9CA3AF', textAlign: 'center' },
+  resultScore: { fontSize: 11, fontWeight: '600', color: colors.text },
+  resultOpponent: { fontSize: 9, color: colors.muted, textAlign: 'center' },
 
   nextMatchCard: {
-    backgroundColor: '#EFF6FF', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: '#BFDBFE',
+    backgroundColor: colors.blue + '15', borderRadius: 12, padding: 16, borderWidth: 1, borderColor: colors.blue + '30',
   },
-  nextMatchOpponent: { fontSize: 16, fontWeight: '600', color: COLORS.darkText, marginTop: 6 },
-  nextMatchMeta: { fontSize: 12, color: '#6B7280', marginTop: 2 },
+  nextMatchOpponent: { fontSize: 16, fontWeight: '600', color: colors.text, marginTop: 6 },
+  nextMatchMeta: { fontSize: 12, color: colors.muted, marginTop: 2 },
 
-  newsHeader: { fontSize: 18, fontWeight: '600', color: COLORS.darkText, paddingHorizontal: 16, marginTop: 20, marginBottom: 8 },
+  newsHeader: { fontSize: 18, fontWeight: '600', color: colors.text, paddingHorizontal: 16, marginTop: 20, marginBottom: 8 },
 
   empty: { alignItems: 'center', paddingVertical: 60 },
-  emptyText: { fontSize: 16, color: '#9CA3AF', marginTop: 8 },
-  emptyHint: { fontSize: 13, color: '#D1D5DB', marginTop: 4 },
-});
+  emptyText: { fontSize: 16, color: colors.muted, marginTop: 8 },
+  emptyHint: { fontSize: 13, color: colors.muted, marginTop: 4 },
+  });
+}

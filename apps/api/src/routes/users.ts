@@ -3,6 +3,8 @@ import { z } from 'zod';
 import { SUPPORTED_LOCALES, SUPPORTED_COUNTRIES } from '@sportykids/shared';
 import { prisma } from '../config/database';
 import { formatUser } from '../utils/format-user';
+import { trackEvent } from '../services/monitoring';
+import { ValidationError, NotFoundError } from '../errors';
 
 const router = Router();
 
@@ -22,8 +24,7 @@ const updateUserSchema = createUserSchema.partial();
 router.post('/', async (req: Request, res: Response) => {
   const parsed = createUserSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   const { favoriteSports, selectedFeeds, locale, country, ...rest } = parsed.data;
@@ -31,11 +32,18 @@ router.post('/', async (req: Request, res: Response) => {
   const user = await prisma.user.create({
     data: {
       ...rest,
-      favoriteSports: JSON.stringify(favoriteSports),
-      selectedFeeds: JSON.stringify(selectedFeeds),
+      favoriteSports,
+      selectedFeeds,
       ...(locale ? { locale } : {}),
       ...(country ? { country } : {}),
     },
+  });
+
+  trackEvent('onboarding_completed', {
+    userId: user.id,
+    sports: parsed.data.favoriteSports,
+    ageRange: parsed.data.age?.toString(),
+    country: parsed.data.country,
   });
 
   res.status(201).json(formatUser(user));
@@ -48,8 +56,7 @@ router.get('/:id', async (req: Request, res: Response) => {
   });
 
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   res.json(formatUser(user));
@@ -59,20 +66,18 @@ router.get('/:id', async (req: Request, res: Response) => {
 router.put('/:id', async (req: Request, res: Response) => {
   const parsed = updateUserSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   const exists = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!exists) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   const { favoriteSports, selectedFeeds, locale, country, ...rest } = parsed.data;
   const data: Record<string, unknown> = { ...rest };
-  if (favoriteSports) data.favoriteSports = JSON.stringify(favoriteSports);
-  if (selectedFeeds) data.selectedFeeds = JSON.stringify(selectedFeeds);
+  if (favoriteSports) data.favoriteSports = favoriteSports;
+  if (selectedFeeds) data.selectedFeeds = selectedFeeds;
   if (locale !== undefined) data.locale = locale;
   if (country !== undefined) data.country = country;
 
@@ -99,14 +104,12 @@ const notificationSubscribeSchema = z.object({
 router.post('/:id/notifications/subscribe', async (req: Request, res: Response) => {
   const parsed = notificationSubscribeSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   const user = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   const { enabled, preferences, pushToken, platform } = parsed.data;
@@ -115,7 +118,7 @@ router.post('/:id/notifications/subscribe', async (req: Request, res: Response) 
     where: { id: req.params.id },
     data: {
       pushEnabled: enabled,
-      pushPreferences: preferences ? JSON.stringify(preferences) : user.pushPreferences,
+      pushPreferences: preferences ?? user.pushPreferences,
     },
   });
 
@@ -138,7 +141,7 @@ router.post('/:id/notifications/subscribe', async (req: Request, res: Response) 
 
   res.json({
     pushEnabled: updated.pushEnabled,
-    pushPreferences: updated.pushPreferences ? JSON.parse(updated.pushPreferences) : null,
+    pushPreferences: updated.pushPreferences ?? null,
   });
 });
 
@@ -146,13 +149,12 @@ router.post('/:id/notifications/subscribe', async (req: Request, res: Response) 
 router.get('/:id/notifications', async (req: Request, res: Response) => {
   const user = await prisma.user.findUnique({ where: { id: req.params.id } });
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   res.json({
     pushEnabled: user.pushEnabled,
-    pushPreferences: user.pushPreferences ? JSON.parse(user.pushPreferences) : null,
+    pushPreferences: user.pushPreferences ?? null,
   });
 });
 

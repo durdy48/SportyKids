@@ -1,14 +1,18 @@
 import { useState, useEffect } from 'react';
-import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator, Linking } from 'react-native';
+import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator } from 'react-native';
 import type { QuizQuestion } from '@sportykids/shared';
-import { COLORS, sportToEmoji, t, getSportLabel } from '@sportykids/shared';
+import { sportToEmoji, t, getSportLabel } from '@sportykids/shared';
+import type { ThemeColors } from '../lib/theme';
 import { fetchQuestions, submitAnswer, fetchScore } from '../lib/api';
 import { useUser } from '../lib/user-context';
+import { haptic } from '../lib/haptics';
+import { BrandedRefreshControl } from '../components/BrandedRefreshControl';
 
 type GameState = 'start' | 'playing' | 'result';
 
 export function QuizScreen() {
-  const { user, locale, refreshUser } = useUser();
+  const { user, locale, refreshUser, colors } = useUser();
+  const s = createStyles(colors);
   const [gameState, setGameState] = useState<GameState>('start');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
   const [index, setIndex] = useState(0);
@@ -17,12 +21,14 @@ export function QuizScreen() {
   const [totalPoints, setTotalPoints] = useState(0);
   const [roundPoints, setRoundPoints] = useState(0);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     if (user) {
       fetchScore(user.id)
         .then((d) => setTotalPoints(d.totalPoints))
-        .catch(console.error);
+        // eslint-disable-next-line no-console
+        .catch((err) => __DEV__ && console.error(err));
     }
   }, [user]);
 
@@ -45,7 +51,7 @@ export function QuizScreen() {
       setFeedback(null);
       setGameState('playing');
     } catch (err) {
-      console.error(err);
+      __DEV__ && console.error(err); // eslint-disable-line no-console
     } finally {
       setLoading(false);
     }
@@ -58,8 +64,9 @@ export function QuizScreen() {
       const data = await submitAnswer(user.id, questions[index].id, option);
       setFeedback(data);
       setRoundPoints((p) => p + data.pointsEarned);
+      haptic(data.correct ? 'success' : 'error');
     } catch (err) {
-      console.error(err);
+      __DEV__ && console.error(err); // eslint-disable-line no-console
     }
   };
 
@@ -80,7 +87,26 @@ export function QuizScreen() {
   const question = questions[index];
 
   return (
-    <ScrollView style={s.container} contentContainerStyle={s.content}>
+    <ScrollView
+      style={s.container}
+      contentContainerStyle={s.content}
+      refreshControl={
+        gameState === 'start' ? (
+          <BrandedRefreshControl
+            refreshing={refreshing}
+            onRefresh={() => {
+              if (!user) return;
+              setRefreshing(true);
+              fetchScore(user.id)
+                .then((d) => setTotalPoints(d.totalPoints))
+                .catch(() => {})
+                .finally(() => setRefreshing(false));
+            }}
+            locale={locale}
+          />
+        ) : undefined
+      }
+    >
       {gameState === 'start' && (
         <View style={s.center}>
           <Text style={{ fontSize: 64 }}>🧠</Text>
@@ -119,13 +145,13 @@ export function QuizScreen() {
             <Text style={s.questionText}>{question.question}</Text>
 
             {question.options.map((op: string, i: number) => {
-              let bgColor = '#F3F4F6';
-              let borderColor = '#E5E7EB';
+              let bgColor = colors.border;
+              let borderColor = colors.border;
               if (feedback) {
-                if (i === feedback.correctAnswer) { bgColor = '#DCFCE7'; borderColor = COLORS.green; }
+                if (i === feedback.correctAnswer) { bgColor = colors.green + '20'; borderColor = colors.green; }
                 else if (i === selection && !feedback.correct) { bgColor = '#FEE2E2'; borderColor = '#F87171'; }
               } else if (i === selection) {
-                bgColor = '#EFF6FF'; borderColor = COLORS.blue;
+                bgColor = colors.blue + '15'; borderColor = colors.blue;
               }
               return (
                 <TouchableOpacity
@@ -176,9 +202,9 @@ export function QuizScreen() {
         <View style={s.center}>
           <Text style={{ fontSize: 64 }}>🏆</Text>
           <Text style={s.titleLarge}>{t('quiz.completed', locale)}</Text>
-          <View style={[s.pointsBox, { backgroundColor: '#DCFCE7' }]}>
+          <View style={[s.pointsBox, { backgroundColor: colors.green + '20' }]}>
             <Text style={s.pointsLabel}>{t('quiz.points_earned', locale)}</Text>
-            <Text style={[s.pointsValue, { color: COLORS.green }]}>+{roundPoints}</Text>
+            <Text style={[s.pointsValue, { color: colors.green }]}>+{roundPoints}</Text>
           </View>
           <Text style={s.subtitle}>Total: {totalPoints} {t('quiz.pts', locale)}</Text>
           <TouchableOpacity style={s.buttonBlue} onPress={startQuiz}>
@@ -190,57 +216,59 @@ export function QuizScreen() {
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  content: { padding: 20, paddingBottom: 40 },
-  center: { alignItems: 'center', paddingTop: 40 },
-  titleLarge: { fontSize: 28, fontWeight: '700', color: COLORS.darkText, marginTop: 12 },
-  subtitle: { fontSize: 15, color: '#9CA3AF', marginTop: 4 },
-  pointsBox: { backgroundColor: '#FEF9C3', borderRadius: 16, padding: 20, alignItems: 'center', marginTop: 20, width: '100%' },
-  pointsLabel: { fontSize: 13, color: '#6B7280' },
-  pointsValue: { fontSize: 40, fontWeight: '700', color: COLORS.yellow },
-  buttonGreen: { backgroundColor: COLORS.green, paddingVertical: 16, paddingHorizontal: 40, borderRadius: 16, marginTop: 24, width: '100%', alignItems: 'center' },
-  buttonBlue: { backgroundColor: COLORS.blue, paddingVertical: 14, borderRadius: 12, marginTop: 16, alignItems: 'center' },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  progress: { flexDirection: 'row', gap: 6, marginBottom: 20 },
-  bar: { flex: 1, height: 6, borderRadius: 3 },
-  barGreen: { backgroundColor: COLORS.green },
-  barBlue: { backgroundColor: COLORS.blue },
-  barGray: { backgroundColor: '#E5E7EB' },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  dailyBadge: {
-    alignSelf: 'flex-start',
-    backgroundColor: '#FEF9C3',
-    paddingHorizontal: 12,
-    paddingVertical: 4,
-    borderRadius: 20,
-    marginBottom: 8,
-    borderWidth: 1,
-    borderColor: COLORS.yellow,
-  },
-  dailyBadgeText: { fontSize: 11, fontWeight: '700', color: '#92400E' },
-  badge: { fontSize: 12, color: '#6B7280', backgroundColor: '#F3F4F6', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start' },
-  questionText: { fontSize: 20, fontWeight: '700', color: COLORS.darkText, marginTop: 16, marginBottom: 20 },
-  option: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 2, marginBottom: 10 },
-  optionLetter: { width: 28, height: 28, borderRadius: 14, backgroundColor: '#E5E7EB', textAlign: 'center', lineHeight: 28, fontSize: 13, fontWeight: '700', marginRight: 12 },
-  optionText: { fontSize: 14, fontWeight: '500', color: COLORS.darkText, flex: 1 },
-  feedbackBox: { padding: 14, borderRadius: 12, marginTop: 12, borderWidth: 1 },
-  feedbackOk: { backgroundColor: '#DCFCE7', borderColor: '#BBF7D0' },
-  feedbackBad: { backgroundColor: '#FEE2E2', borderColor: '#FECACA' },
-  feedbackText: { fontSize: 14, fontWeight: '600', textAlign: 'center' },
-  relatedNewsLink: {
-    marginTop: 10,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-    backgroundColor: '#EFF6FF',
-    borderRadius: 12,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#BFDBFE',
-  },
-  relatedNewsText: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: COLORS.blue,
-  },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    content: { padding: 20, paddingBottom: 40 },
+    center: { alignItems: 'center', paddingTop: 40 },
+    titleLarge: { fontSize: 28, fontWeight: '700', color: colors.text, marginTop: 12 },
+    subtitle: { fontSize: 15, color: colors.muted, marginTop: 4 },
+    pointsBox: { backgroundColor: colors.yellow + '20', borderRadius: 16, padding: 20, alignItems: 'center', marginTop: 20, width: '100%' },
+    pointsLabel: { fontSize: 13, color: colors.muted },
+    pointsValue: { fontSize: 40, fontWeight: '700', color: colors.yellow },
+    buttonGreen: { backgroundColor: colors.green, paddingVertical: 16, paddingHorizontal: 40, borderRadius: 16, marginTop: 24, width: '100%', alignItems: 'center' },
+    buttonBlue: { backgroundColor: colors.blue, paddingVertical: 14, borderRadius: 12, marginTop: 16, alignItems: 'center' },
+    buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+    progress: { flexDirection: 'row', gap: 6, marginBottom: 20 },
+    bar: { flex: 1, height: 6, borderRadius: 3 },
+    barGreen: { backgroundColor: colors.green },
+    barBlue: { backgroundColor: colors.blue },
+    barGray: { backgroundColor: colors.border },
+    card: { backgroundColor: colors.surface, borderRadius: 16, padding: 20, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+    dailyBadge: {
+      alignSelf: 'flex-start',
+      backgroundColor: colors.yellow + '20',
+      paddingHorizontal: 12,
+      paddingVertical: 4,
+      borderRadius: 20,
+      marginBottom: 8,
+      borderWidth: 1,
+      borderColor: colors.yellow,
+    },
+    dailyBadgeText: { fontSize: 11, fontWeight: '700', color: colors.text },
+    badge: { fontSize: 12, color: colors.muted, backgroundColor: colors.border, paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, alignSelf: 'flex-start' },
+    questionText: { fontSize: 20, fontWeight: '700', color: colors.text, marginTop: 16, marginBottom: 20 },
+    option: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 2, marginBottom: 10 },
+    optionLetter: { width: 28, height: 28, borderRadius: 14, backgroundColor: colors.border, textAlign: 'center', lineHeight: 28, fontSize: 13, fontWeight: '700', marginRight: 12 },
+    optionText: { fontSize: 14, fontWeight: '500', color: colors.text, flex: 1 },
+    feedbackBox: { padding: 14, borderRadius: 12, marginTop: 12, borderWidth: 1 },
+    feedbackOk: { backgroundColor: colors.green + '20', borderColor: colors.green + '40' },
+    feedbackBad: { backgroundColor: '#FEE2E2', borderColor: '#FECACA' },  // red stays visible in both themes
+    feedbackText: { fontSize: 14, fontWeight: '600', textAlign: 'center' },
+    relatedNewsLink: {
+      marginTop: 10,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      backgroundColor: colors.blue + '15',
+      borderRadius: 12,
+      alignItems: 'center',
+      borderWidth: 1,
+      borderColor: colors.blue + '30',
+    },
+    relatedNewsText: {
+      fontSize: 13,
+      fontWeight: '600',
+      color: colors.blue,
+    },
+  });
+}

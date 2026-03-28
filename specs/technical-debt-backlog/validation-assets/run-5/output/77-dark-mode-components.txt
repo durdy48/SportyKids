@@ -1,0 +1,5 @@
+MissionCard.tsx: has dark:
+QuizGame.tsx: has dark:
+ParentalPanel.tsx: has dark:
+OnboardingWizard.tsx: missing dark:
+HomeFeedClient.tsx: has dark:

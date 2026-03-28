@@ -35,7 +35,8 @@ export function ContentReportList({ userId, locale }: ContentReportListProps) {
 
   useEffect(() => {
     fetchReports(userId)
-      .then((data) => setReports(data))
+      .then((data) => setReports(data as Report[]))
+      // eslint-disable-next-line no-console
       .catch(console.error)
       .finally(() => setLoading(false));
   }, [userId]);
@@ -50,6 +51,7 @@ export function ContentReportList({ userId, locale }: ContentReportListProps) {
         prev.map((r) => (r.id === reportId ? { ...r, status } : r))
       );
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     } finally {
       setUpdatingId(null);
@@ -70,7 +72,7 @@ export function ContentReportList({ userId, locale }: ContentReportListProps) {
     switch (status) {
       case 'reviewed':
         return (
-          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 text-green-700">
+          <span className="text-xs font-medium px-2 py-0.5 rounded-full bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300">
             {t('report.reviewed', locale)}
           </span>
         );
@@ -141,7 +143,7 @@ export function ContentReportList({ userId, locale }: ContentReportListProps) {
                     type="button"
                     onClick={() => handleUpdateStatus(report.id, 'reviewed')}
                     disabled={updatingId === report.id}
-                    className="flex-1 text-xs font-medium py-1.5 rounded-lg bg-green-100 text-green-700 hover:bg-green-200 transition-colors disabled:opacity-50"
+                    className="flex-1 text-xs font-medium py-1.5 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors disabled:opacity-50"
                   >
                     {t('report.mark_reviewed', locale)}
                   </button>

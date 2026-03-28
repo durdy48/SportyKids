@@ -1,0 +1,99 @@
+API:
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/api
+
+[14:40:34] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "La Liga YouTube"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[14:40:34] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[14:40:34] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 0
+    [35mrejected[39m: 1
+[14:40:34] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[14:40:34] [31mERROR[39m: [36mError syncing video source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Broken Channel"
+    err: "Network timeout"
+[14:40:34] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[14:40:34] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[14:40:34] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "YouTube Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[14:40:35] [32mINFO[39m: [36mVideo sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35mcreated[39m: 0
+    [35msources[39m: 1
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+    [35merrors[39m: 0
+[14:40:35] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[14:40:35] [32mINFO[39m: [36mNo active video sources found.[39m
+    [35mservice[39m: "sportykids-api"
+[14:40:35] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[14:40:35] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Channel A"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[14:40:37] [32mINFO[39m: [36mParental session created[39m
+    [35mservice[39m: "sportykids-api"
+    [35muserId[39m: "cmnaftisj000026l9v8ljbsi3"
+
+ Test Files  35 passed (35)
+      Tests  379 passed (379)
+   Start at  15:40:34
+   Duration  11.03s (transform 574ms, setup 0ms, import 3.16s, tests 4.38s, environment 1ms)
+
+Web:
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/web
+
+
+ Test Files  12 passed (12)
+      Tests  57 passed (57)
+   Start at  15:40:46
+   Duration  2.30s (transform 670ms, setup 2.96s, import 2.40s, tests 351ms, environment 18.68s)
+
+Mobile:
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/mobile
+
+
+ Test Files  10 passed (10)
+      Tests  60 passed (60)
+   Start at  15:40:49
+   Duration  304ms (transform 602ms, setup 279ms, import 951ms, tests 395ms, environment 0ms)

@@ -1,11 +1,11 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
-import { safeJsonParse } from '../utils/safe-json-parse';
+import { AuthorizationError } from '../errors';
 
 // In-memory cache with 60s TTL — only store needed fields, never the PIN hash
 interface CachedProfile {
-  allowedFormats: string;
-  allowedSports: string;
+  allowedFormats: string[];
+  allowedSports: string[];
   maxDailyTimeMinutes: number | null;
   maxNewsMinutes: number | null;
   maxReelsMinutes: number | null;
@@ -113,14 +113,12 @@ export async function parentalGuard(req: Request, res: Response, next: NextFunct
   // 3. Check schedule lock (B-PT4)
   const currentHour = getCurrentHourInTimezone(profile.timezone);
   if (!isWithinSchedule(currentHour, profile.allowedHoursStart, profile.allowedHoursEnd)) {
-    res.status(403).json({
+    throw new AuthorizationError('Outside allowed hours', {
       error: 'schedule_locked',
-      message: 'Outside allowed hours',
       allowedHoursStart: profile.allowedHoursStart,
       allowedHoursEnd: profile.allowedHoursEnd,
       timezone: profile.timezone,
     });
-    return;
   }
 
   // 4. Determine format from route path
@@ -132,26 +130,22 @@ export async function parentalGuard(req: Request, res: Response, next: NextFunct
 
   // 5. Check format restriction
   if (format) {
-    const allowed: string[] = safeJsonParse(profile.allowedFormats, []);
+    const allowed: string[] = profile.allowedFormats;
     if (allowed.length > 0 && !allowed.includes(format)) {
-      res.status(403).json({
+      throw new AuthorizationError(`Format "${format}" is not allowed`, {
         error: 'format_blocked',
-        message: `Format "${format}" is not allowed`,
       });
-      return;
     }
   }
 
   // 6. Check sport restriction
   const sport = req.query.sport as string;
   if (sport) {
-    const allowedSports: string[] = safeJsonParse(profile.allowedSports, []);
+    const allowedSports: string[] = profile.allowedSports;
     if (allowedSports.length > 0 && !allowedSports.includes(sport)) {
-      res.status(403).json({
+      throw new AuthorizationError(`Sport "${sport}" is not allowed`, {
         error: 'sport_blocked',
-        message: `Sport "${sport}" is not allowed`,
       });
-      return;
     }
   }
 
@@ -183,14 +177,15 @@ export async function parentalGuard(req: Request, res: Response, next: NextFunct
     const limitSeconds = effectiveLimit * 60;
 
     if (totalSeconds >= limitSeconds) {
-      res.status(403).json({
-        error: 'limit_reached',
-        message: perTypeLimit != null ? `Daily ${format} time limit reached` : 'Daily time limit reached',
-        format: format || undefined,
-        limit: effectiveLimit,
-        used: Math.round(totalSeconds / 60),
-      });
-      return;
+      throw new AuthorizationError(
+        perTypeLimit != null ? `Daily ${format} time limit reached` : 'Daily time limit reached',
+        {
+          error: 'limit_reached',
+          format: format || undefined,
+          limit: effectiveLimit,
+          used: Math.round(totalSeconds / 60),
+        },
+      );
     }
   }
 

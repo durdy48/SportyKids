@@ -39,6 +39,17 @@ export function celebrateStreak(days: number) {
   }
 }
 
+/** Celebration when a daily mission is completed */
+export function celebrateMissionComplete() {
+  if (prefersReducedMotion()) return;
+  confetti({
+    particleCount: 100,
+    spread: 80,
+    origin: { y: 0.6 },
+    colors: ['#2563EB', '#FACC15', '#22C55E', '#F59E0B'],
+  });
+}
+
 /** Sustained star burst for a perfect quiz score */
 export function celebratePerfectQuiz() {
   if (prefersReducedMotion()) return;

@@ -1,9 +1,10 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import type { Locale } from '@sportykids/shared';
 import { t } from '@sportykids/shared';
 import { fetchTodayMission, claimMission } from '@/lib/api';
+import { celebrateMissionComplete } from '@/lib/celebrations';
 
 interface MissionCardProps {
   userId: string;
@@ -28,20 +29,45 @@ interface Mission {
 
 export function MissionCard({ userId, locale }: MissionCardProps) {
   const [mission, setMission] = useState<Mission | null>(null);
+  const [expired, setExpired] = useState(false);
   const [claiming, setClaiming] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
+  const prevCompletedRef = useRef(false);
 
-  useEffect(() => {
+  const loadMission = useCallback(() => {
     fetchTodayMission(userId)
-      .then((data) => {
+      .then((data: { mission: Mission | null; expired?: boolean }) => {
         if (data && data.mission) {
           setMission(data.mission);
+          setExpired(false);
+        } else {
+          setMission(null);
+          setExpired(data?.expired ?? true);
         }
       })
       .catch(() => {
         // No mission available
       });
   }, [userId]);
+
+  useEffect(() => {
+    loadMission();
+  }, [loadMission]);
+
+  // Listen for activity-logged events to refresh mission progress
+  useEffect(() => {
+    const handler = () => loadMission();
+    window.addEventListener('sportykids:activity-logged', handler);
+    return () => window.removeEventListener('sportykids:activity-logged', handler);
+  }, [loadMission]);
+
+  // Trigger confetti when mission transitions to completed
+  useEffect(() => {
+    if (mission?.completed && !prevCompletedRef.current) {
+      celebrateMissionComplete();
+    }
+    prevCompletedRef.current = mission?.completed ?? false;
+  }, [mission?.completed]);
 
   // Auto-collapse after claim
   useEffect(() => {
@@ -50,6 +76,20 @@ export function MissionCard({ userId, locale }: MissionCardProps) {
       return () => clearTimeout(timer);
     }
   }, [mission?.claimed]);
+
+  // Expired state
+  if (expired && !mission) {
+    return (
+      <div className="bg-[var(--color-background)] border border-[var(--color-border)] rounded-2xl p-4 flex items-center gap-3">
+        <span className="text-2xl">{'\u{1F319}'}</span>
+        <div className="flex-1">
+          <p className="text-sm font-medium text-[var(--color-muted)]">
+            {t('mission.no_mission', locale)}
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   if (!mission || collapsed) return null;
 
@@ -70,10 +110,10 @@ export function MissionCard({ userId, locale }: MissionCardProps) {
   // Claimed state: compact green card
   if (mission.claimed) {
     return (
-      <div className="bg-green-50 border border-green-200 rounded-2xl p-4 flex items-center gap-3 transition-all">
+      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-2xl p-4 flex items-center gap-3 transition-all">
         <span className="text-2xl">&#9989;</span>
         <div className="flex-1">
-          <p className="text-sm font-semibold text-green-700">
+          <p className="text-sm font-semibold text-green-700 dark:text-green-300">
             {t('mission.completed', locale)}
           </p>
         </div>
@@ -84,7 +124,7 @@ export function MissionCard({ userId, locale }: MissionCardProps) {
   // Completed unclaimed: yellow pulsing card
   if (mission.completed && !mission.claimed) {
     return (
-      <div className="bg-yellow-50 border-2 border-yellow-300 rounded-2xl p-5 space-y-3 transition-all">
+      <div className="bg-yellow-50 dark:bg-yellow-900/20 border-2 border-yellow-300 dark:border-yellow-600 rounded-2xl p-5 space-y-3 transition-all">
         <div className="flex items-center gap-3">
           <span className="text-2xl">&#127942;</span>
           <div className="flex-1">
@@ -93,7 +133,7 @@ export function MissionCard({ userId, locale }: MissionCardProps) {
           </div>
         </div>
         {/* Full progress bar */}
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-[var(--color-border)] rounded-full h-2">
           <div className="bg-yellow-400 h-2 rounded-full w-full" />
         </div>
         <button
@@ -109,7 +149,7 @@ export function MissionCard({ userId, locale }: MissionCardProps) {
 
   // Uncompleted: blue card with progress
   return (
-    <div className="bg-blue-50 border border-blue-200 rounded-2xl p-5 space-y-3 transition-all">
+    <div className="bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-700 rounded-2xl p-5 space-y-3 transition-all">
       <div className="flex items-center gap-3">
         <span className="text-2xl">&#127919;</span>
         <div className="flex-1">
@@ -120,14 +160,14 @@ export function MissionCard({ userId, locale }: MissionCardProps) {
           <p className="text-xs text-[var(--color-muted)]">{mission.description}</p>
         </div>
         {mission.reward && (
-          <span className="text-xs font-bold text-[var(--color-yellow)] bg-yellow-100 px-2 py-1 rounded-full whitespace-nowrap">
+          <span className="text-xs font-bold text-[var(--color-yellow)] bg-yellow-100 dark:bg-yellow-900/30 px-2 py-1 rounded-full whitespace-nowrap">
             +{mission.reward.amount} {mission.reward.label ?? 'pts'}
           </span>
         )}
       </div>
       {/* Progress bar */}
       <div className="space-y-1">
-        <div className="w-full bg-gray-200 rounded-full h-2">
+        <div className="w-full bg-[var(--color-border)] rounded-full h-2">
           <div
             className="bg-[var(--color-blue)] h-2 rounded-full transition-all"
             style={{ width: `${progressPercent}%` }}

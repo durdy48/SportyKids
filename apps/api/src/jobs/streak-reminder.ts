@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { prisma } from '../config/database';
 import { sendPushToUser } from '../services/push-sender';
 import { t } from '@sportykids/shared';
+import { logger } from '../services/logger';
 
 // ---------------------------------------------------------------------------
 // Streak reminder: notify users at risk of losing their streak
@@ -36,11 +37,11 @@ export async function sendStreakReminders(): Promise<{ sent: number }> {
       });
       result.sent++;
     } catch (error) {
-      console.error(`[StreakReminder] Error sending to user ${user.id}:`, error);
+      logger.error({ err: error, userId: user.id }, 'Error sending streak reminder to user');
     }
   }
 
-  console.log(`[StreakReminder] Sent ${result.sent} reminders.`);
+  logger.info({ sent: result.sent }, 'Streak reminders sent');
   return result;
 }
 
@@ -52,14 +53,14 @@ let activeJob: ReturnType<typeof cron.schedule> | null = null;
 
 export function startStreakReminderJob(): void {
   if (activeJob) {
-    console.log('[StreakReminder] Job is already active.');
+    logger.info('Streak reminder job is already active.');
     return;
   }
 
   activeJob = cron.schedule('0 20 * * *', async () => {
-    console.log(`[${new Date().toISOString()}] Running streak reminders...`);
+    logger.info('Running streak reminders...');
     await sendStreakReminders();
   });
 
-  console.log('[StreakReminder] Job scheduled: daily at 20:00 UTC.');
+  logger.info('Streak reminder job scheduled: daily at 20:00 UTC.');
 }

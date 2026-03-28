@@ -360,7 +360,8 @@ async function checkUserIdFilter() {
   const totalAll = allNews?.total || 0;
 
   // Find a user with selectedFeeds
-  const { json: catalog } = await api('/news/fuentes/catalogo');
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { json: _catalog } = await api('/news/fuentes/catalogo');
   // We need a userId — grab from news items or just test the param is accepted
   const { json: filtered } = await api('/news?limit=1&userId=cmn50ieqz004u26cei3kkdsx8');
   const totalFiltered = filtered?.total || 0;
@@ -819,7 +820,7 @@ async function checkM6Endpoints() {
   record(S, 'GET /users/:id/notifications', s3 === 200 && 'pushEnabled' in (j3 || {}) ? 'PASS' : 'FAIL');
 
   // Reels with real videos
-  const { status: s4, json: j4 } = await api('/reels?limit=5');
+  const { json: j4 } = await api('/reels?limit=5');
   save('m6-reels.json', j4);
   const hasReal = j4?.reels?.some((r) => !r.videoUrl.includes('dQw4w9WgXcQ'));
   record(S, 'Reels have real videos (not Rick Roll)', hasReal ? 'PASS' : 'FAIL',
@@ -836,7 +837,7 @@ function checkM6Services() {
   } catch { record(S, 'feed-ranker.ts', 'FAIL'); }
 
   try {
-    const teamSvc = read('apps/api/src/services/team-stats.ts');
+    read('apps/api/src/services/team-stats.ts');
     record(S, 'team-stats.ts exists', 'PASS');
   } catch { record(S, 'team-stats.ts', 'FAIL'); }
 

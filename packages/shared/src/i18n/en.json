@@ -188,7 +188,10 @@
     "reached_message": "You've reached your daily time limit. Come back tomorrow for more sports!",
     "format_blocked": "This section is not available. Ask your parents!",
     "sport_blocked": "This sport is not on your list. Ask your parents to add it!",
-    "go_home": "Go to home"
+    "go_home": "Go to home",
+    "news_reached_message": "You've used up your news time for today. Try reels or quiz!",
+    "reels_reached_message": "You've used up your reels time for today. Try news or quiz!",
+    "quiz_reached_message": "You've used up your quiz time for today. Try news or reels!"
   },
   "buttons": {
     "read_more": "Read more",
@@ -361,7 +364,9 @@
     "no_content": "No content with current restrictions.",
     "close": "Close",
     "news_section": "News",
-    "reels_section": "Reels"
+    "reels_section": "Reels",
+    "active_restrictions": "Active restrictions",
+    "no_restrictions": "No restrictions active"
   },
   "news": {
     "trending": "Trending"
@@ -405,7 +410,9 @@
     "completed": "Mission completed!",
     "claim": "Claim reward",
     "claimed": "Reward claimed!",
-    "progress": "{progress} of {target}"
+    "progress": "{progress} of {target}",
+    "expired": "Mission expired",
+    "no_mission": "Tomorrow you'll have another chance!"
   },
   "empty": {
     "news_title": "No news yet",
@@ -452,7 +459,11 @@
     "correct": "Correct",
     "perfect_quizzes": "Perfect quizzes",
     "safe_news_tagline": "Safe sports news for kids",
-    "email_subject": "SportyKids — Weekly digest for {name}"
+    "email_subject": "SportyKids — Weekly digest for {name}",
+    "send_test": "Send test email",
+    "test_sent": "Test email sent to {email}",
+    "test_error": "Could not send test email",
+    "saved": "Saved"
   },
   "settings": {
     "language_region": "Language & Region",
@@ -487,7 +498,13 @@
     "login_error": "Invalid email or password",
     "register_error": "Could not create account",
     "logout": "Log out",
-    "upgrade_prompt": "Create an account to save your progress"
+    "upgrade_prompt": "Create an account to save your progress",
+    "google_signin": "Sign in with Google",
+    "apple_signin": "Sign in with Apple",
+    "social_error": "Could not sign in. Please try again.",
+    "account_linked": "Account linked successfully",
+    "social_email_conflict": "An account with that email already exists. Sign in with your previous method.",
+    "or_continue_with": "or continue with"
   },
   "history": {
     "title": "Recently Read",
@@ -500,6 +517,8 @@
   },
   "schedule": {
     "title": "Usage Schedule",
+    "enable": "Enable usage schedule",
+    "description": "SportyKids will be available from {start}:00 to {end}:00 ({timezone})",
     "start_time": "Start time",
     "end_time": "End time",
     "timezone": "Timezone",
@@ -522,6 +541,20 @@
     "offline_message": "You're offline. Connect to the internet to see the latest news!",
     "schedule_locked_title": "Time to rest!",
     "schedule_locked_message": "SportyKids is sleeping now. Come back during the day!",
+    "auth_required_title": "Log in first!",
+    "auth_required_message": "You need to log in to continue.",
+    "too_fast_title": "Too fast!",
+    "too_fast_message": "Slow down, champ! Wait a moment and try again.",
+    "forbidden_title": "Restricted zone!",
+    "forbidden_message": "You don't have permission to see this. Ask your parents!",
+    "rate_limited_title": "Red light!",
+    "rate_limited_message": "You're doing too many things at once. Wait a moment and try again!",
+    "format_blocked_title": "Section closed!",
+    "format_blocked_message": "This section is not available for you. Ask your parents!",
+    "limit_reached_title": "Break time!",
+    "limit_reached_message": "You've used all your time for today. Come back tomorrow for more sports!",
+    "unauthorized_title": "You need your ticket!",
+    "unauthorized_message": "Log in to enter the stadium!",
     "generic_title": "Foul play!",
     "generic_message": "Something went wrong. Let's try again!",
     "retry": "Try again"
@@ -552,6 +585,8 @@
     "sticker_earned_title": "New sticker!",
     "sticker_earned_body": "You earned a {rarity} sticker: {name}",
     "mission_ready_title": "Today's mission is ready!",
-    "mission_ready_body": "Complete your mission for a {rarity} sticker."
+    "mission_ready_body": "Complete your mission for a {rarity} sticker.",
+    "mission_almost_title": "Almost there!",
+    "mission_almost_body": "You're close to finishing today's mission. Don't give up!"
   }
 }

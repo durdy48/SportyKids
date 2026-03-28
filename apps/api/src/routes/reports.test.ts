@@ -32,17 +32,30 @@ vi.mock('../services/mission-generator', () => ({
   }),
 }));
 
-vi.mock('./parents', () => ({
-  verifyParentalSession: vi.fn().mockReturnValue('parent-user-id'),
+vi.mock('../services/parental-session', () => ({
+  verifyParentalSession: vi.fn().mockResolvedValue('parent-user-id'),
+}));
+
+vi.mock('../services/monitoring', () => ({
+  captureException: vi.fn(),
 }));
 
 import reportRoutes from './reports';
+import { errorHandler } from '../middleware/error-handler';
+
+const mockLog = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
 
 // Build a minimal Express app for testing
 function createApp() {
   const app = express();
   app.use(express.json());
+  app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    (req as express.Request & { log: typeof mockLog; requestId: string }).log = mockLog;
+    (req as express.Request & { requestId: string }).requestId = 'test-req-id';
+    next();
+  });
   app.use('/api/reports', reportRoutes);
+  app.use(errorHandler as express.ErrorRequestHandler);
   return app;
 }
 
@@ -92,7 +105,7 @@ describe('reports routes', () => {
         .send(validBody);
 
       expect(res.status).toBe(429);
-      expect(res.body.error).toBe('rate_limit_exceeded');
+      expect(res.body.error.code).toBe('RATE_LIMIT_EXCEEDED');
       expect(mockPrisma.contentReport.create).not.toHaveBeenCalled();
     });
 
@@ -108,7 +121,7 @@ describe('reports routes', () => {
         .send(validBody);
 
       expect(res.status).toBe(409);
-      expect(res.body.error).toBe('already_reported');
+      expect(res.body.error.code).toBe('CONFLICT');
       expect(mockPrisma.contentReport.create).not.toHaveBeenCalled();
     });
 
@@ -123,7 +136,7 @@ describe('reports routes', () => {
         });
 
       expect(res.status).toBe(400);
-      expect(res.body.error).toBe('Invalid data');
+      expect(res.body.error.code).toBe('VALIDATION_ERROR');
       expect(mockPrisma.contentReport.create).not.toHaveBeenCalled();
     });
   });
@@ -221,7 +234,7 @@ describe('reports routes', () => {
         .send({ status: 'dismissed' });
 
       expect(res.status).toBe(404);
-      expect(res.body.error).toBe('Report not found');
+      expect(res.body.error.code).toBe('NOT_FOUND');
     });
   });
 });

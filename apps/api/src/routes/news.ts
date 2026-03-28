@@ -9,13 +9,14 @@ import type { AgeRange } from '../services/summarizer';
 import type { Locale } from '@sportykids/shared';
 import { parentalGuard } from '../middleware/parental-guard';
 import { requireAuth } from '../middleware/auth';
+import { ValidationError, NotFoundError, ConflictError, AuthorizationError } from '../errors';
 // Note: this file reads ActivityLog but does not create entries.
 // All activity logging goes through POST /api/parents/activity/log (parents.ts),
 // which calls invalidateBehavioralCache. If a future code path here creates
 // ActivityLog entries, it must also call invalidateBehavioralCache.
 import { rankFeed, getBehavioralSignals } from '../services/feed-ranker';
 import { isPublicUrl } from '../utils/url-validator';
-import { apiCache, CACHE_TTL, CACHE_KEYS, withCache } from '../services/cache';
+import { apiCache, CACHE_TTL, withCache } from '../services/cache';
 
 const router = Router();
 
@@ -47,8 +48,7 @@ const filtersSchema = z.object({
 router.get('/', parentalGuard, async (req: Request, res: Response) => {
   const parsed = filtersSchema.safeParse(req.query);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid parameters', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid parameters', parsed.error.flatten());
   }
 
   const { sport, team, age, source, userId, q, locale, page, limit } = parsed.data;
@@ -57,23 +57,21 @@ router.get('/', parentalGuard, async (req: Request, res: Response) => {
     { safetyStatus: 'approved' },
   ];
   if (sport) conditions.push({ sport });
-  // Team filter applied post-query with accent-insensitive matching (SQLite lacks collation support).
+  // Team filter applied post-query with accent-insensitive matching (strip diacritics).
   // We require team to be non-null in the DB query and filter in JS after fetching.
   if (team) {
     conditions.push({ team: { not: null } });
   }
   if (source) conditions.push({ source: { contains: source } });
 
-  // Text search — use OR for title/summary/team wrapped inside AND with other filters
-  // NOTE: SQLite `contains` is case-sensitive. Case-insensitive search requires
-  // PostgreSQL with `mode: 'insensitive'`. Acceptable for MVP.
+  // Text search — use OR for title/summary/team with case-insensitive matching (PostgreSQL)
   if (q && typeof q === 'string' && q.trim()) {
     const searchTerm = q.trim();
     conditions.push({
       OR: [
-        { title: { contains: searchTerm } },
-        { summary: { contains: searchTerm } },
-        { team: { contains: searchTerm } },
+        { title: { contains: searchTerm, mode: 'insensitive' as const } },
+        { summary: { contains: searchTerm, mode: 'insensitive' as const } },
+        { team: { contains: searchTerm, mode: 'insensitive' as const } },
       ],
     });
   }
@@ -86,21 +84,15 @@ router.get('/', parentalGuard, async (req: Request, res: Response) => {
   // Filter by user's selected feeds (source names from their chosen RSS sources)
   if (userId) {
     const feedUser = await prisma.user.findUnique({ where: { id: userId }, select: { selectedFeeds: true } });
-    if (feedUser?.selectedFeeds) {
-      try {
-        const feedIds: string[] = JSON.parse(feedUser.selectedFeeds);
-        if (feedIds.length > 0) {
-          const selectedSources = await prisma.rssSource.findMany({
-            where: { id: { in: feedIds } },
-            select: { name: true },
-          });
-          const sourceNames = selectedSources.map((s) => s.name);
-          if (sourceNames.length > 0) {
-            conditions.push({ source: { in: sourceNames } });
-          }
-        }
-      } catch {
-        // Invalid JSON in selectedFeeds — ignore filter
+    if (feedUser?.selectedFeeds && feedUser.selectedFeeds.length > 0) {
+      const feedIds: string[] = feedUser.selectedFeeds;
+      const selectedSources = await prisma.rssSource.findMany({
+        where: { id: { in: feedIds } },
+        select: { name: true },
+      });
+      const sourceNames = selectedSources.map((s) => s.name);
+      if (sourceNames.length > 0) {
+        conditions.push({ source: { in: sourceNames } });
       }
     }
   }
@@ -124,18 +116,14 @@ router.get('/', parentalGuard, async (req: Request, res: Response) => {
     if (prefUser) {
       userLocale = userLocale || prefUser.locale;
       userCountry = prefUser.country;
-      try {
-        const sports: string[] = JSON.parse(prefUser.favoriteSports);
-        if (sports.length > 0) {
-          userPrefs = { favoriteSports: sports, favoriteTeam: prefUser.favoriteTeam };
-        }
-      } catch {
-        // Invalid JSON — skip ranking
+      const sports: string[] = prefUser.favoriteSports;
+      if (sports.length > 0) {
+        userPrefs = { favoriteSports: sports, favoriteTeam: prefUser.favoriteTeam };
       }
     }
   }
 
-  // Accent-insensitive team filter applied in JS (SQLite lacks Unicode collation)
+  // Accent-insensitive team filter applied in JS (diacritics-stripped comparison)
   const teamNorm = team ? normalizeText(team) : null;
   const matchesTeam = (item: { team?: string | null }) =>
     !teamNorm || (item.team && normalizeText(item.team).includes(teamNorm));
@@ -211,41 +199,31 @@ router.get('/', parentalGuard, async (req: Request, res: Response) => {
 const TRENDING_THRESHOLD = 5;
 const TRENDING_LIMIT = 20;
 
-router.get('/trending', withCache('trending:', CACHE_TTL.TRENDING), async (_req: Request, res: Response) => {
+router.get('/trending', withCache('trending:', CACHE_TTL.TRENDING), async (req: Request, res: Response) => {
   try {
     const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
 
-    // Prisma groupBy with having can be tricky on SQLite, so we use a raw approach:
-    // fetch recent activity logs and aggregate in memory.
-    // TODO: Replace with DB-level aggregation (GROUP BY + HAVING) when migrating to PostgreSQL
-    // to avoid loading all logs into memory as the dataset grows.
-    const recentLogs = await prisma.activityLog.findMany({
+    // PostgreSQL-native GROUP BY + HAVING via Prisma groupBy
+    const trending = await prisma.activityLog.groupBy({
+      by: ['contentId'],
       where: {
         type: 'news_viewed',
         createdAt: { gte: since },
         contentId: { not: null },
       },
-      select: { contentId: true },
+      _count: { contentId: true },
+      having: { contentId: { _count: { gt: TRENDING_THRESHOLD } } },
+      orderBy: { _count: { contentId: 'desc' } },
+      take: TRENDING_LIMIT,
     });
 
-    // Count views per contentId
-    const viewCounts = new Map<string, number>();
-    for (const log of recentLogs) {
-      if (log.contentId) {
-        viewCounts.set(log.contentId, (viewCounts.get(log.contentId) || 0) + 1);
-      }
-    }
-
-    // Filter by threshold and sort by count descending
-    const trendingIds = [...viewCounts.entries()]
-      .filter(([, count]) => count > TRENDING_THRESHOLD)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, TRENDING_LIMIT)
-      .map(([id]) => id);
+    const trendingIds = trending
+      .filter((t) => t.contentId !== null)
+      .map((t) => t.contentId!);
 
     res.json({ trendingIds });
   } catch (err) {
-    console.error('Error fetching trending news:', err);
+    req.log.error({ err }, 'Error fetching trending news');
     res.json({ trendingIds: [] });
   }
 });
@@ -293,8 +271,7 @@ router.post('/sources/custom', requireAuth, async (req: Request, res: Response) 
 
   const parsed = bodySchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid parameters', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid parameters', parsed.error.flatten());
   }
 
   const { name, url, sport, userId, country, language, description, category } = parsed.data;
@@ -302,30 +279,26 @@ router.post('/sources/custom', requireAuth, async (req: Request, res: Response) 
   // Verify the user exists
   const requestUser = await prisma.user.findUnique({ where: { id: userId } });
   if (!requestUser) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   // SSRF prevention: reject internal/private network URLs
   const urlCheck = isPublicUrl(url);
   if (!urlCheck.valid) {
-    res.status(400).json({ error: urlCheck.reason });
-    return;
+    throw new ValidationError(urlCheck.reason ?? 'Invalid URL');
   }
 
   // Check if source URL already exists
   const existing = await prisma.rssSource.findUnique({ where: { url } });
   if (existing) {
-    res.status(409).json({ error: 'RSS source with this URL already exists', existingId: existing.id });
-    return;
+    throw new ConflictError('RSS source with this URL already exists');
   }
 
   // Validate URL is a valid RSS feed
   try {
     await parser.parseURL(url);
   } catch {
-    res.status(422).json({ error: 'URL does not appear to be a valid RSS feed' });
-    return;
+    throw new ValidationError('URL does not appear to be a valid RSS feed');
   }
 
   // Create the custom source
@@ -349,7 +322,7 @@ router.post('/sources/custom', requireAuth, async (req: Request, res: Response) 
   try {
     syncResult = await syncSource(source.id, source.name, source.url, source.sport);
   } catch (err) {
-    console.error(`Error syncing new custom source ${name}:`, err);
+    req.log.error({ err }, `Error syncing new custom source ${name}`);
   }
 
   res.status(201).json({
@@ -363,14 +336,12 @@ router.delete('/sources/custom/:id', requireAuth, async (req: Request, res: Resp
   // Prefer JWT userId, fall back to query/body for backward compat
   const userId = req.auth?.userId || (req.query.userId as string) || (req.body?.userId as string);
   if (!userId) {
-    res.status(400).json({ error: 'userId is required' });
-    return;
+    throw new ValidationError('userId is required');
   }
 
   const requestUser = await prisma.user.findUnique({ where: { id: userId } });
   if (!requestUser) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   const source = await prisma.rssSource.findUnique({
@@ -378,19 +349,16 @@ router.delete('/sources/custom/:id', requireAuth, async (req: Request, res: Resp
   });
 
   if (!source) {
-    res.status(404).json({ error: 'RSS source not found' });
-    return;
+    throw new NotFoundError('RSS source not found');
   }
 
   if (!source.isCustom) {
-    res.status(403).json({ error: 'Cannot delete catalog sources. Only custom sources can be deleted.' });
-    return;
+    throw new AuthorizationError('Cannot delete catalog sources. Only custom sources can be deleted.');
   }
 
   // Verify ownership: only the user who added the source can delete it
   if (source.addedBy && source.addedBy !== userId) {
-    res.status(403).json({ error: 'You can only delete sources you created' });
-    return;
+    throw new AuthorizationError('You can only delete sources you created');
   }
 
   await prisma.rssSource.delete({ where: { id: source.id } });
@@ -432,8 +400,7 @@ router.get('/:id/summary', async (req: Request, res: Response) => {
 
   const parsed = summaryParamsSchema.safeParse(req.query);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid parameters', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid parameters', parsed.error.flatten());
   }
 
   const { age, locale } = parsed.data;
@@ -474,8 +441,7 @@ router.get('/:id/summary', async (req: Request, res: Response) => {
   });
 
   if (!newsItem || newsItem.safetyStatus !== 'approved') {
-    res.status(404).json({ error: 'News item not found' });
-    return;
+    throw new NotFoundError('News item not found');
   }
 
   // Generate on-demand
@@ -488,7 +454,9 @@ router.get('/:id/summary', async (req: Request, res: Response) => {
   );
 
   if (!summaryText) {
-    res.status(503).json({ error: 'Summary generation unavailable. Try again later.' });
+    // 503: AI summary service temporarily unavailable — keep inline as it's
+    // a single-use edge case that doesn't warrant a new error class.
+    res.status(503).json({ error: { code: 'SERVICE_UNAVAILABLE', message: 'Summary generation unavailable. Try again later.' } });
     return;
   }
 
@@ -527,8 +495,7 @@ router.get('/history', async (req: Request, res: Response) => {
 
   const parsed = historySchema.safeParse(req.query);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid parameters', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid parameters', parsed.error.flatten());
   }
 
   const { userId, page: hPage, limit: hLimit } = parsed.data;
@@ -589,8 +556,7 @@ router.get('/:id/related', async (req: Request, res: Response) => {
   });
 
   if (!newsItem || newsItem.safetyStatus !== 'approved') {
-    res.status(404).json({ error: 'News item not found' });
-    return;
+    throw new NotFoundError('News item not found');
   }
 
   // First try to find related articles by team (most relevant)
@@ -634,8 +600,7 @@ router.get('/:id', parentalGuard, async (req: Request, res: Response) => {
   });
 
   if (!newsItem || newsItem.safetyStatus !== 'approved') {
-    res.status(404).json({ error: 'News item not found' });
-    return;
+    throw new NotFoundError('News item not found');
   }
 
   res.json(newsItem);

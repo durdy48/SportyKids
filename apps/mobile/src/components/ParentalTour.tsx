@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Modal } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { COLORS, t } from '@sportykids/shared';
+import { COLORS, t, type Locale } from '@sportykids/shared';
+import type { ThemeColors } from '../lib/theme';
 
 const TOUR_STORAGE_KEY = 'sportykids_parental_tour_done';
 
@@ -17,11 +18,13 @@ const TOUR_STEPS: TourStep[] = [
 ];
 
 interface ParentalTourProps {
-  locale: string;
+  locale: Locale;
   onComplete?: () => void;
+  colors?: ThemeColors;
 }
 
-export function ParentalTour({ locale, onComplete }: ParentalTourProps) {
+export function ParentalTour({ locale, onComplete, colors }: ParentalTourProps) {
+  const styles = createStyles(colors);
   const [currentStep, setCurrentStep] = useState(0);
   const [visible, setVisible] = useState(false);
 
@@ -83,70 +86,72 @@ export function ParentalTour({ locale, onComplete }: ParentalTourProps) {
   );
 }
 
-const styles = StyleSheet.create({
-  overlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.5)',
-    justifyContent: 'center',
-    alignItems: 'center',
-    padding: 24,
-  },
-  card: {
-    backgroundColor: '#FFFFFF',
-    borderRadius: 20,
-    padding: 24,
-    width: '100%',
-    maxWidth: 340,
-  },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 4,
-    marginBottom: 16,
-  },
-  dot: {
-    height: 6,
-    width: 32,
-    borderRadius: 3,
-  },
-  dotActive: {
-    backgroundColor: COLORS.blue,
-  },
-  dotInactive: {
-    backgroundColor: '#E5E7EB',
-  },
-  title: {
-    fontSize: 18,
-    fontWeight: '700',
-    textAlign: 'center',
-    color: COLORS.darkText,
-    marginBottom: 8,
-  },
-  message: {
-    fontSize: 14,
-    textAlign: 'center',
-    color: '#6B7280',
-    marginBottom: 24,
-    lineHeight: 20,
-  },
-  buttons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  skipText: {
-    fontSize: 14,
-    color: '#6B7280',
-  },
-  nextButton: {
-    backgroundColor: COLORS.blue,
-    paddingHorizontal: 24,
-    paddingVertical: 10,
-    borderRadius: 12,
-  },
-  nextText: {
-    color: COLORS.white,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-});
+function createStyles(colors?: ThemeColors) {
+  return StyleSheet.create({
+    overlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.5)',
+      justifyContent: 'center',
+      alignItems: 'center',
+      padding: 24,
+    },
+    card: {
+      backgroundColor: colors?.surface ?? '#FFFFFF',
+      borderRadius: 20,
+      padding: 24,
+      width: '100%',
+      maxWidth: 340,
+    },
+    dots: {
+      flexDirection: 'row',
+      justifyContent: 'center',
+      gap: 4,
+      marginBottom: 16,
+    },
+    dot: {
+      height: 6,
+      width: 32,
+      borderRadius: 3,
+    },
+    dotActive: {
+      backgroundColor: colors?.blue ?? COLORS.blue,
+    },
+    dotInactive: {
+      backgroundColor: colors?.border ?? '#E5E7EB',
+    },
+    title: {
+      fontSize: 18,
+      fontWeight: '700',
+      textAlign: 'center',
+      color: colors?.text ?? '#1E293B',
+      marginBottom: 8,
+    },
+    message: {
+      fontSize: 14,
+      textAlign: 'center',
+      color: colors?.muted ?? '#6B7280',
+      marginBottom: 24,
+      lineHeight: 20,
+    },
+    buttons: {
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      alignItems: 'center',
+    },
+    skipText: {
+      fontSize: 14,
+      color: colors?.muted ?? '#6B7280',
+    },
+    nextButton: {
+      backgroundColor: colors?.blue ?? COLORS.blue,
+      paddingHorizontal: 24,
+      paddingVertical: 10,
+      borderRadius: 12,
+    },
+    nextText: {
+      color: '#FFFFFF',
+      fontWeight: '600',
+      fontSize: 14,
+    },
+  });
+}

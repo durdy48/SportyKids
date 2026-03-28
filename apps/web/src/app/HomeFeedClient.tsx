@@ -15,7 +15,7 @@ import { FeedModeToggle, type FeedMode } from '@/components/FeedModeToggle';
 import { SearchBar } from '@/components/SearchBar';
 import { NewsCardSkeleton } from '@/components/skeletons';
 import { EmptyState } from '@/components/EmptyState';
-import { LimitReached } from '@/components/LimitReached';
+import { LimitReached, type LimitType } from '@/components/LimitReached';
 import { MissionCard } from '@/components/MissionCard';
 
 const FEED_MODE_KEY = 'sportykids_feed_mode';
@@ -92,15 +92,17 @@ export function HomeFeedClient() {
         age: ageRange ? ageRange.min : (user ? user.age : undefined),
         userId: user?.id,
         q: q || undefined,
+        locale,
         page: pg,
         limit: 20,
       });
 
       setNews((prev) => accumulate ? [...prev, ...result.news] : result.news);
       setTotalPages(result.totalPages);
-    } catch (err: any) {
-      if (err?.status === 403 && err?.reason) {
-        setParentalBlock({ reason: err.reason, allowedHoursStart: err.allowedHoursStart, allowedHoursEnd: err.allowedHoursEnd });
+    } catch (err: unknown) {
+      const e = err as Record<string, unknown>;
+      if (e?.status === 403 && e?.reason) {
+        setParentalBlock({ reason: e.reason as string, allowedHoursStart: e.allowedHoursStart as number, allowedHoursEnd: e.allowedHoursEnd as number });
       } else {
         setError(err instanceof Error ? err.message : t('errors.loading_news', locale));
       }
@@ -238,14 +240,14 @@ export function HomeFeedClient() {
 
       {parentalBlock && (
         <LimitReached
-          type={parentalBlock.reason as any}
+          type={parentalBlock.reason as LimitType}
           allowedHoursStart={parentalBlock.allowedHoursStart}
           allowedHoursEnd={parentalBlock.allowedHoursEnd}
         />
       )}
 
       {error && !parentalBlock && (
-        <div className="bg-red-50 text-red-600 p-4 rounded-xl text-sm">
+        <div className="bg-red-50 dark:bg-red-900/20 text-red-600 dark:text-red-400 p-4 rounded-xl text-sm">
           {error}
         </div>
       )}

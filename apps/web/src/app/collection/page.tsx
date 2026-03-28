@@ -19,7 +19,7 @@ import { StreakCounter } from '@/components/StreakCounter';
 import { AchievementBadge } from '@/components/AchievementBadge';
 import { StickerCardSkeleton } from '@/components/skeletons';
 import { EmptyState } from '@/components/EmptyState';
-import { LimitReached } from '@/components/LimitReached';
+import { LimitReached, type LimitType } from '@/components/LimitReached';
 
 type Tab = 'stickers' | 'achievements';
 
@@ -84,9 +84,10 @@ export default function CollectionPage() {
         setCurrentStreak(streakRes.currentStreak);
         setLongestStreak(streakRes.longestStreak);
         setTotalPoints(scoreRes.totalPoints ?? 0);
-      } catch (err: any) {
-        if (err?.status === 403 && err?.reason) {
-          setParentalBlock({ reason: err.reason, allowedHoursStart: err.allowedHoursStart, allowedHoursEnd: err.allowedHoursEnd });
+      } catch (err: unknown) {
+        const e = err as Record<string, unknown>;
+        if (e?.status === 403 && e?.reason) {
+          setParentalBlock({ reason: e.reason as string, allowedHoursStart: e.allowedHoursStart as number, allowedHoursEnd: e.allowedHoursEnd as number });
         }
         // else: API not available yet — show empty state
       } finally {
@@ -118,7 +119,7 @@ export default function CollectionPage() {
     return (
       <div className="max-w-6xl mx-auto px-4 py-6 page-enter">
         <LimitReached
-          type={parentalBlock.reason as any}
+          type={parentalBlock.reason as LimitType}
           allowedHoursStart={parentalBlock.allowedHoursStart}
           allowedHoursEnd={parentalBlock.allowedHoursEnd}
         />

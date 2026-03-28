@@ -7,14 +7,22 @@ import { fetchFeedPreview } from '@/lib/api';
 import { NewsCard } from './NewsCard';
 import { ReelCard } from './ReelCard';
 
+interface RestrictionInfo {
+  blockedFormats: string[];
+  blockedSports: string[];
+  hasTimeLimit: boolean;
+  hasScheduleLock: boolean;
+}
+
 interface FeedPreviewModalProps {
   userId: string;
   userName: string;
   locale: Locale;
+  restrictions?: RestrictionInfo;
   onClose: () => void;
 }
 
-export function FeedPreviewModal({ userId, userName, locale, onClose }: FeedPreviewModalProps) {
+export function FeedPreviewModal({ userId, userName, locale, restrictions, onClose }: FeedPreviewModalProps) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [news, setNews] = useState<NewsItem[]>([]);
@@ -84,6 +92,39 @@ export function FeedPreviewModal({ userId, userName, locale, onClose }: FeedPrev
             <p className="text-center text-red-500 py-8">{error}</p>
           )}
 
+          {/* Restrictions banner */}
+          {!loading && !error && restrictions && (
+            (() => {
+              const hasAny = restrictions.blockedFormats.length > 0 ||
+                restrictions.blockedSports.length > 0 ||
+                restrictions.hasTimeLimit ||
+                restrictions.hasScheduleLock;
+              return hasAny ? (
+                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700 rounded-xl p-3 text-sm text-amber-800 dark:text-amber-200">
+                  <p className="font-semibold mb-1">{t('preview.active_restrictions', locale)}</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-xs">
+                    {restrictions.blockedFormats.length > 0 && (
+                      <li>{t('parental.blocked', locale)}: {restrictions.blockedFormats.join(', ')}</li>
+                    )}
+                    {restrictions.blockedSports.length > 0 && (
+                      <li>{t('limit.sport_blocked', locale)}</li>
+                    )}
+                    {restrictions.hasTimeLimit && (
+                      <li>{t('restrictions.time_limits', locale)}</li>
+                    )}
+                    {restrictions.hasScheduleLock && (
+                      <li>{t('schedule.title', locale)}</li>
+                    )}
+                  </ul>
+                </div>
+              ) : (
+                <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded-xl p-3 text-sm text-green-700 dark:text-green-300">
+                  {t('preview.no_restrictions', locale)}
+                </div>
+              );
+            })()
+          )}
+
           {!loading && !error && !hasContent && (
             <p className="text-center text-[var(--color-muted)] py-16">
               {t('preview.no_content', locale)}
@@ -97,7 +138,7 @@ export function FeedPreviewModal({ userId, userName, locale, onClose }: FeedPrev
                 <span
                   className={`inline-flex items-center gap-1.5 text-sm font-medium px-3 py-1.5 rounded-full ${
                     quizAvailable
-                      ? 'bg-green-100 text-green-700'
+                      ? 'bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300'
                       : 'bg-[var(--color-background)] text-[var(--color-muted)]'
                   }`}
                 >

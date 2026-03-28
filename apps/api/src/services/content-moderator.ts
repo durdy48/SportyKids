@@ -4,7 +4,8 @@
  * Fails open — if AI is unavailable, content is approved by default.
  */
 
-import { getAIClient, AIServiceError } from './ai-client';
+import { getAIClient } from './ai-client';
+import { logger } from './logger';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -80,7 +81,7 @@ export async function moderateContent(
   } catch (err) {
     // Fail open — if AI is unavailable, approve the content
     const errorMsg = err instanceof Error ? err.message : String(err);
-    console.warn(`[Moderator] AI moderation failed, approving by default: ${errorMsg}`);
+    logger.warn({ err: errorMsg }, 'AI moderation failed, approving by default');
     return { status: 'approved', reason: 'auto-approved: AI unavailable' };
   }
 }
@@ -94,7 +95,7 @@ function parseModerationResponse(raw: string): ModerationResult {
     // Extract JSON from the response (it may be wrapped in markdown code blocks)
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      console.warn(`[Moderator] Could not find JSON in response: ${raw.substring(0, 200)}`);
+      logger.warn({ response: raw.substring(0, 200) }, 'Could not find JSON in moderation response');
       return { status: 'approved', reason: 'auto-approved: unparseable response' };
     }
 
@@ -112,10 +113,10 @@ function parseModerationResponse(raw: string): ModerationResult {
     }
 
     // Unknown status — fail open
-    console.warn(`[Moderator] Unknown status in response: ${parsed.status}`);
+    logger.warn({ status: parsed.status }, 'Unknown status in moderation response');
     return { status: 'approved', reason: 'auto-approved: unknown status' };
   } catch {
-    console.warn(`[Moderator] Failed to parse moderation response: ${raw.substring(0, 200)}`);
+    logger.warn({ response: raw.substring(0, 200) }, 'Failed to parse moderation response');
     return { status: 'approved', reason: 'auto-approved: parse error' };
   }
 }
@@ -162,11 +163,7 @@ export async function moderateContentBatch(
     durationMs,
   };
 
-  console.log(
-    `[Moderator] Batch complete: ${metrics.total} items, ` +
-    `${metrics.approved} approved, ${metrics.rejected} rejected, ` +
-    `${metrics.errors} errors, ${metrics.durationMs}ms`,
-  );
+  logger.info({ total: metrics.total, approved: metrics.approved, rejected: metrics.rejected, errors: metrics.errors, durationMs: metrics.durationMs }, 'Moderation batch complete');
 
   return results;
 }

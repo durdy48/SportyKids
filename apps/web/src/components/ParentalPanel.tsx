@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import type { ParentalProfile } from '@sportykids/shared';
 import { SPORTS, sportToEmoji, t, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
 import type { AgeRange } from '@sportykids/shared';
-import { updateParentalProfile, fetchActivity, fetchActivityDetail, verifyPin, setupParentalPin, updateUser, getDigestPreferences, updateDigestPreferences, previewDigest, downloadDigestPdf } from '@/lib/api';
+import { updateParentalProfile, fetchActivity, fetchActivityDetail, verifyPin, setupParentalPin, updateUser, getDigestPreferences, updateDigestPreferences, previewDigest, downloadDigestPdf, sendTestDigestEmail } from '@/lib/api';
 import { useUser } from '@/lib/user-context';
 import { FeedPreviewModal } from './FeedPreviewModal';
 import { ContentReportList } from './ContentReportList';
@@ -92,6 +92,10 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
   const [digestLoaded, setDigestLoaded] = useState(false);
   const [digestPreview, setDigestPreview] = useState<DigestPreview | null>(null);
   const [digestSaving, setDigestSaving] = useState(false);
+  const [digestSavedToast, setDigestSavedToast] = useState(false);
+  const [testEmailSending, setTestEmailSending] = useState(false);
+  const [testEmailMessage, setTestEmailMessage] = useState('');
+  const [testEmailSuccess, setTestEmailSuccess] = useState(false);
 
   // Content state
   const [allowedSports, setAllowedSports] = useState<string[]>(
@@ -100,6 +104,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
 
   useEffect(() => {
     if (user) {
+      // eslint-disable-next-line no-console
       fetchActivity(user.id).then(setActivity).catch(console.error);
     }
   }, [user]);
@@ -110,6 +115,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
     if (user && activeTab === 'activity') {
       fetchActivityDetail(user.id, week.from, week.to)
         .then(setActivityDetail)
+        // eslint-disable-next-line no-console
         .catch(console.error);
     }
   }, [user, activeTab, week]);
@@ -133,10 +139,30 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
     setDigestSaving(true);
     try {
       await updateDigestPreferences(user.id, data);
+      setDigestSavedToast(true);
+      setTimeout(() => setDigestSavedToast(false), 2000);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     } finally {
       setDigestSaving(false);
+    }
+  };
+
+  const handleSendTestEmail = async () => {
+    if (!user) return;
+    setTestEmailSending(true);
+    setTestEmailMessage('');
+    setTestEmailSuccess(false);
+    try {
+      const result = await sendTestDigestEmail(user.id);
+      setTestEmailMessage(t('digest.test_sent', locale, { email: result.sentTo }));
+      setTestEmailSuccess(true);
+    } catch {
+      setTestEmailMessage(t('digest.test_error', locale));
+      setTestEmailSuccess(false);
+    } finally {
+      setTestEmailSending(false);
     }
   };
 
@@ -146,6 +172,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
       const data = await previewDigest(user.id);
       setDigestPreview(data);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     }
   };
@@ -163,6 +190,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
       document.body.removeChild(a);
       URL.revokeObjectURL(url);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     }
   };
@@ -175,6 +203,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
       setProfile(updated);
       setParentalProfile(updated);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     } finally {
       setSaving(false);
@@ -200,6 +229,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
       const updated = await updateUser(user.id, { name: editName.trim() });
       setUser(updated);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     } finally {
       setSaving(false);
@@ -218,6 +248,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
       const updated = await updateUser(user.id, { favoriteSports: next });
       setUser(updated);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     } finally {
       setSaving(false);
@@ -366,19 +397,19 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
           {/* Activity summary cards */}
           {activity && (
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 pt-2">
-              <div className="bg-blue-50 rounded-xl p-3 text-center">
+              <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center">
                 <p className="text-xl font-bold text-[var(--color-blue)]">{activity.news_viewed}</p>
                 <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('parental.news_read', locale)}</p>
               </div>
-              <div className="bg-purple-50 rounded-xl p-3 text-center">
+              <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 text-center">
                 <p className="text-xl font-bold text-purple-600">{activity.reels_viewed}</p>
                 <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('parental.reels_viewed', locale)}</p>
               </div>
-              <div className="bg-green-50 rounded-xl p-3 text-center">
+              <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 text-center">
                 <p className="text-xl font-bold text-[var(--color-green)]">{activity.quizzes_played}</p>
                 <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('parental.quizzes_played', locale)}</p>
               </div>
-              <div className="bg-yellow-50 rounded-xl p-3 text-center">
+              <div className="bg-yellow-50 dark:bg-yellow-900/20 rounded-xl p-3 text-center">
                 <p className="text-xl font-bold text-[var(--color-yellow)]">{activity.totalPoints}</p>
                 <p className="text-xs text-[var(--color-muted)] mt-0.5">{t('parental.total_points', locale)}</p>
               </div>
@@ -388,7 +419,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
           {/* Feed preview button */}
           <button
             onClick={() => setShowPreview(true)}
-            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border-2 border-[var(--color-blue)] text-[var(--color-blue)] hover:bg-blue-50 transition-colors"
+            className="w-full flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-medium border-2 border-[var(--color-blue)] text-[var(--color-blue)] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
           >
             {'\u{1F441}'} {t('preview.button', locale, { name: user?.name ?? '' })}
           </button>
@@ -401,6 +432,12 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
           userId={user.id}
           userName={user.name}
           locale={locale}
+          restrictions={{
+            blockedFormats: ['news', 'reels', 'quiz'].filter((f) => !profile.allowedFormats.includes(f as 'news' | 'reels' | 'quiz')),
+            blockedSports: [], // Sports are additive, not blocked
+            hasTimeLimit: !!profile.maxDailyTimeMinutes && profile.maxDailyTimeMinutes > 0,
+            hasScheduleLock: (profile.allowedHoursStart ?? 0) !== 0 || (profile.allowedHoursEnd ?? 24) !== 24,
+          }}
           onClose={() => setShowPreview(false)}
         />
       )}
@@ -446,7 +483,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                     onClick={() => toggleFormat(f.id)}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-colors ${
                       active
-                        ? 'border-[var(--color-green)] bg-green-50'
+                        ? 'border-[var(--color-green)] bg-green-50 dark:bg-green-900/20'
                         : 'border-[var(--color-border)] bg-[var(--color-background)]'
                     }`}
                   >
@@ -457,7 +494,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                       className={`text-xs font-bold px-3 py-1 rounded-full ${
                         active
                           ? 'bg-[var(--color-green)] text-white'
-                          : 'bg-gray-300 text-white'
+                          : 'bg-gray-300 dark:bg-gray-600 text-white'
                       }`}
                     >
                       {active
@@ -556,40 +593,93 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
               <h4 className="font-[family-name:var(--font-poppins)] font-semibold text-[var(--color-text)] mb-3">
                 {t('schedule.title', locale)}
               </h4>
-              <div className="grid grid-cols-2 gap-4">
-                <label className="text-sm text-[var(--color-muted)]">
-                  {t('schedule.start_time', locale)}
-                  <input
-                    type="number"
-                    min={0}
-                    max={23}
-                    value={profile.allowedHoursStart ?? 7}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (!isNaN(val) && val >= 0 && val <= 23) {
-                        saveProfile({ allowedHoursStart: val } as Partial<ParentalProfile>);
-                      }
-                    }}
-                    className="mt-1 w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
-                  />
-                </label>
-                <label className="text-sm text-[var(--color-muted)]">
-                  {t('schedule.end_time', locale)}
-                  <input
-                    type="number"
-                    min={0}
-                    max={24}
-                    value={profile.allowedHoursEnd ?? 21}
-                    onChange={(e) => {
-                      const val = parseInt(e.target.value);
-                      if (!isNaN(val) && val >= 0 && val <= 24) {
-                        saveProfile({ allowedHoursEnd: val } as Partial<ParentalProfile>);
-                      }
-                    }}
-                    className="mt-1 w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
-                  />
-                </label>
-              </div>
+
+              {/* Toggle */}
+              <label className="flex items-center gap-3 cursor-pointer mb-4">
+                <input
+                  type="checkbox"
+                  checked={(profile.allowedHoursStart ?? 0) !== 0 || (profile.allowedHoursEnd ?? 24) !== 24}
+                  onChange={(e) => {
+                    if (e.target.checked) {
+                      saveProfile({ allowedHoursStart: 7, allowedHoursEnd: 21 } as Partial<ParentalProfile>);
+                    } else {
+                      saveProfile({ allowedHoursStart: 0, allowedHoursEnd: 24 } as Partial<ParentalProfile>);
+                    }
+                  }}
+                  className="w-5 h-5 rounded accent-[var(--color-blue)]"
+                />
+                <span className="text-sm font-medium text-[var(--color-text)]">
+                  {t('schedule.enable', locale)}
+                </span>
+              </label>
+
+              {((profile.allowedHoursStart ?? 0) !== 0 || (profile.allowedHoursEnd ?? 24) !== 24) && (
+                <>
+                  <div className="grid grid-cols-2 gap-4 mb-4">
+                    <label className="text-sm text-[var(--color-muted)]">
+                      {t('schedule.start_time', locale)}
+                      <input
+                        type="number"
+                        min={0}
+                        max={23}
+                        value={profile.allowedHoursStart ?? 7}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val) && val >= 0 && val <= 23) {
+                            saveProfile({ allowedHoursStart: val } as Partial<ParentalProfile>);
+                          }
+                        }}
+                        className="mt-1 w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
+                      />
+                    </label>
+                    <label className="text-sm text-[var(--color-muted)]">
+                      {t('schedule.end_time', locale)}
+                      <input
+                        type="number"
+                        min={0}
+                        max={24}
+                        value={profile.allowedHoursEnd ?? 21}
+                        onChange={(e) => {
+                          const val = parseInt(e.target.value);
+                          if (!isNaN(val) && val >= 0 && val <= 24) {
+                            saveProfile({ allowedHoursEnd: val } as Partial<ParentalProfile>);
+                          }
+                        }}
+                        className="mt-1 w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
+                      />
+                    </label>
+                  </div>
+
+                  {/* Timezone */}
+                  <label className="text-sm text-[var(--color-muted)] block mb-4">
+                    {t('schedule.timezone', locale)}
+                    <select
+                      value={profile.timezone ?? 'Europe/Madrid'}
+                      onChange={(e) => saveProfile({ timezone: e.target.value } as Partial<ParentalProfile>)}
+                      className="mt-1 w-full px-3 py-2 rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] text-[var(--color-text)]"
+                    >
+                      {['Europe/Madrid', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Rome', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'America/Mexico_City', 'Asia/Tokyo'].map((tz) => (
+                        <option key={tz} value={tz}>{tz}</option>
+                      ))}
+                    </select>
+                  </label>
+
+                  {/* Dynamic description */}
+                  <p className="text-sm text-[var(--color-muted)] bg-[var(--color-background)] rounded-lg p-3">
+                    {t('schedule.description', locale, {
+                      start: String(profile.allowedHoursStart ?? 7),
+                      end: String(profile.allowedHoursEnd ?? 21),
+                      timezone: profile.timezone ?? 'Europe/Madrid',
+                    })}
+                  </p>
+                </>
+              )}
+
+              {(profile.allowedHoursStart ?? 0) === 0 && (profile.allowedHoursEnd ?? 24) === 24 && (
+                <p className="text-sm text-[var(--color-muted)]">
+                  {t('schedule.all_day', locale)}
+                </p>
+              )}
             </div>
           </div>
         </div>
@@ -648,11 +738,11 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
 
           {/* Average + most viewed */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="bg-blue-50 rounded-xl p-4 text-center">
+            <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-4 text-center">
               <p className="text-2xl font-bold text-[var(--color-blue)]">{averageDaily}m</p>
               <p className="text-xs text-[var(--color-muted)] mt-1">{t('parental.average_daily', locale)}</p>
             </div>
-            <div className="bg-purple-50 rounded-xl p-4 text-center">
+            <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-4 text-center">
               <p className="text-2xl font-bold text-purple-600">
                 {activityDetail?.mostViewed
                   ? getSportLabel(activityDetail.mostViewed, locale)
@@ -669,19 +759,19 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                 {t('parental.weekly_activity', locale)}
               </h4>
               <div className="grid grid-cols-3 gap-3">
-                <div className="bg-blue-50 rounded-xl p-3 text-center">
+                <div className="bg-blue-50 dark:bg-blue-900/20 rounded-xl p-3 text-center">
                   <p className="text-lg font-bold text-[var(--color-blue)]">
                     {activityDetail.days.reduce((s, d) => s + d.news_viewed, 0)}
                   </p>
                   <p className="text-xs text-[var(--color-muted)]">{t('parental.news_read', locale)}</p>
                 </div>
-                <div className="bg-purple-50 rounded-xl p-3 text-center">
+                <div className="bg-purple-50 dark:bg-purple-900/20 rounded-xl p-3 text-center">
                   <p className="text-lg font-bold text-purple-600">
                     {activityDetail.days.reduce((s, d) => s + d.reels_viewed, 0)}
                   </p>
                   <p className="text-xs text-[var(--color-muted)]">{t('parental.reels_viewed', locale)}</p>
                 </div>
-                <div className="bg-green-50 rounded-xl p-3 text-center">
+                <div className="bg-green-50 dark:bg-green-900/20 rounded-xl p-3 text-center">
                   <p className="text-lg font-bold text-[var(--color-green)]">
                     {activityDetail.days.reduce((s, d) => s + d.quizzes_played, 0)}
                   </p>
@@ -722,6 +812,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
               {t('digest.enable', locale)}
             </span>
             {digestSaving && <span className="text-xs text-[var(--color-muted)]">{t('buttons.saving', locale)}</span>}
+            {digestSavedToast && <span className="text-xs text-[var(--color-green)] font-medium">{t('digest.saved', locale)}</span>}
           </label>
 
           {digestEnabled && (
@@ -743,6 +834,22 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                   <p className="text-xs text-[var(--color-muted)] mt-1">
                     {t('digest.no_email_note', locale)}
                   </p>
+                )}
+                {digestEmail.trim() && (
+                  <div className="mt-2">
+                    <button
+                      onClick={handleSendTestEmail}
+                      disabled={testEmailSending}
+                      className="text-xs font-medium text-[var(--color-blue)] hover:underline disabled:opacity-50"
+                    >
+                      {testEmailSending ? t('buttons.loading', locale) : t('digest.send_test', locale)}
+                    </button>
+                    {testEmailMessage && (
+                      <p className={`text-xs mt-1 ${testEmailSuccess ? 'text-[var(--color-green)]' : 'text-red-500'}`}>
+                        {testEmailMessage}
+                      </p>
+                    )}
+                  </div>
                 )}
               </div>
 
@@ -775,7 +882,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
               <div className="flex gap-3">
                 <button
                   onClick={handleDigestPreview}
-                  className="flex-1 py-3 rounded-xl text-sm font-medium border-2 border-[var(--color-blue)] text-[var(--color-blue)] hover:bg-blue-50 transition-colors"
+                  className="flex-1 py-3 rounded-xl text-sm font-medium border-2 border-[var(--color-blue)] text-[var(--color-blue)] hover:bg-blue-50 dark:hover:bg-blue-900/20 transition-colors"
                 >
                   {t('digest.preview', locale)}
                 </button>
