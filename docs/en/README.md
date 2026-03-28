@@ -13,6 +13,6 @@
 
 ---
 
-**Project status**: Phases 0-4 (MVP) + Phase 5 Differentiators (M1-M6) completed.
+**Project status**: Phases 0-4 (MVP) + Phase 5 Differentiators (M1-M6) + Technical Debt Backlog completed.
 
 [Version en espanol](../es/README.md)

@@ -130,25 +130,75 @@ Vincular un perfil de nino a una cuenta de padre autenticada.
 
 > **Nota**: El middleware de autenticacion es **no bloqueante** — compatible con usuarios anonimos existentes. Si se proporciona un token JWT valido, se adjunta el usuario al request; si no, el request continua sin autenticacion.
 
-### OAuth (Planificado)
+### OAuth Social Login
 
-Los siguientes endpoints estan registrados pero devuelven `501 Not Implemented`:
+#### `GET /api/auth/providers`
+Devuelve que proveedores OAuth estan habilitados en el servidor.
 
-| Ruta | Proveedor | Estado |
-|------|-----------|--------|
-| `GET /api/auth/google` | Google OAuth 2.0 | Planificado |
-| `GET /api/auth/google/callback` | Google OAuth 2.0 | Planificado |
-| `GET /api/auth/apple` | Apple Sign In | Planificado |
-| `GET /api/auth/apple/callback` | Apple Sign In | Planificado |
-
-Formato de respuesta para todos:
+**Respuesta:**
 ```json
 {
-  "error": "<provider> not yet implemented",
-  "provider": "google|apple",
-  "status": "planned"
+  "providers": {
+    "google": true,
+    "apple": true
+  }
 }
 ```
+
+#### `GET /api/auth/google`
+Redirige a la pantalla de consentimiento de Google OAuth 2.0. Establece un parametro CSRF `state` en la sesion.
+
+#### `GET /api/auth/google/callback`
+Callback de Google OAuth. Valida el `state` CSRF, intercambia el codigo de autorizacion por tokens, crea o vincula la cuenta de usuario y devuelve tokens JWT.
+
+**Respuesta:**
+```json
+{
+  "user": { "id": "clx...", "email": "user@gmail.com", "name": "Pablo", "role": "child", "authProvider": "google" },
+  "accessToken": "eyJhbG...",
+  "refreshToken": "abc123..."
+}
+```
+
+#### `POST /api/auth/google/token`
+Flujo mobile: verifica un Google ID token obtenido del SDK nativo de Google Sign-In.
+
+**Body:**
+```json
+{
+  "idToken": "eyJhbG..."
+}
+```
+
+**Respuesta:** Igual que `/api/auth/google/callback`.
+
+#### `GET /api/auth/apple`
+Redirige a la pagina de autorizacion de Apple. Establece `state` CSRF y `nonce` en la sesion.
+
+#### `POST /api/auth/apple/callback`
+Callback de Apple Sign In (POST, segun la especificacion de Apple). Valida el `state` CSRF, verifica el `id_token` contra el endpoint JWKS de Apple, comprueba el `nonce` y devuelve tokens JWT.
+
+**Respuesta:**
+```json
+{
+  "user": { "id": "clx...", "email": "user@privaterelay.appleid.com", "name": "Pablo", "role": "child", "authProvider": "apple" },
+  "accessToken": "eyJhbG...",
+  "refreshToken": "abc123..."
+}
+```
+
+#### `POST /api/auth/apple/token`
+Flujo mobile: verifica un Apple identity token obtenido del SDK nativo de Apple Sign-In.
+
+**Body:**
+```json
+{
+  "identityToken": "eyJhbG...",
+  "fullName": { "givenName": "Pablo", "familyName": "Garcia" }
+}
+```
+
+**Respuesta:** Igual que `/api/auth/apple/callback`.
 
 ---
 

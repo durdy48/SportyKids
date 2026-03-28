@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { prisma } from '../config/database';
 import { isProviderAvailable } from '../services/ai-client';
 import { generateQuizFromNews } from '../services/quiz-generator';
+import { logger } from '../services/logger';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -74,7 +75,7 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
   // Check provider availability first
   const available = await isProviderAvailable();
   if (!available) {
-    console.log('[DailyQuiz] AI provider not available. Skipping quiz generation.');
+    logger.info('AI provider not available. Skipping quiz generation.');
     return result;
   }
 
@@ -117,10 +118,9 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
   // Select up to 15 articles, round-robin by sport
   const selected = selectRoundRobin(articlesWithMissingQuizzes, 15);
 
-  console.log(
-    `[DailyQuiz] Found ${recentNews.length} recent approved articles. ` +
-      `${articlesWithMissingQuizzes.length} need quiz generation. ` +
-      `Selected ${selected.length} for processing.`,
+  logger.info(
+    { totalArticles: recentNews.length, needGeneration: articlesWithMissingQuizzes.length, selected: selected.length },
+    'Quiz generation candidates identified',
   );
 
   // Generate quizzes for each article x ageRange
@@ -150,7 +150,7 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
           await prisma.quizQuestion.create({
             data: {
               question: quiz.question,
-              options: JSON.stringify(quiz.options),
+              options: quiz.options,
               correctAnswer: quiz.correctAnswer,
               sport: article.sport,
               points: quiz.points,
@@ -162,17 +162,18 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
           });
 
           result.generated++;
-          console.log(
-            `[DailyQuiz] Generated quiz for "${article.title}" (age: ${ageRange})`,
+          logger.info(
+            { title: article.title, ageRange },
+            'Generated quiz question',
           );
         } else {
           result.errors++;
         }
       } catch (err) {
         result.errors++;
-        console.error(
-          `[DailyQuiz] Error generating quiz for article ${article.id} (age: ${ageRange}):`,
-          err instanceof Error ? err.message : err,
+        logger.error(
+          { err: err instanceof Error ? err : new Error(String(err)), articleId: article.id, ageRange },
+          'Error generating quiz for article',
         );
       }
 
@@ -181,8 +182,9 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
     }
   }
 
-  console.log(
-    `[DailyQuiz] Finished. Generated: ${result.generated}, Errors: ${result.errors}`,
+  logger.info(
+    { generated: result.generated, errors: result.errors },
+    'Daily quiz generation finished',
   );
 
   // Send push notification to users with dailyQuiz preference
@@ -192,22 +194,31 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
       const { t } = await import('@sportykids/shared');
       const users = await prisma.user.findMany({
         where: { pushEnabled: true },
-        select: { id: true },
+        select: { id: true, locale: true },
       });
       if (users.length > 0) {
-        await sendPushToUsers(
-          users.map((u) => u.id),
-          {
-            // TODO: group by user locale for per-locale messages in production
-            title: t('push.quiz_ready_title', 'es'),
-            body: t('push.quiz_ready_body', 'es'),
-            data: { screen: 'Quiz' },
-          },
-          'dailyQuiz',
-        );
+        // Group users by locale for per-locale push messages
+        const byLocale = new Map<string, string[]>();
+        for (const u of users) {
+          const loc = u.locale || 'es';
+          if (!byLocale.has(loc)) byLocale.set(loc, []);
+          byLocale.get(loc)!.push(u.id);
+        }
+
+        for (const [locale, userIds] of byLocale) {
+          await sendPushToUsers(
+            userIds,
+            {
+              title: t('push.quiz_ready_title', locale),
+              body: t('push.quiz_ready_body', locale),
+              data: { screen: 'Quiz' },
+            },
+            'dailyQuiz',
+          );
+        }
       }
     } catch (err) {
-      console.error('[DailyQuiz] Error sending push notifications:', err);
+      logger.error({ err }, 'Error sending push notifications for daily quiz');
     }
   }
 
@@ -222,14 +233,14 @@ let activeJob: ReturnType<typeof cron.schedule> | null = null;
 
 export function startDailyQuizJob(): void {
   if (activeJob) {
-    console.log('[DailyQuiz] Job is already active.');
+    logger.info('Daily quiz job is already active.');
     return;
   }
 
   activeJob = cron.schedule('0 6 * * *', async () => {
-    console.log(`[${new Date().toISOString()}] Running daily quiz generation...`);
+    logger.info('Running daily quiz generation...');
     await generateDailyQuiz();
   });
 
-  console.log('[DailyQuiz] Job scheduled: daily at 06:00.');
+  logger.info('Daily quiz job scheduled: daily at 06:00.');
 }

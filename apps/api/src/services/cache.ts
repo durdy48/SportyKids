@@ -1,3 +1,5 @@
+import { logger } from './logger';
+
 /**
  * Cache system with pluggable providers (InMemory or Redis).
  *
@@ -153,14 +155,13 @@ export function createCache(): CacheProvider {
   if (provider === 'redis') {
     try {
       // Dynamic import to avoid requiring ioredis when not using Redis
-      // eslint-disable-next-line @typescript-eslint/no-require-imports
       const { RedisCache } = require('./redis-cache');
       const redisUrl = process.env.REDIS_URL ?? 'redis://localhost:6379';
       const cache = new RedisCache(redisUrl);
-      console.log(`[cache] Using RedisCache at ${redisUrl}`);
+      logger.info({ redisUrl }, 'Using RedisCache');
       return cache;
     } catch (err) {
-      console.warn('[cache] Failed to initialize RedisCache, falling back to InMemoryCache:', (err as Error).message);
+      logger.warn({ err: (err as Error).message }, 'Failed to initialize RedisCache, falling back to InMemoryCache');
       return new InMemoryCache(10_000);
     }
   }

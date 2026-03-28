@@ -51,8 +51,7 @@ vi.mock('../services/summarizer', () => ({
   generateSummary: vi.fn(),
 }));
 
-import express from 'express';
-import request from 'supertest';
+// express and supertest not used in this test file — testing prisma logic directly
 
 // We can't easily test with supertest since it's not installed.
 // Instead, test the logic directly by examining the prisma calls.

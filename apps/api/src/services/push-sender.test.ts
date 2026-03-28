@@ -89,7 +89,7 @@ describe('push-sender', () => {
     it('should skip if user preference disables the category', async () => {
       vi.mocked(prisma.user.findUnique).mockResolvedValue({
         pushEnabled: true,
-        pushPreferences: JSON.stringify({ dailyQuiz: false, teamUpdates: true }),
+        pushPreferences: { dailyQuiz: false, teamUpdates: true },
       } as any);
 
       await sendPushToUser('user1', { title: 'Test', body: 'Body' }, 'dailyQuiz');
@@ -150,8 +150,8 @@ describe('push-sender', () => {
 
     it('should filter users by preference', async () => {
       vi.mocked(prisma.user.findMany).mockResolvedValue([
-        { id: 'u1', pushPreferences: JSON.stringify({ teamUpdates: false }) },
-        { id: 'u2', pushPreferences: JSON.stringify({ teamUpdates: true }) },
+        { id: 'u1', pushPreferences: { teamUpdates: false } },
+        { id: 'u2', pushPreferences: { teamUpdates: true } },
       ] as any);
 
       vi.mocked(prisma.pushToken.findMany).mockResolvedValue([

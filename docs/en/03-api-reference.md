@@ -129,25 +129,75 @@ Link a child user to a parent account.
 
 > **Note**: The auth middleware is non-blocking -- anonymous users (without a token) can still access the API for backward compatibility. Authenticated requests include the user in `req.user`.
 
-### OAuth (Planned)
+### OAuth Social Login
 
-The following endpoints are registered but return `501 Not Implemented`:
+#### `GET /api/auth/providers`
+Returns which OAuth providers are currently enabled on the server.
 
-| Route | Provider | Status |
-|-------|----------|--------|
-| `GET /api/auth/google` | Google OAuth 2.0 | Planned |
-| `GET /api/auth/google/callback` | Google OAuth 2.0 | Planned |
-| `GET /api/auth/apple` | Apple Sign In | Planned |
-| `GET /api/auth/apple/callback` | Apple Sign In | Planned |
-
-Response format for all:
+**Response:**
 ```json
 {
-  "error": "<provider> not yet implemented",
-  "provider": "google|apple",
-  "status": "planned"
+  "providers": {
+    "google": true,
+    "apple": true
+  }
 }
 ```
+
+#### `GET /api/auth/google`
+Redirects to Google OAuth 2.0 consent screen. Sets a CSRF `state` parameter in the session.
+
+#### `GET /api/auth/google/callback`
+Google OAuth callback. Validates CSRF `state`, exchanges the authorization code for tokens, creates or links the user account, and returns JWT tokens.
+
+**Response:**
+```json
+{
+  "user": { "id": "clx...", "email": "user@gmail.com", "name": "Pablo", "role": "child", "authProvider": "google" },
+  "accessToken": "eyJhbG...",
+  "refreshToken": "abc123..."
+}
+```
+
+#### `POST /api/auth/google/token`
+Mobile flow: verify a Google ID token obtained from the native Google Sign-In SDK.
+
+**Body:**
+```json
+{
+  "idToken": "eyJhbG..."
+}
+```
+
+**Response:** Same as `/api/auth/google/callback`.
+
+#### `GET /api/auth/apple`
+Redirects to Apple authorization page. Sets a CSRF `state` and `nonce` in the session.
+
+#### `POST /api/auth/apple/callback`
+Apple Sign In callback (POST, per Apple's spec). Validates CSRF `state`, verifies the `id_token` against Apple's JWKS endpoint, checks `nonce`, and returns JWT tokens.
+
+**Response:**
+```json
+{
+  "user": { "id": "clx...", "email": "user@privaterelay.appleid.com", "name": "Pablo", "role": "child", "authProvider": "apple" },
+  "accessToken": "eyJhbG...",
+  "refreshToken": "abc123..."
+}
+```
+
+#### `POST /api/auth/apple/token`
+Mobile flow: verify an Apple identity token obtained from the native Apple Sign-In SDK.
+
+**Body:**
+```json
+{
+  "identityToken": "eyJhbG...",
+  "fullName": { "givenName": "Pablo", "familyName": "Garcia" }
+}
+```
+
+**Response:** Same as `/api/auth/apple/callback`.
 
 ### Token details
 

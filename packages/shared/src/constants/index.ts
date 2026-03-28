@@ -1,6 +1,6 @@
 // Shared constants
-export { KID_FRIENDLY_ERRORS, getErrorType } from './errors';
-export type { KidFriendlyError } from './errors';
+export { KID_FRIENDLY_ERRORS, ERROR_CODES, getErrorType } from './errors';
+export type { KidFriendlyError, ErrorCode } from './errors';
 export { SUPPORTED_LOCALES, SUPPORTED_COUNTRIES, inferCountryFromLocale } from './locale';
 export type { SupportedLocale, SupportedCountry } from './locale';
 

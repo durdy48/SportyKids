@@ -58,7 +58,7 @@ describe('mission-generator', () => {
       mockPrisma.dailyMission.findUnique.mockResolvedValue(null);
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         age: 10,
-        favoriteSports: '["football","basketball"]',
+        favoriteSports: ['football', 'basketball'],
       });
       mockPrisma.parentalProfile.findUnique.mockResolvedValue(null);
 
@@ -109,10 +109,10 @@ describe('mission-generator', () => {
       mockPrisma.dailyMission.findUnique.mockResolvedValue(null);
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         age: 10,
-        favoriteSports: '["football"]',
+        favoriteSports: ['football'],
       });
       mockPrisma.parentalProfile.findUnique.mockResolvedValue({
-        allowedFormats: '["news","quiz"]', // no reels
+        allowedFormats: ['news', 'quiz'], // no reels
       });
 
       mockPrisma.dailyMission.create.mockImplementation(async ({ data }) => ({
@@ -130,7 +130,7 @@ describe('mission-generator', () => {
       mockPrisma.dailyMission.findUnique.mockResolvedValue(null);
       mockPrisma.user.findUniqueOrThrow.mockResolvedValue({
         age: 7,
-        favoriteSports: '["football"]',
+        favoriteSports: ['football'],
       });
       mockPrisma.parentalProfile.findUnique.mockResolvedValue(null);
 

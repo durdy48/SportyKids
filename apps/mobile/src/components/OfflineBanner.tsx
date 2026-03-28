@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, t } from '@sportykids/shared';
+import { t, type Locale } from '@sportykids/shared';
 
 interface OfflineBannerProps {
-  locale: string;
+  locale: Locale;
 }
 
 /**
@@ -48,7 +48,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   text: {
-    color: COLORS.white,
+    color: '#FFFFFF',
     fontSize: 13,
     fontWeight: '600',
   },

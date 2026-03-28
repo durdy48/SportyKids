@@ -10,7 +10,7 @@ import { useActivityTracker } from '@/lib/use-activity-tracker';
 import { ReelCard } from '@/components/ReelCard';
 import { ReelCardSkeleton } from '@/components/skeletons';
 import { EmptyState } from '@/components/EmptyState';
-import { LimitReached } from '@/components/LimitReached';
+import { LimitReached, type LimitType } from '@/components/LimitReached';
 
 export default function ReelsPage() {
   const { user, loading: userLoading, locale } = useUser();
@@ -35,10 +35,12 @@ export default function ReelsPage() {
       const result = await fetchReels({ sport: activeSport ?? undefined, page: pg, limit: 12, userId: user?.id });
       setReels((prev) => accumulate ? [...prev, ...result.reels] : result.reels);
       setTotalPages(result.totalPages);
-    } catch (err: any) {
-      if (err?.status === 403 && err?.reason) {
-        setParentalBlock({ reason: err.reason, allowedHoursStart: err.allowedHoursStart, allowedHoursEnd: err.allowedHoursEnd });
+    } catch (err: unknown) {
+      const e = err as Record<string, unknown>;
+      if (e?.status === 403 && e?.reason) {
+        setParentalBlock({ reason: e.reason as string, allowedHoursStart: e.allowedHoursStart as number, allowedHoursEnd: e.allowedHoursEnd as number });
       } else {
+        // eslint-disable-next-line no-console
         console.error(err);
       }
     } finally {
@@ -107,7 +109,7 @@ export default function ReelsPage() {
       {/* Parental block */}
       {parentalBlock && (
         <LimitReached
-          type={parentalBlock.reason as any}
+          type={parentalBlock.reason as LimitType}
           allowedHoursStart={parentalBlock.allowedHoursStart}
           allowedHoursEnd={parentalBlock.allowedHoursEnd}
         />

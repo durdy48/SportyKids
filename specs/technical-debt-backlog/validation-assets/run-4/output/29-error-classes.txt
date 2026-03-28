@@ -1,0 +1,2 @@
+Found: AppError, ValidationError, AuthenticationError, AuthorizationError, NotFoundError, ConflictError, RateLimitError
+Missing: none

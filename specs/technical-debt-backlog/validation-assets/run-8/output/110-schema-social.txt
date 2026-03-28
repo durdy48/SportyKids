@@ -1,0 +1,2 @@
+hasSocialId: true
+hasIndex: true

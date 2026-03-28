@@ -31,8 +31,14 @@ gantt
     M5 Robust Parental Controls     :done, m5, after m4, 1d
     M6 Smart Feed + Team + Reels    :done, m6, after m5, 1d
 
+    section Technical Debt Backlog
+    PRD1 Testing + Logging + Sessions :done, td1, after m6, 1d
+    PRD2 PostgreSQL + Error Handler   :done, td2, after td1, 1d
+    PRD3 Parental Trust + Missions    :done, td3, after td2, 1d
+    PRD4 OAuth + UX Polish            :done, td4, after td3, 1d
+
     section Next
-    Internal test + Closed beta     :active, f6, after m6, 14d
+    Internal test + Closed beta     :active, f6, after td4, 14d
 ```
 
 ## Phase 5 Differentiators -- Milestones
@@ -92,10 +98,10 @@ gantt
 
 ## Technical decisions made
 
-### 1. SQLite instead of PostgreSQL for development
-**Context**: The MVP needs to start quickly without infrastructure.
-**Decision**: Use SQLite via Prisma during development.
-**Consequence**: No Docker or external database needed. Migration to PostgreSQL is trivial (change provider in schema.prisma).
+### 1. ~~SQLite~~ PostgreSQL as database
+**Context**: The MVP started with SQLite for quick iteration; migrated to PostgreSQL 16 in Tech Debt PRD2.
+**Decision**: PostgreSQL 16 with native array types (`String[]`), native JSON (`Json`/`Json?`), and composite indexes.
+**Consequence**: Production-ready database. Docker Compose for local development. Native types eliminate JSON.parse/stringify overhead.
 
 ### 2. Express instead of Fastify
 **Context**: An HTTP server is needed for the REST API.
@@ -117,14 +123,14 @@ gantt
 **Decision**: Native npm workspaces (without Turborepo/Nx).
 **Trade-off**: Fewer features than Turborepo, but no additional dependency.
 
-### 6. No real authentication in MVP
-**Context**: The MVP prioritizes development speed.
-**Decision**: User is identified by ID, without login/password/JWT.
-**Consequence**: Anyone with the ID can access the profile. Acceptable for a closed beta with 5-10 families.
+### 6. ~~No real authentication in MVP~~ JWT + OAuth implemented
+**Context**: The MVP started without authentication; JWT was added in Sprint 7-8, OAuth in Tech Debt PRD4.
+**Decision**: JWT access tokens (15 min) + refresh tokens (7 days, rotated). Google OAuth 2.0 + Apple Sign In. Non-blocking middleware for backward compatibility with anonymous users.
+**Consequence**: Secure authentication without breaking the anonymous onboarding flow.
 
 ### 7. RSS feeds as content source
 **Context**: We need real sports news.
-**Decision**: Consume public RSS feeds from verified sports press (47 sources across 8 sports).
+**Decision**: Consume public RSS feeds from verified sports press (182+ sources across 8 sports with global coverage).
 **Risk**: RSS URLs may change without notice. Some feeds are intermittent.
 
 ### 8. English identifiers with i18n support
@@ -236,12 +242,38 @@ Key new files:
 - `apps/mobile/src/screens/RssCatalog.tsx` — Mobile RSS source catalog screen
 - `apps/mobile/src/components/StreakCounter.tsx` — Streak counter component for HomeFeed header
 
+## Technical Debt Backlog (PRD 1-4)
+
+The Technical Debt Backlog addressed systemic issues across 4 PRDs:
+
+### PRD1: Testing Infrastructure + Code Quality
+- **Testing**: Vitest infrastructure expanded to 526 tests across 63 files (API: 388 tests/38 files, Web: 69 tests/14 files, Mobile: 69 tests/11 files)
+- **ESLint 9**: Flat config (`eslint.config.mjs`) + Prettier for consistent code formatting
+- **Structured logging**: Pino 9 with JSON output, request ID correlation (`X-Request-Id` middleware), `pino-pretty` in development
+- **Persistent parental sessions**: `ParentalSession` model in Prisma replaces volatile in-memory Map. Sessions survive server restarts with automatic cleanup of expired entries.
+
+### PRD2: PostgreSQL Migration + Typed Error Handler
+- **PostgreSQL 16**: Migrated from SQLite. Native array types (`String[]`), native JSON types (`Json`/`Json?`), composite indexes on NewsItem, Reel, and ActivityLog. Docker Compose for local PostgreSQL + Redis.
+- **Typed error handler**: `AppError` hierarchy (`ValidationError`, `AuthenticationError`, `AuthorizationError`, `NotFoundError`, `ConflictError`, `RateLimitError`). Centralized handler maps AppError/Prisma/Zod errors to correct HTTP status codes. Sentry integration only for 5xx errors.
+- **Code cleanup**: Removed deprecated feed ranker functions (`sportBoost`, `recencyBoost`). Aligned React versions across web and mobile (19.1.x). Removed `skipLibCheck` from web tsconfig. Fixed hardcoded locale in push notification jobs.
+
+### PRD3: Parental Trust + Daily Missions + Dark Mode
+- **Schedule lock (bedtime)**: Parents can set allowed hours with timezone support. Enforced server-side by parental guard middleware.
+- **Daily missions**: `DailyMission` model, mission generator service, cron job (05:00 UTC), mission reminder push (18:00 UTC for >50% progress), `MissionCard` component.
+- **Dark mode**: CSS variables with `.dark` class, 3 modes (system/light/dark), NavBar toggle cycle, anti-flash script, localStorage persistence.
+- **DB-backed parental sessions**: `ParentalSession` model replaces in-memory Map for session persistence across restarts.
+
+### PRD4: OAuth Social Login + UX Polish
+- **OAuth**: Google OAuth 2.0 + Apple Sign In with full security (CSRF state, JWKS verification, nonce). Mobile token endpoints for native SDKs. `GET /api/auth/providers` for feature detection.
+- **9 UX polish items**: Error states, offline banners, parental tour, video player improvements, celebration animations, and more across web and mobile.
+- **CI/CD**: GitHub Actions pipeline (lint, typecheck, test, build) with cached setup job. EAS Build config for mobile.
+
 ## Known technical debt
 
 | Item | Priority | Status | Description |
 |------|----------|--------|-------------|
 | ~~Authentication~~ | ~~High~~ | Done (Sprint 7-8) | ~~Implement JWT or real sessions~~ — JWT + email/password auth with refresh tokens |
-| ~~Tests~~ | ~~High~~ | Started (Sprint 1-2) | ~~No unit or integration tests~~ — Vitest + 36 tests |
+| ~~Tests~~ | ~~High~~ | Done (Tech Debt PRD1) | ~~No unit or integration tests~~ — 526 tests across 63 files |
 | ~~PIN hash~~ | ~~Medium~~ | Done (M5) | ~~Change SHA-256 to bcrypt~~ |
 | ~~Server-side validation~~ | ~~Medium~~ | Done (M5) | ~~Parental restrictions enforced only on frontend~~ |
 | News images | Low | Pending | Many news items lack images (limited RSS feeds) |
@@ -252,33 +284,40 @@ Key new files:
 | ~~Content moderation~~ | ~~High~~ | Done (M1) | ~~AI safety classification~~ |
 | ~~API_BASE mobile~~ | ~~Low~~ | Done (Sprint 1-2) | ~~Hardcoded IPs in each screen~~ — centralized in config.ts |
 | ~~Critical code review fixes~~ | ~~High~~ | Done (Sprint 1-2) | ~~SSRF, ownership, session auth~~ |
-| PIN lockout | Medium | Pending | No lockout after failed PIN attempts |
-| Rate limiting | Medium | Pending | No API rate limiting |
+| ~~PIN lockout~~ | ~~Medium~~ | Done (Tech Debt PRD3) | ~~No lockout after failed PIN attempts~~ — 5 failed attempts = 15-min lockout |
+| ~~Rate limiting~~ | ~~Medium~~ | Done (Tech Debt PRD2) | ~~No API rate limiting~~ — 5-tier rate limiting with configurable env vars |
 | ~~Push notifications~~ | ~~Low~~ | Done (Sprint 7-8) | ~~Preferences stored but notifications not sent~~ — 5 push triggers via expo-server-sdk |
-| API route consistency | Low | Pending | Mix of Spanish and English route paths |
+| ~~API route consistency~~ | ~~Low~~ | Done (Tech Debt PRD2) | ~~Mix of Spanish and English route paths~~ — All routes migrated to English |
+| ~~PostgreSQL~~ | ~~Medium~~ | Done (Tech Debt PRD2) | ~~SQLite without migration plan~~ — PostgreSQL 16 with native types |
+| ~~CI/CD~~ | ~~Medium~~ | Done (Tech Debt PRD4) | ~~No CI/CD pipeline~~ — GitHub Actions (lint, typecheck, test, build) |
+| ~~OAuth~~ | ~~Medium~~ | Done (Tech Debt PRD4) | ~~No social login~~ — Google OAuth 2.0 + Apple Sign In |
+| ~~Dark mode~~ | ~~Low~~ | Done (Tech Debt PRD3) | ~~No dark mode support~~ — 3 modes (system/light/dark) |
+| ~~Structured logging~~ | ~~Low~~ | Done (Tech Debt PRD1) | ~~88 console.* calls~~ — Pino 9 structured JSON logging |
 
 ## Next steps (post-Phase 5)
 
 ### Short term (1-2 weeks)
 - [ ] Internal test with 5-10 families
 - [ ] Fix reported bugs
-- [x] Automated tests — Vitest infrastructure + 36 initial tests (Sprint 1-2)
-- [ ] Expand test coverage (integration tests, API routes)
-- [ ] Implement PIN lockout after 5 failed attempts
-- [ ] Add rate limiting to API endpoints
+- [x] Automated tests — 526 tests across 63 files (Tech Debt PRD1)
+- [x] PIN lockout — 5 failed attempts = 15-min lockout (Tech Debt PRD3)
+- [x] Rate limiting — 5-tier rate limiting (Tech Debt PRD2)
+- [x] CI/CD pipeline — GitHub Actions (Tech Debt PRD4)
+- [x] PostgreSQL migration — native types, composite indexes (Tech Debt PRD2)
 
 ### Medium term (1-2 months)
 - [x] Real authentication with JWT — B-TF3 (Sprint 7-8)
 - [x] Implement push notifications — B-MP5 (Sprint 7-8)
+- [x] OAuth social login — Google + Apple (Tech Debt PRD4)
+- [x] Dark mode — 3 modes with system detection (Tech Debt PRD3)
 - [ ] Analytics dashboard for the team
 - [ ] Add more locales (fr, de, pt)
 - [ ] Human review queue for AI-moderated content
-- [ ] CI/CD pipeline
 
 ### Long term (3-6 months)
 - [ ] Integration with sports APIs (live results, real-time team stats)
 - [ ] Reels with real videos (scraping or APIs)
 - [ ] Premium version with advanced features
 - [ ] Expansion to more languages/countries
-- [ ] Migrate to PostgreSQL for production
+- [ ] Biometric authentication for parental control on mobile
 - [ ] COPPA/GDPR full compliance

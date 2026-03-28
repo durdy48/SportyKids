@@ -1,0 +1,39 @@
+{
+  "status": 200,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "416",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 12:34:48 GMT",
+    "etag": "W/\"1a0-Xb9EZ0Q44LFgKdwXhImt708n2vE\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "41ad5773-0682-4e26-9bb8-cbbee7af258e"
+  },
+  "body": {
+    "exists": true,
+    "profile": {
+      "id": "cmnabbqht000226f4fvoznv82",
+      "userId": "cmnabbqfq000026f4hdbc178u",
+      "allowedSports": [],
+      "allowedFeeds": [],
+      "allowedFormats": [
+        "news",
+        "reels",
+        "quiz"
+      ],
+      "maxDailyTimeMinutes": 60,
+      "maxNewsMinutes": null,
+      "maxReelsMinutes": null,
+      "maxQuizMinutes": null,
+      "digestEnabled": false,
+      "digestEmail": null,
+      "digestDay": 1,
+      "lastDigestSentAt": null,
+      "allowedHoursStart": 7,
+      "allowedHoursEnd": 21,
+      "timezone": "Europe/Madrid"
+    }
+  }
+}

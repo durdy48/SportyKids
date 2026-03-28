@@ -6,7 +6,8 @@ import { subscribeNotifications } from './api';
 // Configure how notifications are presented when the app is in the foreground
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
-    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
     shouldPlaySound: true,
     shouldSetBadge: true,
   }),
@@ -18,6 +19,7 @@ Notifications.setNotificationHandler({
  */
 export async function registerForPushNotifications(): Promise<string | null> {
   if (!Device.isDevice) {
+    // eslint-disable-next-line no-console
     console.log('[Push] Must use physical device for push notifications');
     return null;
   }
@@ -31,6 +33,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
   }
 
   if (finalStatus !== 'granted') {
+    // eslint-disable-next-line no-console
     console.log('[Push] Permission not granted');
     return null;
   }
@@ -54,6 +57,7 @@ export async function registerForPushNotifications(): Promise<string | null> {
     );
     return tokenResponse.data;
   } catch {
+    // eslint-disable-next-line no-console
     console.warn('[Push] Could not get push token');
     return null;
   }
@@ -74,6 +78,7 @@ export async function registerPushTokenWithApi(
       platform: 'expo',
     });
   } catch (error) {
+    // eslint-disable-next-line no-console
     console.error('[Push] Error registering token with API:', error);
   }
 }

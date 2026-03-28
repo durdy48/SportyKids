@@ -7,6 +7,7 @@ import { requireAuth, requireRole } from '../middleware/auth';
 import { isPublicUrl } from '../utils/url-validator';
 import { withCache, CACHE_TTL } from '../services/cache';
 import { syncAllVideoSources } from '../services/video-aggregator';
+import { ValidationError, NotFoundError, ConflictError, AuthenticationError, AuthorizationError } from '../errors';
 
 const parser = new Parser({ timeout: 10000 });
 
@@ -23,8 +24,7 @@ const filtersSchema = z.object({
 router.get('/', parentalGuard, async (req: Request, res: Response) => {
   const parsed = filtersSchema.safeParse(req.query);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid parameters', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid parameters', parsed.error.flatten());
   }
 
   const { sport, age, page, limit } = parsed.data;
@@ -90,8 +90,7 @@ router.post('/sources/custom', requireAuth, async (req: Request, res: Response) 
 
   const parsed = bodySchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid parameters', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid parameters', parsed.error.flatten());
   }
 
   const { name, feedUrl, platform, sport, userId, channelId, playlistId } = parsed.data;
@@ -99,15 +98,13 @@ router.post('/sources/custom', requireAuth, async (req: Request, res: Response) 
   // Verify user exists
   const requestUser = await prisma.user.findUnique({ where: { id: userId } });
   if (!requestUser) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   // SSRF prevention
   const urlCheck = isPublicUrl(feedUrl);
   if (!urlCheck.valid) {
-    res.status(400).json({ error: urlCheck.reason });
-    return;
+    throw new ValidationError(urlCheck.reason ?? 'Invalid URL');
   }
 
   // Validate RSS feed for YouTube platform sources
@@ -115,16 +112,14 @@ router.post('/sources/custom', requireAuth, async (req: Request, res: Response) 
     try {
       await parser.parseURL(feedUrl);
     } catch {
-      res.status(422).json({ error: 'URL does not appear to be a valid RSS feed' });
-      return;
+      throw new ValidationError('URL does not appear to be a valid RSS feed');
     }
   }
 
   // Dedup check
   const existing = await prisma.videoSource.findUnique({ where: { feedUrl } });
   if (existing) {
-    res.status(409).json({ error: 'Video source with this feed URL already exists', existingId: existing.id });
-    return;
+    throw new ConflictError('Video source with this feed URL already exists');
   }
 
   const source = await prisma.videoSource.create({
@@ -147,30 +142,25 @@ router.post('/sources/custom', requireAuth, async (req: Request, res: Response) 
 router.delete('/sources/custom/:id', requireAuth, async (req: Request, res: Response) => {
   const userId = req.auth?.userId;
   if (!userId) {
-    res.status(401).json({ error: 'Authentication required' });
-    return;
+    throw new AuthenticationError('Authentication required');
   }
 
   const requestUser = await prisma.user.findUnique({ where: { id: userId } });
   if (!requestUser) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   const source = await prisma.videoSource.findUnique({ where: { id: req.params.id as string } });
   if (!source) {
-    res.status(404).json({ error: 'Video source not found' });
-    return;
+    throw new NotFoundError('Video source not found');
   }
 
   if (!source.isCustom) {
-    res.status(403).json({ error: 'Cannot delete catalog sources. Only custom sources can be deleted.' });
-    return;
+    throw new AuthorizationError('Cannot delete catalog sources. Only custom sources can be deleted.');
   }
 
   if (source.addedBy && source.addedBy !== userId) {
-    res.status(403).json({ error: 'You can only delete sources you created' });
-    return;
+    throw new AuthorizationError('You can only delete sources you created');
   }
 
   await prisma.videoSource.delete({ where: { id: source.id } });
@@ -179,21 +169,15 @@ router.delete('/sources/custom/:id', requireAuth, async (req: Request, res: Resp
 
 // POST /api/reels/sync — Manual video synchronization (parent only)
 router.post('/sync', requireAuth, requireRole('parent'), async (_req: Request, res: Response) => {
-  try {
-    const result = await syncAllVideoSources();
-    res.json(result);
-  } catch (err) {
-    console.error('[REELS SYNC] Manual sync failed:', err);
-    res.status(500).json({ error: 'Video sync failed', message: (err as Error).message });
-  }
+  const result = await syncAllVideoSources();
+  res.json(result);
 });
 
 // GET /api/reels/:id — Reel detail
 router.get('/:id', parentalGuard, async (req: Request, res: Response) => {
   const reel = await prisma.reel.findUnique({ where: { id: req.params.id as string } });
   if (!reel) {
-    res.status(404).json({ error: 'Reel not found' });
-    return;
+    throw new NotFoundError('Reel not found');
   }
   res.json(reel);
 });

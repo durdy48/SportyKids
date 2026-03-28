@@ -67,7 +67,7 @@ graph LR
 Express server that exposes the REST API. Single entry point for all clients.
 
 - **Port**: 3001 (configurable via `PORT`)
-- **Middleware**: CORS, JSON parser, rate limiting (`express-rate-limit`, 5 tiers), global error handler, parental guard
+- **Middleware**: CORS, JSON parser, rate limiting (`express-rate-limit`, 5 tiers), typed error handler (`AppError` classes with Prisma/Zod mapping, Sentry 5xx only), parental guard
 - **Routes**: `/api/news`, `/api/reels`, `/api/quiz`, `/api/users`, `/api/parents`, `/api/gamification`, `/api/teams`
 - **Health check**: `GET /api/health` (includes AI provider status)
 
@@ -81,6 +81,16 @@ Multi-provider abstraction for LLM access. All AI-dependent services use this cl
 - **Configuration**: set via `AI_PROVIDER` environment variable
 - **Health check**: verifies provider availability at startup and via `/api/health`
 - **Graceful degradation**: all consumers handle AI unavailability with fallback behavior
+
+### OAuth / Social Login (`apps/api/src/services/passport.ts`)
+Passport.js integration for social authentication (Google and Apple).
+
+- **Strategies**: Google OAuth 2.0 via `passport-google-oauth20`. Apple Sign In planned.
+- **Configuration**: activated only when `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` environment variables are set. Without them, the strategy is not registered and the OAuth endpoints return 501.
+- **Flow**: Google redirects to `/api/auth/google/callback` with a profile. The strategy extracts `profile.id` (socialId) and email, then calls `findOrCreateSocialUser('google', socialId, email, name)`.
+- **`findOrCreateSocialUser`** (in `auth-service.ts`): looks up an existing user by `authProvider` + `socialId` composite index. If not found, creates a new user with `authProvider='google'` and the provider's `socialId`. Returns JWT access + refresh tokens.
+- **Stateless**: Passport serialization is a no-op because the app uses JWT tokens, not server sessions.
+- **Account linking**: existing anonymous users can upgrade to a social account via `/api/auth/upgrade`.
 
 ### Content Moderator (`apps/api/src/services/content-moderator.ts`)
 AI-powered content safety classifier for child-appropriate content.
@@ -199,6 +209,13 @@ Scheduled job that generates AI quiz questions from recent news.
 - **Strategy**: round-robin across sports to ensure variety
 - **Fallback**: if AI is unavailable, no daily questions are generated; seed questions remain available
 
+### Cron Scheduler: Mission Reminder (`apps/api/src/jobs/mission-reminder.ts`)
+Sends push notifications to users who are close to completing their daily mission.
+
+- **Frequency**: daily at 18:00 UTC (`0 18 * * *`)
+- **Criteria**: missions with >50% progress and not yet completed
+- **Notification**: "Almost there!" encouragement via push
+
 ### Parental Guard Middleware (`apps/api/src/middleware/parental-guard.ts`)
 Server-side enforcement of parental restrictions.
 
@@ -227,6 +244,50 @@ React Native application with Expo SDK 54.
 - **API client**: 27 functions covering all endpoints
 - **Daily check-in**: automatic on app start
 - **Full parity**: all Phase 5 features implemented (collection, 5-step onboarding, etc.)
+
+## Video Player Strategy
+
+The mobile and web apps play reel videos using a tiered strategy based on the video source type. This section documents the current distribution, player strategies, and performance considerations.
+
+### Video type distribution (seed data)
+
+| Type | Count | Percentage | Source |
+|------|-------|-----------|--------|
+| `youtube_embed` | 10 | ~63% | YouTube RSS aggregation (primary) |
+| `mp4` | 6 | ~37% | Pexels direct video links |
+
+Video sources imported via the Video Aggregator (YouTube RSS) produce `youtube_embed` type exclusively. The MP4 seed entries come from Pexels and serve as demonstration/fallback content.
+
+### Player strategies by platform
+
+**Mobile (React Native)**
+
+| Video type | Player | Strategy |
+|------------|--------|----------|
+| `mp4` | `expo-video` (native) | Direct native playback via `VideoView`. Best performance: hardware-accelerated, supports fullscreen and PiP. Falls back to WebView `<video>` tag if expo-video is unavailable. |
+| `youtube_embed` | WebView + YouTube IFrame API | Loads the YouTube IFrame Player API inside a WebView. Uses `onError` callback to detect embed restrictions (error codes 101/150). On failure, shows a fallback "Open in YouTube" button. 8-second timeout for API load. |
+| `instagram_embed` | WebView iframe | Generic iframe embed. Limited availability due to platform restrictions. |
+| `tiktok_embed` | WebView iframe | Generic iframe embed. Limited availability due to platform restrictions. |
+
+**Web (Next.js)**
+
+| Video type | Player | Strategy |
+|------------|--------|----------|
+| `mp4` | HTML5 `<video>` | Native browser video element with controls. |
+| `youtube_embed` | `<iframe>` | Standard YouTube iframe embed with `modestbranding` and `rel=0`. |
+
+### Performance notes
+
+- **expo-video** (MP4): Best performance path. Uses native hardware decoding, supports background audio, PiP, and fullscreen. Only available for direct MP4 URLs.
+- **WebView YouTube**: Incurs overhead from loading the YouTube IFrame API JavaScript. First load takes 2-4 seconds. Some YouTube videos have embed restrictions (error 153 in UI, codes 101/150 in API) that prevent inline playback; the fallback opens the native YouTube app.
+- **Memory**: `removeClippedSubviews={true}`, `maxToRenderPerBatch={3}`, and `windowSize={5}` on the Reels FlatList limit concurrent WebView instances to prevent memory pressure.
+- **Aspect ratio**: All current content uses 16:9. The player dynamically calculates height from `aspectRatio` field (supports `9:16` for vertical video if added in the future).
+
+### Recommendations for future improvement
+
+1. **Prefer MP4 sources**: MP4 via expo-video offers the best user experience. Prioritize adding MP4 video sources over YouTube channels.
+2. **YouTube Data API**: Consider using the YouTube Data API to pre-check embed availability and filter out restricted videos during sync rather than at playback time.
+3. **Video caching**: For frequently-watched MP4 content, consider a CDN cache layer or on-device caching for offline playback.
 
 ## Data flow
 

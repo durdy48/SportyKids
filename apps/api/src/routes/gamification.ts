@@ -3,6 +3,7 @@ import { z } from 'zod';
 import { prisma } from '../config/database';
 import { checkAndUpdateStreak } from '../services/gamification';
 import { withCache, CACHE_TTL, apiCache } from '../services/cache';
+import { NotFoundError, ValidationError } from '../errors';
 
 const router = Router();
 
@@ -25,10 +26,7 @@ router.get('/stickers/:userId', async (req: Request, res: Response) => {
   const userId = req.params.userId as string;
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
-  }
+  if (!user) throw new NotFoundError('User not found');
 
   const totalStickers = await prisma.sticker.count();
   const userStickers = await prisma.userSticker.findMany({
@@ -73,10 +71,7 @@ router.get('/achievements/:userId', async (req: Request, res: Response) => {
   const userId = req.params.userId as string;
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
-  }
+  if (!user) throw new NotFoundError('User not found');
 
   const totalAchievements = await prisma.achievement.count();
   const userAchievements = await prisma.userAchievement.findMany({
@@ -116,10 +111,7 @@ router.get('/streaks/:userId', async (req: Request, res: Response) => {
     },
   });
 
-  if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
-  }
+  if (!user) throw new NotFoundError('User not found');
 
   res.json(user);
 });
@@ -134,18 +126,12 @@ const checkInSchema = z.object({
 
 router.post('/check-in', async (req: Request, res: Response) => {
   const parsed = checkInSchema.safeParse(req.body);
-  if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data' });
-    return;
-  }
+  if (!parsed.success) throw new ValidationError('Invalid data', parsed.error.flatten());
 
   const { userId } = parsed.data;
 
   const user = await prisma.user.findUnique({ where: { id: userId } });
-  if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
-  }
+  if (!user) throw new NotFoundError('User not found');
 
   const result = await checkAndUpdateStreak(userId);
   // Invalidate behavioral signals cache after check-in

@@ -1,5 +1,6 @@
 import type { Request, Response, NextFunction } from 'express';
 import { verifyAccessToken, type JwtPayload } from '../services/auth-service';
+import { AuthenticationError, AuthorizationError } from '../errors';
 
 // Extend Express Request to carry auth info
 declare global {
@@ -30,10 +31,9 @@ export function authMiddleware(req: Request, _res: Response, next: NextFunction)
 /**
  * Blocking middleware — requires a valid JWT.
  */
-export function requireAuth(req: Request, res: Response, next: NextFunction): void {
+export function requireAuth(req: Request, _res: Response, next: NextFunction): void {
   if (!req.auth) {
-    res.status(401).json({ error: 'Authentication required' });
-    return;
+    throw new AuthenticationError('Authentication required');
   }
   next();
 }
@@ -42,14 +42,12 @@ export function requireAuth(req: Request, res: Response, next: NextFunction): vo
  * Factory: requires a specific role.
  */
 export function requireRole(role: 'child' | 'parent') {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.auth) {
-      res.status(401).json({ error: 'Authentication required' });
-      return;
+      throw new AuthenticationError('Authentication required');
     }
     if (req.auth.role !== role) {
-      res.status(403).json({ error: 'Insufficient permissions' });
-      return;
+      throw new AuthorizationError('Insufficient permissions');
     }
     next();
   };

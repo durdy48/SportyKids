@@ -11,7 +11,7 @@ interface NotificationSettingsProps {
 }
 
 const DEFAULT_PREFERENCES: PushPreferences = {
-  sports: [],
+  sports: true,
   dailyQuiz: true,
   teamUpdates: true,
 };
@@ -91,11 +91,11 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
         <label className="flex items-center gap-3 cursor-pointer">
           <input
             type="checkbox"
-            checked={preferences.sports.length > 0}
+            checked={preferences.sports}
             onChange={() => {
               const newPrefs = {
                 ...preferences,
-                sports: preferences.sports.length > 0 ? [] : ['all'],
+                sports: !preferences.sports,
               };
               setPreferences(newPrefs);
               save(enabled, newPrefs);

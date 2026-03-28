@@ -1,0 +1,42 @@
+{
+  "status": 201,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "515",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 13:41:53 GMT",
+    "etag": "W/\"203-ed03SWcoY/WIaydORFOiKe+Bs1o\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "42ab41c0-4b3a-40c5-bd92-ec7db8d86386"
+  },
+  "body": {
+    "id": "cmnadpzky000i26tlwu6n3vro",
+    "name": "PG Test User",
+    "age": 11,
+    "email": null,
+    "authProvider": "anonymous",
+    "role": "child",
+    "parentUserId": null,
+    "lastLoginAt": null,
+    "favoriteSports": [
+      "football",
+      "basketball"
+    ],
+    "favoriteTeam": null,
+    "selectedFeeds": [],
+    "pushEnabled": false,
+    "pushPreferences": null,
+    "totalPoints": 0,
+    "currentStreak": 0,
+    "longestStreak": 0,
+    "lastActiveDate": null,
+    "currentQuizCorrectStreak": 0,
+    "quizPerfectCount": 0,
+    "createdAt": "2026-03-28T13:41:53.122Z",
+    "updatedAt": "2026-03-28T13:41:53.122Z",
+    "locale": "es",
+    "country": "ES"
+  }
+}

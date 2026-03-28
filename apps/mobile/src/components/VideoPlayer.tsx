@@ -23,7 +23,7 @@ const { width: SCREEN_WIDTH } = Dimensions.get('window');
  * - YouTube/Instagram/TikTok: WebView embed with error detection.
  *   If embed fails (e.g. YouTube error 153), shows a "Watch in app" fallback button.
  */
-export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio, locale = 'es' }: VideoPlayerProps) {
+export function VideoPlayer({ videoUrl, videoType, thumbnailUrl: _thumbnailUrl, aspectRatio, locale = 'es' }: VideoPlayerProps) {
   const [embedError, setEmbedError] = useState(false);
 
   const isYouTube = videoType === 'youtube_embed' || videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
@@ -155,30 +155,37 @@ function getTikTokEmbed(url: string): string {
   return `<iframe width="100%" height="100%" src="${htmlEncode(url)}" frameborder="0" allow="autoplay;encrypted-media" allowfullscreen style="border:0"></iframe>`;
 }
 
+// Resolve expo-video at module scope so the hook is always called in the same order.
+const expoVideoModule: { useVideoPlayer: (source: string, setup: (p: { loop: boolean }) => void) => unknown; VideoView: React.ComponentType<Record<string, unknown>> } | null =
+  (() => { try { return require('expo-video'); } catch { return null; } })();
+
+// No-op fallback so the hook call count is stable when expo-video is absent.
+const noopUseVideoPlayer = (_source: string, _setup: (p: { loop: boolean }) => void): null => null;
+const useVideoPlayer = expoVideoModule?.useVideoPlayer ?? noopUseVideoPlayer;
+
 /**
  * Expo Video player wrapper. Only used when expo-video is available.
  */
 function ExpoVideoPlayer({ videoUrl, height }: { videoUrl: string; height: number }) {
-  try {
-    const { VideoView, useVideoPlayer } = require('expo-video');
-    const player = useVideoPlayer(videoUrl, (p: { loop: boolean }) => {
-      p.loop = false;
-    });
+  const player = useVideoPlayer(videoUrl, (p: { loop: boolean }) => {
+    p.loop = false;
+  });
 
-    return (
-      <View style={[styles.container, { height }]}>
-        <VideoView
-          player={player}
-          style={styles.video}
-          contentFit="cover"
-          allowsFullscreen
-          allowsPictureInPicture
-        />
-      </View>
-    );
-  } catch {
-    return null;
-  }
+  if (!expoVideoModule || !player) return null;
+
+  const { VideoView } = expoVideoModule;
+
+  return (
+    <View style={[styles.container, { height }]}>
+      <VideoView
+        player={player}
+        style={styles.video}
+        contentFit="cover"
+        allowsFullscreen
+        allowsPictureInPicture
+      />
+    </View>
+  );
 }
 
 const styles = StyleSheet.create({

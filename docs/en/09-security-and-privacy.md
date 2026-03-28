@@ -21,7 +21,8 @@ SportyKids is aimed at children aged 6 to 14. Content security and privacy are *
 - Access protected by a 4-digit PIN
 - **PIN stored as bcrypt hash** (upgraded from SHA-256; transparent migration on first successful verification of legacy hashes)
 - **PIN lockout**: after 5 consecutive failed attempts, the account is locked for 15 minutes. The `ParentalProfile` model tracks `failedAttempts` (Int, default 0) and `lockedUntil` (DateTime, nullable). Failed attempts return 401 with `attemptsRemaining`; locked accounts return 423 with `lockedUntil` and `remainingSeconds`.
-- **Session tokens**: 5-minute TTL issued after PIN verification, required for parental dashboard operations
+- **Session tokens**: DB-backed (`ParentalSession` model) with 5-minute TTL issued after PIN verification, required for parental dashboard operations. Sessions persist across server restarts. Automatic cleanup of expired sessions.
+- **Schedule lock (bedtime)**: Parents can set allowed hours (`allowedHoursStart`/`allowedHoursEnd`, default 0-24 = no restriction) with timezone support (`timezone` field, default `Europe/Madrid`). Enforced server-side by the parental guard middleware -- requests outside allowed hours return 403.
 - Parents control:
   - Allowed formats (news, reels, quiz)
   - Allowed sports (8 sports individually toggleable)
@@ -38,6 +39,18 @@ SportyKids is aimed at children aged 6 to 14. Content security and privacy are *
 - Only HTTP/HTTPS protocols are allowed
 - Source URLs are stored and fetched server-side only
 
+### OAuth Security
+- **Google OAuth 2.0**: CSRF protection via `state` parameter validated on callback. ID tokens verified against Google's public keys.
+- **Apple Sign In**: CSRF `state` validation, `id_token` verified against Apple's JWKS endpoint, `nonce` verification to prevent replay attacks. Apple callback uses POST (per Apple's specification).
+- **Mobile flows**: Dedicated `/token` endpoints for native SDKs (Google ID token / Apple identity token verification server-side).
+- **Account linking**: OAuth accounts are linked by email. Existing email/password users who sign in via OAuth are merged (not duplicated).
+
+### JWT Authentication
+- **Access tokens**: 15-minute TTL, signed with `JWT_SECRET`. Included in `Authorization: Bearer <token>` header.
+- **Refresh tokens**: 7-day TTL, rotated on each use (old token deleted, new token issued). Stored in `RefreshToken` model in the database.
+- **Non-blocking middleware**: Anonymous users (without a token) can still access the API for backward compatibility. Authenticated requests include the user in `req.user`.
+- **Token revocation**: `POST /api/auth/logout` revokes the refresh token. Access tokens expire naturally (no server-side revocation list).
+
 ### Rate limiting
 All API endpoints are protected by `express-rate-limit` middleware with 5 tiers:
 
@@ -52,11 +65,10 @@ All API endpoints are protected by `express-rate-limit` middleware with 5 tiers:
 All limits are configurable via environment variables. Exceeded limits return `429 Too Many Requests` with standard rate-limit headers.
 
 ### User data
-- No emails or passwords are collected
-- No identity verification is required
+- Email and password are collected only for authenticated accounts (optional; anonymous users remain supported)
 - Profile is created with: name, age, sports preferences
 - Data is stored locally (localStorage / AsyncStorage) + server DB
-- Notification preferences are stored but not acted upon (MVP -- no push notifications sent)
+- Push notifications delivered via `expo-server-sdk` with 5 triggers (quiz ready, team news, streak reminder, sticker earned, mission ready)
 
 ### External content
 - News comes from 182 verified sports press RSS sources across 8 sports with global coverage
@@ -93,7 +105,7 @@ flowchart TD
     end
 
     subgraph "Content pipeline"
-        R["47 RSS Sources"] --> S["Aggregator"]
+        R["182+ RSS Sources"] --> S["Aggregator"]
         S --> T["Classifier<br/>(age + sport + team)"]
         T --> U["AI Content Moderator"]
         U -->|approved| V["DB"]
@@ -122,9 +134,9 @@ Duration tracking uses `sendBeacon` for reliable reporting even when the user na
 ## Recommended improvements for production
 
 ### Authentication
-- Implement JWT with refresh tokens
+- ~~Implement JWT with refresh tokens~~ -- **Implemented**: JWT access tokens (15 min) + refresh tokens (7 days, rotated). Non-blocking middleware for backward compatibility.
+- ~~OAuth social login~~ -- **Implemented**: Google OAuth 2.0 + Apple Sign In with CSRF/JWKS/nonce validation. Mobile token endpoints for native SDKs.
 - Biometric authentication (TouchID/FaceID) for parental control on mobile
-- Sessions with expiration
 
 ### PIN lockout
 - ~~Implement lockout after 5 failed PIN verification attempts~~ -- **Implemented**: 5 failed attempts = 15-minute lockout with `failedAttempts` and `lockedUntil` fields on `ParentalProfile`

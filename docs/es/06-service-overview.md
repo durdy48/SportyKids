@@ -70,7 +70,7 @@ graph LR
 Servidor Express que expone la API REST. Punto de entrada unico para todos los clientes.
 
 - **Puerto**: 3001 (configurable via `PORT`)
-- **Middleware**: CORS, JSON parser, rate limiting (`express-rate-limit`, 5 niveles), error handler global, parental-guard
+- **Middleware**: CORS, JSON parser, rate limiting (`express-rate-limit`, 5 niveles), error handler tipado (clases `AppError` con mapeo Prisma/Zod, Sentry solo 5xx), parental-guard
 - **Rutas**: `/api/news`, `/api/reels`, `/api/quiz`, `/api/users`, `/api/parents`, `/api/gamification`, `/api/teams`
 - **Health check**: `GET /api/health` (incluye estado del proveedor AI)
 
@@ -82,6 +82,16 @@ Cliente multi-proveedor que abstrae la comunicacion con modelos de lenguaje.
 - **Metodos**: `complete(prompt)`, `isAvailable()`, `getProviderName()`
 - **Fail-open**: si el proveedor no esta disponible, los servicios dependientes operan en modo degradado
 - **Health check**: `/api/health` reporta disponibilidad del proveedor
+
+### OAuth / Social Login (`apps/api/src/services/passport.ts`)
+Integracion con Passport.js para autenticacion social (Google y Apple).
+
+- **Estrategias**: Google OAuth 2.0 via `passport-google-oauth20`. Apple Sign In planificado.
+- **Configuracion**: se activa solo cuando las variables de entorno `GOOGLE_CLIENT_ID` y `GOOGLE_CLIENT_SECRET` estan definidas. Sin ellas, la estrategia no se registra y los endpoints OAuth devuelven 501.
+- **Flujo**: Google redirige a `/api/auth/google/callback` con un perfil. La estrategia extrae `profile.id` (socialId) y email, luego llama a `findOrCreateSocialUser('google', socialId, email, name)`.
+- **`findOrCreateSocialUser`** (en `auth-service.ts`): busca un usuario existente por el indice compuesto `authProvider` + `socialId`. Si no existe, crea un nuevo usuario con `authProvider='google'` y el `socialId` del proveedor. Devuelve tokens JWT access + refresh.
+- **Stateless**: la serializacion de Passport es un no-op porque la app usa tokens JWT, no sesiones en servidor.
+- **Vinculacion de cuentas**: usuarios anonimos existentes pueden convertirse a cuenta social via `/api/auth/upgrade`.
 
 ### Content Moderator (`apps/api/src/services/content-moderator.ts`)
 Clasifica noticias como seguras o no seguras para ninos usando IA.
@@ -212,6 +222,13 @@ Job programado que genera preguntas de quiz diarias a partir de noticias.
 - **Round-robin**: alterna deportes para variedad
 - **Fallback**: si la IA no esta disponible, no genera (se usan preguntas del seed)
 
+### Cron: Recordatorio de misiones (`apps/api/src/jobs/mission-reminder.ts`)
+Envia notificaciones push a usuarios cerca de completar su mision diaria.
+
+- **Frecuencia**: diaria a las 18:00 UTC (`0 18 * * *`)
+- **Criterio**: misiones con >50% de progreso y no completadas
+- **Notificacion**: "Casi lo tienes!" via push
+
 ### Webapp (`apps/web`)
 Aplicacion web Next.js con App Router.
 
@@ -231,6 +248,47 @@ Aplicacion React Native con Expo SDK 54.
 - **5 pasos onboarding**: incluyendo PIN parental
 - **Navegacion**: React Navigation (bottom tabs + stack)
 - **Estado**: React Context (`user-context`) con AsyncStorage
+
+## Estrategia del Reproductor de Video
+
+Las apps movil y web reproducen reels usando una estrategia por niveles basada en el tipo de fuente del video.
+
+### Distribucion de tipos de video (datos semilla)
+
+| Tipo | Cantidad | Porcentaje | Fuente |
+|------|----------|-----------|--------|
+| `youtube_embed` | 10 | ~63% | Agregacion RSS de YouTube (principal) |
+| `mp4` | 6 | ~37% | Enlaces directos de video Pexels |
+
+### Estrategias de reproductor por plataforma
+
+**Movil (React Native)**
+
+| Tipo de video | Reproductor | Estrategia |
+|---------------|-------------|------------|
+| `mp4` | `expo-video` (nativo) | Reproduccion nativa directa via `VideoView`. Mejor rendimiento: aceleracion por hardware, soporta pantalla completa y PiP. Si expo-video no esta disponible, usa WebView con tag `<video>`. |
+| `youtube_embed` | WebView + YouTube IFrame API | Carga el YouTube IFrame Player API dentro de un WebView. Usa callback `onError` para detectar restricciones de embed (codigos de error 101/150). En caso de fallo, muestra boton "Abrir en YouTube". Timeout de 8 segundos. |
+| `instagram_embed` | WebView iframe | Embed generico via iframe. Disponibilidad limitada. |
+| `tiktok_embed` | WebView iframe | Embed generico via iframe. Disponibilidad limitada. |
+
+**Web (Next.js)**
+
+| Tipo de video | Reproductor | Estrategia |
+|---------------|-------------|------------|
+| `mp4` | HTML5 `<video>` | Elemento de video nativo del navegador con controles. |
+| `youtube_embed` | `<iframe>` | Iframe estandar de YouTube con `modestbranding` y `rel=0`. |
+
+### Notas de rendimiento
+
+- **expo-video** (MP4): Mejor ruta de rendimiento. Usa decodificacion nativa por hardware, soporta audio en background, PiP y pantalla completa.
+- **WebView YouTube**: Incurre overhead por cargar el JavaScript del YouTube IFrame API. Primera carga 2-4 segundos. Algunos videos tienen restricciones de embed; el fallback abre la app nativa de YouTube.
+- **Memoria**: `removeClippedSubviews`, `maxToRenderPerBatch={3}` y `windowSize={5}` en el FlatList de Reels limitan las instancias concurrentes de WebView.
+
+### Recomendaciones futuras
+
+1. **Preferir fuentes MP4**: MP4 via expo-video ofrece la mejor experiencia. Priorizar fuentes MP4 sobre canales YouTube.
+2. **YouTube Data API**: Considerar pre-verificar disponibilidad de embed durante la sincronizacion.
+3. **Cache de video**: Para contenido MP4 frecuente, considerar cache CDN o cache en dispositivo para lectura offline.
 
 ## Flujo de datos
 

@@ -2,6 +2,7 @@ import cron from 'node-cron';
 import { prisma } from '../config/database';
 import { generateDigestData, renderDigestHtml } from '../services/digest-generator';
 import { t, type Locale } from '@sportykids/shared';
+import { logger } from '../services/logger';
 
 let activeJob: cron.ScheduledTask | null = null;
 
@@ -28,7 +29,7 @@ async function sendDigestEmail(to: string, subject: string, html: string): Promi
     await transporter.sendMail({ from, to, subject, html });
     return true;
   } catch (err) {
-    console.error(`[weekly-digest] Failed to send email to ${to}:`, err);
+    logger.error({ err, to }, 'Failed to send digest email');
     return false;
   }
 }
@@ -44,7 +45,7 @@ async function processWeeklyDigests(): Promise<void> {
     include: { user: true },
   });
 
-  console.log(`[weekly-digest] Found ${profiles.length} digest(s) to send for day ${currentDay}.`);
+  logger.info({ count: profiles.length, day: currentDay }, 'Found digests to send');
 
   for (const profile of profiles) {
     try {
@@ -57,9 +58,9 @@ async function processWeeklyDigests(): Promise<void> {
         const sent = await sendDigestEmail(profile.digestEmail, subject, html);
 
         if (sent) {
-          console.log(`[weekly-digest] Email sent to ${profile.digestEmail} for user ${profile.userId}`);
+          logger.info({ email: profile.digestEmail, userId: profile.userId }, 'Digest email sent');
         } else {
-          console.log(`[weekly-digest] SMTP not configured, skipping email for user ${profile.userId}`);
+          logger.info({ userId: profile.userId }, 'SMTP not configured, skipping digest email');
         }
       }
 
@@ -69,7 +70,7 @@ async function processWeeklyDigests(): Promise<void> {
         data: { lastDigestSentAt: new Date() },
       });
     } catch (err) {
-      console.error(`[weekly-digest] Error processing digest for user ${profile.userId}:`, err);
+      logger.error({ err, userId: profile.userId }, 'Error processing weekly digest');
     }
   }
 }
@@ -77,16 +78,16 @@ async function processWeeklyDigests(): Promise<void> {
 /** Start the weekly digest cron job — runs daily at 08:00 UTC */
 export function startWeeklyDigestJob(): void {
   if (activeJob) {
-    console.log('[weekly-digest] Job is already active.');
+    logger.info('Weekly digest job is already active.');
     return;
   }
 
   activeJob = cron.schedule('0 8 * * *', async () => {
-    console.log(`[${new Date().toISOString()}] Running weekly digest job...`);
+    logger.info('Running weekly digest job...');
     await processWeeklyDigests();
   });
 
-  console.log('[weekly-digest] Job scheduled: daily at 08:00 UTC.');
+  logger.info('Weekly digest job scheduled: daily at 08:00 UTC.');
 }
 
 // Export for testing

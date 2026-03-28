@@ -1,0 +1,17 @@
+{
+  "status": 404,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "31",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 12:34:48 GMT",
+    "etag": "W/\"1f-vHK1YGKhPcKy2SsiThLAYontBII\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "c8cbeb91-d6d6-4ad7-99a5-00dbf660ab36"
+  },
+  "body": {
+    "error": "News item not found"
+  }
+}

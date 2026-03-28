@@ -79,7 +79,7 @@ export async function logout(): Promise<void> {
   await clearTokens();
 }
 
-async function storeTokens(accessToken: string, refreshTokenValue: string): Promise<void> {
+export async function storeTokens(accessToken: string, refreshTokenValue: string): Promise<void> {
   await AsyncStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
   await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshTokenValue);
 }
@@ -87,5 +87,34 @@ async function storeTokens(accessToken: string, refreshTokenValue: string): Prom
 async function clearTokens(): Promise<void> {
   await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
   await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+}
+
+export async function fetchAuthProviders(): Promise<{ google: boolean; apple: boolean }> {
+  try {
+    const res = await fetch(`${API_BASE}/auth/providers`);
+    if (!res.ok) return { google: false, apple: false };
+    return res.json();
+  } catch {
+    return { google: false, apple: false };
+  }
+}
+
+export async function loginWithSocialToken(
+  provider: 'google' | 'apple',
+  idToken: string,
+  name?: string
+): Promise<AuthResponse> {
+  const res = await fetch(`${API_BASE}/auth/${provider}/token`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ idToken, name }),
+  });
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({}));
+    throw new Error(body.error || 'Social login failed');
+  }
+  const data: AuthResponse = await res.json();
+  await storeTokens(data.accessToken, data.refreshToken);
+  return data;
 }
 

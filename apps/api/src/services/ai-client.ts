@@ -3,6 +3,8 @@
  * Supports Ollama (default), OpenRouter, and Anthropic.
  */
 
+import { logger } from './logger';
+
 // ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
@@ -142,7 +144,7 @@ async function isProviderAvailable(): Promise<boolean> {
 
   lastHealthCheck = now;
   if (!providerAvailable) {
-    console.log(`[AI] Provider "${cfg.provider}" is not available. Skipping AI calls for ${HEALTH_CHECK_INTERVAL / 1000}s.`);
+    logger.info({ provider: cfg.provider, skipDurationSeconds: HEALTH_CHECK_INTERVAL / 1000 }, 'AI provider is not available, skipping AI calls');
   }
   return providerAvailable;
 }
@@ -270,9 +272,7 @@ class AIClient {
         if (!isRetryable || attempt === cfg.maxRetries) break;
 
         const delay = cfg.retryDelayMs * Math.pow(2, attempt);
-        console.warn(
-          `[AI] Attempt ${attempt + 1} failed for ${cfg.provider}, retrying in ${delay}ms...`,
-        );
+        logger.warn({ provider: cfg.provider, attempt: attempt + 1, retryDelayMs: delay }, 'AI attempt failed, retrying');
         await new Promise((resolve) => setTimeout(resolve, delay));
       }
     }

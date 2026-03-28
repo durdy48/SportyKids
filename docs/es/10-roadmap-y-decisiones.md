@@ -31,8 +31,14 @@ gantt
     M5 Robust Parental Controls   :done, m5, after m4, 1d
     M6 Smart Feed + Team + Reels  :done, m6, after m5, 1d
 
+    section Backlog Deuda Tecnica
+    PRD1 Testing + Logging + Sessions :done, td1, after m6, 1d
+    PRD2 PostgreSQL + Error Handler   :done, td2, after td1, 1d
+    PRD3 Parental Trust + Missions    :done, td3, after td2, 1d
+    PRD4 OAuth + UX Polish            :done, td4, after td3, 1d
+
     section Post-lanzamiento
-    Test interno + Beta cerrada   :active, beta, after m6, 14d
+    Test interno + Beta cerrada   :active, beta, after td4, 14d
 ```
 
 ## Fase 5: Diferenciadores (6 milestones completados)
@@ -40,7 +46,7 @@ gantt
 ### M1: Infraestructura AI + Seguridad de contenido
 - Cliente AI multi-proveedor (`ai-client.ts`): Ollama (gratis, default), OpenRouter, Anthropic Claude
 - Moderador de contenido (`content-moderator.ts`): clasifica noticias como safe/unsafe con fail-open
-- 47 fuentes RSS en 8 deportes (antes 4 fuentes)
+- 182+ fuentes RSS en 8 deportes con cobertura global (antes 4 fuentes)
 - Campo `safetyStatus` en NewsItem (pending/approved/rejected)
 - Health check para disponibilidad del proveedor AI
 - Fuentes RSS custom via API
@@ -88,10 +94,10 @@ gantt
 
 ## Decisiones tecnicas tomadas
 
-### 1. SQLite en vez de PostgreSQL para desarrollo
-**Contexto**: El MVP necesita arrancar rapido sin infraestructura.
-**Decision**: Usar SQLite via Prisma durante el desarrollo.
-**Consecuencia**: No se necesita Docker ni base de datos externa. Migracion a PostgreSQL trivial (cambiar provider en schema.prisma).
+### 1. ~~SQLite~~ PostgreSQL como base de datos
+**Contexto**: El MVP comenzo con SQLite para iteracion rapida; se migro a PostgreSQL 16 en Tech Debt PRD2.
+**Decision**: PostgreSQL 16 con tipos nativos de array (`String[]`), JSON nativo (`Json`/`Json?`), e indices compuestos.
+**Consecuencia**: Base de datos lista para produccion. Docker Compose para desarrollo local. Los tipos nativos eliminan la sobrecarga de JSON.parse/stringify.
 
 ### 2. Express en vez de Fastify
 **Contexto**: Se necesita un servidor HTTP para la API REST.
@@ -120,7 +126,7 @@ gantt
 
 ### 7. Feeds RSS como fuente de contenido
 **Contexto**: Necesitamos noticias deportivas reales.
-**Decision**: Consumir 47 feeds RSS publicos de multiples fuentes deportivas.
+**Decision**: Consumir 182+ feeds RSS publicos de multiples fuentes deportivas con cobertura global.
 **Riesgo**: Las URLs de RSS pueden cambiar sin aviso. Algunas fuentes son intermitentes.
 
 ### 8. PIN parental con bcrypt
@@ -231,46 +237,78 @@ Nuevos ficheros y componentes clave:
 - `apps/mobile/src/screens/RssCatalog.tsx` — Catalogo RSS mobile
 - `apps/mobile/src/components/StreakCounter.tsx` — Contador de racha en HomeFeed
 
+## Backlog de Deuda Tecnica (PRD 1-4)
+
+El Backlog de Deuda Tecnica abordo problemas sistemicos en 4 PRDs:
+
+### PRD1: Infraestructura de Testing + Calidad de Codigo
+- **Testing**: Infraestructura Vitest expandida a 526 tests en 63 archivos (API: 388 tests/38 archivos, Web: 69 tests/14 archivos, Mobile: 69 tests/11 archivos)
+- **ESLint 9**: Configuracion flat (`eslint.config.mjs`) + Prettier para formateo consistente
+- **Logging estructurado**: Pino 9 con salida JSON, correlacion de request ID (middleware `X-Request-Id`), `pino-pretty` en desarrollo
+- **Sesiones parentales persistentes**: Modelo `ParentalSession` en Prisma reemplaza el Map volatil en memoria. Las sesiones sobreviven reinicios del servidor con limpieza automatica de entradas expiradas.
+
+### PRD2: Migracion a PostgreSQL + Error Handler Tipado
+- **PostgreSQL 16**: Migrado desde SQLite. Tipos nativos de array (`String[]`), tipos nativos JSON (`Json`/`Json?`), indices compuestos en NewsItem, Reel y ActivityLog. Docker Compose para PostgreSQL + Redis local.
+- **Error handler tipado**: Jerarquia `AppError` (`ValidationError`, `AuthenticationError`, `AuthorizationError`, `NotFoundError`, `ConflictError`, `RateLimitError`). Handler centralizado mapea errores AppError/Prisma/Zod a codigos HTTP correctos. Integracion Sentry solo para errores 5xx.
+- **Limpieza de codigo**: Eliminadas funciones deprecadas del feed ranker (`sportBoost`, `recencyBoost`). Alineadas versiones de React entre web y mobile (19.1.x). Eliminado `skipLibCheck` del tsconfig web. Corregido locale hardcodeado en jobs de push notifications.
+
+### PRD3: Confianza Parental + Misiones Diarias + Modo Oscuro
+- **Schedule lock (horario nocturno)**: Los padres pueden configurar horas permitidas con soporte de zona horaria. Enforced server-side por el middleware parental-guard.
+- **Misiones diarias**: Modelo `DailyMission`, servicio generador de misiones, job cron (05:00 UTC), push de recordatorio de mision (18:00 UTC para >50% progreso), componente `MissionCard`.
+- **Modo oscuro**: Variables CSS con clase `.dark`, 3 modos (system/light/dark), ciclo de toggle en NavBar, script anti-flash, persistencia en localStorage.
+- **Sesiones parentales en BD**: Modelo `ParentalSession` reemplaza Map en memoria para persistencia entre reinicios.
+
+### PRD4: OAuth Social Login + Pulido UX
+- **OAuth**: Google OAuth 2.0 + Apple Sign In con seguridad completa (CSRF state, verificacion JWKS, nonce). Endpoints mobile para SDKs nativos. `GET /api/auth/providers` para deteccion de funcionalidades.
+- **9 items de pulido UX**: Estados de error, banners offline, tour parental, mejoras en el reproductor de video, animaciones de celebracion, y mas en web y mobile.
+- **CI/CD**: Pipeline de GitHub Actions (lint, typecheck, test, build) con job de setup cacheado. Configuracion EAS Build para mobile.
+
 ## Deuda tecnica conocida
 
 | Item | Prioridad | Descripcion |
 |------|-----------|-------------|
 | ~~Autenticacion~~ | ~~Alta~~ | ~~Implementar JWT o sesiones reales~~ — **Resuelto** (Sprint 7-8: JWT + email/password, B-TF3) |
-| ~~Tests~~ | ~~Alta~~ | ~~No hay tests unitarios ni de integracion~~ — **Iniciado** (Sprint 1-2: Vitest + 36 tests) |
+| ~~Tests~~ | ~~Alta~~ | ~~No hay tests unitarios ni de integracion~~ — **Resuelto** (Tech Debt PRD1: 526 tests en 63 archivos) |
 | ~~Notificaciones push~~ | ~~Media~~ | ~~Solo se almacenan preferencias, no se envian~~ — **Resuelto** (Sprint 7-8: expo-server-sdk, 5 triggers, deep linking, B-MP5) |
 | Imagenes de noticias | Baja | Muchas noticias no tienen imagen (feeds RSS limitados) |
 | Reels con videos reales | Baja | Los reels son placeholder (YouTube embeds) |
 | ~~API_BASE mobile~~ | ~~Baja~~ | ~~Hardcodeado en cada screen~~ — **Resuelto** (Sprint 1-2: centralizado en `config.ts`) |
-| Rutas API inconsistentes | Baja | Mezcla de espanol e ingles en rutas |
+| ~~Rutas API inconsistentes~~ | ~~Baja~~ | ~~Mezcla de espanol e ingles en rutas~~ — **Resuelto** (Tech Debt PRD2: todas las rutas en ingles) |
 | ~~Hash del PIN~~ | ~~Media~~ | ~~SHA-256 por bcrypt~~ — **Resuelto** (M5) |
 | ~~Validacion server-side~~ | ~~Media~~ | ~~Restricciones solo en frontend~~ — **Resuelto** (M5) |
 | ~~Internacionalizacion~~ | ~~Baja~~ | ~~Solo en espanol~~ — **Resuelto** |
 | ~~Gamificacion~~ | ~~Media~~ | ~~Sin engagement/retencion~~ — **Resuelto** (M4) |
 | ~~Quiz estaticos~~ | ~~Media~~ | ~~Solo preguntas del seed~~ — **Resuelto** (M3) |
 | ~~Fixes criticos code review~~ | ~~Alta~~ | ~~SSRF, ownership, session auth~~ — **Resuelto** (Sprint 1-2) |
+| ~~PostgreSQL~~ | ~~Media~~ | ~~SQLite sin plan de migracion~~ — **Resuelto** (Tech Debt PRD2: PostgreSQL 16 con tipos nativos) |
+| ~~CI/CD~~ | ~~Media~~ | ~~Sin pipeline CI/CD~~ — **Resuelto** (Tech Debt PRD4: GitHub Actions) |
+| ~~OAuth~~ | ~~Media~~ | ~~Sin login social~~ — **Resuelto** (Tech Debt PRD4: Google OAuth 2.0 + Apple Sign In) |
+| ~~Modo oscuro~~ | ~~Baja~~ | ~~Sin modo oscuro~~ — **Resuelto** (Tech Debt PRD3: 3 modos system/light/dark) |
+| ~~Logging estructurado~~ | ~~Baja~~ | ~~88 console.* calls~~ — **Resuelto** (Tech Debt PRD1: Pino 9 JSON logging) |
 
 ## Proximos pasos (post-Fase 5)
 
 ### Corto plazo (1-2 semanas)
 - [ ] Test interno con 5-10 familias
 - [ ] Corregir bugs reportados
-- [ ] Mejorar deteccion de imagenes en RSS
-- [x] Tests automatizados — infraestructura Vitest + 36 tests iniciales (Sprint 1-2)
-- [ ] Ampliar cobertura de tests (integracion, rutas API)
+- [x] Tests automatizados — 526 tests en 63 archivos (Tech Debt PRD1)
+- [x] Rate limiting — 5 niveles con variables de entorno (Tech Debt PRD2)
+- [x] CI/CD pipeline — GitHub Actions (Tech Debt PRD4)
+- [x] Migracion a PostgreSQL — tipos nativos, indices compuestos (Tech Debt PRD2)
 - [ ] Anadir mas idiomas al sistema i18n
 
 ### Medio plazo (1-2 meses)
 - [x] Autenticacion real con JWT — completado (B-TF3)
 - [x] Notificaciones push reales (Expo Push) — completado (B-MP5)
+- [x] OAuth social login — Google + Apple (Tech Debt PRD4)
+- [x] Modo oscuro — 3 modos con deteccion de sistema (Tech Debt PRD3)
 - [ ] Dashboard de analytics para el equipo
-- [ ] CI/CD pipeline
-- [ ] Migracion a PostgreSQL
-- [ ] Rate limiting y headers de seguridad
+- [ ] Human review queue para contenido moderado por IA
 
 ### Largo plazo (3-6 meses)
 - [ ] Integracion con APIs deportivas (resultados en vivo para TeamStats)
 - [ ] Reels con videos reales (scraping o APIs)
 - [ ] Version premium con funcionalidades avanzadas
 - [ ] Expansion a otros idiomas/paises
-- [ ] Autenticacion biometrica para control parental
-- [ ] Auditoria de seguridad completa
+- [ ] Autenticacion biometrica para control parental en movil
+- [ ] Auditoria de seguridad completa (COPPA/GDPR)

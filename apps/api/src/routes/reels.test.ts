@@ -76,6 +76,10 @@ vi.mock('../services/video-aggregator', () => ({
   }),
 }));
 
+vi.mock('../services/monitoring', () => ({
+  captureException: vi.fn(),
+}));
+
 vi.mock('../utils/url-validator', () => ({
   isPublicUrl: vi.fn().mockReturnValue({ valid: true }),
 }));
@@ -84,12 +88,21 @@ import express from 'express';
 import request from 'supertest';
 import { isPublicUrl } from '../utils/url-validator';
 import reelsRouter from './reels';
+import { errorHandler } from '../middleware/error-handler';
+
+const mockLog = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
 
 // Build a test app
 function createApp() {
   const app = express();
   app.use(express.json());
+  app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    (req as express.Request & { log: typeof mockLog; requestId: string }).log = mockLog;
+    (req as express.Request & { requestId: string }).requestId = 'test-req-id';
+    next();
+  });
   app.use('/api/reels', reelsRouter);
+  app.use(errorHandler as express.ErrorRequestHandler);
   return app;
 }
 
@@ -264,7 +277,7 @@ describe('POST /api/reels/sources/custom', () => {
       });
 
     expect(res.status).toBe(400);
-    expect(res.body.error).toMatch(/not allowed/i);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 
   it('rejects invalid RSS feed URL for YouTube sources', async () => {
@@ -282,8 +295,8 @@ describe('POST /api/reels/sources/custom', () => {
         userId: 'user-1',
       });
 
-    expect(res.status).toBe(422);
-    expect(res.body.error).toMatch(/valid RSS feed/i);
+    expect(res.status).toBe(400);
+    expect(res.body.error.code).toBe('VALIDATION_ERROR');
   });
 
   it('rejects invalid platform values', async () => {

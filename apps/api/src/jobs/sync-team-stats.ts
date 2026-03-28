@@ -1,5 +1,6 @@
 import cron from 'node-cron';
 import { syncAllTeamStats } from '../services/team-stats-sync';
+import { logger } from '../services/logger';
 
 let activeJob: cron.ScheduledTask | null = null;
 
@@ -9,13 +10,13 @@ let activeJob: cron.ScheduledTask | null = null;
 export function startTeamStatsSyncJob() {
   if (activeJob) return;
   activeJob = cron.schedule('0 4 * * *', async () => {
-    console.log('[team-stats-sync] Starting daily team stats sync...');
+    logger.info('Starting daily team stats sync...');
     try {
       const result = await syncAllTeamStats();
-      console.log(`[team-stats-sync] Done. Synced: ${result.synced}, Failed: ${result.failed}`);
+      logger.info({ synced: result.synced, failed: result.failed }, 'Team stats sync completed');
     } catch (err) {
-      console.error('[team-stats-sync] Error:', err);
+      logger.error({ err }, 'Team stats sync error');
     }
   });
-  console.log('[team-stats-sync] Cron scheduled: daily at 04:00 UTC');
+  logger.info('Team stats sync job scheduled: daily at 04:00 UTC');
 }

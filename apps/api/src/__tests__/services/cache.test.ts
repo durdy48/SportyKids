@@ -1,4 +1,4 @@
-import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
+import { describe, it, expect, vi, afterEach } from 'vitest';
 import express from 'express';
 import request from 'supertest';
 import {
@@ -87,7 +87,6 @@ describe('createCache factory', () => {
 
 describe('withCache middleware', () => {
   it('returns cached response on cache hit', async () => {
-    const app = express();
     const cache = new InMemoryCache(100);
 
     // Pre-populate cache

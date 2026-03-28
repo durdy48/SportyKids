@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet } from 'react-native';
-import { COLORS, t } from '@sportykids/shared';
+import { t } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
 
 interface StreakCounterProps {

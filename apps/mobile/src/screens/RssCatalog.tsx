@@ -11,6 +11,7 @@ import {
 } from 'react-native';
 import type { RssSource } from '@sportykids/shared';
 import { COLORS, t, getSportLabel } from '@sportykids/shared';
+import type { ThemeColors } from '../lib/theme';
 import { fetchSourceCatalog, updateUser } from '../lib/api';
 import { useUser } from '../lib/user-context';
 
@@ -21,7 +22,8 @@ interface Section {
 }
 
 export function RssCatalogScreen() {
-  const { user, locale, setUser } = useUser();
+  const { user, locale, setUser, colors } = useUser();
+  const styles = createStyles(colors);
   const [sections, setSections] = useState<Section[]>([]);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
@@ -30,6 +32,7 @@ export function RssCatalogScreen() {
 
   useEffect(() => {
     loadCatalog();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -115,7 +118,7 @@ export function RssCatalogScreen() {
         value={selectedIds.has(item.id)}
         onValueChange={() => toggleSource(item.id)}
         trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
-        thumbColor={selectedIds.has(item.id) ? COLORS.blue : '#F3F4F6'}
+        thumbColor={selectedIds.has(item.id) ? colors.blue : colors.border}
       />
     </View>
   );
@@ -171,16 +174,17 @@ export function RssCatalogScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   loadingContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   header: {
     paddingHorizontal: 16,
@@ -190,34 +194,34 @@ const styles = StyleSheet.create({
   headerTitle: {
     fontSize: 22,
     fontWeight: '700',
-    color: COLORS.darkText,
+    color: colors.text,
   },
   headerSubtitle: {
     fontSize: 14,
-    color: '#9CA3AF',
+    color: colors.muted,
     marginTop: 4,
   },
   sectionHeader: {
-    backgroundColor: '#F1F5F9',
+    backgroundColor: colors.background,
     paddingHorizontal: 16,
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#E5E7EB',
+    borderBottomColor: colors.border,
   },
   sectionTitle: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.darkText,
+    color: colors.text,
     textTransform: 'capitalize',
   },
   sourceCard: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     paddingHorizontal: 16,
     paddingVertical: 14,
     borderBottomWidth: 1,
-    borderBottomColor: '#F1F5F9',
+    borderBottomColor: colors.border,
   },
   sourceInfo: {
     flex: 1,
@@ -226,11 +230,11 @@ const styles = StyleSheet.create({
   sourceName: {
     fontSize: 15,
     fontWeight: '600',
-    color: COLORS.darkText,
+    color: colors.text,
   },
   sourceDescription: {
     fontSize: 13,
-    color: '#6B7280',
+    color: colors.muted,
     marginTop: 2,
     lineHeight: 18,
   },
@@ -242,10 +246,10 @@ const styles = StyleSheet.create({
   },
   sourceMetaText: {
     fontSize: 12,
-    color: '#9CA3AF',
+    color: colors.muted,
   },
   customBadge: {
-    backgroundColor: '#EFF6FF',
+    backgroundColor: colors.blue + '15',
     paddingHorizontal: 6,
     paddingVertical: 2,
     borderRadius: 4,
@@ -261,9 +265,9 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     padding: 16,
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
-    borderTopColor: '#E5E7EB',
+    borderTopColor: colors.border,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.1,
@@ -281,4 +285,5 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
-});
+  });
+}

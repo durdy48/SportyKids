@@ -1,16 +1,20 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, Modal, Image, Linking,
 } from 'react-native';
+import type { NewsItem, Reel } from '@sportykids/shared';
 import { COLORS, SPORTS, t, sportToEmoji, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
+import type { ThemeColors } from '../lib/theme';
 import * as Haptics from 'expo-haptics';
-import type { AgeRange } from '@sportykids/shared';
 import {
   getParentalProfile, verifyPin, setupParentalPin,
-  updateParentalProfile, fetchActivity,
+  updateParentalProfile, fetchActivity, fetchFeedPreview,
+  getDigestPreferences, updateDigestPreferences,
 } from '../lib/api';
+import { API_BASE } from '../config';
 import { useUser } from '../lib/user-context';
+import { ParentalTour } from '../components/ParentalTour';
 
 interface ParentalProfileData {
   allowedFormats: string[];
@@ -37,7 +41,7 @@ interface ActivitySummary {
 }
 
 type ScreenState = 'loading' | 'create-pin' | 'confirm-pin' | 'verify-pin' | 'panel';
-type TabId = 'profile' | 'content' | 'restrictions' | 'activity' | 'pin';
+type TabId = 'profile' | 'content' | 'restrictions' | 'activity' | 'pin' | 'digest';
 
 const FORMATS = [
   { id: 'news', labelKey: 'nav.news', emoji: '📰' },
@@ -48,7 +52,8 @@ const FORMATS = [
 const TIME_PRESETS = [15, 30, 60, 90, 120, 0]; // 0 = no limit
 
 export function ParentalControlScreen() {
-  const { user, parentalProfile, setParentalProfile, locale } = useUser();
+  const { user, setParentalProfile, locale, colors, theme, setTheme } = useUser();
+  const s = createStyles(colors);
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [pin, setPin] = useState('');
   const [tempPin, setTempPin] = useState('');
@@ -58,13 +63,19 @@ export function ParentalControlScreen() {
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState<TabId>('profile');
 
+  // Feed preview state
+  const [previewVisible, setPreviewVisible] = useState(false);
+  const [previewNews, setPreviewNews] = useState<NewsItem[]>([]);
+  const [previewReels, setPreviewReels] = useState<Reel[]>([]);
+  const [previewQuizAvailable, setPreviewQuizAvailable] = useState(false);
+  const [previewLoading, setPreviewLoading] = useState(false);
+
   // Lockout state
   const [lockedUntil, setLockedUntil] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // PIN change state
-  const [changingPin, setChangingPin] = useState(false);
   const [currentPinInput, setCurrentPinInput] = useState('');
   const [newPinInput, setNewPinInput] = useState('');
   const [confirmNewPin, setConfirmNewPin] = useState('');
@@ -101,10 +112,11 @@ export function ParentalControlScreen() {
       const data = await verifyPin(user.id, pin);
       if (data.verified) {
         if (data.profile) {
-          setProfile(data.profile as ParentalProfileData);
+          setProfile(data.profile as unknown as ParentalProfileData);
           setParentalProfile(data.profile);
         }
         setLockedUntil(null);
+        // eslint-disable-next-line no-console
         fetchActivity(user.id).then((data) => setActivity(data as ActivitySummary)).catch(console.error);
         setScreenState('panel');
       } else if (data.status === 423) {
@@ -136,8 +148,9 @@ export function ParentalControlScreen() {
     if (!user) return;
     try {
       const data = await setupParentalPin(user.id, pin);
-      setProfile(data as ParentalProfileData);
+      setProfile(data as unknown as ParentalProfileData);
       setParentalProfile(data);
+      // eslint-disable-next-line no-console
       fetchActivity(user.id).then((data) => setActivity(data as ActivitySummary)).catch(console.error);
       setScreenState('panel');
     } catch { setError(t('errors.create_pin_failed', locale)); }
@@ -149,7 +162,7 @@ export function ParentalControlScreen() {
     setSaving(true);
     try {
       const updated = await updateParentalProfile(user.id, data);
-      setProfile(updated as ParentalProfileData);
+      setProfile(updated as unknown as ParentalProfileData);
       setParentalProfile(updated);
     } catch { /* */ }
     setSaving(false);
@@ -163,8 +176,8 @@ export function ParentalControlScreen() {
     if (formats.length === 0) return;
     setSaving(true);
     try {
-      const updated = await updateParentalProfile(user.id, { allowedFormats: formats });
-      setProfile(updated as ParentalProfileData);
+      const updated = await updateParentalProfile(user.id, { allowedFormats: formats as ('news' | 'reels' | 'quiz')[] });
+      setProfile(updated as unknown as ParentalProfileData);
       setParentalProfile(updated);
     } catch { /* */ }
     setSaving(false);
@@ -177,7 +190,7 @@ export function ParentalControlScreen() {
       const updated = await updateParentalProfile(user.id, {
         maxDailyTimeMinutes: minutes > 0 ? minutes : undefined,
       });
-      setProfile(updated as ParentalProfileData);
+      setProfile(updated as unknown as ParentalProfileData);
       setParentalProfile(updated);
     } catch { /* */ }
     setSaving(false);
@@ -213,9 +226,8 @@ export function ParentalControlScreen() {
 
     try {
       const updated = await setupParentalPin(user.id, newPinInput);
-      setProfile(updated as ParentalProfileData);
+      setProfile(updated as unknown as ParentalProfileData);
       setParentalProfile(updated);
-      setChangingPin(false);
       setCurrentPinInput('');
       setNewPinInput('');
       setConfirmNewPin('');
@@ -226,7 +238,42 @@ export function ParentalControlScreen() {
     }
   };
 
-  if (!user || screenState === 'loading') return <ActivityIndicator style={{ flex: 1 }} color={COLORS.blue} />;
+  const openFeedPreview = async () => {
+    if (!user) return;
+    setPreviewLoading(true);
+    try {
+      const data = await fetchFeedPreview(user.id);
+      setPreviewNews(data.news);
+      setPreviewReels(data.reels);
+      setPreviewQuizAvailable(data.quizAvailable);
+      setPreviewVisible(true);
+    } catch {
+      Alert.alert(t('errors.connection_error', locale));
+    } finally {
+      setPreviewLoading(false);
+    }
+  };
+
+  // Digest state
+  const [digestEnabled, setDigestEnabledState] = useState(false);
+  const [digestEmail, setDigestEmailState] = useState('');
+  const [digestDay, setDigestDayState] = useState(1);
+  const [digestLoaded, setDigestLoaded] = useState(false);
+
+  useEffect(() => {
+    if (user && activeTab === 'digest' && !digestLoaded) {
+      getDigestPreferences(user.id)
+        .then((prefs: { digestEnabled?: boolean; digestEmail?: string | null; digestDay?: number }) => {
+          setDigestEnabledState(prefs.digestEnabled ?? false);
+          setDigestEmailState(prefs.digestEmail ?? '');
+          setDigestDayState(prefs.digestDay ?? 1);
+          setDigestLoaded(true);
+        })
+        .catch(() => setDigestLoaded(true));
+    }
+  }, [user, activeTab, digestLoaded]);
+
+  if (!user || screenState === 'loading') return <ActivityIndicator style={{ flex: 1 }} color={colors.blue} />;
 
   // PIN entry screens
   if (screenState !== 'panel') {
@@ -264,7 +311,7 @@ export function ParentalControlScreen() {
                 {formatCountdown(countdown)}
               </Text>
               <View style={{ width: 200, height: 6, backgroundColor: '#FCA5A5', borderRadius: 3 }}>
-                <View style={{ width: `${Math.max(0, 1 - countdown / 900) * 100}%`, height: 6, backgroundColor: '#EF4444', borderRadius: 3 } as any} />
+                <View style={{ width: Math.max(0, 1 - countdown / 900) * 200, height: 6, backgroundColor: '#EF4444', borderRadius: 3 }} />
               </View>
             </View>
           ) : error ? (
@@ -288,18 +335,21 @@ export function ParentalControlScreen() {
   const currentTimeLimit = (profile?.maxDailyTimeMinutes as number) ?? 0;
 
   return (
+    <View style={{ flex: 1 }}>
+    <ParentalTour locale={locale} colors={colors} />
     <ScrollView style={s.container} contentContainerStyle={s.content}>
       <Text style={s.title}>{t('parental.control', locale)}</Text>
       <Text style={s.subtitle}>{t('parental.manage_content', locale, { name: user.name })}</Text>
 
       {/* Tab bar */}
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={s.tabBarScroll} contentContainerStyle={s.tabBarContent}>
-        {(['profile', 'content', 'restrictions', 'activity', 'pin'] as TabId[]).map((tab) => {
+        {(['profile', 'content', 'restrictions', 'activity', 'digest', 'pin'] as TabId[]).map((tab) => {
           const labels: Record<TabId, string> = {
             profile: t('parental.tab_profile', locale),
             content: t('parental.tab_content', locale),
             restrictions: t('parental.tab_restrictions', locale),
             activity: t('parental.tab_activity', locale),
+            digest: t('parental.tab_digest', locale),
             pin: t('parental.tab_pin', locale),
           };
           return (
@@ -385,6 +435,21 @@ export function ParentalControlScreen() {
             </View>
           </View>
 
+          {/* Feed Preview button */}
+          <TouchableOpacity
+            style={s.previewButton}
+            onPress={openFeedPreview}
+            disabled={previewLoading}
+          >
+            {previewLoading ? (
+              <ActivityIndicator color={colors.surface} />
+            ) : (
+              <Text style={s.previewButtonText}>
+                {t('preview.button', locale, { name: user.name })}
+              </Text>
+            )}
+          </TouchableOpacity>
+
           {saving && <Text style={s.saving}>{t('buttons.saving', locale)}</Text>}
         </>
       )}
@@ -433,55 +498,190 @@ export function ParentalControlScreen() {
           {/* Schedule lock */}
           <View style={s.card}>
             <Text style={s.cardTitle}>{t('schedule.title', locale)}</Text>
-            <View style={{ flexDirection: 'row', gap: 12 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={s.profileLabel}>{t('schedule.start_time', locale)}</Text>
-                <View style={s.scheduleInputRow}>
-                  <TouchableOpacity
-                    style={s.scheduleBtn}
-                    onPress={() => {
-                      const val = ((profile?.allowedHoursStart as number) ?? 7) - 1;
-                      if (val >= 0 && val < ((profile?.allowedHoursEnd as number) ?? 21)) saveProfile({ allowedHoursStart: val });
-                    }}
-                  >
-                    <Text style={s.scheduleBtnText}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={s.scheduleValue}>{profile?.allowedHoursStart ?? 7}:00</Text>
-                  <TouchableOpacity
-                    style={s.scheduleBtn}
-                    onPress={() => {
-                      const val = ((profile?.allowedHoursStart as number) ?? 7) + 1;
-                      if (val <= 23 && val < ((profile?.allowedHoursEnd as number) ?? 21)) saveProfile({ allowedHoursStart: val });
-                    }}
-                  >
-                    <Text style={s.scheduleBtnText}>+</Text>
-                  </TouchableOpacity>
-                </View>
+
+            {/* Toggle */}
+            <TouchableOpacity
+              style={s.scheduleToggleRow}
+              onPress={() => {
+                const isEnabled = ((profile?.allowedHoursStart as number) ?? 0) !== 0 || ((profile?.allowedHoursEnd as number) ?? 24) !== 24;
+                if (isEnabled) {
+                  saveProfile({ allowedHoursStart: 0, allowedHoursEnd: 24 });
+                } else {
+                  saveProfile({ allowedHoursStart: 7, allowedHoursEnd: 21 });
+                }
+              }}
+            >
+              <Text style={[s.profileLabel, { flex: 1 }]}>{t('schedule.enable', locale)}</Text>
+              <View style={[s.toggleTrack, ((profile?.allowedHoursStart ?? 0) !== 0 || (profile?.allowedHoursEnd ?? 24) !== 24) && s.toggleTrackActive]}>
+                <View style={[s.toggleThumb, ((profile?.allowedHoursStart ?? 0) !== 0 || (profile?.allowedHoursEnd ?? 24) !== 24) && s.toggleThumbActive]} />
               </View>
-              <View style={{ flex: 1 }}>
-                <Text style={s.profileLabel}>{t('schedule.end_time', locale)}</Text>
-                <View style={s.scheduleInputRow}>
-                  <TouchableOpacity
-                    style={s.scheduleBtn}
-                    onPress={() => {
-                      const val = ((profile?.allowedHoursEnd as number) ?? 21) - 1;
-                      if (val >= 0 && val > ((profile?.allowedHoursStart as number) ?? 7)) saveProfile({ allowedHoursEnd: val });
-                    }}
-                  >
-                    <Text style={s.scheduleBtnText}>−</Text>
-                  </TouchableOpacity>
-                  <Text style={s.scheduleValue}>{profile?.allowedHoursEnd ?? 21}:00</Text>
-                  <TouchableOpacity
-                    style={s.scheduleBtn}
-                    onPress={() => {
-                      const val = ((profile?.allowedHoursEnd as number) ?? 21) + 1;
-                      if (val <= 24) saveProfile({ allowedHoursEnd: val });
-                    }}
-                  >
-                    <Text style={s.scheduleBtnText}>+</Text>
-                  </TouchableOpacity>
+            </TouchableOpacity>
+
+            {((profile?.allowedHoursStart ?? 0) !== 0 || (profile?.allowedHoursEnd ?? 24) !== 24) && (
+              <>
+                <View style={{ flexDirection: 'row', gap: 12, marginTop: 12 }}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.profileLabel}>{t('schedule.start_time', locale)}</Text>
+                    <View style={s.scheduleInputRow}>
+                      <TouchableOpacity
+                        style={s.scheduleBtn}
+                        onPress={() => {
+                          const val = ((profile?.allowedHoursStart as number) ?? 7) - 1;
+                          if (val >= 0 && val < ((profile?.allowedHoursEnd as number) ?? 21)) saveProfile({ allowedHoursStart: val });
+                        }}
+                      >
+                        <Text style={s.scheduleBtnText}>-</Text>
+                      </TouchableOpacity>
+                      <Text style={s.scheduleValue}>{profile?.allowedHoursStart ?? 7}:00</Text>
+                      <TouchableOpacity
+                        style={s.scheduleBtn}
+                        onPress={() => {
+                          const val = ((profile?.allowedHoursStart as number) ?? 7) + 1;
+                          if (val <= 23 && val < ((profile?.allowedHoursEnd as number) ?? 21)) saveProfile({ allowedHoursStart: val });
+                        }}
+                      >
+                        <Text style={s.scheduleBtnText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={s.profileLabel}>{t('schedule.end_time', locale)}</Text>
+                    <View style={s.scheduleInputRow}>
+                      <TouchableOpacity
+                        style={s.scheduleBtn}
+                        onPress={() => {
+                          const val = ((profile?.allowedHoursEnd as number) ?? 21) - 1;
+                          if (val >= 0 && val > ((profile?.allowedHoursStart as number) ?? 7)) saveProfile({ allowedHoursEnd: val });
+                        }}
+                      >
+                        <Text style={s.scheduleBtnText}>-</Text>
+                      </TouchableOpacity>
+                      <Text style={s.scheduleValue}>{profile?.allowedHoursEnd ?? 21}:00</Text>
+                      <TouchableOpacity
+                        style={s.scheduleBtn}
+                        onPress={() => {
+                          const val = ((profile?.allowedHoursEnd as number) ?? 21) + 1;
+                          if (val <= 24) saveProfile({ allowedHoursEnd: val });
+                        }}
+                      >
+                        <Text style={s.scheduleBtnText}>+</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </View>
                 </View>
-              </View>
+
+                {/* Timezone picker */}
+                <Text style={[s.profileLabel, { marginTop: 12 }]}>{t('schedule.timezone', locale)}</Text>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginTop: 6, marginBottom: 8 }}>
+                  {['Europe/Madrid', 'Europe/London', 'Europe/Paris', 'Europe/Berlin', 'Europe/Rome', 'America/New_York', 'America/Chicago', 'America/Los_Angeles', 'America/Mexico_City', 'Asia/Tokyo'].map((tz) => (
+                    <TouchableOpacity
+                      key={tz}
+                      style={[s.timeChip, (profile?.timezone ?? 'Europe/Madrid') === tz && s.timeChipActive]}
+                      onPress={() => saveProfile({ timezone: tz })}
+                    >
+                      <Text style={[s.timeChipText, (profile?.timezone ?? 'Europe/Madrid') === tz && s.timeChipTextActive]}>
+                        {tz.split('/')[1]?.replace('_', ' ') ?? tz}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+
+                {/* Dynamic description */}
+                <Text style={[s.scheduleDescription, { color: colors.muted }]}>
+                  {t('schedule.description', locale, {
+                    start: String(profile?.allowedHoursStart ?? 7),
+                    end: String(profile?.allowedHoursEnd ?? 21),
+                    timezone: (profile?.timezone as string) ?? 'Europe/Madrid',
+                  })}
+                </Text>
+              </>
+            )}
+
+            {(profile?.allowedHoursStart ?? 0) === 0 && (profile?.allowedHoursEnd ?? 24) === 24 && (
+              <Text style={[s.scheduleDescription, { color: colors.muted }]}>
+                {t('schedule.all_day', locale)}
+              </Text>
+            )}
+          </View>
+
+          {/* Per-type time limit sliders */}
+          <View style={s.card}>
+            <Text style={s.cardTitle}>{t('restrictions.per_type', locale)}</Text>
+            <Text style={[s.perTypeTip, { color: colors.muted }]}>{t('restrictions.per_type_tip', locale)}</Text>
+
+            {/* News limit */}
+            <View style={s.perTypeRow}>
+              <Text style={[s.perTypeLabel, { color: colors.text }]}>{t('restrictions.news_limit', locale)}</Text>
+              <Text style={[s.perTypeValue, { color: colors.blue }]}>
+                {(profile?.maxNewsMinutes ?? 0) === 0
+                  ? t('restrictions.no_specific_limit', locale)
+                  : t('restrictions.minutes', locale, { n: String(profile?.maxNewsMinutes) })}
+              </Text>
+            </View>
+            <View style={s.timeLimitGrid}>
+              {[0, 5, 15, 30, 60, 90, 120].map((mins) => {
+                const active = (profile?.maxNewsMinutes ?? 0) === mins;
+                const label = mins === 0 ? t('restrictions.no_specific_limit', locale) : `${mins} min`;
+                return (
+                  <TouchableOpacity
+                    key={`news-${mins}`}
+                    style={[s.timeLimitChip, active && s.timeLimitActive]}
+                    onPress={() => saveProfile({ maxNewsMinutes: mins === 0 ? null : mins })}
+                  >
+                    <Text style={[s.timeLimitText, active && { color: '#fff' }]}>{label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Reels limit */}
+            <View style={[s.perTypeRow, { marginTop: 16 }]}>
+              <Text style={[s.perTypeLabel, { color: colors.text }]}>{t('restrictions.reels_limit', locale)}</Text>
+              <Text style={[s.perTypeValue, { color: colors.blue }]}>
+                {(profile?.maxReelsMinutes ?? 0) === 0
+                  ? t('restrictions.no_specific_limit', locale)
+                  : t('restrictions.minutes', locale, { n: String(profile?.maxReelsMinutes) })}
+              </Text>
+            </View>
+            <View style={s.timeLimitGrid}>
+              {[0, 5, 15, 30, 60, 90, 120].map((mins) => {
+                const active = (profile?.maxReelsMinutes ?? 0) === mins;
+                const label = mins === 0 ? t('restrictions.no_specific_limit', locale) : `${mins} min`;
+                return (
+                  <TouchableOpacity
+                    key={`reels-${mins}`}
+                    style={[s.timeLimitChip, active && s.timeLimitActive]}
+                    onPress={() => saveProfile({ maxReelsMinutes: mins === 0 ? null : mins })}
+                  >
+                    <Text style={[s.timeLimitText, active && { color: '#fff' }]}>{label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+
+            {/* Quiz limit */}
+            <View style={[s.perTypeRow, { marginTop: 16 }]}>
+              <Text style={[s.perTypeLabel, { color: colors.text }]}>{t('restrictions.quiz_limit', locale)}</Text>
+              <Text style={[s.perTypeValue, { color: colors.blue }]}>
+                {(profile?.maxQuizMinutes ?? 0) === 0
+                  ? t('restrictions.no_specific_limit', locale)
+                  : t('restrictions.minutes', locale, { n: String(profile?.maxQuizMinutes) })}
+              </Text>
+            </View>
+            <View style={s.timeLimitGrid}>
+              {[0, 5, 15, 30, 60, 90, 120].map((mins) => {
+                const active = (profile?.maxQuizMinutes ?? 0) === mins;
+                const label = mins === 0 ? t('restrictions.no_specific_limit', locale) : `${mins} min`;
+                return (
+                  <TouchableOpacity
+                    key={`quiz-${mins}`}
+                    style={[s.timeLimitChip, active && s.timeLimitActive]}
+                    onPress={() => saveProfile({ maxQuizMinutes: mins === 0 ? null : mins })}
+                  >
+                    <Text style={[s.timeLimitText, active && { color: '#fff' }]}>{label}</Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
           </View>
 
@@ -495,26 +695,118 @@ export function ParentalControlScreen() {
           <Text style={s.cardTitle}>{t('parental.weekly_activity', locale)}</Text>
           {activity ? (
             <View style={s.statsGrid}>
-              <View style={[s.stat, { backgroundColor: '#EFF6FF' }]}>
-                <Text style={[s.statNum, { color: COLORS.blue }]}>{activity.news_viewed ?? 0}</Text>
+              <View style={[s.stat, { backgroundColor: colors.blue + '15' }]}>
+                <Text style={[s.statNum, { color: colors.blue }]}>{activity.news_viewed ?? 0}</Text>
                 <Text style={s.statLabel}>{t('parental.news_read', locale)}</Text>
               </View>
-              <View style={[s.stat, { backgroundColor: '#F3E8FF' }]}>
+              <View style={[s.stat, { backgroundColor: '#9333EA' + '15' }]}>
                 <Text style={[s.statNum, { color: '#9333EA' }]}>{activity.reels_viewed ?? 0}</Text>
                 <Text style={s.statLabel}>{t('parental.reels_viewed', locale)}</Text>
               </View>
-              <View style={[s.stat, { backgroundColor: '#DCFCE7' }]}>
-                <Text style={[s.statNum, { color: COLORS.green }]}>{activity.quizzes_played ?? 0}</Text>
+              <View style={[s.stat, { backgroundColor: colors.green + '15' }]}>
+                <Text style={[s.statNum, { color: colors.green }]}>{activity.quizzes_played ?? 0}</Text>
                 <Text style={s.statLabel}>{t('parental.quizzes_played', locale)}</Text>
               </View>
-              <View style={[s.stat, { backgroundColor: '#FEF9C3' }]}>
-                <Text style={[s.statNum, { color: COLORS.yellow }]}>{activity.totalPoints ?? 0}</Text>
+              <View style={[s.stat, { backgroundColor: colors.yellow + '15' }]}>
+                <Text style={[s.statNum, { color: colors.yellow }]}>{activity.totalPoints ?? 0}</Text>
                 <Text style={s.statLabel}>{t('parental.total_points', locale)}</Text>
               </View>
             </View>
           ) : (
             <ActivityIndicator color={COLORS.blue} />
           )}
+        </View>
+      )}
+
+      {/* Digest tab */}
+      {activeTab === 'digest' && (
+        <View style={[s.card, { backgroundColor: colors.surface }]}>
+          <Text style={[s.cardTitle, { color: colors.text }]}>{t('digest.title', locale)}</Text>
+
+          <TouchableOpacity
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12 }}
+            onPress={() => {
+              const next = !digestEnabled;
+              setDigestEnabledState(next);
+              if (user) updateDigestPreferences(user.id, { digestEnabled: next }).catch(() => {});
+            }}
+          >
+            <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: colors.blue, backgroundColor: digestEnabled ? colors.blue : 'transparent', justifyContent: 'center', alignItems: 'center' }}>
+              {digestEnabled && <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>✓</Text>}
+            </View>
+            <Text style={{ fontSize: 14, fontWeight: '500', color: colors.text }}>{t('digest.enable', locale)}</Text>
+          </TouchableOpacity>
+
+          {digestEnabled && (
+            <View style={{ gap: 16 }}>
+              <View>
+                <Text style={[s.inputLabel, { color: colors.muted }]}>{t('digest.email_label', locale)}</Text>
+                <TextInput
+                  style={{ fontSize: 15, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border, color: colors.text }}
+                  value={digestEmail}
+                  onChangeText={setDigestEmailState}
+                  onBlur={() => {
+                    if (user) updateDigestPreferences(user.id, { digestEmail: digestEmail.trim() || null }).catch(() => {});
+                  }}
+                  placeholder={t('digest.email_placeholder', locale)}
+                  placeholderTextColor={colors.muted}
+                  keyboardType="email-address"
+                  autoCapitalize="none"
+                />
+              </View>
+
+              <View>
+                <Text style={[s.inputLabel, { color: colors.muted }]}>{t('digest.send_on', locale)}</Text>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, marginTop: 8 }}>
+                  {[1, 2, 3, 4, 5, 6, 0].map((day) => (
+                    <TouchableOpacity
+                      key={day}
+                      style={{ paddingHorizontal: 12, paddingVertical: 8, borderRadius: 10, backgroundColor: digestDay === day ? colors.blue : colors.border }}
+                      onPress={() => {
+                        setDigestDayState(day);
+                        if (user) updateDigestPreferences(user.id, { digestDay: day }).catch(() => {});
+                      }}
+                    >
+                      <Text style={{ fontSize: 13, fontWeight: digestDay === day ? '600' : '500', color: digestDay === day ? '#fff' : colors.text }}>
+                        {t(`digest.days.${day}`, locale)}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </View>
+              </View>
+
+              <TouchableOpacity
+                style={[s.button, { marginTop: 8 }]}
+                onPress={() => {
+                  if (!user) return;
+                  const url = `${API_BASE}/parents/digest/${user.id}/download`;
+                  Linking.openURL(url);
+                }}
+              >
+                <Text style={s.buttonText}>{t('digest.download_pdf', locale)}</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Theme toggle in profile tab */}
+      {activeTab === 'profile' && (
+        <View style={[s.card, { backgroundColor: colors.surface }]}>
+          <Text style={[s.cardTitle, { color: colors.text }]}>{t('theme.toggle', locale)}</Text>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            {(['system', 'dark', 'light'] as const).map((mode) => (
+              <TouchableOpacity
+                key={mode}
+                style={[s.timeLimitChip, theme === mode && { backgroundColor: colors.blue }]}
+                onPress={() => setTheme(mode)}
+              >
+                <Text style={[s.timeLimitText, theme === mode && { color: '#fff' }]}>
+                  {mode === 'system' ? '🔄' : mode === 'dark' ? '🌙' : '☀️'} {t(`theme.${mode}`, locale)}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
       )}
 
@@ -570,58 +862,183 @@ export function ParentalControlScreen() {
           </TouchableOpacity>
         </View>
       )}
+
     </ScrollView>
+
+    {/* Feed Preview Modal */}
+    <Modal visible={previewVisible} animationType="slide" onRequestClose={() => setPreviewVisible(false)}>
+      <View style={[s.previewOverlay, { paddingTop: 54 }]}>
+        <View style={s.previewHeader}>
+          <Text style={s.previewTitle} numberOfLines={1}>
+            {t('preview.title', locale, { name: user.name })}
+          </Text>
+          <TouchableOpacity style={s.previewClose} onPress={() => setPreviewVisible(false)}>
+            <Text style={s.previewCloseText}>{t('preview.close', locale)}</Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Restrictions banner */}
+        <View style={s.restrictionsBanner}>
+          <Text style={s.restrictionsBannerTitle}>
+            {profile?.allowedFormats?.length === 3 && !profile?.maxDailyTimeMinutes
+              ? t('preview.no_restrictions', locale)
+              : t('preview.active_restrictions', locale)}
+          </Text>
+          {profile && (
+            <Text style={s.restrictionsBannerText}>
+              {(profile.allowedFormats as string[])?.map((f: string) => t(`nav.${f}`, locale)).join(', ')}
+              {profile.maxDailyTimeMinutes ? ` · ${profile.maxDailyTimeMinutes} min/day` : ''}
+            </Text>
+          )}
+        </View>
+
+        <ScrollView>
+          {/* News Section */}
+          {previewNews.length > 0 && (
+            <>
+              <View style={s.previewSection}>
+                <Text style={s.previewSectionTitle}>{t('preview.news_section', locale)}</Text>
+              </View>
+              {previewNews.slice(0, 10).map((item) => (
+                <View key={item.id} style={s.previewNewsItem}>
+                  {item.imageUrl ? (
+                    <Image source={{ uri: item.imageUrl }} style={s.previewNewsImage} />
+                  ) : null}
+                  <View style={s.previewNewsContent}>
+                    <Text style={s.previewNewsTitle} numberOfLines={2}>{item.title}</Text>
+                    <Text style={s.previewNewsMeta}>{item.source} · {sportToEmoji(item.sport)} {getSportLabel(item.sport, locale)}</Text>
+                  </View>
+                </View>
+              ))}
+            </>
+          )}
+
+          {/* Reels Section */}
+          {previewReels.length > 0 && (
+            <>
+              <View style={s.previewSection}>
+                <Text style={s.previewSectionTitle}>{t('preview.reels_section', locale)}</Text>
+              </View>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, paddingBottom: 16 }}>
+                {previewReels.slice(0, 10).map((reel) => (
+                  <View key={reel.id} style={s.previewReelItem}>
+                    {reel.thumbnailUrl ? (
+                      <Image source={{ uri: reel.thumbnailUrl }} style={s.previewReelImage} />
+                    ) : null}
+                    <View style={s.previewReelTitle}>
+                      <Text style={s.previewReelTitleText} numberOfLines={2}>{reel.title}</Text>
+                    </View>
+                  </View>
+                ))}
+              </ScrollView>
+            </>
+          )}
+
+          {/* Quiz status */}
+          <View style={s.previewSection}>
+            <Text style={s.previewSectionTitle}>
+              {previewQuizAvailable ? t('preview.quiz_available', locale) : t('preview.quiz_blocked', locale)}
+            </Text>
+          </View>
+
+          {/* Empty state */}
+          {previewNews.length === 0 && previewReels.length === 0 && (
+            <View style={s.previewEmpty}>
+              <Text style={{ fontSize: 48 }}>📭</Text>
+              <Text style={s.previewEmptyText}>{t('preview.no_content', locale)}</Text>
+            </View>
+          )}
+        </ScrollView>
+      </View>
+    </Modal>
+    </View>
   );
 }
 
-const s = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#F8FAFC' },
-  content: { padding: 20, paddingBottom: 40 },
-  center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
-  title: { fontSize: 24, fontWeight: '700', color: COLORS.darkText, marginTop: 12 },
-  subtitle: { fontSize: 14, color: '#9CA3AF', marginTop: 4, marginBottom: 20 },
-  pinInput: { fontSize: 32, fontWeight: '700', textAlign: 'center', letterSpacing: 16, width: 200, paddingVertical: 16, borderBottomWidth: 3, borderBottomColor: '#E5E7EB', marginTop: 24, marginBottom: 8 },
-  pinInputSmall: { fontSize: 24, fontWeight: '700', textAlign: 'center', letterSpacing: 12, width: '100%', paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: '#E5E7EB', marginBottom: 12 },
-  inputLabel: { fontSize: 13, color: '#6B7280', marginTop: 8, marginBottom: 4 },
-  error: { color: '#EF4444', fontSize: 13, marginTop: 8 },
-  button: { backgroundColor: COLORS.blue, paddingVertical: 14, paddingHorizontal: 40, borderRadius: 12, alignItems: 'center' },
-  buttonDisabled: { opacity: 0.4 },
-  buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
-  tabBar: { flexDirection: 'row', backgroundColor: '#F3F4F6', borderRadius: 12, padding: 4, marginBottom: 16 },
-  tab: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, alignItems: 'center' },
-  tabActive: { backgroundColor: '#fff', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 2, elevation: 2 },
-  tabText: { fontSize: 13, fontWeight: '500', color: '#9CA3AF' },
-  tabTextActive: { color: COLORS.darkText, fontWeight: '600' },
-  card: { backgroundColor: '#fff', borderRadius: 16, padding: 20, marginTop: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
-  cardTitle: { fontSize: 16, fontWeight: '600', color: COLORS.darkText, marginBottom: 12 },
-  statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
-  stat: { flex: 1, minWidth: '40%', borderRadius: 12, padding: 16, alignItems: 'center' },
-  statNum: { fontSize: 28, fontWeight: '700' },
-  statLabel: { fontSize: 11, color: '#6B7280', marginTop: 2 },
-  formatRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 2, marginBottom: 8 },
-  formatActive: { borderColor: COLORS.green, backgroundColor: '#F0FDF4' },
-  formatInactive: { borderColor: '#E5E7EB', backgroundColor: '#F9FAFB' },
-  formatText: { fontSize: 14, fontWeight: '500', color: COLORS.darkText },
-  formatBadge: { fontSize: 11, fontWeight: '700', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, overflow: 'hidden' },
-  badgeOn: { backgroundColor: COLORS.green, color: '#fff' },
-  badgeOff: { backgroundColor: '#D1D5DB', color: '#fff' },
-  timeLimitGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  timeLimitChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: '#F3F4F6', minWidth: '28%', alignItems: 'center' },
-  timeLimitActive: { backgroundColor: COLORS.blue },
-  timeLimitText: { fontSize: 13, fontWeight: '600', color: '#4B5563' },
-  saving: { fontSize: 12, color: '#9CA3AF', textAlign: 'center', marginTop: 8 },
-  tabBarScroll: { marginBottom: 16 },
-  tabBarContent: { backgroundColor: '#F3F4F6', borderRadius: 12, padding: 4, gap: 0 },
-  profileRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: '#F3F4F6' },
-  profileLabel: { fontSize: 13, color: '#6B7280', flex: 1 },
-  profileValue: { fontSize: 14, fontWeight: '600', color: COLORS.darkText, flex: 1, textAlign: 'right' },
-  sportsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
-  sportChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
-  sportChipActive: { backgroundColor: COLORS.green },
-  sportChipInactive: { backgroundColor: '#F3F4F6' },
-  sportChipText: { fontSize: 13, fontWeight: '500', color: '#6B7280' },
-  scheduleInputRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 8 },
-  scheduleBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: '#F3F4F6', justifyContent: 'center', alignItems: 'center' },
-  scheduleBtnText: { fontSize: 20, fontWeight: '600', color: COLORS.darkText },
-  scheduleValue: { fontSize: 18, fontWeight: '700', color: COLORS.darkText, minWidth: 60, textAlign: 'center' },
-});
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
+    container: { flex: 1, backgroundColor: colors.background },
+    content: { padding: 20, paddingBottom: 40 },
+    center: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 40 },
+    title: { fontSize: 24, fontWeight: '700', color: colors.text, marginTop: 12 },
+    subtitle: { fontSize: 14, color: colors.muted, marginTop: 4, marginBottom: 20 },
+    pinInput: { fontSize: 32, fontWeight: '700', textAlign: 'center', letterSpacing: 16, width: 200, paddingVertical: 16, borderBottomWidth: 3, borderBottomColor: colors.border, marginTop: 24, marginBottom: 8 },
+    pinInputSmall: { fontSize: 24, fontWeight: '700', textAlign: 'center', letterSpacing: 12, width: '100%', paddingVertical: 12, borderBottomWidth: 2, borderBottomColor: colors.border, marginBottom: 12 },
+    inputLabel: { fontSize: 13, color: colors.muted, marginTop: 8, marginBottom: 4 },
+    error: { color: '#EF4444', fontSize: 13, marginTop: 8 },
+    button: { backgroundColor: colors.blue, paddingVertical: 14, paddingHorizontal: 40, borderRadius: 12, alignItems: 'center' },
+    buttonDisabled: { opacity: 0.4 },
+    buttonText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+    tabBar: { flexDirection: 'row', backgroundColor: colors.border, borderRadius: 12, padding: 4, marginBottom: 16 },
+    tab: { paddingVertical: 10, paddingHorizontal: 14, borderRadius: 10, alignItems: 'center' },
+    tabActive: { backgroundColor: colors.surface, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.08, shadowRadius: 2, elevation: 2 },
+    tabText: { fontSize: 13, fontWeight: '500', color: colors.muted },
+    tabTextActive: { color: colors.text, fontWeight: '600' },
+    card: { backgroundColor: colors.surface, borderRadius: 16, padding: 20, marginTop: 16, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+    cardTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 12 },
+    statsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+    stat: { flex: 1, minWidth: '40%', borderRadius: 12, padding: 16, alignItems: 'center' },
+    statNum: { fontSize: 28, fontWeight: '700' },
+    statLabel: { fontSize: 11, color: colors.muted, marginTop: 2 },
+    formatRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 14, borderRadius: 12, borderWidth: 2, marginBottom: 8 },
+    formatActive: { borderColor: colors.green, backgroundColor: colors.green + '10' },
+    formatInactive: { borderColor: colors.border, backgroundColor: colors.background },
+    formatText: { fontSize: 14, fontWeight: '500', color: colors.text },
+    formatBadge: { fontSize: 11, fontWeight: '700', paddingHorizontal: 10, paddingVertical: 4, borderRadius: 20, overflow: 'hidden' },
+    badgeOn: { backgroundColor: colors.green, color: '#fff' },
+    badgeOff: { backgroundColor: '#D1D5DB', color: '#fff' },
+    timeLimitGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    timeLimitChip: { paddingHorizontal: 16, paddingVertical: 10, borderRadius: 12, backgroundColor: colors.border, minWidth: '28%', alignItems: 'center' },
+    timeLimitActive: { backgroundColor: colors.blue },
+    timeLimitText: { fontSize: 13, fontWeight: '600', color: colors.muted },
+    perTypeTip: { fontSize: 12, marginBottom: 12 },
+    perTypeRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 },
+    perTypeLabel: { fontSize: 14, fontWeight: '600' },
+    perTypeValue: { fontSize: 13, fontWeight: '500' },
+    saving: { fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: 8 },
+    tabBarScroll: { marginBottom: 16 },
+    tabBarContent: { backgroundColor: colors.border, borderRadius: 12, padding: 4, gap: 0 },
+    profileRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+    profileLabel: { fontSize: 13, color: colors.muted, flex: 1 },
+    profileValue: { fontSize: 14, fontWeight: '600', color: colors.text, flex: 1, textAlign: 'right' },
+    sportsGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8 },
+    sportChip: { paddingHorizontal: 14, paddingVertical: 8, borderRadius: 12 },
+    sportChipActive: { backgroundColor: colors.green },
+    sportChipInactive: { backgroundColor: colors.border },
+    sportChipText: { fontSize: 13, fontWeight: '500', color: colors.muted },
+    scheduleInputRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12, marginTop: 8 },
+    scheduleBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.border, justifyContent: 'center', alignItems: 'center' },
+    scheduleBtnText: { fontSize: 20, fontWeight: '600', color: colors.text },
+    scheduleValue: { fontSize: 18, fontWeight: '700', color: colors.text, minWidth: 60, textAlign: 'center' },
+    scheduleToggleRow: { flexDirection: 'row', alignItems: 'center', marginBottom: 4, paddingVertical: 4 },
+    toggleTrack: { width: 44, height: 24, borderRadius: 12, backgroundColor: colors.border, justifyContent: 'center', paddingHorizontal: 2 },
+    toggleTrackActive: { backgroundColor: colors.blue },
+    toggleThumb: { width: 20, height: 20, borderRadius: 10, backgroundColor: '#fff' },
+    toggleThumbActive: { alignSelf: 'flex-end' },
+    scheduleDescription: { fontSize: 12, marginTop: 8, lineHeight: 18 },
+    // Feed preview modal styles
+    previewButton: { backgroundColor: colors.blue, paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 16 },
+    previewButtonText: { color: '#fff', fontSize: 15, fontWeight: '600' },
+    previewOverlay: { flex: 1, backgroundColor: colors.background },
+    previewHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, borderBottomWidth: 1, borderBottomColor: colors.border },
+    previewTitle: { fontSize: 18, fontWeight: '700', color: colors.text, flex: 1 },
+    previewClose: { padding: 8 },
+    previewCloseText: { fontSize: 16, fontWeight: '600', color: colors.blue },
+    restrictionsBanner: { paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
+    restrictionsBannerTitle: { fontSize: 13, fontWeight: '600', color: colors.muted, marginBottom: 4 },
+    restrictionsBannerText: { fontSize: 12, color: colors.muted },
+    previewSection: { paddingHorizontal: 16, paddingTop: 16, paddingBottom: 8 },
+    previewSectionTitle: { fontSize: 16, fontWeight: '600', color: colors.text, marginBottom: 8 },
+    previewNewsItem: { backgroundColor: colors.surface, borderRadius: 12, marginHorizontal: 16, marginBottom: 10, overflow: 'hidden', shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.05, shadowRadius: 3, elevation: 1 },
+    previewNewsImage: { width: '100%', height: 120, resizeMode: 'cover' },
+    previewNewsContent: { padding: 12 },
+    previewNewsTitle: { fontSize: 14, fontWeight: '600', color: colors.text, marginBottom: 4 },
+    previewNewsMeta: { fontSize: 12, color: colors.muted },
+    previewReelItem: { width: 120, height: 170, borderRadius: 12, marginRight: 10, overflow: 'hidden', backgroundColor: '#000' },
+    previewReelImage: { width: '100%', height: '100%', resizeMode: 'cover' },
+    previewReelTitle: { position: 'absolute', bottom: 0, left: 0, right: 0, backgroundColor: 'rgba(0,0,0,0.5)', padding: 6 },
+    previewReelTitleText: { color: '#fff', fontSize: 11, fontWeight: '500' },
+    previewEmpty: { alignItems: 'center', paddingVertical: 40 },
+    previewEmptyText: { fontSize: 14, color: colors.muted, marginTop: 8 },
+  });
+}

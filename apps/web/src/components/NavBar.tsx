@@ -12,7 +12,6 @@ export function NavBar() {
   const pathname = usePathname();
   const { user, parentalProfile, locale, resolvedTheme, setTheme, theme, setLocale, setUser } = useUser();
   const [showLangMenu, setShowLangMenu] = useState(false);
-  const [savingLocale, setSavingLocale] = useState(false);
   const [savedMsg, setSavedMsg] = useState(false);
 
   if (!user) return null;
@@ -102,14 +101,12 @@ export function NavBar() {
                     onChange={async (e) => {
                       if (!user) return;
                       const newCountry = e.target.value;
-                      setSavingLocale(true);
                       try {
                         await updateUser(user.id, { country: newCountry } as Record<string, unknown>);
                         setUser({ ...user, country: newCountry });
                         setSavedMsg(true);
                         setTimeout(() => setSavedMsg(false), 2000);
                       } catch { /* ignore */ }
-                      setSavingLocale(false);
                     }}
                     className="w-full px-2 py-1.5 rounded-lg text-xs bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text)]"
                   >
@@ -132,7 +129,7 @@ export function NavBar() {
               aria-label={t('theme.toggle', locale)}
               title={t(`theme.${theme}`, locale)}
             >
-              {resolvedTheme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19'}
+              {theme === 'system' ? '\u{1F504}' : resolvedTheme === 'dark' ? '\u2600\uFE0F' : '\uD83C\uDF19'}
             </button>
             <Link
               href="/parents"

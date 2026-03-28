@@ -2,6 +2,7 @@ import Parser from 'rss-parser';
 import { prisma } from '../config/database';
 import { classifyNews } from './classifier';
 import { moderateContent } from './content-moderator';
+import { logger } from './logger';
 
 const parser = new Parser({
   timeout: 10000,
@@ -177,7 +178,7 @@ export async function syncVideoSource(
         result.itemsCreated++;
       } catch (err) {
         if (!(err instanceof Error && err.message.includes('Unique constraint'))) {
-          console.error(`  Error inserting reel "${item.title}":`, err);
+          logger.error({ err, title: item.title }, 'Error inserting reel');
         }
       }
     }
@@ -188,12 +189,9 @@ export async function syncVideoSource(
       data: { lastSyncedAt: new Date() },
     });
 
-    console.log(
-      `  OK ${sourceName}: ${result.itemsCreated} created, ` +
-      `${result.moderationApproved} approved, ${result.moderationRejected} rejected`,
-    );
+    logger.info({ source: sourceName, created: result.itemsCreated, approved: result.moderationApproved, rejected: result.moderationRejected }, 'Video source sync complete');
   } catch (err) {
-    console.error(`  Error syncing video source ${sourceName}:`, err instanceof Error ? err.message : err);
+    logger.error({ err: err instanceof Error ? err.message : err, source: sourceName }, 'Error syncing video source');
   }
 
   return result;
@@ -204,7 +202,7 @@ export async function syncVideoSource(
 // ---------------------------------------------------------------------------
 
 export async function syncAllVideoSources(): Promise<VideoSyncAllResult> {
-  console.log('Starting video source synchronization...');
+  logger.info('Starting video source synchronization...');
   const sources = await prisma.videoSource.findMany({ where: { active: true } });
 
   const allResult: VideoSyncAllResult = {
@@ -217,7 +215,7 @@ export async function syncAllVideoSources(): Promise<VideoSyncAllResult> {
   };
 
   if (sources.length === 0) {
-    console.log('No active video sources found.');
+    logger.info('No active video sources found.');
     return allResult;
   }
 
@@ -242,10 +240,7 @@ export async function syncAllVideoSources(): Promise<VideoSyncAllResult> {
     }
   }
 
-  console.log(
-    `Video sync complete: ${allResult.totalCreated} reels from ${allResult.sources.length} sources. ` +
-    `Moderation: ${allResult.totalApproved} approved, ${allResult.totalRejected} rejected, ${allResult.totalErrors} errors.`,
-  );
+  logger.info({ created: allResult.totalCreated, sources: allResult.sources.length, approved: allResult.totalApproved, rejected: allResult.totalRejected, errors: allResult.totalErrors }, 'Video sync complete');
 
   return allResult;
 }

@@ -3,6 +3,7 @@ import { getTeamStats } from '../services/team-stats';
 import { syncAllTeamStats } from '../services/team-stats-sync';
 import { withCache, CACHE_TTL } from '../services/cache';
 import { requireAuth } from '../middleware/auth';
+import { NotFoundError } from '../errors';
 
 const router = Router();
 
@@ -12,26 +13,18 @@ router.get('/:teamName/stats', withCache('team:stats:', CACHE_TTL.TEAM_STATS), a
 
   const stats = await getTeamStats(decodeURIComponent(teamName));
 
-  if (!stats) {
-    res.status(404).json({ error: 'Team not found' });
-    return;
-  }
+  if (!stats) throw new NotFoundError('Team not found');
 
   res.json(stats);
 });
 
 // POST /api/teams/sync — Manual sync of team stats from TheSportsDB (B-CP3)
 router.post('/sync', requireAuth, async (_req: Request, res: Response) => {
-  try {
-    const result = await syncAllTeamStats();
-    res.json({
-      message: 'Team stats sync complete',
-      ...result,
-    });
-  } catch (err) {
-    console.error('Error syncing team stats:', err);
-    res.status(500).json({ error: 'Failed to sync team stats' });
-  }
+  const result = await syncAllTeamStats();
+  res.json({
+    message: 'Team stats sync complete',
+    ...result,
+  });
 });
 
 export default router;

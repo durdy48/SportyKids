@@ -92,20 +92,6 @@ export function sportFrequencyBoost(
 }
 
 /**
- * @deprecated Use sportFrequencyBoost instead. Kept for backward compatibility.
- * Score a single item's sport engagement boost (0-4).
- * Maps interaction count to a tier.
- */
-export function sportBoost(sportEngagement: Map<string, number>, sport: string): number {
-  const count = sportEngagement.get(sport.toLowerCase()) ?? 0;
-  if (count >= 20) return 4;
-  if (count >= 10) return 3;
-  if (count >= 5) return 2;
-  if (count >= 1) return 1;
-  return 0;
-}
-
-/**
  * Score a single item's source engagement boost (0-2).
  */
 export function sourceBoost(sourceEngagement: Map<string, number>, source: string): number {
@@ -132,22 +118,10 @@ export function recencyDecay(
 }
 
 /**
- * @deprecated Use recencyDecay instead. Kept for backward compatibility.
- * Score recency boost (0-3). Newer articles get higher scores.
- */
-export function recencyBoost(publishedAt: Date | string): number {
-  const ageMs = Date.now() - toTime(publishedAt);
-  const ageHours = ageMs / (1000 * 60 * 60);
-  if (ageHours < 3) return 3;
-  if (ageHours < 12) return 2;
-  if (ageHours < 24) return 1;
-  return 0;
-}
-
-/**
  * Language match boost (B-CP5). +2 if item language matches user locale.
+ * Callers should normalize null/undefined to '' before invoking.
  */
-export function languageBoost(itemLanguage: string | null | undefined, userLocale: string | undefined): number {
+export function languageBoost(itemLanguage: string, userLocale: string): number {
   if (!itemLanguage || !userLocale) return 0;
   return itemLanguage.toLowerCase().startsWith(userLocale.toLowerCase()) ? 2 : 0;
 }
@@ -211,7 +185,7 @@ export function rankFeed<T extends RankableItem>(
 
       // Language match boost (B-CP5)
       if (behavioral.locale && item.language) {
-        score += languageBoost(item.language, behavioral.locale) * RANKING_WEIGHTS.LOCALE;
+        score += languageBoost(item.language || '', behavioral.locale || '') * RANKING_WEIGHTS.LOCALE;
       }
 
       // Country match boost

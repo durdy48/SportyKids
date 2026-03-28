@@ -68,6 +68,11 @@ vi.mock('../services/summarizer', () => ({
   generateSummary: vi.fn(),
 }));
 
+vi.mock('../services/monitoring', () => ({
+  captureException: vi.fn(),
+  trackEvent: vi.fn(),
+}));
+
 // DO NOT mock auth — use real middleware so requireAuth rejects without a JWT
 vi.mock('../services/auth-service', () => ({
   verifyAccessToken: vi.fn().mockReturnValue(null),
@@ -77,12 +82,21 @@ import express from 'express';
 import request from 'supertest';
 import { authMiddleware } from '../middleware/auth';
 import newsRouter from './news';
+import { errorHandler } from '../middleware/error-handler';
+
+const mockLog = { info: vi.fn(), warn: vi.fn(), error: vi.fn(), debug: vi.fn() };
 
 function createApp() {
   const app = express();
   app.use(express.json());
+  app.use((req: express.Request, _res: express.Response, next: express.NextFunction) => {
+    (req as express.Request & { log: typeof mockLog; requestId: string }).log = mockLog;
+    (req as express.Request & { requestId: string }).requestId = 'test-req-id';
+    next();
+  });
   app.use(authMiddleware);
   app.use('/api/news', newsRouter);
+  app.use(errorHandler as express.ErrorRequestHandler);
   return app;
 }
 
@@ -103,6 +117,6 @@ describe('POST /api/news/sources/custom — auth required', () => {
       });
 
     expect(res.status).toBe(401);
-    expect(res.body.error).toBe('Authentication required');
+    expect(res.body.error.code).toBe('AUTHENTICATION_ERROR');
   });
 });

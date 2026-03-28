@@ -188,7 +188,10 @@
     "reached_message": "Has alcanzado tu l\u00edmite de tiempo. \u00a1Vuelve ma\u00f1ana para m\u00e1s deportes!",
     "format_blocked": "Esta secci\u00f3n no est\u00e1 disponible. \u00a1Pregunta a tus padres!",
     "sport_blocked": "Este deporte no est\u00e1 en tu lista. \u00a1Pregunta a tus padres para a\u00f1adirlo!",
-    "go_home": "Ir al inicio"
+    "go_home": "Ir al inicio",
+    "news_reached_message": "Has usado tu tiempo de noticias por hoy. Prueba reels o quiz!",
+    "reels_reached_message": "Has usado tu tiempo de reels por hoy. Prueba noticias o quiz!",
+    "quiz_reached_message": "Has usado tu tiempo de quiz por hoy. Prueba noticias o reels!"
   },
   "buttons": {
     "read_more": "Ver más",
@@ -361,7 +364,9 @@
     "no_content": "No hay contenido con las restricciones actuales.",
     "close": "Cerrar",
     "news_section": "Noticias",
-    "reels_section": "Reels"
+    "reels_section": "Reels",
+    "active_restrictions": "Restricciones activas",
+    "no_restrictions": "Sin restricciones activas"
   },
   "news": {
     "trending": "Tendencia"
@@ -405,7 +410,9 @@
     "completed": "¡Misión completada!",
     "claim": "Reclamar recompensa",
     "claimed": "¡Recompensa reclamada!",
-    "progress": "{progress} de {target}"
+    "progress": "{progress} de {target}",
+    "expired": "Mision expirada",
+    "no_mission": "Manana tendras otra oportunidad!"
   },
   "empty": {
     "news_title": "No hay noticias aún",
@@ -452,7 +459,11 @@
     "correct": "Aciertos",
     "perfect_quizzes": "Quizzes perfectos",
     "safe_news_tagline": "Noticias deportivas seguras para niños",
-    "email_subject": "SportyKids — Resumen semanal de {name}"
+    "email_subject": "SportyKids — Resumen semanal de {name}",
+    "send_test": "Enviar email de prueba",
+    "test_sent": "Email de prueba enviado a {email}",
+    "test_error": "No se pudo enviar el email de prueba",
+    "saved": "Guardado"
   },
   "settings": {
     "language_region": "Idioma y región",
@@ -487,7 +498,13 @@
     "login_error": "Email o contraseña incorrectos",
     "register_error": "No se pudo crear la cuenta",
     "logout": "Cerrar sesión",
-    "upgrade_prompt": "Crea una cuenta para guardar tu progreso"
+    "upgrade_prompt": "Crea una cuenta para guardar tu progreso",
+    "google_signin": "Iniciar sesión con Google",
+    "apple_signin": "Iniciar sesión con Apple",
+    "social_error": "No se pudo iniciar sesión. Inténtalo de nuevo.",
+    "account_linked": "Cuenta vinculada correctamente",
+    "social_email_conflict": "Ya existe una cuenta con ese email. Inicia sesión con tu método anterior.",
+    "or_continue_with": "o continúa con"
   },
   "history": {
     "title": "Leídos recientemente",
@@ -500,6 +517,8 @@
   },
   "schedule": {
     "title": "Horario de uso",
+    "enable": "Activar horario de uso",
+    "description": "SportyKids estara disponible de {start}:00 a {end}:00 ({timezone})",
     "start_time": "Hora de inicio",
     "end_time": "Hora de fin",
     "timezone": "Zona horaria",
@@ -522,6 +541,20 @@
     "offline_message": "Estás sin conexión. ¡Conéctate a internet para ver las últimas noticias!",
     "schedule_locked_title": "Hora de descansar!",
     "schedule_locked_message": "SportyKids está durmiendo. ¡Vuelve durante el día!",
+    "auth_required_title": "Necesitas entrar!",
+    "auth_required_message": "Inicia sesion para poder continuar.",
+    "too_fast_title": "Demasiado rapido!",
+    "too_fast_message": "Vas muy rapido, campeon! Espera un momento e intenta de nuevo.",
+    "forbidden_title": "Zona restringida!",
+    "forbidden_message": "No tienes permiso para ver esto. Pregunta a tus padres!",
+    "rate_limited_title": "Semaforo en rojo!",
+    "rate_limited_message": "Estas haciendo muchas cosas a la vez. Espera un momento y vuelve a intentar!",
+    "format_blocked_title": "Seccion cerrada!",
+    "format_blocked_message": "Esta seccion no esta disponible para ti. Pregunta a tus padres!",
+    "limit_reached_title": "Hora del descanso!",
+    "limit_reached_message": "Has usado todo tu tiempo por hoy. Vuelve manana para mas deportes!",
+    "unauthorized_title": "Necesitas tu entrada!",
+    "unauthorized_message": "Inicia sesion para poder entrar al estadio!",
     "generic_title": "Falta!",
     "generic_message": "Algo salió mal. ¡Vamos a intentar de nuevo!",
     "retry": "Intentar de nuevo"
@@ -552,6 +585,8 @@
     "sticker_earned_title": "Nuevo sticker!",
     "sticker_earned_body": "Has ganado un sticker {rarity}: {name}",
     "mission_ready_title": "Mision del dia lista!",
-    "mission_ready_body": "Completa tu mision para ganar un sticker {rarity}."
+    "mission_ready_body": "Completa tu mision para ganar un sticker {rarity}.",
+    "mission_almost_title": "Casi lo tienes!",
+    "mission_almost_body": "Estas cerca de completar la mision de hoy. No te rindas!"
   }
 }

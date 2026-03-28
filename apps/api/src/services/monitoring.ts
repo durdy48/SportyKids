@@ -11,6 +11,9 @@
  *   POSTHOG_HOST         — PostHog host (default: https://app.posthog.com)
  */
 
+import { logger } from './logger';
+
+let Sentry: typeof import('@sentry/node') | null = null;
 let sentryInitialized = false;
 
 /**
@@ -20,14 +23,14 @@ let sentryInitialized = false;
 export function initSentry(): void {
   const dsn = process.env.SENTRY_DSN;
   if (!dsn) {
-    console.log('[monitoring] Sentry DSN not configured — error tracking disabled');
+    logger.info('Sentry DSN not configured — error tracking disabled');
     return;
   }
 
   try {
     // Dynamic import to avoid bundling Sentry when not needed
-    const Sentry = require('@sentry/node');
-    Sentry.init({
+    Sentry = require('@sentry/node');
+    Sentry!.init({
       dsn,
       environment: process.env.SENTRY_ENVIRONMENT || 'development',
       tracesSampleRate: 0.1, // 10% of transactions
@@ -37,24 +40,35 @@ export function initSentry(): void {
       },
     });
     sentryInitialized = true;
-    console.log('[monitoring] Sentry initialized');
+    logger.info('Sentry initialized');
   } catch (err) {
-    console.warn('[monitoring] Failed to initialize Sentry:', err);
+    logger.warn({ err }, 'Failed to initialize Sentry');
   }
 }
 
 /**
  * Capture an exception in Sentry.
  */
-export function captureException(error: Error, context?: Record<string, unknown>): void {
-  if (!sentryInitialized) return;
+export function captureException(error: Error, context?: { requestId?: string; path?: string; method?: string; userId?: string }): void {
+  if (!sentryInitialized || !Sentry) return;
   try {
-    const Sentry = require('@sentry/node');
-    Sentry.captureException(error, {
-      extra: context,
+    Sentry.withScope((scope) => {
+      if (context) {
+        scope.setExtras(context);
+      }
+      Sentry!.captureException(error);
     });
   } catch {
     // Ignore if Sentry fails
+  }
+}
+
+/**
+ * Add a breadcrumb to the current Sentry scope.
+ */
+export function addBreadcrumb(message: string, category: string, level: 'info' | 'warning' | 'error' = 'info'): void {
+  if (Sentry) {
+    Sentry.addBreadcrumb({ message, category, level });
   }
 }
 

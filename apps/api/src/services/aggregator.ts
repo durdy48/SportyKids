@@ -5,6 +5,7 @@ import { moderateContent } from './content-moderator';
 import { generateSummary } from './summarizer';
 import type { AgeRange } from './summarizer';
 import type { Locale } from '@sportykids/shared';
+import { logger } from './logger';
 
 const parser = new Parser({
   timeout: 10000,
@@ -116,18 +117,12 @@ async function generateSummariesForNewsItem(
             },
           });
         } catch (err) {
-          console.warn(
-            `[Aggregator] Failed to generate summary for newsItem=${newsItemId} ageRange=${ageRange} locale=${locale}:`,
-            err instanceof Error ? err.message : err,
-          );
+          logger.warn({ newsItemId, ageRange, locale, err: err instanceof Error ? err.message : err }, 'Failed to generate summary for newsItem');
         }
       }
     }
   } catch (err) {
-    console.warn(
-      `[Aggregator] Failed to generate summaries for newsItem=${newsItemId}:`,
-      err instanceof Error ? err.message : err,
-    );
+    logger.warn({ newsItemId, err: err instanceof Error ? err.message : err }, 'Failed to generate summaries for newsItem');
   }
 }
 
@@ -232,7 +227,7 @@ export async function syncSource(
       } catch (err) {
         // Duplicate or other error — continue with the next news item
         if (!(err instanceof Error && err.message.includes('Unique constraint'))) {
-          console.error(`  Error inserting news item "${item.title}":`, err);
+          logger.error({ err, title: item.title }, 'Error inserting news item');
         }
       }
     }
@@ -243,12 +238,9 @@ export async function syncSource(
       data: { lastSyncedAt: new Date() },
     });
 
-    console.log(
-      `  OK ${sourceName}: ${result.itemsCreated} created, ` +
-      `${result.moderationApproved} approved, ${result.moderationRejected} rejected`,
-    );
+    logger.info({ source: sourceName, created: result.itemsCreated, approved: result.moderationApproved, rejected: result.moderationRejected }, 'Source sync complete');
   } catch (err) {
-    console.error(`  Error syncing ${sourceName}:`, err instanceof Error ? err.message : err);
+    logger.error({ err: err instanceof Error ? err.message : err, source: sourceName }, 'Error syncing source');
   }
 
   return result;
@@ -259,7 +251,7 @@ export async function syncSource(
 // ---------------------------------------------------------------------------
 
 export async function syncAllSources(): Promise<SyncAllResult> {
-  console.log('Starting feed synchronization...');
+  logger.info('Starting feed synchronization...');
   const sources = await prisma.rssSource.findMany({ where: { active: true } });
 
   const allResult: SyncAllResult = {
@@ -272,7 +264,7 @@ export async function syncAllSources(): Promise<SyncAllResult> {
   };
 
   if (sources.length === 0) {
-    console.log('No active RSS sources found.');
+    logger.info('No active RSS sources found.');
     return allResult;
   }
 
@@ -286,10 +278,7 @@ export async function syncAllSources(): Promise<SyncAllResult> {
     allResult.sources.push(result);
   }
 
-  console.log(
-    `Synchronization complete: ${allResult.totalCreated} items from ${sources.length} sources. ` +
-    `Moderation: ${allResult.totalApproved} approved, ${allResult.totalRejected} rejected, ${allResult.totalErrors} errors.`,
-  );
+  logger.info({ created: allResult.totalCreated, sources: sources.length, approved: allResult.totalApproved, rejected: allResult.totalRejected, errors: allResult.totalErrors }, 'Feed synchronization complete');
 
   return allResult;
 }

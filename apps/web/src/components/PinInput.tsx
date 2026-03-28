@@ -29,6 +29,7 @@ export function PinInput({ onSubmit, title, subtitle, buttonText, loading, error
   const clearInputs = useCallback(() => {
     setDigits(['', '', '', '']);
     refs[0].current?.focus();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Lockout countdown timer

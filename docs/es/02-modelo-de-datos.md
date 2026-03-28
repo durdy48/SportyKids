@@ -25,6 +25,12 @@ erDiagram
         string notificationPreferences "JSON, nullable"
         string locale "es|en, default es"
         string country "ES|GB|US|FR|IT|DE, default ES"
+        string email "unique, nullable"
+        string passwordHash "nullable"
+        string authProvider "anonymous|email|google|apple"
+        string socialId "nullable, ID del proveedor"
+        string role "child|parent"
+        string parentUserId "nullable, FK -> User"
         datetime createdAt
         datetime updatedAt
     }
@@ -195,7 +201,15 @@ erDiagram
 ## Descripcion de modelos
 
 ### User
-Perfil del nino. Los campos `favoriteSports`, `selectedFeeds` y `notificationPreferences` se almacenan como JSON strings en SQLite. Incluye campos de gamificacion (`totalPoints`, `streak`, `lastActiveDate`).
+Perfil del nino. Los campos `favoriteSports` y `selectedFeeds` son arrays nativos PostgreSQL `String[]`. `pushPreferences` es tipo nativo `Json?`. Incluye campos de gamificacion (`totalPoints`, `streak`, `lastActiveDate`).
+
+**Campos de autenticacion:**
+- `email` (unique, nullable) -- para login con email/password y login social
+- `passwordHash` (nullable) -- hash bcrypt para autenticacion por email
+- `authProvider` -- metodo de login: `anonymous` (default), `email`, `google`, `apple`
+- `socialId` (nullable) -- identificador unico del proveedor social (e.g., Google sub, Apple sub). Se usa junto con `authProvider` para localizar cuentas sociales existentes via el indice compuesto `@@index([authProvider, socialId])`.
+- `role` -- `child` (default) o `parent`
+- `parentUserId` (nullable) -- FK al User padre para cuentas de hijos vinculadas
 
 ### NewsItem
 Articulo agregado desde un feed RSS. El campo `rssGuid` es unico y se usa para evitar duplicados al re-sincronizar. El campo `safetyStatus` indica si el contenido ha sido moderado por IA (`pending`, `approved`, `rejected`).
@@ -308,9 +322,11 @@ Los valores de deporte en la base de datos son en ingles:
 
 Los nombres de modelos y campos estan en ingles en el codigo y la base de datos. Para mostrar textos al usuario en su idioma, se usa la funcion `t(key, locale)` del modulo `@sportykids/shared/i18n`. Por ejemplo, el valor `football` se traduce a "Futbol" en espanol mediante `t('sports.football', 'es')`.
 
-## Notas sobre SQLite
+## Notas sobre PostgreSQL
 
-- Los campos tipo array se almacenan como `String` con JSON serializado
-- La API parsea/serializa automaticamente en las respuestas
-- Para produccion, migrar a PostgreSQL y usar arrays nativos de Prisma
+- Los campos array (`favoriteSports`, `selectedFeeds`, `options`, `allowedSports`, `allowedFeeds`, `allowedFormats`) usan arrays nativos `String[]`
+- Los campos JSON (`recentResults`, `nextMatch`, `pushPreferences`) usan tipos nativos `Json`/`Json?`
+- No se usa `JSON.parse`/`JSON.stringify` para estos campos
+- Indices compuestos en `NewsItem`, `Reel` y `ActivityLog` para rendimiento de consultas
+- El endpoint trending usa `groupBy` nativo con clausula `having`
 - El campo `NewsSummary` tiene un indice unico compuesto en (`newsItemId`, `ageRange`, `locale`)

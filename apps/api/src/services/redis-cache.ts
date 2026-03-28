@@ -9,6 +9,7 @@
  */
 
 import type { CacheProvider, CacheStats } from './cache';
+import { logger } from './logger';
 
 const KEY_PREFIX = 'sk:'; // Namespace all keys to avoid collisions
 
@@ -28,7 +29,6 @@ export interface RedisClient {
  * Throws if ioredis is not installed.
  */
 export function createRedisClient(redisUrl: string): RedisClient {
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
   const IORedis = require('ioredis');
   return new IORedis(redisUrl, {
     maxRetriesPerRequest: 3,
@@ -55,12 +55,12 @@ export class RedisCache implements CacheProvider {
 
     this.client.on('connect', () => {
       this.connected = true;
-      console.log('[redis-cache] Connected');
+      logger.info('Redis cache connected');
     });
 
     this.client.on('error', (err: Error) => {
       this.connected = false;
-      console.error('[redis-cache] Error:', err.message);
+      logger.error({ err: err.message }, 'Redis cache error');
     });
 
     this.client.on('close', () => {

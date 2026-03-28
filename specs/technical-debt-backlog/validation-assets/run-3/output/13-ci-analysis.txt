@@ -1,0 +1,7 @@
+lint job: true
+test job: true
+test-web job: true
+test-mobile job: true
+builds depend on all 4: true
+prisma cache: true
+mobile typecheck: true

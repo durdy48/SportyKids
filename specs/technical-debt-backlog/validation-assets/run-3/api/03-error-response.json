@@ -1,0 +1,22 @@
+{
+  "status": 404,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "260",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 13:41:52 GMT",
+    "etag": "W/\"104-krm8rbMjru/3g2OdUiVwfxnDmwk\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "d6da3d72-6752-42e9-aae2-40cfff2f134a"
+  },
+  "body": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "News item not found",
+      "stack": "NotFoundError: News item not found\n    at <anonymous> (/Users/antonioduarteruiz/personal/sportykids/apps/api/src/routes/news.ts:601:11)",
+      "requestId": "d6da3d72-6752-42e9-aae2-40cfff2f134a"
+    }
+  }
+}

@@ -5,7 +5,9 @@ import { generateDailyQuiz } from '../jobs/generate-daily-quiz';
 import { awardSticker, evaluateAchievements } from '../services/gamification';
 import { checkMissionProgress } from '../services/mission-generator';
 import { parentalGuard } from '../middleware/parental-guard';
-import { verifyParentalSession } from './parents';
+import { verifyParentalSession } from '../services/parental-session';
+import { trackEvent } from '../services/monitoring';
+import { ValidationError, NotFoundError, AuthenticationError } from '../errors';
 
 const router = Router();
 
@@ -32,8 +34,7 @@ const questionsSchema = z.object({
 router.get('/questions', parentalGuard, async (req: Request, res: Response) => {
   const parsed = questionsSchema.safeParse(req.query);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid parameters' });
-    return;
+    throw new ValidationError('Invalid parameters', parsed.error.flatten());
   }
 
   const { count, sport, age } = parsed.data;
@@ -54,7 +55,7 @@ router.get('/questions', parentalGuard, async (req: Request, res: Response) => {
     const dailyRaw = await prisma.quizQuestion.findMany({ where: dailyWhere });
     dailyQuestions = dailyRaw.map((q) => ({
       ...q,
-      options: JSON.parse(q.options),
+      options: q.options,
       isDaily: true,
     }));
 
@@ -68,7 +69,7 @@ router.get('/questions', parentalGuard, async (req: Request, res: Response) => {
       const seedRaw = await prisma.quizQuestion.findMany({ where: seedWhere });
       seedQuestions = seedRaw.map((q) => ({
         ...q,
-        options: JSON.parse(q.options),
+        options: q.options,
         isDaily: false,
       }));
     }
@@ -88,7 +89,7 @@ router.get('/questions', parentalGuard, async (req: Request, res: Response) => {
 
     const questions = shuffled.map((q) => ({
       ...q,
-      options: JSON.parse(q.options),
+      options: q.options,
       isDaily: q.generatedAt !== null,
     }));
 
@@ -109,16 +110,14 @@ const answerSchema = z.object({
 router.post('/answer', parentalGuard, async (req: Request, res: Response) => {
   const parsed = answerSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data' });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   const { userId, questionId, answer } = parsed.data;
 
   const question = await prisma.quizQuestion.findUnique({ where: { id: questionId } });
   if (!question) {
-    res.status(404).json({ error: 'Question not found' });
-    return;
+    throw new NotFoundError('Question not found');
   }
 
   const correct = answer === question.correctAnswer;
@@ -176,6 +175,13 @@ router.post('/answer', parentalGuard, async (req: Request, res: Response) => {
     });
   }
 
+  trackEvent('quiz_played', {
+    userId,
+    questionId,
+    correct: String(correct),
+    sport: question.sport,
+  });
+
   res.json({
     correct,
     correctAnswer: question.correctAnswer,
@@ -196,8 +202,7 @@ router.get('/score/:userId', async (req: Request, res: Response) => {
   });
 
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   res.json(user);
@@ -214,35 +219,24 @@ const generateSchema = z.object({
 router.post('/generate', async (req: Request, res: Response) => {
   // Require parental session verification
   const sessionToken = req.headers['x-parental-session'] as string | undefined;
-  const sessionUserId = verifyParentalSession(sessionToken);
+  const sessionUserId = await verifyParentalSession(sessionToken);
   if (!sessionUserId) {
-    res.status(401).json({ error: 'Parental session required' });
-    return;
+    throw new AuthenticationError('Parental session required');
   }
 
   const parsed = generateSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'userId is required' });
-    return;
+    throw new ValidationError('userId is required', parsed.error.flatten());
   }
 
   // Verify the user exists
   const user = await prisma.user.findUnique({ where: { id: parsed.data.userId } });
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
-  try {
-    const result = await generateDailyQuiz();
-    res.json(result);
-  } catch (err) {
-    console.error('[QuizRoute] Error during manual quiz generation:', err);
-    res.status(500).json({
-      error: 'Quiz generation failed',
-      message: err instanceof Error ? err.message : 'Unknown error',
-    });
-  }
+  const result = await generateDailyQuiz();
+  res.json(result);
 });
 
 export default router;

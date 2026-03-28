@@ -18,4 +18,14 @@ config.resolver.nodeModulesPaths = [
 // Prevent duplicate React/React Native from root node_modules
 config.resolver.disableHierarchicalLookup = true;
 
+// Inject SharedArrayBuffer + Atomics polyfill before all modules (fixes Hermes on Expo Go)
+const defaultGetPolyfills = config.serializer?.getPolyfills || require('react-native/rn-get-polyfills');
+config.serializer = {
+  ...config.serializer,
+  getPolyfills: (ctx) => [
+    path.resolve(projectRoot, 'globals.js'),
+    ...defaultGetPolyfills(ctx),
+  ],
+};
+
 module.exports = config;

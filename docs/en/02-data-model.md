@@ -25,6 +25,12 @@ erDiagram
         string notificationPreferences "JSON, nullable"
         string locale "es|en, default es"
         string country "ES|GB|US|FR|IT|DE, default ES"
+        string email "unique, nullable"
+        string passwordHash "nullable"
+        string authProvider "anonymous|email|google|apple"
+        string socialId "nullable, provider-scoped ID"
+        string role "child|parent"
+        string parentUserId "nullable, FK -> User"
         datetime createdAt
         datetime updatedAt
     }
@@ -192,12 +198,20 @@ erDiagram
 ## Model Descriptions
 
 ### User
-Child's profile. The `favoriteSports` and `selectedFeeds` fields are stored as JSON strings in SQLite (Prisma does not support native arrays in SQLite).
+Child's profile. The `favoriteSports` and `selectedFeeds` fields are native PostgreSQL `String[]` arrays. `pushPreferences` is a native `Json?` type.
 
 **Phase 5 additions:**
 - `loginStreak` / `lastLoginDate` -- track consecutive daily logins for gamification
 - `totalPoints` -- accumulated from news views, reels, quiz answers, daily check-ins
 - `notificationPreferences` -- JSON storing notification settings (MVP: stored but not sent)
+
+**Auth fields:**
+- `email` (unique, nullable) -- for email/password and social login
+- `passwordHash` (nullable) -- bcrypt hash for email auth
+- `authProvider` -- login method: `anonymous` (default), `email`, `google`, `apple`
+- `socialId` (nullable) -- provider-scoped unique identifier (e.g., Google sub, Apple sub). Used with `authProvider` to find existing social accounts via the composite index `@@index([authProvider, socialId])`.
+- `role` -- `child` (default) or `parent`
+- `parentUserId` (nullable) -- FK to parent User for linked child accounts
 
 ### NewsItem
 Article aggregated from an RSS feed. The `rssGuid` field is unique and is used to prevent duplicates during re-synchronization. The sport comes from the source; the team is detected by keywords.
@@ -302,11 +316,13 @@ RSS feed that the aggregator consumes periodically. It can be enabled/disabled w
 - 182 total sources across 8 sports (up from 4 in MVP), including 10 Google News RSS sources for Spanish outlets without native RSS and 127 team/athlete-specific Google News feeds covering La Liga, Premier League, Serie A, Bundesliga, Ligue 1, national teams, NBA, EuroLeague/ACB, tennis, F1, cycling, swimming, athletics, and padel
 - Custom sources can be added/removed via API (`POST/DELETE /api/news/fuentes/custom`)
 
-## Notes on SQLite
+## Notes on PostgreSQL
 
-- Array-type fields are stored as `String` with serialized JSON
-- The API automatically parses/serializes in responses
-- For production, migrate to PostgreSQL and use native Prisma arrays
+- Array fields (`favoriteSports`, `selectedFeeds`, `options`, `allowedSports`, `allowedFeeds`, `allowedFormats`) use native `String[]` arrays
+- JSON fields (`recentResults`, `nextMatch`, `pushPreferences`) use native `Json`/`Json?` types
+- No `JSON.parse`/`JSON.stringify` needed for these fields
+- Composite indexes on `NewsItem`, `Reel`, and `ActivityLog` for query performance
+- Trending endpoint uses native `groupBy` with `having` clause
 
 ## Sport Values
 

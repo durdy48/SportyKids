@@ -1,0 +1,35 @@
+{
+  "status": 200,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "434",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 20:42:00 GMT",
+    "etag": "W/\"1b2-NcLUkEONBFDWjCzWYckD7qQmrlk\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "9465862f-4726-4101-8300-d1991b13c4fa"
+  },
+  "body": {
+    "mission": {
+      "id": "cmnasq9d0000726ijvvwm94gq",
+      "userId": "cmnasq92h000326ij43tk589b",
+      "date": "2026-03-28",
+      "type": "quiz_master",
+      "title": "Acierta 5 preguntas del quiz",
+      "description": "Consigue 5 respuestas correctas en el quiz!",
+      "target": 5,
+      "progress": 0,
+      "completed": false,
+      "completedAt": null,
+      "rewardType": "sticker",
+      "rewardRarity": "epic",
+      "rewardPoints": 0,
+      "claimed": false,
+      "claimedAt": null,
+      "createdAt": "2026-03-28T20:42:00.037Z"
+    },
+    "expired": false
+  }
+}

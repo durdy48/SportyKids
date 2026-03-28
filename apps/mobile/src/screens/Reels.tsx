@@ -1,13 +1,15 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, FlatList, Dimensions, TouchableOpacity, StyleSheet,
-  ActivityIndicator, Image, Share, Linking,
+  Image, Share, Linking,
 } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Reel } from '@sportykids/shared';
 import { SPORTS, COLORS, sportToEmoji, t, getSportLabel } from '@sportykids/shared';
 import { fetchReels } from '../lib/api';
 import { useUser } from '../lib/user-context';
+import { haptic } from '../lib/haptics';
+import { BrandedRefreshControl } from '../components/BrandedRefreshControl';
 import { SkeletonPlaceholder } from '../components/SkeletonPlaceholder';
 import { WebView } from 'react-native-webview';
 import { htmlEncode, getYouTubeThumbnail, getYouTubeVideoId } from '../lib/html-utils';
@@ -29,6 +31,7 @@ export function ReelsScreen() {
   const [likedIds, setLikedIds] = useState<Set<string>>(new Set());
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [errorIds, setErrorIds] = useState<Set<string>>(new Set());
+  const [refreshing, setRefreshing] = useState(false);
 
   useEffect(() => {
     const key = getLikesStorageKey(user?.id);
@@ -44,6 +47,7 @@ export function ReelsScreen() {
   };
 
   const toggleLike = (reelId: string) => {
+    haptic('light');
     const newSet = new Set(likedIds);
     if (newSet.has(reelId)) newSet.delete(reelId);
     else newSet.add(reelId);
@@ -64,6 +68,7 @@ export function ReelsScreen() {
       const data = await fetchReels({ sport: activeSport ?? undefined, limit: 20 });
       setReels(data.reels);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     } finally {
       setLoading(false);
@@ -256,6 +261,13 @@ export function ReelsScreen() {
           removeClippedSubviews={true}
           maxToRenderPerBatch={3}
           windowSize={5}
+          refreshControl={
+            <BrandedRefreshControl
+              refreshing={refreshing}
+              onRefresh={() => { setRefreshing(true); load().finally(() => setRefreshing(false)); }}
+              locale={locale}
+            />
+          }
           renderItem={renderReel}
           ListEmptyComponent={
             <View style={s.empty}>

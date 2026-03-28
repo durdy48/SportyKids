@@ -4,7 +4,7 @@ Personalized sports news app for kids (6-14) with AI content moderation, age-ada
 
 ## What is SportyKids?
 
-SportyKids aggregates real sports news from 47+ trusted sources across 8 sports, moderates content with AI for child safety, adapts it to the child's age, and presents it in a kid-friendly interface. Parents control what their children see, and kids earn stickers and achievements for engagement.
+SportyKids aggregates real sports news from 182+ trusted sources across 8 sports, moderates content with AI for child safety, adapts it to the child's age, and presents it in a kid-friendly interface. Parents control what their children see, and kids earn stickers and achievements for engagement.
 
 ### Features
 
@@ -14,6 +14,8 @@ SportyKids aggregates real sports news from 47+ trusted sources across 8 sports,
 - **"Explain it Easy"** — AI-generated summaries adapted to 3 age profiles: 6-8, 9-11, 12-14 (M2)
 - **Reels** — Sports video grid with YouTube thumbnails, like/share (M6)
 - **Custom RSS Sources** — Add your own feeds via URL with RSS validation
+- **Reading History** — Recently read articles section on home
+- **Related Articles** — "You might also like" recommendations
 
 **Quiz & Gamification**
 - **Dynamic Quiz** — AI-generated daily questions from real news + 15 seed questions in Spanish (M3)
@@ -21,6 +23,7 @@ SportyKids aggregates real sports news from 47+ trusted sources across 8 sports,
 - **Daily Streaks** — Login streaks with milestone rewards (3/7/14/30 days) (M4)
 - **20 Achievements** — Unlockable badges for reading, watching, quizzing, and collecting (M4)
 - **Points System** — +5 news, +3 reels, +10 quiz, +50 perfect quiz, +2 daily login
+- **Daily Missions** — Daily challenges with progress tracking and rewards
 
 **Team & Personalization**
 - **Team Hub** — Stats (league position, W/D/L results, top scorer, next match) for 15 teams (M6)
@@ -30,47 +33,57 @@ SportyKids aggregates real sports news from 47+ trusted sources across 8 sports,
 **Parental Controls**
 - **Backend Enforcement** — Server-side format/sport/time restrictions via middleware (M5)
 - **bcrypt PIN** — Secure 4-digit PIN with transparent SHA-256 migration (M5)
-- **Activity Tracking** — Duration tracking with sendBeacon, detailed reports with charts (M5)
+- **Activity Tracking** — Duration tracking with sendBeacon, detailed reports, digest emails, schedule lock (bedtime hours) (M5)
+- **Schedule Lock** — Configurable allowed hours with timezone support
+- **Weekly Digest** — PDF/email reports for parents
 - **5-Tab Panel** — Profile, Content, Restrictions, Activity (CSS charts), PIN management
 
 **Platform**
 - **Web App** — Next.js 16 with all features
 - **Mobile App** — React Native + Expo with full feature parity (27 API functions)
+- **Dark Mode** — System/light/dark theme on web and mobile
 - **i18n** — Spanish and English support throughout
+
+**Authentication**
+- **JWT Auth** — Access/refresh token auth with email/password
+- **OAuth Social Login** — Google and Apple Sign In (Passport.js)
 
 ## Tech Stack
 
 | Layer | Technology | Details |
 |-------|-----------|---------|
 | Monorepo | npm workspaces | packages/shared, apps/api, apps/web, apps/mobile |
-| API | Express 5 + TypeScript | Prisma 6, SQLite, Zod 4 |
+| API | Express 5 + TypeScript | Prisma 6, PostgreSQL 16, Zod 4 |
+| Auth | JWT + Passport.js | Email/password + Google/Apple OAuth |
 | AI | Multi-provider | Ollama (free, default), OpenRouter, Anthropic Claude |
 | Webapp | Next.js 16 | Tailwind CSS 4, App Router |
 | Mobile | React Native 0.81 | Expo SDK 54, React Navigation 7 |
 | Shared | @sportykids/shared | Types, constants, utils, i18n (es/en) |
-| RSS | rss-parser + node-cron | 47+ sources, 30-min sync cycle |
+| RSS | rss-parser + node-cron | 182+ sources, 30-min sync cycle |
+| Logging | Pino 9 | Structured JSON logging |
+| Testing | Vitest | 562 tests across 64 files |
 
 ## Quick Start
 
 ```bash
-# Prerequisites: Node.js >= 20
+# Prerequisites: Node.js >= 20, Docker (for PostgreSQL)
 
 # Install dependencies
 npm install
 
+# Start PostgreSQL
+docker-compose -f apps/api/docker-compose.yml up -d postgres
+
 # Set up the database
 cd apps/api
-cp .env.example .env  # Configure AI provider (default: Ollama, free)
+cp .env.example .env
 npx prisma migrate dev
-npx tsx prisma/seed.ts  # Seeds: 182 RSS sources, 15 quiz questions, 36 stickers, 20 achievements, 15 team stats
+npx tsx prisma/seed.ts
 cd ../..
 
 # Start development
 npm run dev:api    # API at http://localhost:3001
-PORT=3000 npm run dev:web    # Webapp at http://localhost:3000
-
-# Optional: AI moderation (install Ollama for free local AI)
-brew install ollama && ollama pull llama3.2:3b && ollama serve
+npm run dev:web    # Webapp at http://localhost:3000
 ```
 
 ## Project Structure
@@ -80,17 +93,22 @@ sportykids/
 ├── packages/shared/         # @sportykids/shared — types, constants, utils, i18n
 ├── apps/
 │   ├── api/                 # Express REST API
-│   │   ├── prisma/          # Schema (12 models), migrations (6), seed
-│   │   ├── src/routes/      # news, reels, quiz, users, parents, gamification, teams
+│   │   ├── prisma/          # Schema (20+ models), migrations, seed
+│   │   ├── src/routes/      # news, reels, quiz, users, parents, gamification, teams, auth, missions, reports
 │   │   ├── src/services/    # ai-client, content-moderator, summarizer, quiz-generator,
-│   │   │                    # gamification, feed-ranker, team-stats, aggregator, classifier
-│   │   ├── src/middleware/  # parental-guard, error-handler
-│   │   └── src/jobs/        # sync-feeds (30min), generate-daily-quiz (06:00 UTC)
+│   │   │                    # gamification, feed-ranker, team-stats, aggregator, classifier,
+│   │   │                    # passport, auth-service, logger, parental-session, push-sender,
+│   │   │                    # digest-generator, mission-generator, video-aggregator
+│   │   ├── src/middleware/  # auth, parental-guard, error-handler, rate-limiter, request-id
+│   │   ├── src/errors/      # AppError, ValidationError, AuthenticationError, NotFoundError, etc.
+│   │   └── src/jobs/        # sync-feeds (30min), sync-videos (6h), generate-daily-quiz (06:00),
+│   │                        # generate-daily-missions (05:00), send-weekly-digests (08:00),
+│   │                        # streak-reminder (20:00), sync-team-stats (04:00), mission-reminder (18:00)
 │   ├── web/                 # Next.js webapp (8 pages, 25+ components)
-│   └── mobile/              # React Native + Expo (7 screens, 6 tabs)
+│   └── mobile/              # React Native + Expo (10 screens, 6 tabs)
 └── docs/
-    ├── es/                  # Documentation in Spanish (11 docs)
-    └── en/                  # Documentation in English (11 docs)
+    ├── es/                  # Documentation in Spanish
+    └── en/                  # Documentation in English
 ```
 
 ## API Endpoints
@@ -98,21 +116,33 @@ sportykids/
 | Method | Route | Description |
 |--------|-------|-------------|
 | GET | `/api/news?sport=&userId=&age=` | Smart feed with personalized ranking |
-| GET | `/api/news/:id/resumen?age=&locale=` | AI summary adapted by age |
-| GET | `/api/news/fuentes/catalogo` | Full RSS source catalog (182+) |
-| POST | `/api/news/fuentes/custom` | Add custom RSS source (with validation) |
+| GET | `/api/news/:id/summary?age=&locale=` | AI summary adapted by age |
+| GET | `/api/news/sources/catalog` | Full RSS source catalog (182+) |
+| POST | `/api/news/sources/custom` | Add custom RSS source (with validation) |
+| GET | `/api/news/history?userId=` | Reading history (paginated) |
+| GET | `/api/news/:id/related` | Related articles by team/sport |
 | GET | `/api/reels` | Video reels feed |
+| GET | `/api/reels/sources/catalog` | Video source catalog |
 | GET | `/api/quiz/questions?age=&count=` | Quiz (daily AI + seed fallback) |
-| POST | `/api/quiz/generate` | Trigger daily quiz generation |
 | POST | `/api/quiz/answer` | Submit answer, earn points |
 | GET | `/api/gamification/stickers` | Sticker catalog (36) |
 | GET | `/api/gamification/achievements` | Achievement definitions (20) |
 | POST | `/api/gamification/check-in` | Daily check-in (streak + sticker) |
+| GET | `/api/missions/today/:userId` | Daily mission with progress |
 | GET | `/api/teams/:name/stats` | Team stats (15 teams) |
-| POST | `/api/parents/configurar` | Set parental PIN (bcrypt) |
-| GET | `/api/parents/actividad/:id/detalle` | Detailed activity breakdown |
+| POST | `/api/parents/setup` | Set parental PIN (bcrypt) |
+| GET | `/api/parents/profile/:userId` | Parental profile and restrictions |
+| GET | `/api/parents/activity/:userId` | Weekly activity summary |
+| PUT | `/api/parents/digest/:userId` | Configure weekly digest preferences |
+| POST | `/api/auth/register` | Register with email/password |
+| POST | `/api/auth/login` | Login (returns JWT) |
+| POST | `/api/auth/refresh` | Refresh access token |
+| GET | `/api/auth/providers` | Available auth providers |
+| GET | `/api/auth/google` | Google OAuth 2.0 |
+| GET | `/api/auth/apple` | Apple Sign In |
+| POST | `/api/reports` | Submit content report |
 
-See [full API reference](docs/en/03-api-reference.md) for all 30+ endpoints.
+See [full API reference](docs/en/03-api-reference.md) for all 40+ endpoints.
 
 ## Documentation
 
@@ -126,55 +156,36 @@ Comprehensive documentation available in two languages:
 | Phase | Status | Focus |
 |-------|--------|-------|
 | 0-4 | ✅ Done | MVP: Feed, Onboarding, Reels, Quiz, Parental Controls |
-| 5 - M1 | ✅ Done | AI Infrastructure + Content Safety (47 sources, moderation) |
-| 5 - M2 | ✅ Done | Age-Adapted Content ("Explain it Easy") |
-| 5 - M3 | ✅ Done | Dynamic Quiz from Real News (AI daily generation) |
-| 5 - M4 | ✅ Done | Gamification (36 stickers, 20 achievements, streaks) |
-| 5 - M5 | ✅ Done | Robust Parental Controls (backend enforcement, bcrypt) |
-| 5 - M6 | ✅ Done | Smart Feed + Team Hub + Improved Reels |
-| Mobile | ✅ Done | Full feature parity with web app |
-| Next | 🔲 | Video aggregator (YouTube RSS), user locale config, scraping fallback |
+| 5 | ✅ Done | Differentiators: AI, Quiz, Gamification, Parental, Smart Feed |
+| Tech Debt | ✅ Done | PostgreSQL, OAuth, structured logging, error handling, testing |
+| Next | 🔲 | Beta testing with families |
 
 ## Backlog & Upcoming Features
 
-### High Priority
-
-| Feature | Description | Spec |
-|---------|-------------|------|
-| **Video Aggregator (YouTube RSS)** | Automatic daily video ingestion from YouTube channels via RSS. Same pattern as news aggregator — cron job, moderation, configurable sources. Replaces static seed reels with fresh content. | [backlog-video-aggregator.md](specs/phase-5-differentiators/backlog-video-aggregator.md) |
-| **User Locale/Country Config** | Add language and country selection to onboarding. Content filtered by user's language, quiz/summaries generated in preferred language. | [backlog-user-locale.md](specs/phase-5-differentiators/backlog-user-locale.md) |
-| **Scraping Fallback for Sources without RSS** | Cheerio scraper or Google News RSS workaround for sites that don't have RSS feeds (Estadio Deportivo, ElDesmarque, Mucho Deporte, El Correo). | [backlog-scraping.md](specs/phase-5-differentiators/backlog-scraping.md) |
-
 ### Medium Priority
 
-| Feature | Description | Spec |
-|---------|-------------|------|
-| **Multi-Source Reels** | Support Instagram Reels, TikTok embeds, and native MP4 in addition to YouTube. Platform detection in ReelCard component. | [backlog-multi-source-reels.md](specs/phase-5-differentiators/backlog-multi-source-reels.md) |
-| **Redundant Filters Cleanup** | After onboarding, the home page should not re-ask sport/age selection. Simplify filters for logged-in users to only show followed sports. | Noted in prd6.md |
-| **Real Sticker Artwork** | Replace placeholder sticker images (`/stickers/*.png`) with designed artwork for all 36 stickers. | — |
-| **Push Notifications (Real)** | Wire actual push delivery (FCM for mobile, service worker for web) using the notification preferences already stored in DB. | — |
+| Feature | Description |
+|---------|-------------|
+| **Scraping Fallback** | Cheerio scraper or Google News RSS workaround for sites without RSS feeds |
+| **Redundant Filters Cleanup** | Simplify home filters for logged-in users to only show followed sports |
+| **Real Sticker Artwork** | Replace placeholder sticker images with designed artwork for all 36 stickers |
+| **Push Notifications (Real)** | Wire actual push delivery (FCM for mobile, service worker for web) |
 
 ### Lower Priority / Future
 
 | Feature | Description |
 |---------|-------------|
-| **Live Team Stats API** | Replace seed TeamStats with live data from a sports API (football-data.org, NBA API, etc.) |
 | **Sticker Trading** | Social feature: share/trade stickers with friends (with parental approval) |
 | **Quiz Leaderboards** | Weekly rankings among friends or class groups |
 | **Sports Education** | Mini-courses explaining rules of each sport |
 | **School Integration** | Dashboard for PE teachers |
-| **PostgreSQL Migration** | Move from SQLite to PostgreSQL for production |
-| **JWT Authentication** | Replace ID-based user identification with proper auth |
-| **Automated Tests** | Unit and integration test suites for API and frontend |
-| **Weekly Parent Report** | AI-generated weekly summary sent to parents ("Your child explored football and basketball this week...") |
 
 ### Known Technical Debt
 
-- Pre-existing TypeScript build errors in API (Express query param types)
 - Feed ranker loads all items into memory before pagination (OK for current scale)
-- Session tokens in-memory only (lost on API restart)
 - YouTube autoplay may be blocked by browsers without user interaction
-- Reels are YouTube embeds only (no native video support yet)
+- Mobile OAuth requires expo-auth-session for native flows (currently shows alert)
+- Google/Apple OAuth requires real credentials for end-to-end testing
 
 ## License
 

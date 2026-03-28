@@ -17,19 +17,23 @@ import reportRoutes from './routes/reports';
 import missionRoutes from './routes/missions';
 import authRouter from './routes/auth';
 import { errorHandler } from './middleware/error-handler';
+import { requestIdMiddleware } from './middleware/request-id';
 import { authMiddleware } from './middleware/auth';
 import { authLimiter, pinLimiter, contentLimiter, syncLimiter, defaultLimiter } from './middleware/rate-limiter';
 import { startSyncJob, runManualSync } from './jobs/sync-feeds';
 import { startWeeklyDigestJob } from './jobs/send-weekly-digests';
 import { startDailyMissionsJob } from './jobs/generate-daily-missions';
 import { startStreakReminderJob } from './jobs/streak-reminder';
+import { startMissionReminderJob } from './jobs/mission-reminder';
 import { startTeamStatsSyncJob } from './jobs/sync-team-stats';
 import { startVideoSyncJob, runManualVideoSync } from './jobs/sync-videos';
+import { logger } from './services/logger';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 // Middleware
+app.use(requestIdMiddleware);
 app.use(cors());
 app.use(express.json());
 app.use(authMiddleware);
@@ -70,10 +74,10 @@ app.use(errorHandler);
 
 // Start server
 app.listen(PORT, () => {
-  console.log(`SportyKids API running at http://localhost:${PORT}`);
+  logger.info({ port: PORT }, `SportyKids API running at http://localhost:${PORT}`);
 
   // Initial sync on startup
-  runManualSync().catch(console.error);
+  runManualSync().catch((err) => logger.error({ err }, 'Initial sync failed'));
 
   // Schedule periodic sync
   startSyncJob();
@@ -87,10 +91,13 @@ app.listen(PORT, () => {
   // Schedule streak reminder notifications
   startStreakReminderJob();
 
+  // Schedule daily mission reminders (18:00 UTC)
+  startMissionReminderJob();
+
   // Schedule daily team stats sync from TheSportsDB
   startTeamStatsSyncJob();
 
   // Initial video sync on startup + schedule periodic sync
-  runManualVideoSync().catch(console.error);
+  runManualVideoSync().catch((err) => logger.error({ err }, 'Initial video sync failed'));
   startVideoSyncJob();
 });

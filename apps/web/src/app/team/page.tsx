@@ -11,7 +11,7 @@ import { TeamStatsCard } from '@/components/TeamStatsCard';
 import { TeamReelsStrip } from '@/components/TeamReelsStrip';
 import { TeamPageSkeleton } from '@/components/skeletons';
 import { EmptyState } from '@/components/EmptyState';
-import { LimitReached } from '@/components/LimitReached';
+import { LimitReached, type LimitType } from '@/components/LimitReached';
 
 export default function TeamPage() {
   const { user, loading: userLoading, setUser, locale } = useUser();
@@ -49,16 +49,18 @@ export default function TeamPage() {
       );
       setReels(teamReels);
       setTeamStats(statsResult);
-    } catch (err: any) {
-      if (err?.status === 403 && err?.reason) {
-        setParentalBlock({ reason: err.reason, allowedHoursStart: err.allowedHoursStart, allowedHoursEnd: err.allowedHoursEnd });
+    } catch (err: unknown) {
+      const e = err as Record<string, unknown>;
+      if (e?.status === 403 && e?.reason) {
+        setParentalBlock({ reason: e.reason as string, allowedHoursStart: e.allowedHoursStart as number, allowedHoursEnd: e.allowedHoursEnd as number });
       } else {
+        // eslint-disable-next-line no-console
         console.error('Error loading team data:', err);
       }
     } finally {
       setLoading(false);
     }
-  }, [user?.favoriteTeam, user?.id]);
+  }, [user?.favoriteTeam, user?.id, user?.favoriteSports]);
 
   useEffect(() => {
     if (user?.favoriteTeam) {
@@ -75,6 +77,7 @@ export default function TeamPage() {
       setUser(updated);
       setChangingTeam(false);
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error('Error updating team:', err);
     }
   };
@@ -85,7 +88,7 @@ export default function TeamPage() {
     return (
       <div className="space-y-6 page-enter">
         <LimitReached
-          type={parentalBlock.reason as any}
+          type={parentalBlock.reason as LimitType}
           allowedHoursStart={parentalBlock.allowedHoursStart}
           allowedHoursEnd={parentalBlock.allowedHoursEnd}
         />

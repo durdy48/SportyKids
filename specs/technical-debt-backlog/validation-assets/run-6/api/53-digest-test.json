@@ -1,0 +1,22 @@
+{
+  "status": 500,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "243",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 20:42:00 GMT",
+    "etag": "W/\"f3-IMjTAqtyngsL3Ip9lA9AzpoXLsQ\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "f278e75d-e167-4e99-a87e-5da97bf68538"
+  },
+  "body": {
+    "error": {
+      "code": "INTERNAL_ERROR",
+      "message": "Internal server error",
+      "stack": "Error: connect ECONNREFUSED 127.0.0.1:587\n    at TCPConnectWrap.afterConnect [as oncomplete] (node:net:1637:16)",
+      "requestId": "f278e75d-e167-4e99-a87e-5da97bf68538"
+    }
+  }
+}

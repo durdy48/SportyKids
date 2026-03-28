@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -11,18 +11,25 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
-import { COLORS, t } from '@sportykids/shared';
+import { t } from '@sportykids/shared';
+import type { ThemeColors } from '../lib/theme';
 import { useUser } from '../lib/user-context';
-import { register } from '../lib/auth';
+import { register, fetchAuthProviders } from '../lib/auth';
 
-export function RegisterScreen({ navigation }: { navigation: any }) {
-  const { setUser, locale } = useUser();
+export function RegisterScreen({ navigation }: { navigation: { goBack: () => void } }) {
+  const { setUser, locale, colors } = useUser();
+  const styles = createStyles(colors);
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [age, setAge] = useState('');
   const [role, setRole] = useState<'parent' | 'child'>('parent');
   const [loading, setLoading] = useState(false);
+  const [providers, setProviders] = useState<{ google: boolean; apple: boolean }>({ google: false, apple: false });
+
+  useEffect(() => {
+    fetchAuthProviders().then(setProviders).catch(() => {});
+  }, []);
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) return;
@@ -56,7 +63,7 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
           <TextInput
             style={styles.input}
             placeholder={t('auth.name', locale)}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.muted}
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
@@ -64,7 +71,7 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
           <TextInput
             style={styles.input}
             placeholder={t('auth.email', locale)}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.muted}
             value={email}
             onChangeText={setEmail}
             keyboardType="email-address"
@@ -74,7 +81,7 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
           <TextInput
             style={styles.input}
             placeholder={t('auth.password', locale)}
-            placeholderTextColor="#9CA3AF"
+            placeholderTextColor={colors.muted}
             value={password}
             onChangeText={setPassword}
             secureTextEntry
@@ -103,7 +110,7 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
             <TextInput
               style={styles.input}
               placeholder={t('filters.age', locale)}
-              placeholderTextColor="#9CA3AF"
+              placeholderTextColor={colors.muted}
               value={age}
               onChangeText={setAge}
               keyboardType="number-pad"
@@ -123,6 +130,43 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
             )}
           </TouchableOpacity>
 
+          {(providers.google || providers.apple) && (
+            <>
+              <View style={styles.separator}>
+                <View style={styles.separatorLine} />
+                <Text style={styles.separatorText}>{t('auth.or_continue_with', locale)}</Text>
+                <View style={styles.separatorLine} />
+              </View>
+
+              {/* TODO: Social OAuth requires expo-auth-session for proper mobile deep linking.
+                 Linking.openURL cannot return tokens back to the app. These buttons show
+                 an informational alert until deep linking is configured. */}
+              {providers.google && (
+                <TouchableOpacity
+                  style={styles.socialButton}
+                  onPress={() => Alert.alert(
+                    t('auth.google_signin', locale),
+                    'OAuth login requires app configuration. Use email login for now.',
+                  )}
+                >
+                  <Text style={styles.socialButtonText}>{t('auth.google_signin', locale)}</Text>
+                </TouchableOpacity>
+              )}
+
+              {providers.apple && (
+                <TouchableOpacity
+                  style={[styles.socialButton, styles.appleButton]}
+                  onPress={() => Alert.alert(
+                    t('auth.apple_signin', locale),
+                    'OAuth login requires app configuration. Use email login for now.',
+                  )}
+                >
+                  <Text style={[styles.socialButtonText, styles.appleButtonText]}>{t('auth.apple_signin', locale)}</Text>
+                </TouchableOpacity>
+              )}
+            </>
+          )}
+
           <TouchableOpacity
             style={styles.linkButton}
             onPress={() => navigation.goBack()}
@@ -135,10 +179,11 @@ export function RegisterScreen({ navigation }: { navigation: any }) {
   );
 }
 
-const styles = StyleSheet.create({
+function createStyles(colors: ThemeColors) {
+  return StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: colors.background,
   },
   scroll: {
     flexGrow: 1,
@@ -149,7 +194,7 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 24,
     fontWeight: '700',
-    color: COLORS.darkText,
+    color: colors.text,
     textAlign: 'center',
     marginBottom: 32,
   },
@@ -157,14 +202,14 @@ const styles = StyleSheet.create({
     gap: 14,
   },
   input: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    color: COLORS.darkText,
+    color: colors.text,
   },
   roleRow: {
     flexDirection: 'row',
@@ -175,24 +220,24 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: '#E5E7EB',
+    borderColor: colors.border,
     alignItems: 'center',
-    backgroundColor: '#FFFFFF',
+    backgroundColor: colors.surface,
   },
   roleSelected: {
-    borderColor: COLORS.blue,
-    backgroundColor: '#EFF6FF',
+    borderColor: colors.blue,
+    backgroundColor: colors.blue + '15',
   },
   roleText: {
     fontSize: 14,
     fontWeight: '500',
-    color: '#6B7280',
+    color: colors.muted,
   },
   roleTextSelected: {
-    color: COLORS.blue,
+    color: colors.blue,
   },
   primaryButton: {
-    backgroundColor: COLORS.blue,
+    backgroundColor: colors.blue,
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: 'center',
@@ -206,14 +251,50 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  separator: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginVertical: 4,
+  },
+  separatorLine: {
+    flex: 1,
+    height: 1,
+    backgroundColor: colors.border,
+  },
+  separatorText: {
+    marginHorizontal: 12,
+    fontSize: 12,
+    color: colors.muted,
+  },
+  socialButton: {
+    paddingVertical: 14,
+    borderRadius: 12,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
+  },
+  socialButtonText: {
+    fontSize: 15,
+    fontWeight: '600',
+    color: colors.text,
+  },
+  appleButton: {
+    backgroundColor: colors.text,
+    borderColor: colors.text,
+  },
+  appleButtonText: {
+    color: colors.surface,
+  },
   linkButton: {
     paddingVertical: 12,
     alignItems: 'center',
   },
   linkButtonText: {
-    color: COLORS.blue,
+    color: colors.blue,
     fontSize: 14,
     fontWeight: '500',
     textDecorationLine: 'underline',
   },
-});
+  });
+}

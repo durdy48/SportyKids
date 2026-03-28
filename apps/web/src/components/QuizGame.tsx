@@ -44,6 +44,7 @@ export function QuizGame({ questions, userId, onFinish, locale }: QuizGameProps)
         }
       }
     } catch (err) {
+      // eslint-disable-next-line no-console
       console.error(err);
     } finally {
       setSubmitting(false);
@@ -65,7 +66,7 @@ export function QuizGame({ questions, userId, onFinish, locale }: QuizGameProps)
       return selection === i ? 'border-[var(--color-blue)] bg-[var(--color-blue)]/10' : 'border-[var(--color-border)] hover:bg-[var(--color-background)]';
     }
     if (i === result.correctAnswer) return 'border-[var(--color-green)] bg-[var(--color-green)]/10';
-    if (i === selection && !result.correct) return 'border-red-400 bg-red-50';
+    if (i === selection && !result.correct) return 'border-red-400 bg-red-50 dark:bg-red-900/20';
     return 'border-[var(--color-border)] opacity-50';
   };
 
@@ -127,8 +128,8 @@ export function QuizGame({ questions, userId, onFinish, locale }: QuizGameProps)
         <div className="space-y-4">
           <div className={`p-4 rounded-xl text-sm font-medium ${
             result.correct
-              ? 'bg-green-50 text-green-700 border border-green-200'
-              : 'bg-red-50 text-red-700 border border-red-200'
+              ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700'
+              : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700'
           }`}>
             {result.correct ? t('quiz.correct', locale) : t('quiz.incorrect', locale)}
           </div>

@@ -1,6 +1,7 @@
 import jwt from 'jsonwebtoken';
 import { compare, hash } from 'bcryptjs';
 import crypto from 'crypto';
+import type { User } from '@prisma/client';
 import { prisma } from '../config/database';
 
 // ---------------------------------------------------------------------------
@@ -101,4 +102,51 @@ export async function hashPassword(password: string): Promise<string> {
 
 export async function verifyPassword(password: string, passwordHash: string): Promise<boolean> {
   return compare(password, passwordHash);
+}
+
+// ---------------------------------------------------------------------------
+// Social login helpers
+// ---------------------------------------------------------------------------
+
+export async function findOrCreateSocialUser(
+  provider: 'google' | 'apple',
+  socialId: string,
+  email: string | null,
+  name: string,
+  role: 'child' | 'parent' = 'parent',
+): Promise<{ user: User; isNewUser: boolean }> {
+  // 1. Check by socialId + provider
+  let user = await prisma.user.findFirst({
+    where: { authProvider: provider, socialId },
+  });
+  if (user) {
+    await prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+    return { user, isNewUser: false };
+  }
+
+  // 2. Check by email (account linking)
+  if (email) {
+    user = await prisma.user.findUnique({ where: { email } });
+    if (user) {
+      const updated = await prisma.user.update({
+        where: { id: user.id },
+        data: { socialId, authProvider: provider, lastLoginAt: new Date() },
+      });
+      return { user: updated, isNewUser: false };
+    }
+  }
+
+  // 3. Create new user
+  const newUser = await prisma.user.create({
+    data: {
+      name: name || 'User',
+      age: 35,
+      email,
+      socialId,
+      authProvider: provider,
+      role,
+      lastLoginAt: new Date(),
+    },
+  });
+  return { user: newUser, isNewUser: true };
 }

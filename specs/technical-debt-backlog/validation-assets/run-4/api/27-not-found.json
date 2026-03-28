@@ -1,0 +1,22 @@
+{
+  "status": 404,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "250",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 14:40:54 GMT",
+    "etag": "W/\"fa-FddWqlK9jxL6p9qY449g4abtCIY\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "1dfe4012-fa09-4ad1-bb7e-3210b8d8d9ee"
+  },
+  "body": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "User not found",
+      "stack": "NotFoundError: User not found\n    at <anonymous> (/Users/antonioduarteruiz/personal/sportykids/apps/api/src/routes/users.ts:59:11)",
+      "requestId": "1dfe4012-fa09-4ad1-bb7e-3210b8d8d9ee"
+    }
+  }
+}

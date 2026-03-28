@@ -3,9 +3,10 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 export const navigationRef = createNavigationContainerRef();
-import { View, Text, TouchableOpacity } from 'react-native';
+import { Text, TouchableOpacity } from 'react-native';
 import { t } from '@sportykids/shared';
 import { useUser } from '../lib/user-context';
+import { haptic } from '../lib/haptics';
 import { HomeFeedScreen } from '../screens/HomeFeed';
 import { ReelsScreen } from '../screens/Reels';
 import { QuizScreen } from '../screens/Quiz';
@@ -21,32 +22,36 @@ const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function LanguageToggle() {
-  const { locale, setLocale } = useUser();
+  const { locale, setLocale, colors } = useUser();
   const nextLocale = locale === 'es' ? 'en' : 'es';
   const flag = locale === 'es' ? '🇪🇸' : '🇬🇧';
   return (
     <TouchableOpacity
       onPress={() => setLocale(nextLocale)}
-      style={{ marginRight: 12, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: '#F3F4F6' }}
+      style={{ marginRight: 12, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: colors.border }}
     >
       <Text style={{ fontSize: 16 }}>{flag}</Text>
-      <Text style={{ fontSize: 12, fontWeight: '600', color: '#4B5563', marginLeft: 4 }}>{locale.toUpperCase()}</Text>
+      <Text style={{ fontSize: 12, fontWeight: '600', color: colors.muted, marginLeft: 4 }}>{locale.toUpperCase()}</Text>
     </TouchableOpacity>
   );
 }
 
 function MainTabs() {
-  const { locale } = useUser();
+  const { locale, colors } = useUser();
 
   return (
     <Tab.Navigator
       screenOptions={{
         headerShown: true,
-        headerTitleStyle: { fontWeight: '600', fontSize: 18 },
+        headerTitleStyle: { fontWeight: '600', fontSize: 18, color: colors.text },
+        headerStyle: { backgroundColor: colors.surface },
         headerRight: () => <LanguageToggle />,
-        tabBarActiveTintColor: '#2563EB',
-        tabBarInactiveTintColor: '#9CA3AF',
-        tabBarStyle: { borderTopColor: '#F1F5F9' },
+        tabBarActiveTintColor: colors.blue,
+        tabBarInactiveTintColor: colors.muted,
+        tabBarStyle: { borderTopColor: colors.border, backgroundColor: colors.surface },
+      }}
+      screenListeners={{
+        tabPress: () => haptic('selection'),
       }}
     >
       <Tab.Screen
@@ -54,7 +59,7 @@ function MainTabs() {
         component={HomeFeedScreen}
         options={{
           title: t('nav.news', locale),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>📰</Text>,
+          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>📰</Text>,
         }}
       />
       <Tab.Screen
@@ -62,9 +67,9 @@ function MainTabs() {
         component={ReelsScreen}
         options={{
           title: t('nav.reels', locale),
-          headerStyle: { backgroundColor: '#000' },
-          headerTintColor: '#fff',
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🎬</Text>,
+          headerStyle: { backgroundColor: colors.background },
+          headerTintColor: colors.text,
+          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>🎬</Text>,
         }}
       />
       <Tab.Screen
@@ -72,7 +77,7 @@ function MainTabs() {
         component={QuizScreen}
         options={{
           title: t('nav.quiz', locale),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🧠</Text>,
+          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>🧠</Text>,
         }}
       />
       <Tab.Screen
@@ -80,7 +85,7 @@ function MainTabs() {
         component={CollectionScreen}
         options={{
           title: t('nav.collection', locale),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🏆</Text>,
+          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>🏆</Text>,
         }}
       />
       <Tab.Screen
@@ -88,7 +93,7 @@ function MainTabs() {
         component={FavoriteTeamScreen}
         options={{
           title: t('nav.my_team', locale),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>⚽</Text>,
+          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>⚽</Text>,
         }}
       />
       <Tab.Screen
@@ -96,7 +101,7 @@ function MainTabs() {
         component={ParentalControlScreen}
         options={{
           title: t('nav.parents', locale),
-          tabBarIcon: ({ color }) => <Text style={{ fontSize: 20 }}>🔒</Text>,
+          tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>🔒</Text>,
         }}
       />
     </Tab.Navigator>

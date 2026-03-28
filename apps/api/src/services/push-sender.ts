@@ -1,5 +1,6 @@
 import { Expo, type ExpoPushMessage, type ExpoPushTicket } from 'expo-server-sdk';
 import { prisma } from '../config/database';
+import { logger } from './logger';
 
 const expo = new Expo();
 
@@ -31,13 +32,9 @@ export async function sendPushToUser(
     if (!user?.pushEnabled) return;
 
     if (preference && user.pushPreferences) {
-      try {
-        const prefs = JSON.parse(user.pushPreferences);
-        if (preference === 'dailyQuiz' && !prefs.dailyQuiz) return;
-        if (preference === 'teamUpdates' && !prefs.teamUpdates) return;
-      } catch {
-        // Invalid preferences JSON — send anyway
-      }
+      const prefs = user.pushPreferences as Record<string, unknown>;
+      if (preference === 'dailyQuiz' && !prefs.dailyQuiz) return;
+      if (preference === 'teamUpdates' && !prefs.teamUpdates) return;
     }
 
     const tokens = await prisma.pushToken.findMany({
@@ -52,7 +49,7 @@ export async function sendPushToUser(
       payload,
     );
   } catch (error) {
-    console.error(`[push-sender] Error sending to user ${userId}:`, error);
+    logger.error({ err: error, userId }, 'Error sending push to user');
   }
 }
 
@@ -77,13 +74,9 @@ export async function sendPushToUsers(
       .filter((user) => {
         if (!preference) return true;
         if (!user.pushPreferences) return true;
-        try {
-          const prefs = JSON.parse(user.pushPreferences);
-          if (preference === 'dailyQuiz' && !prefs.dailyQuiz) return false;
-          if (preference === 'teamUpdates' && !prefs.teamUpdates) return false;
-        } catch {
-          // Invalid preferences — include user
-        }
+        const prefs = user.pushPreferences as Record<string, unknown>;
+        if (preference === 'dailyQuiz' && !prefs.dailyQuiz) return false;
+        if (preference === 'teamUpdates' && !prefs.teamUpdates) return false;
         return true;
       })
       .map((u) => u.id);
@@ -102,7 +95,7 @@ export async function sendPushToUsers(
       payload,
     );
   } catch (error) {
-    console.error('[push-sender] Error sending to users:', error);
+    logger.error({ err: error }, 'Error sending push to users');
   }
 }
 
@@ -114,7 +107,7 @@ async function sendToTokens(pushTokens: string[], payload: PushPayload): Promise
 
   for (const token of pushTokens) {
     if (!Expo.isExpoPushToken(token)) {
-      console.warn(`[push-sender] Invalid Expo push token: ${token}`);
+      logger.warn({ token }, 'Invalid Expo push token');
       continue;
     }
 
@@ -148,12 +141,12 @@ async function sendToTokens(pushTokens: string[], payload: PushPayload): Promise
               where: { token: targetToken },
               data: { active: false },
             });
-            console.log(`[push-sender] Deactivated token: ${targetToken}`);
+            logger.info({ token: targetToken }, 'Deactivated push token');
           }
         }
       }
     } catch (error) {
-      console.error('[push-sender] Error sending chunk:', error);
+      logger.error({ err: error }, 'Error sending push notification chunk');
     }
   }
 }

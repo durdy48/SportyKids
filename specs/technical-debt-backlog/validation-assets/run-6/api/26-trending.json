@@ -1,0 +1,17 @@
+{
+  "status": 200,
+  "headers": {
+    "access-control-allow-origin": "*",
+    "connection": "keep-alive",
+    "content-length": "18",
+    "content-type": "application/json; charset=utf-8",
+    "date": "Sat, 28 Mar 2026 20:41:59 GMT",
+    "etag": "W/\"12-O3V7C8sWgB33nAcA72NMEv6n8pc\"",
+    "keep-alive": "timeout=5",
+    "x-powered-by": "Express",
+    "x-request-id": "1922da97-32fb-42ed-bc01-f34d4e6de7c9"
+  },
+  "body": {
+    "trendingIds": []
+  }
+}

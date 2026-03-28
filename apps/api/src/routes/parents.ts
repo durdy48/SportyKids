@@ -4,54 +4,27 @@ import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
 import { t } from '@sportykids/shared';
 import { prisma } from '../config/database';
-import type { Prisma } from '@prisma/client';
+import type { Prisma, ParentalProfile } from '@prisma/client';
 import { awardPointsForActivity } from '../services/gamification';
 import { checkMissionProgress } from '../services/mission-generator';
 import { invalidateProfileCache } from '../middleware/parental-guard';
 import { invalidateBehavioralCache } from '../services/feed-ranker';
-import { safeJsonParse } from '../utils/safe-json-parse';
-import { generateDigestData, renderDigestHtml, renderDigestPdf } from '../services/digest-generator';
+import { generateDigestData, renderDigestPdf, renderDigestHtml } from '../services/digest-generator';
+import { trackEvent } from '../services/monitoring';
+import {
+  createParentalSession,
+  verifyParentalSession,
+  cleanupExpiredSessions,
+} from '../services/parental-session';
+import { ValidationError, AuthenticationError, NotFoundError, RateLimitError, AppError } from '../errors';
+import { apiCache } from '../services/cache';
 
 const router = Router();
 
-// ---------------------------------------------------------------------------
-// Session token store (in-memory, 5-min expiry)
-// ---------------------------------------------------------------------------
-const parentSessions = new Map<string, { userId: string; expiresAt: number }>();
-
-const SESSION_TTL_MS = 5 * 60 * 1000; // 5 minutes
-
-// Clean up expired sessions every 5 minutes to prevent memory leaks
+// Clean up expired parental sessions every 5 minutes
 setInterval(() => {
-  const now = Date.now();
-  for (const [token, session] of parentSessions) {
-    if (session.expiresAt <= now) {
-      parentSessions.delete(token);
-    }
-  }
+  cleanupExpiredSessions().catch(() => {});
 }, 5 * 60_000);
-
-function createSession(userId: string): { sessionToken: string; expiresAt: number } {
-  const sessionToken = crypto.randomUUID();
-  const expiresAt = Date.now() + SESSION_TTL_MS;
-  parentSessions.set(sessionToken, { userId, expiresAt });
-  return { sessionToken, expiresAt };
-}
-
-/**
- * Validate a parental session token from X-Parental-Session header.
- * Returns the userId if valid, null otherwise.
- */
-export function verifyParentalSession(token: string | undefined): string | null {
-  if (!token) return null;
-  const session = parentSessions.get(token);
-  if (!session) return null;
-  if (session.expiresAt <= Date.now()) {
-    parentSessions.delete(token);
-    return null;
-  }
-  return session.userId;
-}
 
 /** Check if a stored hash is a legacy SHA-256 hex string (64 hex chars) */
 function isSha256Hash(hash: string): boolean {
@@ -82,8 +55,7 @@ const configureSchema = z.object({
 router.post('/setup', async (req: Request, res: Response) => {
   const parsed = configureSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   const { userId, pin, allowedSports, allowedFormats, maxDailyTimeMinutes, maxNewsMinutes, maxReelsMinutes, maxQuizMinutes, allowedHoursStart, allowedHoursEnd, timezone } = parsed.data;
@@ -94,8 +66,8 @@ router.post('/setup', async (req: Request, res: Response) => {
     where: { userId },
     update: {
       pin: hashedPin,
-      ...(allowedSports && { allowedSports: JSON.stringify(allowedSports) }),
-      ...(allowedFormats && { allowedFormats: JSON.stringify(allowedFormats) }),
+      ...(allowedSports && { allowedSports }),
+      ...(allowedFormats && { allowedFormats }),
       ...(maxDailyTimeMinutes !== undefined && { maxDailyTimeMinutes }),
       ...(maxNewsMinutes !== undefined && { maxNewsMinutes }),
       ...(maxReelsMinutes !== undefined && { maxReelsMinutes }),
@@ -107,8 +79,8 @@ router.post('/setup', async (req: Request, res: Response) => {
     create: {
       userId,
       pin: hashedPin,
-      allowedSports: JSON.stringify(allowedSports ?? []),
-      allowedFormats: JSON.stringify(allowedFormats ?? ['news', 'reels', 'quiz']),
+      allowedSports: allowedSports ?? [],
+      allowedFormats: allowedFormats ?? ['news', 'reels', 'quiz'],
       maxDailyTimeMinutes: maxDailyTimeMinutes ?? 60,
       maxNewsMinutes: maxNewsMinutes ?? null,
       maxReelsMinutes: maxReelsMinutes ?? null,
@@ -140,8 +112,7 @@ const PIN_LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
 router.post('/verify-pin', async (req: Request, res: Response) => {
   const parsed = verifySchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data' });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   const profile = await prisma.parentalProfile.findUnique({
@@ -149,8 +120,7 @@ router.post('/verify-pin', async (req: Request, res: Response) => {
   });
 
   if (!profile) {
-    res.status(404).json({ error: 'Not found' });
-    return;
+    throw new NotFoundError('Not found');
   }
 
   // Fetch user locale for i18n error messages
@@ -195,18 +165,23 @@ router.post('/verify-pin', async (req: Request, res: Response) => {
     }
   }
 
+  trackEvent('parental_pin_verified', {
+    userId: parsed.data.userId,
+    success: String(verified),
+  });
+
   if (verified) {
     // Reset failed attempts on success
     await prisma.parentalProfile.update({
       where: { userId: parsed.data.userId },
       data: { failedAttempts: 0, lockedUntil: null },
     });
-    const session = createSession(parsed.data.userId);
+    const session = await createParentalSession(parsed.data.userId);
     res.json({
       verified: true,
       exists: true,
       sessionToken: session.sessionToken,
-      expiresAt: session.expiresAt,
+      expiresAt: session.expiresAt.getTime(),
       profile: formatProfile(profile),
     });
   } else {
@@ -243,7 +218,7 @@ router.post('/verify-pin', async (req: Request, res: Response) => {
 // GET /api/parents/profile/:userId — Get parental profile
 // ---------------------------------------------------------------------------
 router.get('/profile/:userId', async (req: Request, res: Response) => {
-  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
 
   const profile = await prisma.parentalProfile.findUnique({
     where: { userId: req.params.userId },
@@ -279,29 +254,26 @@ const updateSchema = z.object({
 });
 
 router.put('/profile/:userId', async (req: Request, res: Response) => {
-  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
-    res.status(401).json({ error: 'Parental session required' });
-    return;
+    throw new AuthenticationError('Parental session required');
   }
 
   const parsed = updateSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data' });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   const { allowedSports, allowedFormats, maxDailyTimeMinutes, maxNewsMinutes, maxReelsMinutes, maxQuizMinutes, allowedHoursStart, allowedHoursEnd, timezone } = parsed.data;
 
   // Validate schedule: start must be less than end
   if (allowedHoursStart !== undefined && allowedHoursEnd !== undefined && allowedHoursStart >= allowedHoursEnd) {
-    res.status(400).json({ error: 'allowedHoursStart must be less than allowedHoursEnd' });
-    return;
+    throw new ValidationError('allowedHoursStart must be less than allowedHoursEnd');
   }
 
   const data: Prisma.ParentalProfileUpdateInput = {};
-  if (allowedSports) data.allowedSports = JSON.stringify(allowedSports);
-  if (allowedFormats) data.allowedFormats = JSON.stringify(allowedFormats);
+  if (allowedSports) data.allowedSports = allowedSports;
+  if (allowedFormats) data.allowedFormats = allowedFormats;
   if (maxDailyTimeMinutes !== undefined) data.maxDailyTimeMinutes = maxDailyTimeMinutes;
   if (maxNewsMinutes !== undefined) data.maxNewsMinutes = maxNewsMinutes;
   if (maxReelsMinutes !== undefined) data.maxReelsMinutes = maxReelsMinutes;
@@ -325,10 +297,9 @@ router.put('/profile/:userId', async (req: Request, res: Response) => {
 // GET /api/parents/activity/:userId — Weekly summary
 // ---------------------------------------------------------------------------
 router.get('/activity/:userId', async (req: Request, res: Response) => {
-  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
-    res.status(401).json({ error: 'Parental session required' });
-    return;
+    throw new AuthenticationError('Parental session required');
   }
 
   const oneWeekAgo = new Date();
@@ -374,16 +345,14 @@ const detailQuerySchema = z.object({
 });
 
 router.get('/activity/:userId/detail', async (req: Request, res: Response) => {
-  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
-    res.status(401).json({ error: 'Parental session required' });
-    return;
+    throw new AuthenticationError('Parental session required');
   }
 
   const parsed = detailQuerySchema.safeParse(req.query);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid parameters', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid parameters', parsed.error.flatten());
   }
 
   const userId = req.params.userId;
@@ -484,8 +453,7 @@ const logSchema = z.object({
 router.post('/activity/log', async (req: Request, res: Response) => {
   const parsed = logSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data' });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   await prisma.activityLog.create({
@@ -526,10 +494,9 @@ router.post('/activity/log', async (req: Request, res: Response) => {
 // GET /api/parents/preview/:userId — "See What My Kid Sees" parent preview
 // ---------------------------------------------------------------------------
 router.get('/preview/:userId', async (req: Request, res: Response) => {
-  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
-    res.status(401).json({ error: 'Parental session required' });
-    return;
+    throw new AuthenticationError('Parental session required');
   }
 
   const userId = req.params.userId;
@@ -537,13 +504,12 @@ router.get('/preview/:userId', async (req: Request, res: Response) => {
   const user = await prisma.user.findUnique({ where: { id: userId } });
 
   if (!profile || !user) {
-    res.status(404).json({ error: 'Not found' });
-    return;
+    throw new NotFoundError('Not found');
   }
 
-  const allowedFormats: string[] = safeJsonParse(profile.allowedFormats as string, []);
-  const allowedSports: string[] = safeJsonParse(profile.allowedSports as string, []);
-  const favoriteSports: string[] = safeJsonParse(user.favoriteSports as string, []);
+  const allowedFormats: string[] = profile.allowedFormats;
+  const allowedSports: string[] = profile.allowedSports;
+  const favoriteSports: string[] = user.favoriteSports;
 
   // Fetch news if format allowed
   let news: unknown[] = [];
@@ -582,23 +548,20 @@ const digestSchema = z.object({
 });
 
 router.put('/digest/:userId', async (req: Request, res: Response) => {
-  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
-    res.status(401).json({ error: 'Parental session required' });
-    return;
+    throw new AuthenticationError('Parental session required');
   }
 
   const parsed = digestSchema.safeParse(req.body);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten() });
-    return;
+    throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
   const userId = req.params.userId;
   const profile = await prisma.parentalProfile.findUnique({ where: { userId } });
   if (!profile) {
-    res.status(404).json({ error: 'Parental profile not found' });
-    return;
+    throw new NotFoundError('Parental profile not found');
   }
 
   const updated = await prisma.parentalProfile.update({
@@ -613,10 +576,9 @@ router.put('/digest/:userId', async (req: Request, res: Response) => {
 // GET /api/parents/digest/:userId — Get digest preferences
 // ---------------------------------------------------------------------------
 router.get('/digest/:userId', async (req: Request, res: Response) => {
-  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
-    res.status(401).json({ error: 'Parental session required' });
-    return;
+    throw new AuthenticationError('Parental session required');
   }
 
   const profile = await prisma.parentalProfile.findUnique({
@@ -624,8 +586,7 @@ router.get('/digest/:userId', async (req: Request, res: Response) => {
   });
 
   if (!profile) {
-    res.status(404).json({ error: 'Parental profile not found' });
-    return;
+    throw new NotFoundError('Parental profile not found');
   }
 
   res.json({
@@ -640,16 +601,14 @@ router.get('/digest/:userId', async (req: Request, res: Response) => {
 // GET /api/parents/digest/:userId/preview — Preview digest data (JSON)
 // ---------------------------------------------------------------------------
 router.get('/digest/:userId/preview', async (req: Request, res: Response) => {
-  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
-    res.status(401).json({ error: 'Parental session required' });
-    return;
+    throw new AuthenticationError('Parental session required');
   }
 
   const user = await prisma.user.findUnique({ where: { id: req.params.userId } });
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   const data = await generateDigestData(req.params.userId);
@@ -660,21 +619,21 @@ router.get('/digest/:userId/preview', async (req: Request, res: Response) => {
 // GET /api/parents/digest/:userId/download — Download digest as PDF
 // ---------------------------------------------------------------------------
 router.get('/digest/:userId/download', async (req: Request, res: Response) => {
-  const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
-    res.status(401).json({ error: 'Parental session required' });
-    return;
+    throw new AuthenticationError('Parental session required');
   }
 
   const user = await prisma.user.findUnique({ where: { id: req.params.userId } });
   if (!user) {
-    res.status(404).json({ error: 'User not found' });
-    return;
+    throw new NotFoundError('User not found');
   }
 
   const locale = (req.query.locale === 'en' ? 'en' : 'es') as 'es' | 'en';
   const data = await generateDigestData(req.params.userId);
   const pdfBuffer = await renderDigestPdf(data, locale);
+
+  trackEvent('digest_downloaded', { userId: req.params.userId });
 
   res.setHeader('Content-Type', 'application/pdf');
   res.setHeader('Content-Disposition', `attachment; filename="sportykids-digest-${req.params.userId}.pdf"`);
@@ -682,14 +641,75 @@ router.get('/digest/:userId/download', async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
+// POST /api/parents/digest/:userId/test — Send test digest email
+// ---------------------------------------------------------------------------
+router.post('/digest/:userId/test', async (req: Request, res: Response) => {
+  const sessionUserId = await verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
+  if (!sessionUserId) {
+    throw new AuthenticationError('Parental session required');
+  }
+
+  const userId = req.params.userId;
+
+  // Rate limit: 1 per 5 min per user (via CacheProvider with TTL)
+  const cooldownKey = `test-email-cooldown:${userId}`;
+  const existing = await apiCache.get<string>(cooldownKey);
+  if (existing) {
+    throw new RateLimitError('Wait 5 minutes between test emails');
+  }
+
+  const profile = await prisma.parentalProfile.findUnique({ where: { userId } });
+  if (!profile || !profile.digestEmail) {
+    throw new ValidationError('No digest email configured');
+  }
+
+  const user = await prisma.user.findUnique({ where: { id: userId } });
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  const locale = (user.locale === 'en' ? 'en' : 'es') as 'es' | 'en';
+
+  try {
+    const data = await generateDigestData(userId);
+    const html = renderDigestHtml(data, locale);
+
+    const nodemailer = await import('nodemailer');
+    const transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST || 'localhost',
+      port: parseInt(process.env.SMTP_PORT || '587', 10),
+      secure: process.env.SMTP_SECURE === 'true',
+      auth: process.env.SMTP_USER ? {
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
+      } : undefined,
+    });
+
+    await transporter.sendMail({
+      from: process.env.SMTP_FROM || 'noreply@sportykids.app',
+      to: profile.digestEmail,
+      subject: `[TEST] ${t('digest.email_subject', locale, { name: user.name })}`,
+      html,
+    });
+
+    await apiCache.set(cooldownKey, 'true', 5 * 60_000);
+    res.json({ ok: true, sentTo: profile.digestEmail });
+  } catch (err) {
+    if (err instanceof AppError) throw err;
+    req.log?.error?.({ err }, 'Failed to send test digest email');
+    throw err;
+  }
+});
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function formatProfile({ pin, failedAttempts, lockedUntil, ...rest }: Record<string, unknown>) {
+function formatProfile({ pin: _pin, failedAttempts: _failedAttempts, lockedUntil: _lockedUntil, ...rest }: ParentalProfile) {
   return {
     ...rest,
-    allowedSports: safeJsonParse(rest.allowedSports as string, []),
-    allowedFeeds: safeJsonParse(rest.allowedFeeds as string, []),
-    allowedFormats: safeJsonParse(rest.allowedFormats as string, []),
+    allowedSports: rest.allowedSports ?? [],
+    allowedFeeds: rest.allowedFeeds ?? [],
+    allowedFormats: rest.allowedFormats ?? [],
     digestEnabled: rest.digestEnabled ?? false,
     digestEmail: rest.digestEmail ?? null,
     digestDay: rest.digestDay ?? 1,

@@ -1,6 +1,5 @@
 import { prisma } from '../config/database';
 import { t, type Locale } from '@sportykids/shared';
-import { safeJsonParse } from '../utils/safe-json-parse';
 
 export interface DigestData {
   userName: string;

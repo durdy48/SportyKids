@@ -4,17 +4,21 @@ import request from 'supertest';
 import bcrypt from 'bcryptjs';
 import { prisma } from '../config/database';
 import parentsRouter from '../routes/parents';
+import { requestIdMiddleware } from '../middleware/request-id';
+import { errorHandler } from '../middleware/error-handler';
 
 const app = express();
 app.use(express.json());
+app.use(requestIdMiddleware);
 app.use('/api/parents', parentsRouter);
+app.use(errorHandler as express.ErrorRequestHandler);
 
 const TEST_PIN = '1234';
 const WRONG_PIN = '9999';
 
 async function createTestUserWithProfile(pin: string = TEST_PIN) {
   const user = await prisma.user.create({
-    data: { name: 'Test Kid', age: 10, favoriteSports: '["football"]' },
+    data: { name: 'Test Kid', age: 10, favoriteSports: ['football'] },
   });
   const hashedPin = await bcrypt.hash(pin, 10);
   await prisma.parentalProfile.create({
@@ -33,6 +37,7 @@ describe('PIN Lockout', () => {
     await prisma.pushToken.deleteMany();
     await prisma.refreshToken.deleteMany();
     await prisma.dailyMission.deleteMany();
+    await prisma.parentalSession.deleteMany();
     await prisma.parentalProfile.deleteMany();
     await prisma.user.deleteMany();
   });
