@@ -48,11 +48,25 @@
     "title": "Reels",
     "subtitle": "Short sports videos",
     "no_reels": "No reels available",
+    "video_unavailable": "Video unavailable",
+    "video_inline_error": "This video cannot be played inline",
+    "open_in_youtube": "▶ Open in YouTube",
+    "open_video": "▶ Open video",
     "like": "Like",
     "share": "Share",
     "copied": "Link copied!",
     "tap_to_play": "Tap to play",
-    "filter": "Filter"
+    "filter": "Filter",
+    "sources_title": "Video Sources",
+    "add_source": "Add source",
+    "source_added": "Source added successfully",
+    "source_deleted": "Source deleted",
+    "source_error_duplicate": "This URL already exists in the catalog",
+    "source_error_invalid": "Could not validate this URL",
+    "delete_confirm": "Delete this video source?",
+    "custom_badge": "Custom",
+    "sync_started": "Video sync started",
+    "sync_complete": "Sync complete: {created} new videos"
   },
   "quiz": {
     "title": "Sports Quiz",
@@ -144,6 +158,10 @@
     "current_pin": "Current PIN",
     "new_pin": "New PIN",
     "pin_changed": "PIN changed successfully",
+    "pin_locked": "PIN is locked. Try again in {minutes} minutes.",
+    "pin_incorrect": "Wrong PIN. {remaining} attempts remaining.",
+    "pin_locked_short": "Locked: {remaining}",
+    "pin_lockout_warning": "Warning: PIN will be locked after one more failed attempt.",
     "session_active": "Session active",
     "session_expired": "Session expired, enter your PIN again",
     "day_mon": "M",
@@ -197,7 +215,8 @@
     "connection_error": "Connection error",
     "create_pin_failed": "Error creating PIN",
     "invalid_data": "Invalid data",
-    "not_found": "Not found"
+    "not_found": "Not found",
+    "rate_limited": "Too many requests. Wait a moment and try again."
   },
   "sources": {
     "catalog_title": "News sources",
@@ -211,6 +230,7 @@
     "country_FR": "France",
     "country_IT": "Italy",
     "country_DE": "Germany",
+    "search_sources_placeholder": "Search sources...",
     "category_general": "General",
     "category_team": "Team",
     "category_league": "League",
@@ -243,8 +263,10 @@
     "stickers_collected": "{{collected}} of {{total}} stickers",
     "all_sports": "All",
     "achievements": "Achievements",
+    "no_stickers": "No stickers yet",
     "locked": "Locked",
-    "obtained": "Obtained"
+    "obtained": "Obtained",
+    "tab_stickers": "Stickers"
   },
   "sticker": {
     "rarity": {
@@ -261,7 +283,47 @@
     "days": "days"
   },
   "achievement": {
-    "unlocked": "Achievement unlocked!"
+    "unlocked": "Achievement unlocked!",
+    "first_read": "First read",
+    "first_read_desc": "Read your first news article",
+    "news_10": "Regular reader",
+    "news_10_desc": "Read 10 news articles",
+    "news_50": "Junior journalist",
+    "news_50_desc": "Read 50 news articles",
+    "news_100": "News expert",
+    "news_100_desc": "Read 100 news articles",
+    "first_reel": "First video",
+    "first_reel_desc": "Watch your first reel",
+    "reels_20": "Sports cinephile",
+    "reels_20_desc": "Watch 20 reels",
+    "first_quiz": "First quiz",
+    "first_quiz_desc": "Complete your first quiz",
+    "quiz_perfect": "Perfect quiz",
+    "quiz_perfect_desc": "Get a perfect quiz score",
+    "quiz_10_perfect": "Brainiac",
+    "quiz_10_perfect_desc": "Get 10 perfect quizzes",
+    "streak_3": "3-day streak",
+    "streak_3_desc": "Keep a 3-day streak",
+    "streak_7": "Weekly streak",
+    "streak_7_desc": "Keep a 7-day streak",
+    "streak_14": "Two-week streak",
+    "streak_14_desc": "Keep a 14-day streak",
+    "streak_30": "Monthly streak",
+    "streak_30_desc": "Keep a 30-day streak",
+    "all_sports": "Multi-sport",
+    "all_sports_desc": "Read news from 5 different sports",
+    "first_sticker": "First sticker",
+    "first_sticker_desc": "Collect your first sticker",
+    "stickers_10": "Collector",
+    "stickers_10_desc": "Collect 10 stickers",
+    "stickers_25": "Master collector",
+    "stickers_25_desc": "Collect 25 stickers",
+    "daily_login_7": "Full week",
+    "daily_login_7_desc": "Log in 7 days in a row",
+    "points_500": "500 points",
+    "points_500_desc": "Earn 500 points",
+    "points_1000": "1000 points",
+    "points_1000_desc": "Earn 1000 points"
   },
   "notifications": {
     "title": "Notifications",
@@ -319,7 +381,8 @@
     "mark_reviewed": "Mark reviewed",
     "dismiss": "Dismiss",
     "reviewed": "Reviewed",
-    "dismissed": "Dismissed"
+    "dismissed": "Dismissed",
+    "no_reports": "No reports"
   },
   "mission": {
     "read_news": "Read {target} news articles",
@@ -375,7 +438,36 @@
       "4": "Thu",
       "5": "Fri",
       "6": "Sat"
-    }
+    },
+    "weekly_digest": "Weekly Digest",
+    "period": "Period",
+    "total_time": "Total time",
+    "daily_average": "Daily average",
+    "activity": "Activity",
+    "top_sports": "Top Sports",
+    "content_blocked_moderation": "Content blocked by moderation",
+    "content_blocked": "Content blocked",
+    "quiz_performance": "Quiz performance",
+    "quizzes_played": "Quizzes played",
+    "correct": "Correct",
+    "perfect_quizzes": "Perfect quizzes",
+    "safe_news_tagline": "Safe sports news for kids",
+    "email_subject": "SportyKids — Weekly digest for {name}"
+  },
+  "settings": {
+    "language_region": "Language & Region",
+    "language": "Language",
+    "country": "Country",
+    "save": "Save",
+    "saved": "Saved"
+  },
+  "countries": {
+    "ES": "Spain",
+    "GB": "United Kingdom",
+    "US": "United States",
+    "FR": "France",
+    "IT": "Italy",
+    "DE": "Germany"
   },
   "theme": {
     "toggle": "Toggle theme",

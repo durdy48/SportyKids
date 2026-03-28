@@ -13,6 +13,54 @@ interface RssSourceSeed {
   category?: string;
 }
 
+interface VideoSourceSeed {
+  name: string;
+  platform: string;
+  feedUrl: string;
+  channelId?: string;
+  playlistId?: string;
+  sport: string;
+}
+
+const initialVideoSources: VideoSourceSeed[] = [
+  // ── Football ────────────────────────────────────────────────────────
+  { name: 'La Liga Official', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCIk1SjEGvIaLP01IyjqhUdQ', channelId: 'UCIk1SjEGvIaLP01IyjqhUdQ', sport: 'football' },
+  { name: 'FC Barcelona', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC14UlmYlSNiQCBe9Eookf_A', channelId: 'UC14UlmYlSNiQCBe9Eookf_A', sport: 'football' },
+  { name: 'Real Madrid CF', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCWV3obpZVGgJ3j9FVhEjhPQ', channelId: 'UCWV3obpZVGgJ3j9FVhEjhPQ', sport: 'football' },
+  { name: 'Premier League', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCG5qGWdu8nIRZqJ_GgDwQ-w', channelId: 'UCG5qGWdu8nIRZqJ_GgDwQ-w', sport: 'football' },
+  { name: 'UEFA Champions League', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCmqtR_Zcb9tVOhSR4GJPOdA', channelId: 'UCmqtR_Zcb9tVOhSR4GJPOdA', sport: 'football' },
+
+  // ── Basketball ──────────────────────────────────────────────────────
+  { name: 'NBA', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCWJ2lWNubArHWmf3FIHbfcQ', channelId: 'UCWJ2lWNubArHWmf3FIHbfcQ', sport: 'basketball' },
+  { name: 'ACB Liga Endesa', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCsQKJjv_7sCJ3H5e2ToxsRQ', channelId: 'UCsQKJjv_7sCJ3H5e2ToxsRQ', sport: 'basketball' },
+  { name: 'EuroLeague Basketball', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCHZVHPyEBBiCN_MWGLvoE6g', channelId: 'UCHZVHPyEBBiCN_MWGLvoE6g', sport: 'basketball' },
+
+  // ── Tennis ──────────────────────────────────────────────────────────
+  { name: 'ATP Tour', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCbcxFkd6B9xUU54tGlefpBQ', channelId: 'UCbcxFkd6B9xUU54tGlefpBQ', sport: 'tennis' },
+  { name: 'WTA Tennis', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCfgFISz_Dml2FvndRLICm6Q', channelId: 'UCfgFISz_Dml2FvndRLICm6Q', sport: 'tennis' },
+  { name: 'Roland Garros', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCLhFbNomu6fEJ8LAQHFGCFA', channelId: 'UCLhFbNomu6fEJ8LAQHFGCFA', sport: 'tennis' },
+
+  // ── Swimming ────────────────────────────────────────────────────────
+  { name: 'World Aquatics', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCOmS8sLY6FjYqFHqYdTYIwg', channelId: 'UCOmS8sLY6FjYqFHqYdTYIwg', sport: 'swimming' },
+  { name: 'SwimSwam Video', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCxkfAhgF2bXi8rZCmekJJJQ', channelId: 'UCxkfAhgF2bXi8rZCmekJJJQ', sport: 'swimming' },
+
+  // ── Athletics ───────────────────────────────────────────────────────
+  { name: 'World Athletics', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCXhSfRMgSE-OFCHPEgjjKUg', channelId: 'UCXhSfRMgSE-OFCHPEgjjKUg', sport: 'athletics' },
+  { name: 'Olympics', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCTl3QQTvqHFjurroKxexy2Q', channelId: 'UCTl3QQTvqHFjurroKxexy2Q', sport: 'athletics' },
+
+  // ── Cycling ─────────────────────────────────────────────────────────
+  { name: 'GCN en Espanol', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCbgDgpSIjCO3CVQFE5P5XRQ', channelId: 'UCbgDgpSIjCO3CVQFE5P5XRQ', sport: 'cycling' },
+  { name: 'Tour de France', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCikVMad1jqoGYIDftpFm2Aw', channelId: 'UCikVMad1jqoGYIDftpFm2Aw', sport: 'cycling' },
+
+  // ── Formula 1 ───────────────────────────────────────────────────────
+  { name: 'Formula 1', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCB_qr75-ydFVKSz9KnBMLpg', channelId: 'UCB_qr75-ydFVKSz9KnBMLpg', sport: 'formula1' },
+  { name: 'Scuderia Ferrari', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCEsCUOoJoR7Y5c2wuEIo8lQ', channelId: 'UCEsCUOoJoR7Y5c2wuEIo8lQ', sport: 'formula1' },
+
+  // ── Padel ───────────────────────────────────────────────────────────
+  { name: 'Premier Padel', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCW-WYt6vA9DJQHE0zOA8e0A', channelId: 'UCW-WYt6vA9DJQHE0zOA8e0A', sport: 'padel' },
+  { name: 'World Padel Tour', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCMxpzwjvC64W5OUFNZ9ReOA', channelId: 'UCMxpzwjvC64W5OUFNZ9ReOA', sport: 'padel' },
+];
+
 const initialSources: RssSourceSeed[] = [
   // ── Football (Spain) ──────────────────────────────────────────────
   { name: 'Marca - Football', url: 'https://feeds.marca.com/rss/portada.xml', sport: 'football', country: 'ES', language: 'es', description: 'Marca — leading Spanish sports newspaper', category: 'general' },
@@ -76,6 +124,178 @@ const initialSources: RssSourceSeed[] = [
   { name: 'Mundo Deportivo - Padel', url: 'https://www.mundodeportivo.com/rss/padel', sport: 'padel', country: 'ES', language: 'es', description: 'Mundo Deportivo — padel section', category: 'general' },
   { name: 'PadelSpain', url: 'https://padelspain.net/feed/', sport: 'padel', country: 'ES', language: 'es', description: 'PadelSpain — dedicated padel news', category: 'general' },
   { name: 'PadelFIP', url: 'https://www.padelfip.com/feed/', sport: 'padel', country: 'ES', language: 'en', description: 'International Padel Federation news', category: 'official' },
+
+  // ── Google News RSS (Spanish outlets without native RSS) ─────────
+  // Estadio Deportivo
+  { name: 'Google News: Estadio Deportivo - Football', url: 'https://news.google.com/rss/search?q=site:estadiodeportivo.com+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Estadio Deportivo football coverage via Google News RSS', category: 'google_news' },
+  { name: 'Google News: Estadio Deportivo - Basketball', url: 'https://news.google.com/rss/search?q=site:estadiodeportivo.com+baloncesto&hl=es&gl=ES', sport: 'basketball', country: 'ES', language: 'es', description: 'Estadio Deportivo basketball coverage via Google News RSS', category: 'google_news' },
+  { name: 'Google News: Estadio Deportivo - General', url: 'https://news.google.com/rss/search?q=site:estadiodeportivo.com+deportes&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Estadio Deportivo general sports via Google News RSS', category: 'google_news' },
+  // Mucho Deporte
+  { name: 'Google News: Mucho Deporte - Football', url: 'https://news.google.com/rss/search?q=site:muchodeporte.com+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Mucho Deporte football coverage via Google News RSS', category: 'google_news' },
+  { name: 'Google News: Mucho Deporte - General', url: 'https://news.google.com/rss/search?q=site:muchodeporte.com+deportes&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Mucho Deporte general sports via Google News RSS', category: 'google_news' },
+  // El Desmarque
+  { name: 'Google News: El Desmarque - Football', url: 'https://news.google.com/rss/search?q=site:eldesmarque.com+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'El Desmarque football coverage via Google News RSS', category: 'google_news' },
+  { name: 'Google News: El Desmarque - Basketball', url: 'https://news.google.com/rss/search?q=site:eldesmarque.com+baloncesto&hl=es&gl=ES', sport: 'basketball', country: 'ES', language: 'es', description: 'El Desmarque basketball coverage via Google News RSS', category: 'google_news' },
+  { name: 'Google News: El Desmarque - General', url: 'https://news.google.com/rss/search?q=site:eldesmarque.com+deportes&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'El Desmarque general sports via Google News RSS', category: 'google_news' },
+  // El Correo de Andalucia
+  { name: 'Google News: El Correo de Andalucia - Football', url: 'https://news.google.com/rss/search?q=site:elcorreoweb.es+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'El Correo de Andalucia football coverage via Google News RSS', category: 'google_news' },
+  { name: 'Google News: El Correo de Andalucia - General', url: 'https://news.google.com/rss/search?q=site:elcorreoweb.es+deportes&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'El Correo de Andalucia general sports via Google News RSS', category: 'google_news' },
+  // ── Team/Athlete news via Google News RSS ───────────────────────────
+
+  // Football — La Liga (Spain)
+  { name: 'Google News: Real Madrid', url: 'https://news.google.com/rss/search?q=%22Real+Madrid%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Real Madrid news via Google News', category: 'team_news' },
+  { name: 'Google News: FC Barcelona', url: 'https://news.google.com/rss/search?q=%22FC+Barcelona%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'FC Barcelona news via Google News', category: 'team_news' },
+  { name: 'Google News: Atletico de Madrid', url: 'https://news.google.com/rss/search?q=%22Atletico+de+Madrid%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Atletico de Madrid news via Google News', category: 'team_news' },
+  { name: 'Google News: Sevilla FC', url: 'https://news.google.com/rss/search?q=%22Sevilla+FC%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Sevilla FC news via Google News', category: 'team_news' },
+  { name: 'Google News: Real Betis', url: 'https://news.google.com/rss/search?q=%22Real+Betis%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Real Betis news via Google News', category: 'team_news' },
+  { name: 'Google News: Athletic Club', url: 'https://news.google.com/rss/search?q=%22Athletic+Club%22+Bilbao+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Athletic Club news via Google News', category: 'team_news' },
+  { name: 'Google News: Real Sociedad', url: 'https://news.google.com/rss/search?q=%22Real+Sociedad%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Real Sociedad news via Google News', category: 'team_news' },
+  { name: 'Google News: Valencia CF', url: 'https://news.google.com/rss/search?q=%22Valencia+CF%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Valencia CF news via Google News', category: 'team_news' },
+  { name: 'Google News: Villarreal', url: 'https://news.google.com/rss/search?q=%22Villarreal+CF%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Villarreal news via Google News', category: 'team_news' },
+  { name: 'Google News: Girona FC', url: 'https://news.google.com/rss/search?q=%22Girona+FC%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Girona FC news via Google News', category: 'team_news' },
+  { name: 'Google News: Celta de Vigo', url: 'https://news.google.com/rss/search?q=%22Celta+de+Vigo%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Celta de Vigo news via Google News', category: 'team_news' },
+  { name: 'Google News: Osasuna', url: 'https://news.google.com/rss/search?q=%22Osasuna%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Osasuna news via Google News', category: 'team_news' },
+  { name: 'Google News: RCD Mallorca', url: 'https://news.google.com/rss/search?q=%22RCD+Mallorca%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'RCD Mallorca news via Google News', category: 'team_news' },
+  { name: 'Google News: Getafe CF', url: 'https://news.google.com/rss/search?q=%22Getafe+CF%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Getafe CF news via Google News', category: 'team_news' },
+  { name: 'Google News: Rayo Vallecano', url: 'https://news.google.com/rss/search?q=%22Rayo+Vallecano%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Rayo Vallecano news via Google News', category: 'team_news' },
+  { name: 'Google News: Las Palmas', url: 'https://news.google.com/rss/search?q=%22UD+Las+Palmas%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'UD Las Palmas news via Google News', category: 'team_news' },
+  { name: 'Google News: Alaves', url: 'https://news.google.com/rss/search?q=%22Deportivo+Alaves%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Deportivo Alaves news via Google News', category: 'team_news' },
+  { name: 'Google News: Espanyol', url: 'https://news.google.com/rss/search?q=%22RCD+Espanyol%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'RCD Espanyol news via Google News', category: 'team_news' },
+  { name: 'Google News: Leganes', url: 'https://news.google.com/rss/search?q=%22CD+Leganes%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'CD Leganes news via Google News', category: 'team_news' },
+  { name: 'Google News: Real Valladolid', url: 'https://news.google.com/rss/search?q=%22Real+Valladolid%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Real Valladolid news via Google News', category: 'team_news' },
+
+  // Football — Premier League (England)
+  { name: 'Google News: Manchester City', url: 'https://news.google.com/rss/search?q=%22Manchester+City%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Manchester City news via Google News', category: 'team_news' },
+  { name: 'Google News: Liverpool FC', url: 'https://news.google.com/rss/search?q=%22Liverpool+FC%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Liverpool FC news via Google News', category: 'team_news' },
+  { name: 'Google News: Arsenal FC', url: 'https://news.google.com/rss/search?q=%22Arsenal+FC%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Arsenal FC news via Google News', category: 'team_news' },
+  { name: 'Google News: Chelsea FC', url: 'https://news.google.com/rss/search?q=%22Chelsea+FC%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Chelsea FC news via Google News', category: 'team_news' },
+  { name: 'Google News: Manchester United', url: 'https://news.google.com/rss/search?q=%22Manchester+United%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Manchester United news via Google News', category: 'team_news' },
+  { name: 'Google News: Tottenham', url: 'https://news.google.com/rss/search?q=%22Tottenham+Hotspur%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Tottenham Hotspur news via Google News', category: 'team_news' },
+  { name: 'Google News: Newcastle United', url: 'https://news.google.com/rss/search?q=%22Newcastle+United%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Newcastle United news via Google News', category: 'team_news' },
+  { name: 'Google News: Aston Villa', url: 'https://news.google.com/rss/search?q=%22Aston+Villa%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Aston Villa news via Google News', category: 'team_news' },
+  { name: 'Google News: Brighton', url: 'https://news.google.com/rss/search?q=%22Brighton+Hove+Albion%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Brighton & Hove Albion news via Google News', category: 'team_news' },
+  { name: 'Google News: West Ham', url: 'https://news.google.com/rss/search?q=%22West+Ham+United%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'West Ham United news via Google News', category: 'team_news' },
+  { name: 'Google News: Nottingham Forest', url: 'https://news.google.com/rss/search?q=%22Nottingham+Forest%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Nottingham Forest news via Google News', category: 'team_news' },
+  { name: 'Google News: Bournemouth', url: 'https://news.google.com/rss/search?q=%22AFC+Bournemouth%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'AFC Bournemouth news via Google News', category: 'team_news' },
+  { name: 'Google News: Fulham', url: 'https://news.google.com/rss/search?q=%22Fulham+FC%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Fulham FC news via Google News', category: 'team_news' },
+  { name: 'Google News: Crystal Palace', url: 'https://news.google.com/rss/search?q=%22Crystal+Palace%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Crystal Palace news via Google News', category: 'team_news' },
+  { name: 'Google News: Brentford', url: 'https://news.google.com/rss/search?q=%22Brentford+FC%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Brentford FC news via Google News', category: 'team_news' },
+  { name: 'Google News: Everton', url: 'https://news.google.com/rss/search?q=%22Everton+FC%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Everton FC news via Google News', category: 'team_news' },
+  { name: 'Google News: Wolverhampton', url: 'https://news.google.com/rss/search?q=%22Wolverhampton+Wanderers%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Wolverhampton Wanderers news via Google News', category: 'team_news' },
+  { name: 'Google News: Leicester City', url: 'https://news.google.com/rss/search?q=%22Leicester+City%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Leicester City news via Google News', category: 'team_news' },
+  { name: 'Google News: Ipswich Town', url: 'https://news.google.com/rss/search?q=%22Ipswich+Town%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Ipswich Town news via Google News', category: 'team_news' },
+  { name: 'Google News: Southampton', url: 'https://news.google.com/rss/search?q=%22Southampton+FC%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'Southampton FC news via Google News', category: 'team_news' },
+
+  // Football — Serie A (Italy)
+  { name: 'Google News: Inter Milan', url: 'https://news.google.com/rss/search?q=%22Inter+Milan%22+football&hl=en&gl=GB', sport: 'football', country: 'IT', language: 'en', description: 'Inter Milan news via Google News', category: 'team_news' },
+  { name: 'Google News: AC Milan', url: 'https://news.google.com/rss/search?q=%22AC+Milan%22+football&hl=en&gl=GB', sport: 'football', country: 'IT', language: 'en', description: 'AC Milan news via Google News', category: 'team_news' },
+  { name: 'Google News: Juventus', url: 'https://news.google.com/rss/search?q=%22Juventus%22+football&hl=en&gl=GB', sport: 'football', country: 'IT', language: 'en', description: 'Juventus news via Google News', category: 'team_news' },
+  { name: 'Google News: Napoli', url: 'https://news.google.com/rss/search?q=%22SSC+Napoli%22+football&hl=en&gl=GB', sport: 'football', country: 'IT', language: 'en', description: 'SSC Napoli news via Google News', category: 'team_news' },
+  { name: 'Google News: Atalanta', url: 'https://news.google.com/rss/search?q=%22Atalanta%22+football&hl=en&gl=GB', sport: 'football', country: 'IT', language: 'en', description: 'Atalanta news via Google News', category: 'team_news' },
+  { name: 'Google News: AS Roma', url: 'https://news.google.com/rss/search?q=%22AS+Roma%22+football&hl=en&gl=GB', sport: 'football', country: 'IT', language: 'en', description: 'AS Roma news via Google News', category: 'team_news' },
+  { name: 'Google News: Lazio', url: 'https://news.google.com/rss/search?q=%22SS+Lazio%22+football&hl=en&gl=GB', sport: 'football', country: 'IT', language: 'en', description: 'SS Lazio news via Google News', category: 'team_news' },
+  { name: 'Google News: Fiorentina', url: 'https://news.google.com/rss/search?q=%22Fiorentina%22+football&hl=en&gl=GB', sport: 'football', country: 'IT', language: 'en', description: 'Fiorentina news via Google News', category: 'team_news' },
+  { name: 'Google News: Bologna', url: 'https://news.google.com/rss/search?q=%22Bologna+FC%22+football&hl=en&gl=GB', sport: 'football', country: 'IT', language: 'en', description: 'Bologna FC news via Google News', category: 'team_news' },
+
+  // Football — Bundesliga (Germany)
+  { name: 'Google News: Bayern Munich', url: 'https://news.google.com/rss/search?q=%22Bayern+Munich%22+football&hl=en&gl=GB', sport: 'football', country: 'DE', language: 'en', description: 'Bayern Munich news via Google News', category: 'team_news' },
+  { name: 'Google News: Borussia Dortmund', url: 'https://news.google.com/rss/search?q=%22Borussia+Dortmund%22+football&hl=en&gl=GB', sport: 'football', country: 'DE', language: 'en', description: 'Borussia Dortmund news via Google News', category: 'team_news' },
+  { name: 'Google News: Bayer Leverkusen', url: 'https://news.google.com/rss/search?q=%22Bayer+Leverkusen%22+football&hl=en&gl=GB', sport: 'football', country: 'DE', language: 'en', description: 'Bayer Leverkusen news via Google News', category: 'team_news' },
+  { name: 'Google News: RB Leipzig', url: 'https://news.google.com/rss/search?q=%22RB+Leipzig%22+football&hl=en&gl=GB', sport: 'football', country: 'DE', language: 'en', description: 'RB Leipzig news via Google News', category: 'team_news' },
+  { name: 'Google News: VfB Stuttgart', url: 'https://news.google.com/rss/search?q=%22VfB+Stuttgart%22+football&hl=en&gl=GB', sport: 'football', country: 'DE', language: 'en', description: 'VfB Stuttgart news via Google News', category: 'team_news' },
+
+  // Football — Ligue 1 (France)
+  { name: 'Google News: PSG', url: 'https://news.google.com/rss/search?q=%22Paris+Saint+Germain%22+football&hl=en&gl=GB', sport: 'football', country: 'FR', language: 'en', description: 'Paris Saint-Germain news via Google News', category: 'team_news' },
+  { name: 'Google News: Marseille', url: 'https://news.google.com/rss/search?q=%22Olympique+Marseille%22+football&hl=en&gl=GB', sport: 'football', country: 'FR', language: 'en', description: 'Olympique de Marseille news via Google News', category: 'team_news' },
+  { name: 'Google News: Monaco', url: 'https://news.google.com/rss/search?q=%22AS+Monaco%22+football&hl=en&gl=GB', sport: 'football', country: 'FR', language: 'en', description: 'AS Monaco news via Google News', category: 'team_news' },
+  { name: 'Google News: Lyon', url: 'https://news.google.com/rss/search?q=%22Olympique+Lyon%22+football&hl=en&gl=GB', sport: 'football', country: 'FR', language: 'en', description: 'Olympique Lyonnais news via Google News', category: 'team_news' },
+  { name: 'Google News: Lille', url: 'https://news.google.com/rss/search?q=%22LOSC+Lille%22+football&hl=en&gl=GB', sport: 'football', country: 'FR', language: 'en', description: 'LOSC Lille news via Google News', category: 'team_news' },
+
+  // Football — National Teams
+  { name: 'Google News: Seleccion Espanola', url: 'https://news.google.com/rss/search?q=%22seleccion+espanola%22+futbol&hl=es&gl=ES', sport: 'football', country: 'ES', language: 'es', description: 'Spain National Team news via Google News', category: 'team_news' },
+  { name: 'Google News: Argentina National Team', url: 'https://news.google.com/rss/search?q=%22seleccion+argentina%22+futbol&hl=es&gl=ES', sport: 'football', country: 'AR', language: 'es', description: 'Argentina National Team news via Google News', category: 'team_news' },
+  { name: 'Google News: Brazil National Team', url: 'https://news.google.com/rss/search?q=%22Brazil+national+team%22+football&hl=en&gl=GB', sport: 'football', country: 'BR', language: 'en', description: 'Brazil National Team news via Google News', category: 'team_news' },
+  { name: 'Google News: France National Team', url: 'https://news.google.com/rss/search?q=%22France+national+team%22+football&hl=en&gl=GB', sport: 'football', country: 'FR', language: 'en', description: 'France National Team news via Google News', category: 'team_news' },
+  { name: 'Google News: Germany National Team', url: 'https://news.google.com/rss/search?q=%22Germany+national+team%22+football&hl=en&gl=GB', sport: 'football', country: 'DE', language: 'en', description: 'Germany National Team news via Google News', category: 'team_news' },
+  { name: 'Google News: England National Team', url: 'https://news.google.com/rss/search?q=%22England+national+team%22+football&hl=en&gl=GB', sport: 'football', country: 'GB', language: 'en', description: 'England National Team news via Google News', category: 'team_news' },
+  { name: 'Google News: Portugal National Team', url: 'https://news.google.com/rss/search?q=%22Portugal+national+team%22+football&hl=en&gl=GB', sport: 'football', country: 'PT', language: 'en', description: 'Portugal National Team news via Google News', category: 'team_news' },
+  { name: 'Google News: Italy National Team', url: 'https://news.google.com/rss/search?q=%22Italy+national+team%22+football&hl=en&gl=GB', sport: 'football', country: 'IT', language: 'en', description: 'Italy National Team news via Google News', category: 'team_news' },
+  { name: 'Google News: Mexico National Team', url: 'https://news.google.com/rss/search?q=%22seleccion+mexicana%22+futbol&hl=es&gl=ES', sport: 'football', country: 'MX', language: 'es', description: 'Mexico National Team news via Google News', category: 'team_news' },
+  { name: 'Google News: USA National Team', url: 'https://news.google.com/rss/search?q=%22USMNT%22+soccer&hl=en&gl=US', sport: 'football', country: 'US', language: 'en', description: 'USA National Team news via Google News', category: 'team_news' },
+  { name: 'Google News: Colombia National Team', url: 'https://news.google.com/rss/search?q=%22seleccion+Colombia%22+futbol&hl=es&gl=ES', sport: 'football', country: 'CO', language: 'es', description: 'Colombia National Team news via Google News', category: 'team_news' },
+
+  // Basketball — NBA
+  { name: 'Google News: LA Lakers', url: 'https://news.google.com/rss/search?q=%22Los+Angeles+Lakers%22+NBA&hl=en&gl=US', sport: 'basketball', country: 'US', language: 'en', description: 'LA Lakers news via Google News', category: 'team_news' },
+  { name: 'Google News: Boston Celtics', url: 'https://news.google.com/rss/search?q=%22Boston+Celtics%22+NBA&hl=en&gl=US', sport: 'basketball', country: 'US', language: 'en', description: 'Boston Celtics news via Google News', category: 'team_news' },
+  { name: 'Google News: Golden State Warriors', url: 'https://news.google.com/rss/search?q=%22Golden+State+Warriors%22+NBA&hl=en&gl=US', sport: 'basketball', country: 'US', language: 'en', description: 'Golden State Warriors news via Google News', category: 'team_news' },
+  { name: 'Google News: Milwaukee Bucks', url: 'https://news.google.com/rss/search?q=%22Milwaukee+Bucks%22+NBA&hl=en&gl=US', sport: 'basketball', country: 'US', language: 'en', description: 'Milwaukee Bucks news via Google News', category: 'team_news' },
+  { name: 'Google News: Denver Nuggets', url: 'https://news.google.com/rss/search?q=%22Denver+Nuggets%22+NBA&hl=en&gl=US', sport: 'basketball', country: 'US', language: 'en', description: 'Denver Nuggets news via Google News', category: 'team_news' },
+  { name: 'Google News: Philadelphia 76ers', url: 'https://news.google.com/rss/search?q=%22Philadelphia+76ers%22+NBA&hl=en&gl=US', sport: 'basketball', country: 'US', language: 'en', description: 'Philadelphia 76ers news via Google News', category: 'team_news' },
+  { name: 'Google News: Miami Heat', url: 'https://news.google.com/rss/search?q=%22Miami+Heat%22+NBA&hl=en&gl=US', sport: 'basketball', country: 'US', language: 'en', description: 'Miami Heat news via Google News', category: 'team_news' },
+  { name: 'Google News: Dallas Mavericks', url: 'https://news.google.com/rss/search?q=%22Dallas+Mavericks%22+NBA&hl=en&gl=US', sport: 'basketball', country: 'US', language: 'en', description: 'Dallas Mavericks news via Google News', category: 'team_news' },
+  { name: 'Google News: Phoenix Suns', url: 'https://news.google.com/rss/search?q=%22Phoenix+Suns%22+NBA&hl=en&gl=US', sport: 'basketball', country: 'US', language: 'en', description: 'Phoenix Suns news via Google News', category: 'team_news' },
+  { name: 'Google News: New York Knicks', url: 'https://news.google.com/rss/search?q=%22New+York+Knicks%22+NBA&hl=en&gl=US', sport: 'basketball', country: 'US', language: 'en', description: 'New York Knicks news via Google News', category: 'team_news' },
+
+  // Basketball — EuroLeague / ACB
+  { name: 'Google News: Real Madrid Basket', url: 'https://news.google.com/rss/search?q=%22Real+Madrid%22+baloncesto&hl=es&gl=ES', sport: 'basketball', country: 'ES', language: 'es', description: 'Real Madrid basketball news via Google News', category: 'team_news' },
+  { name: 'Google News: Barcelona Basket', url: 'https://news.google.com/rss/search?q=%22Barcelona%22+baloncesto+ACB&hl=es&gl=ES', sport: 'basketball', country: 'ES', language: 'es', description: 'FC Barcelona basketball news via Google News', category: 'team_news' },
+  { name: 'Google News: Baskonia', url: 'https://news.google.com/rss/search?q=%22Baskonia%22+baloncesto&hl=es&gl=ES', sport: 'basketball', country: 'ES', language: 'es', description: 'Baskonia basketball news via Google News', category: 'team_news' },
+  { name: 'Google News: Valencia Basket', url: 'https://news.google.com/rss/search?q=%22Valencia+Basket%22+baloncesto&hl=es&gl=ES', sport: 'basketball', country: 'ES', language: 'es', description: 'Valencia Basket news via Google News', category: 'team_news' },
+  { name: 'Google News: Unicaja', url: 'https://news.google.com/rss/search?q=%22Unicaja%22+baloncesto&hl=es&gl=ES', sport: 'basketball', country: 'ES', language: 'es', description: 'Unicaja basketball news via Google News', category: 'team_news' },
+  { name: 'Google News: Joventut', url: 'https://news.google.com/rss/search?q=%22Joventut+Badalona%22+baloncesto&hl=es&gl=ES', sport: 'basketball', country: 'ES', language: 'es', description: 'Joventut Badalona basketball news via Google News', category: 'team_news' },
+
+  // Tennis — Top Players
+  { name: 'Google News: Carlos Alcaraz', url: 'https://news.google.com/rss/search?q=%22Carlos+Alcaraz%22+tennis&hl=en&gl=GB', sport: 'tennis', country: 'ES', language: 'en', description: 'Carlos Alcaraz news via Google News', category: 'team_news' },
+  { name: 'Google News: Jannik Sinner', url: 'https://news.google.com/rss/search?q=%22Jannik+Sinner%22+tennis&hl=en&gl=GB', sport: 'tennis', country: 'IT', language: 'en', description: 'Jannik Sinner news via Google News', category: 'team_news' },
+  { name: 'Google News: Novak Djokovic', url: 'https://news.google.com/rss/search?q=%22Novak+Djokovic%22+tennis&hl=en&gl=GB', sport: 'tennis', country: 'RS', language: 'en', description: 'Novak Djokovic news via Google News', category: 'team_news' },
+  { name: 'Google News: Alexander Zverev', url: 'https://news.google.com/rss/search?q=%22Alexander+Zverev%22+tennis&hl=en&gl=GB', sport: 'tennis', country: 'DE', language: 'en', description: 'Alexander Zverev news via Google News', category: 'team_news' },
+  { name: 'Google News: Daniil Medvedev', url: 'https://news.google.com/rss/search?q=%22Daniil+Medvedev%22+tennis&hl=en&gl=GB', sport: 'tennis', country: 'RU', language: 'en', description: 'Daniil Medvedev news via Google News', category: 'team_news' },
+  { name: 'Google News: Iga Swiatek', url: 'https://news.google.com/rss/search?q=%22Iga+Swiatek%22+tennis&hl=en&gl=GB', sport: 'tennis', country: 'PL', language: 'en', description: 'Iga Swiatek news via Google News', category: 'team_news' },
+  { name: 'Google News: Aryna Sabalenka', url: 'https://news.google.com/rss/search?q=%22Aryna+Sabalenka%22+tennis&hl=en&gl=GB', sport: 'tennis', country: 'BY', language: 'en', description: 'Aryna Sabalenka news via Google News', category: 'team_news' },
+  { name: 'Google News: Coco Gauff', url: 'https://news.google.com/rss/search?q=%22Coco+Gauff%22+tennis&hl=en&gl=US', sport: 'tennis', country: 'US', language: 'en', description: 'Coco Gauff news via Google News', category: 'team_news' },
+  { name: 'Google News: Rafael Nadal', url: 'https://news.google.com/rss/search?q=%22Rafael+Nadal%22+tennis&hl=en&gl=GB', sport: 'tennis', country: 'ES', language: 'en', description: 'Rafael Nadal news via Google News', category: 'team_news' },
+  { name: 'Google News: Stefanos Tsitsipas', url: 'https://news.google.com/rss/search?q=%22Stefanos+Tsitsipas%22+tennis&hl=en&gl=GB', sport: 'tennis', country: 'GR', language: 'en', description: 'Stefanos Tsitsipas news via Google News', category: 'team_news' },
+
+  // Formula 1 — Drivers & Teams
+  { name: 'Google News: Fernando Alonso', url: 'https://news.google.com/rss/search?q=%22Fernando+Alonso%22+formula+1&hl=es&gl=ES', sport: 'formula1', country: 'ES', language: 'es', description: 'Fernando Alonso F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: Carlos Sainz F1', url: 'https://news.google.com/rss/search?q=%22Carlos+Sainz%22+F1&hl=es&gl=ES', sport: 'formula1', country: 'ES', language: 'es', description: 'Carlos Sainz F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: Max Verstappen', url: 'https://news.google.com/rss/search?q=%22Max+Verstappen%22+F1&hl=en&gl=GB', sport: 'formula1', country: 'NL', language: 'en', description: 'Max Verstappen F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: Lewis Hamilton', url: 'https://news.google.com/rss/search?q=%22Lewis+Hamilton%22+F1&hl=en&gl=GB', sport: 'formula1', country: 'GB', language: 'en', description: 'Lewis Hamilton F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: Charles Leclerc', url: 'https://news.google.com/rss/search?q=%22Charles+Leclerc%22+F1&hl=en&gl=GB', sport: 'formula1', country: 'MC', language: 'en', description: 'Charles Leclerc F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: Lando Norris', url: 'https://news.google.com/rss/search?q=%22Lando+Norris%22+F1&hl=en&gl=GB', sport: 'formula1', country: 'GB', language: 'en', description: 'Lando Norris F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: Oscar Piastri', url: 'https://news.google.com/rss/search?q=%22Oscar+Piastri%22+F1&hl=en&gl=GB', sport: 'formula1', country: 'AU', language: 'en', description: 'Oscar Piastri F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: Red Bull Racing', url: 'https://news.google.com/rss/search?q=%22Red+Bull+Racing%22+F1&hl=en&gl=GB', sport: 'formula1', country: 'AT', language: 'en', description: 'Red Bull Racing F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: Ferrari F1', url: 'https://news.google.com/rss/search?q=%22Ferrari%22+formula+1&hl=en&gl=GB', sport: 'formula1', country: 'IT', language: 'en', description: 'Ferrari F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: McLaren F1', url: 'https://news.google.com/rss/search?q=%22McLaren%22+formula+1&hl=en&gl=GB', sport: 'formula1', country: 'GB', language: 'en', description: 'McLaren F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: Mercedes F1', url: 'https://news.google.com/rss/search?q=%22Mercedes%22+formula+1&hl=en&gl=GB', sport: 'formula1', country: 'DE', language: 'en', description: 'Mercedes F1 news via Google News', category: 'team_news' },
+  { name: 'Google News: Aston Martin F1', url: 'https://news.google.com/rss/search?q=%22Aston+Martin%22+formula+1&hl=en&gl=GB', sport: 'formula1', country: 'GB', language: 'en', description: 'Aston Martin F1 news via Google News', category: 'team_news' },
+
+  // Cycling — Top Riders & Teams
+  { name: 'Google News: Tadej Pogacar', url: 'https://news.google.com/rss/search?q=%22Tadej+Pogacar%22+cycling&hl=en&gl=GB', sport: 'cycling', country: 'SI', language: 'en', description: 'Tadej Pogacar cycling news via Google News', category: 'team_news' },
+  { name: 'Google News: Jonas Vingegaard', url: 'https://news.google.com/rss/search?q=%22Jonas+Vingegaard%22+cycling&hl=en&gl=GB', sport: 'cycling', country: 'DK', language: 'en', description: 'Jonas Vingegaard cycling news via Google News', category: 'team_news' },
+  { name: 'Google News: Remco Evenepoel', url: 'https://news.google.com/rss/search?q=%22Remco+Evenepoel%22+cycling&hl=en&gl=GB', sport: 'cycling', country: 'BE', language: 'en', description: 'Remco Evenepoel cycling news via Google News', category: 'team_news' },
+  { name: 'Google News: Primoz Roglic', url: 'https://news.google.com/rss/search?q=%22Primoz+Roglic%22+cycling&hl=en&gl=GB', sport: 'cycling', country: 'SI', language: 'en', description: 'Primoz Roglic cycling news via Google News', category: 'team_news' },
+  { name: 'Google News: UAE Team Emirates', url: 'https://news.google.com/rss/search?q=%22UAE+Team+Emirates%22+cycling&hl=en&gl=GB', sport: 'cycling', country: 'AE', language: 'en', description: 'UAE Team Emirates cycling news via Google News', category: 'team_news' },
+  { name: 'Google News: Team Visma', url: 'https://news.google.com/rss/search?q=%22Team+Visma%22+cycling&hl=en&gl=GB', sport: 'cycling', country: 'NL', language: 'en', description: 'Team Visma cycling news via Google News', category: 'team_news' },
+
+  // Swimming — Top Athletes
+  { name: 'Google News: Leon Marchand', url: 'https://news.google.com/rss/search?q=%22Leon+Marchand%22+swimming&hl=en&gl=GB', sport: 'swimming', country: 'FR', language: 'en', description: 'Leon Marchand swimming news via Google News', category: 'team_news' },
+  { name: 'Google News: Katie Ledecky', url: 'https://news.google.com/rss/search?q=%22Katie+Ledecky%22+swimming&hl=en&gl=US', sport: 'swimming', country: 'US', language: 'en', description: 'Katie Ledecky swimming news via Google News', category: 'team_news' },
+  { name: 'Google News: Caeleb Dressel', url: 'https://news.google.com/rss/search?q=%22Caeleb+Dressel%22+swimming&hl=en&gl=US', sport: 'swimming', country: 'US', language: 'en', description: 'Caeleb Dressel swimming news via Google News', category: 'team_news' },
+  { name: 'Google News: Adam Peaty', url: 'https://news.google.com/rss/search?q=%22Adam+Peaty%22+swimming&hl=en&gl=GB', sport: 'swimming', country: 'GB', language: 'en', description: 'Adam Peaty swimming news via Google News', category: 'team_news' },
+
+  // Athletics — Top Athletes
+  { name: 'Google News: Noah Lyles', url: 'https://news.google.com/rss/search?q=%22Noah+Lyles%22+athletics&hl=en&gl=US', sport: 'athletics', country: 'US', language: 'en', description: 'Noah Lyles athletics news via Google News', category: 'team_news' },
+  { name: 'Google News: Mondo Duplantis', url: 'https://news.google.com/rss/search?q=%22Mondo+Duplantis%22+athletics&hl=en&gl=GB', sport: 'athletics', country: 'SE', language: 'en', description: 'Mondo Duplantis athletics news via Google News', category: 'team_news' },
+  { name: 'Google News: Sydney McLaughlin', url: 'https://news.google.com/rss/search?q=%22Sydney+McLaughlin%22+athletics&hl=en&gl=US', sport: 'athletics', country: 'US', language: 'en', description: 'Sydney McLaughlin athletics news via Google News', category: 'team_news' },
+  { name: 'Google News: Faith Kipyegon', url: 'https://news.google.com/rss/search?q=%22Faith+Kipyegon%22+athletics&hl=en&gl=GB', sport: 'athletics', country: 'KE', language: 'en', description: 'Faith Kipyegon athletics news via Google News', category: 'team_news' },
+  { name: 'Google News: Femke Bol', url: 'https://news.google.com/rss/search?q=%22Femke+Bol%22+athletics&hl=en&gl=GB', sport: 'athletics', country: 'NL', language: 'en', description: 'Femke Bol athletics news via Google News', category: 'team_news' },
+
+  // Padel — Top Players
+  { name: 'Google News: Alejandro Galan', url: 'https://news.google.com/rss/search?q=%22Alejandro+Galan%22+padel&hl=es&gl=ES', sport: 'padel', country: 'ES', language: 'es', description: 'Alejandro Galan padel news via Google News', category: 'team_news' },
+  { name: 'Google News: Arturo Coello', url: 'https://news.google.com/rss/search?q=%22Arturo+Coello%22+padel&hl=es&gl=ES', sport: 'padel', country: 'ES', language: 'es', description: 'Arturo Coello padel news via Google News', category: 'team_news' },
+  { name: 'Google News: Ari Sanchez', url: 'https://news.google.com/rss/search?q=%22Ari+Sanchez%22+padel&hl=es&gl=ES', sport: 'padel', country: 'ES', language: 'es', description: 'Ari Sanchez padel news via Google News', category: 'team_news' },
+  { name: 'Google News: Gemma Triay', url: 'https://news.google.com/rss/search?q=%22Gemma+Triay%22+padel&hl=es&gl=ES', sport: 'padel', country: 'ES', language: 'es', description: 'Gemma Triay padel news via Google News', category: 'team_news' },
 ];
 
 const initialReels = [
@@ -97,6 +317,13 @@ const initialReels = [
   // Athletics — verified
   { title: 'Usain Bolt 9.58 — Récord mundial 100m', videoUrl: 'https://www.youtube.com/embed/3nbjhpcZ9_g', thumbnailUrl: '', source: 'World Athletics', sport: 'athletics', durationSeconds: 45, videoType: 'youtube_embed', aspectRatio: '16:9' },
   { title: 'Atletismo 100 metros planos', videoUrl: 'https://www.youtube.com/embed/KNA7gdXzFD4', thumbnailUrl: '', source: 'YouTube', sport: 'athletics', durationSeconds: 120, videoType: 'youtube_embed', aspectRatio: '16:9' },
+  // MP4 direct — always work inline (Pexels free license)
+  { title: 'Football training session', videoUrl: 'https://videos.pexels.com/video-files/3191572/3191572-sd_640_360_25fps.mp4', thumbnailUrl: 'https://images.pexels.com/videos/3191572/free-video-3191572.jpg?w=400', source: 'Pexels', sport: 'football', durationSeconds: 15, videoType: 'mp4', aspectRatio: '16:9', publishedAt: new Date() },
+  { title: 'Basketball slam dunk', videoUrl: 'https://videos.pexels.com/video-files/4761556/4761556-sd_640_360_25fps.mp4', thumbnailUrl: 'https://images.pexels.com/videos/4761556/free-video-4761556.jpg?w=400', source: 'Pexels', sport: 'basketball', durationSeconds: 12, videoType: 'mp4', aspectRatio: '16:9', publishedAt: new Date() },
+  { title: 'Tennis practice rally', videoUrl: 'https://videos.pexels.com/video-files/5067588/5067588-sd_640_360_25fps.mp4', thumbnailUrl: 'https://images.pexels.com/videos/5067588/free-video-5067588.jpg?w=400', source: 'Pexels', sport: 'tennis', durationSeconds: 18, videoType: 'mp4', aspectRatio: '16:9', publishedAt: new Date() },
+  { title: 'Swimming freestyle technique', videoUrl: 'https://videos.pexels.com/video-files/4761480/4761480-sd_640_360_25fps.mp4', thumbnailUrl: 'https://images.pexels.com/videos/4761480/free-video-4761480.jpg?w=400', source: 'Pexels', sport: 'swimming', durationSeconds: 10, videoType: 'mp4', aspectRatio: '16:9', publishedAt: new Date() },
+  { title: 'Cycling mountain road', videoUrl: 'https://videos.pexels.com/video-files/4889152/4889152-sd_640_360_25fps.mp4', thumbnailUrl: 'https://images.pexels.com/videos/4889152/free-video-4889152.jpg?w=400', source: 'Pexels', sport: 'cycling', durationSeconds: 20, videoType: 'mp4', aspectRatio: '16:9', publishedAt: new Date() },
+  { title: 'Running on track', videoUrl: 'https://videos.pexels.com/video-files/3209245/3209245-sd_640_360_25fps.mp4', thumbnailUrl: 'https://images.pexels.com/videos/3209245/free-video-3209245.jpg?w=400', source: 'Pexels', sport: 'athletics', durationSeconds: 14, videoType: 'mp4', aspectRatio: '16:9', publishedAt: new Date() },
 ];
 
 const initialQuestions = [
@@ -562,6 +789,31 @@ async function main() {
     data: { videoType: 'youtube_embed', aspectRatio: '16:9' },
   });
   console.log('  Done.');
+
+  console.log('\nSeeding video sources...');
+  for (const vs of initialVideoSources) {
+    await prisma.videoSource.upsert({
+      where: { feedUrl: vs.feedUrl },
+      update: {
+        name: vs.name,
+        platform: vs.platform,
+        sport: vs.sport,
+        channelId: vs.channelId ?? null,
+        playlistId: vs.playlistId ?? null,
+      },
+      create: {
+        name: vs.name,
+        platform: vs.platform,
+        feedUrl: vs.feedUrl,
+        channelId: vs.channelId ?? null,
+        playlistId: vs.playlistId ?? null,
+        sport: vs.sport,
+        isCustom: false,
+      },
+    });
+    console.log(`  + ${vs.name} (${vs.sport})`);
+  }
+  console.log(`  Total video sources: ${await prisma.videoSource.count()}`);
 
   console.log('\nSeed completed.');
 }

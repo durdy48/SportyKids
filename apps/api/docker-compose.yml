@@ -1,16 +1,22 @@
-# Docker Compose for local PostgreSQL development (B-TF4)
+# Docker Compose for local PostgreSQL + Redis development
 #
 # Usage:
-#   docker compose up -d postgres
+#   docker compose up -d              # Start both PostgreSQL and Redis
+#   docker compose up -d postgres     # Start only PostgreSQL
+#   docker compose up -d redis        # Start only Redis
 #
-# Then update .env:
-#   DATABASE_URL="postgresql://sportykids:sportykids@localhost:5432/sportykids"
+# PostgreSQL:
+#   Update .env:
+#     DATABASE_URL="postgresql://sportykids:sportykids@localhost:5432/sportykids"
+#   Update prisma/schema.prisma:
+#     provider = "postgresql"
+#   Then run:
+#     npx prisma migrate dev
 #
-# And update prisma/schema.prisma:
-#   provider = "postgresql"
-#
-# Then run:
-#   npx prisma migrate dev
+# Redis (optional cache backend):
+#   Update .env:
+#     CACHE_PROVIDER=redis
+#     REDIS_URL=redis://localhost:6379
 
 services:
   postgres:
@@ -30,5 +36,20 @@ services:
       timeout: 5s
       retries: 5
 
+  redis:
+    image: redis:7-alpine
+    container_name: sportykids-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - sportykids-redis-data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    command: redis-server --appendonly yes --maxmemory 128mb --maxmemory-policy allkeys-lru
+
 volumes:
   sportykids-pgdata:
+  sportykids-redis-data:

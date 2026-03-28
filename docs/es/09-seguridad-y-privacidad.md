@@ -26,6 +26,7 @@ El servicio `content-moderator.ts` clasifica automaticamente cada noticia agrega
 #### Autenticacion con bcrypt
 - PIN de 4 digitos almacenado como **hash bcrypt** con salt
 - **Migracion transparente** desde SHA-256: usuarios existentes se migran automaticamente al verificar PIN
+- **Bloqueo por intentos fallidos**: tras 5 intentos consecutivos incorrectos, la cuenta se bloquea durante 15 minutos. El modelo `ParentalProfile` registra `failedAttempts` (Int, default 0) y `lockedUntil` (DateTime, nullable). Intentos fallidos devuelven 401 con `attemptsRemaining`; cuentas bloqueadas devuelven 423 con `lockedUntil` y `remainingSeconds`.
 - Sesiones con **token temporal** (TTL 5 minutos) para evitar re-verificacion constante
 
 #### Enforcement server-side (parental-guard middleware)
@@ -50,6 +51,19 @@ Las restricciones parentales se aplican en **dos niveles**:
 - **Restricciones**: tiempo maximo diario
 - **Actividad**: resumen semanal con duraciones, desglose por dia y deporte
 - **PIN**: cambiar PIN de acceso
+
+### Rate limiting
+Todos los endpoints de la API estan protegidos por middleware `express-rate-limit` con 5 niveles:
+
+| Nivel | Rutas | Limite | Variable de entorno |
+|-------|-------|--------|---------------------|
+| Auth | `/api/auth/login`, `/api/auth/register` | 5 req/min | `RATE_LIMIT_AUTH` |
+| PIN | `/api/parents/verify-pin` | 10 req/min | `RATE_LIMIT_PIN` |
+| Content | `/api/news/*`, `/api/reels/*`, `/api/quiz/*` | 60 req/min | `RATE_LIMIT_CONTENT` |
+| Sync | `/api/news/sync`, `/api/reels/sync`, `/api/teams/sync` | 2 req/min | `RATE_LIMIT_SYNC` |
+| Default | Todos los demas `/api/*` | 100 req/min | `RATE_LIMIT_DEFAULT` |
+
+Todos los limites son configurables via variables de entorno. Las peticiones que excedan el limite reciben `429 Too Many Requests` con headers estandar de rate-limit.
 
 ### Datos del usuario
 - No se recopilan emails ni contrasenas
@@ -124,12 +138,12 @@ flowchart TD
 ### Autenticacion
 - Implementar JWT con refresh tokens
 - Autenticacion biometrica (TouchID/FaceID) para control parental en movil
-- Bloqueo tras 5 intentos fallidos de PIN
+- ~~Bloqueo tras 5 intentos fallidos de PIN~~ -- **Implementado**: 5 intentos fallidos = bloqueo de 15 minutos con campos `failedAttempts` y `lockedUntil` en `ParentalProfile`
 
 ### HTTPS y red
 - Forzar HTTPS en todos los endpoints
 - Configurar CORS con dominios especificos (no `*`)
-- Implementar rate limiting (express-rate-limit)
+- ~~Implementar rate limiting (express-rate-limit)~~ -- **Implementado**: 5 niveles (auth, PIN, content, sync, default) con limites configurables via variables de entorno
 - Headers de seguridad (Helmet.js)
 
 ### Proteccion contra SSRF

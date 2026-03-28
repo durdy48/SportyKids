@@ -114,7 +114,7 @@ export function ContentReportList({ userId, locale }: ContentReportListProps) {
 
       {reports.length === 0 ? (
         <p className="text-sm text-[var(--color-muted)] text-center py-4">
-          {'\u2705'} {locale === 'es' ? 'Sin reportes' : 'No reports'}
+          {'\u2705'} {t('report.no_reports', locale)}
         </p>
       ) : (
         <div className="space-y-2">

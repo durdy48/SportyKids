@@ -25,7 +25,7 @@ export async function fetchNewsSummary(
   age: number,
   locale: string
 ): Promise<{ summary: string; ageRange: string; generatedAt: string }> {
-  const res = await fetch(`${API_BASE}/news/${newsId}/resumen?age=${age}&locale=${locale}`);
+  const res = await fetch(`${API_BASE}/news/${newsId}/summary?age=${age}&locale=${locale}`);
   if (!res.ok) throw new Error(`Error ${res.status}`);
   return res.json();
 }
@@ -63,6 +63,8 @@ export interface CreateUserData {
   favoriteSports: string[];
   favoriteTeam?: string;
   selectedFeeds: string[];
+  locale?: string;
+  country?: string;
 }
 
 export async function createUser(data: CreateUserData): Promise<User> {
@@ -98,19 +100,19 @@ export interface RssSourceInfo {
 }
 
 export async function fetchSources(): Promise<RssSourceInfo[]> {
-  const res = await fetch(`${API_BASE}/news/fuentes/listado`);
+  const res = await fetch(`${API_BASE}/news/sources/list`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
 export async function fetchSourceCatalog(): Promise<RssSourceCatalogResponse> {
-  const res = await fetch(`${API_BASE}/news/fuentes/catalogo`);
+  const res = await fetch(`${API_BASE}/news/sources/catalog`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
 export async function addCustomSource(data: { url: string; name: string; sport: string; userId: string }): Promise<RssSource> {
-  const res = await fetch(`${API_BASE}/news/fuentes/custom`, {
+  const res = await fetch(`${API_BASE}/news/sources/custom`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
@@ -121,7 +123,7 @@ export async function addCustomSource(data: { url: string; name: string; sport: 
 
 export async function deleteCustomSource(sourceId: string, userId?: string): Promise<void> {
   const params = userId ? `?userId=${encodeURIComponent(userId)}` : '';
-  const res = await fetch(`${API_BASE}/news/fuentes/custom/${sourceId}${params}`, {
+  const res = await fetch(`${API_BASE}/news/sources/custom/${sourceId}${params}`, {
     method: 'DELETE',
   });
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
@@ -230,7 +232,7 @@ function parentalHeaders(extra?: Record<string, string>): Record<string, string>
 }
 
 export async function setupParentalPin(userId: string, pin: string, options?: { allowedFormats?: string[]; maxDailyTimeMinutes?: number }): Promise<ParentalProfile> {
-  const res = await fetch(`${API_BASE}/parents/configurar`, {
+  const res = await fetch(`${API_BASE}/parents/setup`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, pin, ...options }),
@@ -239,14 +241,38 @@ export async function setupParentalPin(userId: string, pin: string, options?: { 
   return res.json();
 }
 
-export async function verifyPin(userId: string, pin: string): Promise<{ verified: boolean; exists: boolean; profile?: ParentalProfile; sessionToken?: string }> {
-  const res = await fetch(`${API_BASE}/parents/verificar-pin`, {
+export interface PinVerifyResult {
+  verified: boolean;
+  exists?: boolean;
+  profile?: ParentalProfile;
+  sessionToken?: string;
+  // Lockout fields
+  attemptsRemaining?: number;
+  lockedUntil?: string;
+  remainingSeconds?: number;
+  error?: string;
+  status?: number;
+}
+
+export async function verifyPin(userId: string, pin: string): Promise<PinVerifyResult> {
+  const res = await fetch(`${API_BASE}/parents/verify-pin`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, pin }),
   });
-  if (!res.ok) throw new Error(`Error ${res.status}`);
   const data = await res.json();
+
+  if (res.status === 429) {
+    return { verified: false, status: 429, error: data.error };
+  }
+  if (res.status === 423) {
+    return { verified: false, status: 423, error: data.error, lockedUntil: data.lockedUntil, remainingSeconds: data.remainingSeconds };
+  }
+  if (res.status === 401) {
+    return { verified: false, status: 401, error: data.error, attemptsRemaining: data.attemptsRemaining };
+  }
+  if (!res.ok) throw new Error(`Error ${res.status}`);
+
   if (data.sessionToken) {
     parentalSessionToken = data.sessionToken;
   }
@@ -254,7 +280,7 @@ export async function verifyPin(userId: string, pin: string): Promise<{ verified
 }
 
 export async function getParentalProfile(userId: string): Promise<{ exists: boolean; profile?: ParentalProfile }> {
-  const res = await fetch(`${API_BASE}/parents/perfil/${userId}`, {
+  const res = await fetch(`${API_BASE}/parents/profile/${userId}`, {
     headers: parentalHeaders(),
   });
   if (!res.ok) throw new Error(`Error ${res.status}`);
@@ -262,7 +288,7 @@ export async function getParentalProfile(userId: string): Promise<{ exists: bool
 }
 
 export async function updateParentalProfile(userId: string, data: Partial<ParentalProfile>): Promise<ParentalProfile> {
-  const res = await fetch(`${API_BASE}/parents/perfil/${userId}`, {
+  const res = await fetch(`${API_BASE}/parents/profile/${userId}`, {
     method: 'PUT',
     headers: parentalHeaders({ 'Content-Type': 'application/json' }),
     body: JSON.stringify(data),
@@ -272,7 +298,7 @@ export async function updateParentalProfile(userId: string, data: Partial<Parent
 }
 
 export async function fetchActivity(userId: string): Promise<{ news_viewed: number; reels_viewed: number; quizzes_played: number; totalPoints: number }> {
-  const res = await fetch(`${API_BASE}/parents/actividad/${userId}`, {
+  const res = await fetch(`${API_BASE}/parents/activity/${userId}`, {
     headers: parentalHeaders(),
   });
   if (!res.ok) throw new Error(`Error ${res.status}`);
@@ -280,7 +306,7 @@ export async function fetchActivity(userId: string): Promise<{ news_viewed: numb
 }
 
 export async function recordActivity(userId: string, type: string, durationSeconds?: number, contentId?: string, sport?: string): Promise<void> {
-  await fetch(`${API_BASE}/parents/actividad/registrar`, {
+  await fetch(`${API_BASE}/parents/activity/log`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ userId, type, durationSeconds, contentId, sport }),
@@ -288,7 +314,7 @@ export async function recordActivity(userId: string, type: string, durationSecon
 }
 
 export async function fetchActivityDetail(userId: string, from: string, to: string): Promise<{ days: { date: string; news_viewed: number; reels_viewed: number; quizzes_played: number; totalMinutes: number }[]; mostViewed: string }> {
-  const res = await fetch(`${API_BASE}/parents/actividad/${userId}/detalle?from=${from}&to=${to}`, { headers: parentalHeaders() });
+  const res = await fetch(`${API_BASE}/parents/activity/${userId}/detail?from=${from}&to=${to}`, { headers: parentalHeaders() });
   if (!res.ok) throw new Error(`Error ${res.status}`);
   const data = await res.json();
 
@@ -455,7 +481,7 @@ export async function downloadDigestPdf(userId: string) {
 
 // Reading history (B-EN4)
 export async function fetchReadingHistory(userId: string, page = 1, limit = 10): Promise<{ history: NewsItem[]; total: number }> {
-  const res = await fetch(`${API_BASE}/news/historial?userId=${userId}&page=${page}&limit=${limit}`);
+  const res = await fetch(`${API_BASE}/news/history?userId=${userId}&page=${page}&limit=${limit}`);
   if (!res.ok) return { history: [], total: 0 };
   return res.json();
 }
@@ -463,7 +489,7 @@ export async function fetchReadingHistory(userId: string, page = 1, limit = 10):
 // Content recommendations (B-CP4)
 export async function fetchRelatedArticles(newsId: string, limit = 5): Promise<{ related: NewsItem[] }> {
   try {
-    const res = await fetch(`${API_BASE}/news/${newsId}/relacionados?limit=${limit}`);
+    const res = await fetch(`${API_BASE}/news/${newsId}/related?limit=${limit}`);
     if (!res.ok) return { related: [] };
     return res.json();
   } catch {

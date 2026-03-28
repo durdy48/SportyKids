@@ -6,7 +6,7 @@ import request from 'supertest';
 // Mock Prisma
 // ---------------------------------------------------------------------------
 const mockPrisma = vi.hoisted(() => ({
-  parentalProfile: { findUnique: vi.fn() },
+  parentalProfile: { findUnique: vi.fn(), update: vi.fn() },
   user: { findUnique: vi.fn() },
   newsItem: { findMany: vi.fn() },
   reel: { findMany: vi.fn() },
@@ -50,7 +50,7 @@ function createApp() {
   return app;
 }
 
-// Helper to obtain a valid parental session token via the verificar-pin endpoint
+// Helper to obtain a valid parental session token via the verify-pin endpoint
 async function getSessionToken(app: express.Express, userId: string): Promise<string> {
   // Mock parentalProfile.findUnique to return a profile with a bcrypt hash of '1234'
   // bcrypt hash of '1234' with 10 rounds (pre-computed for test speed)
@@ -60,10 +60,12 @@ async function getSessionToken(app: express.Express, userId: string): Promise<st
     pin: bcryptHash,
     allowedFormats: '[]',
     allowedSports: '[]',
+    failedAttempts: 0,
+    lockedUntil: null,
   });
 
   const res = await request(app)
-    .post('/api/parents/verificar-pin')
+    .post('/api/parents/verify-pin')
     .send({ userId, pin: '1234' });
 
   return res.body.sessionToken;

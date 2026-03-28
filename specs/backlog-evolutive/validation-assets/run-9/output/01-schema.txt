@@ -1,0 +1,23 @@
+CREATE TABLE IF NOT EXISTS "ParentalProfile" (
+    "id" TEXT NOT NULL PRIMARY KEY,
+    "userId" TEXT NOT NULL,
+    "pin" TEXT NOT NULL,
+    "allowedSports" TEXT NOT NULL DEFAULT '[]',
+    "allowedFeeds" TEXT NOT NULL DEFAULT '[]',
+    "allowedFormats" TEXT NOT NULL DEFAULT '["news","reels","quiz"]',
+    "maxDailyTimeMinutes" INTEGER NOT NULL DEFAULT 60,
+    "maxNewsMinutes" INTEGER,
+    "maxReelsMinutes" INTEGER,
+    "maxQuizMinutes" INTEGER,
+    "digestEnabled" BOOLEAN NOT NULL DEFAULT false,
+    "digestEmail" TEXT,
+    "digestDay" INTEGER NOT NULL DEFAULT 1,
+    "lastDigestSentAt" DATETIME,
+    "allowedHoursStart" INTEGER NOT NULL DEFAULT 7,
+    "allowedHoursEnd" INTEGER NOT NULL DEFAULT 21,
+    "timezone" TEXT NOT NULL DEFAULT 'Europe/Madrid',
+    "failedAttempts" INTEGER NOT NULL DEFAULT 0,
+    "lockedUntil" DATETIME,
+    CONSTRAINT "ParentalProfile_userId_fkey" FOREIGN KEY ("userId") REFERENCES "User" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
+);
+CREATE UNIQUE INDEX "ParentalProfile_userId_key" ON "ParentalProfile"("userId");

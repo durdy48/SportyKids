@@ -1,13 +1,19 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { t } from '@sportykids/shared';
+import { t, SUPPORTED_COUNTRIES } from '@sportykids/shared';
+import type { Locale } from '@sportykids/shared';
 import { useUser } from '@/lib/user-context';
+import { updateUser } from '@/lib/api';
 
 export function NavBar() {
   const pathname = usePathname();
-  const { user, parentalProfile, locale, resolvedTheme, setTheme, theme } = useUser();
+  const { user, parentalProfile, locale, resolvedTheme, setTheme, theme, setLocale, setUser } = useUser();
+  const [showLangMenu, setShowLangMenu] = useState(false);
+  const [savingLocale, setSavingLocale] = useState(false);
+  const [savedMsg, setSavedMsg] = useState(false);
 
   if (!user) return null;
 
@@ -56,6 +62,69 @@ export function NavBar() {
             </div>
           </div>
           <div className="flex items-center gap-2">
+            {/* Language switcher */}
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setShowLangMenu(!showLangMenu)}
+                className="px-2.5 py-1.5 rounded-lg text-sm transition-colors text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-background)]"
+                aria-label={t('settings.language', locale)}
+                title={t('settings.language', locale)}
+              >
+                {locale === 'es' ? '\u{1F1EA}\u{1F1F8}' : '\u{1F1EC}\u{1F1E7}'}
+              </button>
+              {showLangMenu && (
+                <div className="absolute right-0 top-full mt-1 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-xl shadow-lg p-3 z-50 w-48 space-y-3">
+                  <p className="text-xs font-semibold text-[var(--color-muted)]">{t('settings.language', locale)}</p>
+                  <div className="flex gap-2">
+                    {[
+                      { value: 'es' as Locale, flag: '\u{1F1EA}\u{1F1F8}', label: 'ES' },
+                      { value: 'en' as Locale, flag: '\u{1F1EC}\u{1F1E7}', label: 'EN' },
+                    ].map((opt) => (
+                      <button
+                        key={opt.value}
+                        onClick={() => {
+                          setLocale(opt.value);
+                        }}
+                        className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                          locale === opt.value
+                            ? 'bg-[var(--color-blue)] text-white'
+                            : 'bg-[var(--color-background)] text-[var(--color-text)] hover:bg-[var(--color-border)]'
+                        }`}
+                      >
+                        {opt.flag} {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="text-xs font-semibold text-[var(--color-muted)] mt-2">{t('settings.country', locale)}</p>
+                  <select
+                    value={user?.country ?? 'ES'}
+                    onChange={async (e) => {
+                      if (!user) return;
+                      const newCountry = e.target.value;
+                      setSavingLocale(true);
+                      try {
+                        await updateUser(user.id, { country: newCountry } as Record<string, unknown>);
+                        setUser({ ...user, country: newCountry });
+                        setSavedMsg(true);
+                        setTimeout(() => setSavedMsg(false), 2000);
+                      } catch { /* ignore */ }
+                      setSavingLocale(false);
+                    }}
+                    className="w-full px-2 py-1.5 rounded-lg text-xs bg-[var(--color-background)] border border-[var(--color-border)] text-[var(--color-text)]"
+                  >
+                    {SUPPORTED_COUNTRIES.map((c) => (
+                      <option key={c} value={c}>
+                        {t(`countries.${c}`, locale)}
+                      </option>
+                    ))}
+                  </select>
+                  {savedMsg && (
+                    <p className="text-xs text-[var(--color-green)] text-center">{t('settings.saved', locale)}</p>
+                  )}
+                </div>
+              )}
+            </div>
             <button
               type="button"
               onClick={cycleTheme}

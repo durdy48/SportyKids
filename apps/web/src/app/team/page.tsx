@@ -42,10 +42,12 @@ export default function TeamPage() {
         fetchTeamStats(user.favoriteTeam),
       ]);
       setNews(newsResult.news);
+      const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+      const teamNorm = user.favoriteTeam ? norm(user.favoriteTeam) : '';
       const teamReels = reelsResult.reels.filter(
-        (r) => r.team && r.team.toLowerCase() === user.favoriteTeam?.toLowerCase()
+        (r) => r.team && norm(r.team).includes(teamNorm)
       );
-      setReels(teamReels.length > 0 ? teamReels : reelsResult.reels.slice(0, 6));
+      setReels(teamReels);
       setTeamStats(statsResult);
     } catch (err: any) {
       if (err?.status === 403 && err?.reason) {

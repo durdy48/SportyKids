@@ -4,7 +4,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { User, ParentalProfile } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
 import { t } from '@sportykids/shared';
-import { getUser, getParentalProfile, checkIn, getStreakInfo } from './api';
+import { getUser, getParentalProfile, checkIn, getStreakInfo, updateUser } from './api';
 import { registerForPushNotifications, registerPushTokenWithApi } from './push-notifications';
 
 const STORAGE_KEY = 'sportykids_user_id';
@@ -25,6 +25,7 @@ interface UserContextType {
   setUser: (user: User) => void;
   setParentalProfile: (profile: ParentalProfile) => void;
   reloadParentalProfile: () => Promise<void>;
+  refreshUser: () => Promise<void>;
   setLocale: (locale: Locale) => void;
   logout: () => void;
 }
@@ -38,6 +39,7 @@ const UserContext = createContext<UserContextType>({
   setUser: () => {},
   setParentalProfile: () => {},
   reloadParentalProfile: async () => {},
+  refreshUser: async () => {},
   setLocale: () => {},
   logout: () => {},
 });
@@ -78,6 +80,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
       try {
         const u = await getUser(id);
         setUserState(u);
+        // Sync locale from server if available
+        if (u.locale && (u.locale === 'es' || u.locale === 'en')) {
+          setLocaleState(u.locale as Locale);
+          await AsyncStorage.setItem(LOCALE_KEY, u.locale);
+        }
         await loadParentalProfile(u.id);
 
         // Load streak info
@@ -140,9 +147,25 @@ export function UserProvider({ children }: { children: ReactNode }) {
     if (user) await loadParentalProfile(user.id);
   };
 
-  const setLocale = (l: Locale) => {
+  const refreshUser = useCallback(async () => {
+    if (!user) return;
+    try {
+      const u = await getUser(user.id);
+      setUserState(u);
+    } catch {
+      // Non-critical — user data will refresh on next app load
+    }
+  }, [user]);
+
+  const setLocale = async (l: Locale) => {
     setLocaleState(l);
-    AsyncStorage.setItem(LOCALE_KEY, l);
+    await AsyncStorage.setItem(LOCALE_KEY, l);
+    // Sync locale preference to server if user exists
+    if (user) {
+      updateUser(user.id, { locale: l }).catch(() => {
+        // Non-critical — locale persists locally regardless
+      });
+    }
   };
 
   const logout = () => {
@@ -163,6 +186,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
         setUser,
         setParentalProfile,
         reloadParentalProfile,
+        refreshUser,
         setLocale,
         logout,
       }}

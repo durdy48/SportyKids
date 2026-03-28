@@ -275,4 +275,59 @@ router.post('/link-child', requireAuth, async (req: Request, res: Response) => {
   res.json(formatUser(updated));
 });
 
+// ---------------------------------------------------------------------------
+// OAuth placeholder routes (planned)
+// ---------------------------------------------------------------------------
+// Implementation plan:
+// 1. Google OAuth 2.0:
+//    - GET /api/auth/google → redirect to Google consent screen
+//    - GET /api/auth/google/callback → exchange code for tokens, upsert user
+//    - Requires: GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, GOOGLE_REDIRECT_URI
+//    - Library: googleapis or passport-google-oauth20
+//
+// 2. Apple Sign In:
+//    - GET /api/auth/apple → redirect to Apple authorization
+//    - GET /api/auth/apple/callback → verify identity token, upsert user
+//    - Requires: APPLE_CLIENT_ID, APPLE_TEAM_ID, APPLE_KEY_ID, APPLE_PRIVATE_KEY
+//    - Library: apple-signin-auth
+//
+// 3. Common flow for both:
+//    - On first login: create User with authProvider = 'google' | 'apple'
+//    - On subsequent logins: update lastLoginAt
+//    - Link to existing email account if same email found
+//    - Issue JWT access + refresh tokens (same as email auth)
+// ---------------------------------------------------------------------------
+
+router.get('/google', (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Google OAuth not yet implemented',
+    provider: 'google',
+    status: 'planned',
+  });
+});
+
+router.get('/google/callback', (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Google OAuth callback not yet implemented',
+    provider: 'google',
+    status: 'planned',
+  });
+});
+
+router.get('/apple', (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Apple Sign In not yet implemented',
+    provider: 'apple',
+    status: 'planned',
+  });
+});
+
+router.get('/apple/callback', (_req: Request, res: Response) => {
+  res.status(501).json({
+    error: 'Apple Sign In callback not yet implemented',
+    provider: 'apple',
+    status: 'planned',
+  });
+});
+
 export default router;

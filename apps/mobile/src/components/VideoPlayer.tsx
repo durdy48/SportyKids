@@ -1,63 +1,114 @@
 import React, { useState } from 'react';
-import { View, StyleSheet, Dimensions, TouchableOpacity, Text } from 'react-native';
-import { WebView } from 'react-native-webview';
+import { View, StyleSheet, Dimensions, TouchableOpacity, Text, Linking } from 'react-native';
+import { WebView, WebViewMessageEvent } from 'react-native-webview';
+import type { Locale } from '@sportykids/shared';
+import { t } from '@sportykids/shared';
+import { htmlEncode, getYouTubeWatchUrl } from '../lib/html-utils';
 
 interface VideoPlayerProps {
   videoUrl: string;
   videoType?: string;
   thumbnailUrl?: string;
   aspectRatio?: string;
+  locale?: Locale;
 }
 
 const { width: SCREEN_WIDTH } = Dimensions.get('window');
 
 /**
- * Native video player for mobile (B-MP6).
+ * Native video player for mobile.
  *
- * For MP4: Uses expo-video when available, falls back to WebView.
- * For YouTube: Uses WebView with embedded iframe.
+ * Strategy:
+ * - MP4: expo-video inline (native player)
+ * - YouTube/Instagram/TikTok: WebView embed with error detection.
+ *   If embed fails (e.g. YouTube error 153), shows a "Watch in app" fallback button.
  */
-export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio }: VideoPlayerProps) {
-  const [isPlaying, setIsPlaying] = useState(false);
+export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio, locale = 'es' }: VideoPlayerProps) {
+  const [embedError, setEmbedError] = useState(false);
 
-  const isYouTube = videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
+  const isYouTube = videoType === 'youtube_embed' || videoUrl.includes('youtube.com') || videoUrl.includes('youtu.be');
   const isMP4 = videoType === 'mp4' || videoUrl.endsWith('.mp4');
+  const isInstagram = videoType === 'instagram_embed';
+  const isTikTok = videoType === 'tiktok_embed';
 
   const videoHeight = aspectRatio === '9:16'
     ? SCREEN_WIDTH * (16 / 9)
     : SCREEN_WIDTH * (9 / 16);
 
+  // MP4: use expo-video inline
   if (isMP4) {
-    // Try expo-video, fall back to WebView
     try {
-      const { VideoView, useVideoPlayer } = require('expo-video');
       return <ExpoVideoPlayer videoUrl={videoUrl} height={videoHeight} />;
     } catch {
-      // expo-video not installed — use WebView fallback
+      // expo-video not available — fall through to WebView
     }
   }
 
-  // YouTube or fallback: WebView with embedded player
-  const embedHtml = isYouTube
-    ? getYouTubeEmbed(videoUrl)
-    : `<video src="${videoUrl}" controls autoplay playsinline style="width:100%;height:100%;object-fit:cover"></video>`;
+  // Embed error fallback: offer to open in native app
+  if (embedError) {
+    const openExternal = () => {
+      if (isYouTube) Linking.openURL(getYouTubeWatchUrl(videoUrl));
+      else Linking.openURL(videoUrl);
+    };
+
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorEmoji}>🎬</Text>
+        <Text style={styles.errorText}>
+          {isYouTube ? t('reels.video_inline_error', locale) : t('reels.video_unavailable', locale)}
+        </Text>
+        <TouchableOpacity style={styles.errorButton} onPress={openExternal}>
+          <Text style={styles.errorButtonText}>
+            {isYouTube ? t('reels.open_in_youtube', locale) : t('reels.open_video', locale)}
+          </Text>
+        </TouchableOpacity>
+      </View>
+    );
+  }
+
+  // Build embed HTML with error detection JS
+  let embedHtml: string;
+  if (isYouTube) {
+    embedHtml = getYouTubeEmbed(videoUrl);
+  } else if (isInstagram) {
+    embedHtml = getInstagramEmbed(videoUrl);
+  } else if (isTikTok) {
+    embedHtml = getTikTokEmbed(videoUrl);
+  } else {
+    embedHtml = `<video src="${htmlEncode(videoUrl)}" controls autoplay playsinline style="width:100%;height:100%;object-fit:cover"></video>`;
+  }
 
   const html = `
     <!DOCTYPE html>
     <html>
-    <head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0}body{background:#000}</style></head>
+    <head>
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      <style>*{margin:0;padding:0}body{background:#000;overflow:hidden}</style>
+    </head>
     <body>${embedHtml}</body>
     </html>
   `;
 
+  const onMessage = (event: WebViewMessageEvent) => {
+    if (event.nativeEvent.data === 'EMBED_ERROR') {
+      setEmbedError(true);
+    }
+  };
+
   return (
-    <View style={[styles.container, { height: videoHeight }]}>
+    <View style={styles.container}>
       <WebView
         source={{ html }}
         style={styles.webview}
         allowsInlineMediaPlayback
         mediaPlaybackRequiresUserAction={false}
         javaScriptEnabled
+        scrollEnabled={false}
+        onMessage={onMessage}
+        onError={() => setEmbedError(true)}
+        onHttpError={(e) => {
+          if (e.nativeEvent.statusCode >= 400) setEmbedError(true);
+        }}
       />
     </View>
   );
@@ -66,7 +117,42 @@ export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio }: 
 function getYouTubeEmbed(url: string): string {
   const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|watch\?v=))([^?&]+)/);
   const videoId = match?.[1] ?? '';
-  return `<iframe width="100%" height="100%" src="https://www.youtube.com/embed/${videoId}?autoplay=1&playsinline=1" frameborder="0" allow="autoplay;encrypted-media" allowfullscreen></iframe>`;
+  // Use YouTube IFrame Player API directly (not raw iframe) to get onError callback.
+  // Error codes 101/150 = embed restricted (error 153 in UI).
+  return `
+    <div id="player" style="width:100%;height:100%"></div>
+    <script>
+      var tag = document.createElement('script');
+      tag.src = 'https://www.youtube.com/iframe_api';
+      document.body.appendChild(tag);
+      function onYouTubeIframeAPIReady() {
+        new YT.Player('player', {
+          width: '100%',
+          height: '100%',
+          videoId: '${htmlEncode(videoId)}',
+          playerVars: { autoplay: 1, playsinline: 1, modestbranding: 1, rel: 0 },
+          events: {
+            onError: function(e) {
+              window.ReactNativeWebView.postMessage('EMBED_ERROR');
+            }
+          }
+        });
+      }
+      // Fallback: if API doesn't load in 8s, report error
+      setTimeout(function() {
+        if (!document.querySelector('iframe')) {
+          window.ReactNativeWebView.postMessage('EMBED_ERROR');
+        }
+      }, 8000);
+    </script>`;
+}
+
+function getInstagramEmbed(url: string): string {
+  return `<iframe width="100%" height="100%" src="${htmlEncode(url)}" frameborder="0" allow="autoplay;encrypted-media" allowfullscreen style="border:0"></iframe>`;
+}
+
+function getTikTokEmbed(url: string): string {
+  return `<iframe width="100%" height="100%" src="${htmlEncode(url)}" frameborder="0" allow="autoplay;encrypted-media" allowfullscreen style="border:0"></iframe>`;
 }
 
 /**
@@ -97,7 +183,8 @@ function ExpoVideoPlayer({ videoUrl, height }: { videoUrl: string; height: numbe
 
 const styles = StyleSheet.create({
   container: {
-    width: SCREEN_WIDTH,
+    flex: 1,
+    width: '100%',
     backgroundColor: '#000',
     overflow: 'hidden',
     borderRadius: 12,
@@ -108,5 +195,34 @@ const styles = StyleSheet.create({
   },
   video: {
     flex: 1,
+  },
+  errorContainer: {
+    flex: 1,
+    backgroundColor: '#111',
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderRadius: 12,
+    padding: 24,
+  },
+  errorEmoji: {
+    fontSize: 48,
+    marginBottom: 12,
+  },
+  errorText: {
+    color: '#999',
+    fontSize: 14,
+    textAlign: 'center',
+    marginBottom: 16,
+  },
+  errorButton: {
+    backgroundColor: '#FF0000',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 24,
+  },
+  errorButtonText: {
+    color: '#fff',
+    fontSize: 15,
+    fontWeight: '600',
   },
 });

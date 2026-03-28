@@ -1,3 +1,38 @@
+// ===========================================================================
+// SportyKids Prisma Schema
+// ===========================================================================
+//
+// Database Provider Configuration
+// --------------------------------
+// Default: SQLite (for local development)
+// Production: PostgreSQL (recommended)
+//
+// To switch to PostgreSQL:
+//   1. Start PostgreSQL:
+//        docker compose -f apps/api/docker-compose.yml up -d
+//   2. Update .env:
+//        DATABASE_URL="postgresql://sportykids:sportykids@localhost:5432/sportykids"
+//   3. Change provider below from "sqlite" to "postgresql"
+//   4. Run migrations:
+//        npx prisma migrate dev --name postgres_migration
+//   5. Seed data:
+//        npx tsx prisma/seed.ts
+//
+// Or use the migration script:
+//   bash apps/api/scripts/migrate-to-postgres.sh
+//
+// To revert to SQLite:
+//   1. Change provider below back to "sqlite"
+//   2. Update .env: DATABASE_URL="file:./dev.db"
+//   3. npx prisma migrate dev
+//
+// Notes:
+//   - JSON arrays (favoriteSports, selectedFeeds, options) are stored as
+//     JSON strings in SQLite. In PostgreSQL, they remain as text but could
+//     be migrated to native Json/String[] types in the future.
+//   - Prisma v6 is required (v7 breaks datasource url config).
+// ===========================================================================
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -66,6 +101,7 @@ model User {
   parentalProfile          ParentalProfile?
   activityLogs             ActivityLog[]
   locale                   String            @default("es")
+  country                  String            @default("ES")
   userStickers             UserSticker[]
   userAchievements         UserAchievement[]
   pushTokens               PushToken[]
@@ -73,20 +109,41 @@ model User {
 }
 
 model Reel {
-  id              String   @id @default(cuid())
+  id              String    @id @default(cuid())
   title           String
   videoUrl        String
-  thumbnailUrl    String   @default("")
+  thumbnailUrl    String    @default("")
   source          String
   sport           String
   team            String?
-  minAge          Int      @default(6)
-  maxAge          Int      @default(14)
-  durationSeconds Int      @default(60)
+  minAge          Int       @default(6)
+  maxAge          Int       @default(14)
+  durationSeconds Int       @default(60)
   videoType       String?
   aspectRatio     String?
   previewGifUrl   String?
-  createdAt       DateTime @default(now())
+  rssGuid         String?   @unique
+  videoSourceId   String?   // Logical FK to VideoSource.id (no Prisma relation — SQLite doesn't enforce FKs reliably)
+  safetyStatus    String    @default("approved")
+  safetyReason    String?
+  moderatedAt     DateTime?
+  publishedAt     DateTime?
+  createdAt       DateTime  @default(now())
+}
+
+model VideoSource {
+  id           String    @id @default(cuid())
+  name         String
+  platform     String
+  feedUrl      String    @unique
+  channelId    String?
+  playlistId   String?
+  sport        String
+  active       Boolean   @default(true)
+  isCustom     Boolean   @default(false)
+  addedBy      String?
+  lastSyncedAt DateTime?
+  createdAt    DateTime  @default(now())
 }
 
 model QuizQuestion {
@@ -120,9 +177,11 @@ model ParentalProfile {
   digestEmail         String?
   digestDay           Int      @default(1)
   lastDigestSentAt    DateTime?
-  allowedHoursStart   Int      @default(7)
-  allowedHoursEnd     Int      @default(21)
+  allowedHoursStart   Int      @default(0)
+  allowedHoursEnd     Int      @default(24)
   timezone            String   @default("Europe/Madrid")
+  failedAttempts      Int      @default(0)
+  lockedUntil         DateTime?
 }
 
 model ContentReport {

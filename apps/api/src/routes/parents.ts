@@ -2,10 +2,13 @@ import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import crypto from 'crypto';
 import bcrypt from 'bcryptjs';
+import { t } from '@sportykids/shared';
 import { prisma } from '../config/database';
+import type { Prisma } from '@prisma/client';
 import { awardPointsForActivity } from '../services/gamification';
 import { checkMissionProgress } from '../services/mission-generator';
 import { invalidateProfileCache } from '../middleware/parental-guard';
+import { invalidateBehavioralCache } from '../services/feed-ranker';
 import { safeJsonParse } from '../utils/safe-json-parse';
 import { generateDigestData, renderDigestHtml, renderDigestPdf } from '../services/digest-generator';
 
@@ -60,7 +63,7 @@ function hashPinSha256(pin: string): string {
 }
 
 // ---------------------------------------------------------------------------
-// POST /api/parents/configurar — Create parental profile with PIN (bcrypt)
+// POST /api/parents/setup — Create parental profile with PIN (bcrypt)
 // ---------------------------------------------------------------------------
 const configureSchema = z.object({
   userId: z.string(),
@@ -76,7 +79,7 @@ const configureSchema = z.object({
   timezone: z.string().optional(),
 });
 
-router.post('/configurar', async (req: Request, res: Response) => {
+router.post('/setup', async (req: Request, res: Response) => {
   const parsed = configureSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'Invalid data', details: parsed.error.flatten() });
@@ -123,14 +126,18 @@ router.post('/configurar', async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/parents/verificar-pin — Verify PIN (bcrypt with SHA-256 migration)
+// POST /api/parents/verify-pin — Verify PIN (bcrypt with SHA-256 migration + lockout)
 // ---------------------------------------------------------------------------
 const verifySchema = z.object({
   userId: z.string(),
   pin: z.string().length(4),
 });
 
-router.post('/verificar-pin', async (req: Request, res: Response) => {
+// Hardcoded by design — not env-configurable to prevent weakening brute-force protection
+const MAX_PIN_ATTEMPTS = 5;
+const PIN_LOCKOUT_DURATION_MS = 15 * 60 * 1000; // 15 minutes
+
+router.post('/verify-pin', async (req: Request, res: Response) => {
   const parsed = verifySchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'Invalid data' });
@@ -142,7 +149,26 @@ router.post('/verificar-pin', async (req: Request, res: Response) => {
   });
 
   if (!profile) {
-    res.json({ verified: false, exists: false });
+    res.status(404).json({ error: 'Not found' });
+    return;
+  }
+
+  // Fetch user locale for i18n error messages
+  const user = await prisma.user.findUnique({
+    where: { id: parsed.data.userId },
+    select: { locale: true },
+  });
+  const locale = (user?.locale === 'en' ? 'en' : 'es') as 'es' | 'en';
+
+  // Check lockout
+  if (profile.lockedUntil && profile.lockedUntil.getTime() > Date.now()) {
+    const remainingSeconds = Math.ceil((profile.lockedUntil.getTime() - Date.now()) / 1000);
+    const minutes = Math.ceil(remainingSeconds / 60);
+    res.status(423).json({
+      error: t('parental.pin_locked', locale, { minutes: String(minutes) }),
+      lockedUntil: profile.lockedUntil.toISOString(),
+      remainingSeconds,
+    });
     return;
   }
 
@@ -170,6 +196,11 @@ router.post('/verificar-pin', async (req: Request, res: Response) => {
   }
 
   if (verified) {
+    // Reset failed attempts on success
+    await prisma.parentalProfile.update({
+      where: { userId: parsed.data.userId },
+      data: { failedAttempts: 0, lockedUntil: null },
+    });
     const session = createSession(parsed.data.userId);
     res.json({
       verified: true,
@@ -179,14 +210,39 @@ router.post('/verificar-pin', async (req: Request, res: Response) => {
       profile: formatProfile(profile),
     });
   } else {
-    res.json({ verified: false, exists: true });
+    const newFailedAttempts = profile.failedAttempts + 1;
+
+    if (newFailedAttempts >= MAX_PIN_ATTEMPTS) {
+      const lockedUntil = new Date(Date.now() + PIN_LOCKOUT_DURATION_MS);
+      await prisma.parentalProfile.update({
+        where: { userId: parsed.data.userId },
+        data: { failedAttempts: newFailedAttempts, lockedUntil },
+      });
+      const remainingSeconds = Math.ceil(PIN_LOCKOUT_DURATION_MS / 1000);
+      const minutes = Math.ceil(remainingSeconds / 60);
+      res.status(423).json({
+        error: t('parental.pin_locked', locale, { minutes: String(minutes) }),
+        lockedUntil: lockedUntil.toISOString(),
+        remainingSeconds,
+      });
+    } else {
+      await prisma.parentalProfile.update({
+        where: { userId: parsed.data.userId },
+        data: { failedAttempts: newFailedAttempts },
+      });
+      const attemptsRemaining = MAX_PIN_ATTEMPTS - newFailedAttempts;
+      res.status(401).json({
+        error: t('parental.pin_incorrect', locale, { remaining: String(attemptsRemaining) }),
+        attemptsRemaining,
+      });
+    }
   }
 });
 
 // ---------------------------------------------------------------------------
-// GET /api/parents/perfil/:userId — Get parental profile
+// GET /api/parents/profile/:userId — Get parental profile
 // ---------------------------------------------------------------------------
-router.get('/perfil/:userId', async (req: Request, res: Response) => {
+router.get('/profile/:userId', async (req: Request, res: Response) => {
   const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
 
   const profile = await prisma.parentalProfile.findUnique({
@@ -208,7 +264,7 @@ router.get('/perfil/:userId', async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
-// PUT /api/parents/perfil/:userId — Update restrictions
+// PUT /api/parents/profile/:userId — Update restrictions
 // ---------------------------------------------------------------------------
 const updateSchema = z.object({
   allowedSports: z.array(z.string()).optional(),
@@ -222,7 +278,7 @@ const updateSchema = z.object({
   timezone: z.string().optional(),
 });
 
-router.put('/perfil/:userId', async (req: Request, res: Response) => {
+router.put('/profile/:userId', async (req: Request, res: Response) => {
   const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
     res.status(401).json({ error: 'Parental session required' });
@@ -236,7 +292,14 @@ router.put('/perfil/:userId', async (req: Request, res: Response) => {
   }
 
   const { allowedSports, allowedFormats, maxDailyTimeMinutes, maxNewsMinutes, maxReelsMinutes, maxQuizMinutes, allowedHoursStart, allowedHoursEnd, timezone } = parsed.data;
-  const data: Record<string, unknown> = {};
+
+  // Validate schedule: start must be less than end
+  if (allowedHoursStart !== undefined && allowedHoursEnd !== undefined && allowedHoursStart >= allowedHoursEnd) {
+    res.status(400).json({ error: 'allowedHoursStart must be less than allowedHoursEnd' });
+    return;
+  }
+
+  const data: Prisma.ParentalProfileUpdateInput = {};
   if (allowedSports) data.allowedSports = JSON.stringify(allowedSports);
   if (allowedFormats) data.allowedFormats = JSON.stringify(allowedFormats);
   if (maxDailyTimeMinutes !== undefined) data.maxDailyTimeMinutes = maxDailyTimeMinutes;
@@ -259,9 +322,9 @@ router.put('/perfil/:userId', async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /api/parents/actividad/:userId — Weekly summary
+// GET /api/parents/activity/:userId — Weekly summary
 // ---------------------------------------------------------------------------
-router.get('/actividad/:userId', async (req: Request, res: Response) => {
+router.get('/activity/:userId', async (req: Request, res: Response) => {
   const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
     res.status(401).json({ error: 'Parental session required' });
@@ -303,14 +366,14 @@ router.get('/actividad/:userId', async (req: Request, res: Response) => {
 });
 
 // ---------------------------------------------------------------------------
-// GET /api/parents/actividad/:userId/detalle — Detailed activity breakdown
+// GET /api/parents/activity/:userId/detail — Detailed activity breakdown
 // ---------------------------------------------------------------------------
 const detailQuerySchema = z.object({
   from: z.coerce.date().optional(),
   to: z.coerce.date().optional(),
 });
 
-router.get('/actividad/:userId/detalle', async (req: Request, res: Response) => {
+router.get('/activity/:userId/detail', async (req: Request, res: Response) => {
   const sessionUserId = verifyParentalSession(req.headers['x-parental-session'] as string | undefined);
   if (!sessionUserId) {
     res.status(401).json({ error: 'Parental session required' });
@@ -408,7 +471,7 @@ router.get('/actividad/:userId/detalle', async (req: Request, res: Response) => 
 });
 
 // ---------------------------------------------------------------------------
-// POST /api/parents/actividad/registrar — Log activity (with detail fields)
+// POST /api/parents/activity/log — Log activity (with detail fields)
 // ---------------------------------------------------------------------------
 const logSchema = z.object({
   userId: z.string(),
@@ -418,7 +481,7 @@ const logSchema = z.object({
   sport: z.string().optional(),
 });
 
-router.post('/actividad/registrar', async (req: Request, res: Response) => {
+router.post('/activity/log', async (req: Request, res: Response) => {
   const parsed = logSchema.safeParse(req.body);
   if (!parsed.success) {
     res.status(400).json({ error: 'Invalid data' });
@@ -434,6 +497,9 @@ router.post('/actividad/registrar', async (req: Request, res: Response) => {
       sport: parsed.data.sport,
     },
   });
+
+  // Invalidate behavioral cache so next feed request uses fresh signals
+  invalidateBehavioralCache(parsed.data.userId);
 
   // Award points for activity (news_viewed, reels_viewed)
   const gamificationResult = await awardPointsForActivity(
@@ -618,7 +684,7 @@ router.get('/digest/:userId/download', async (req: Request, res: Response) => {
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
-function formatProfile({ pin, ...rest }: Record<string, unknown>) {
+function formatProfile({ pin, failedAttempts, lockedUntil, ...rest }: Record<string, unknown>) {
   return {
     ...rest,
     allowedSports: safeJsonParse(rest.allowedSports as string, []),

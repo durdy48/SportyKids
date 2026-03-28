@@ -9,7 +9,7 @@ SportyKids aggregates real sports news from 47+ trusted sources across 8 sports,
 ### Features
 
 **Content & Feed**
-- **Smart News Feed** — 47+ RSS sources, personalized by preferences, 3 display modes (Headlines, Cards, Explain)
+- **Smart News Feed** — 182+ RSS sources, personalized by preferences, 3 display modes (Headlines, Cards, Explain)
 - **AI Content Moderation** — Every article classified as safe/unsafe before reaching kids (M1)
 - **"Explain it Easy"** — AI-generated summaries adapted to 3 age profiles: 6-8, 9-11, 12-14 (M2)
 - **Reels** — Sports video grid with YouTube thumbnails, like/share (M6)
@@ -62,7 +62,7 @@ npm install
 cd apps/api
 cp .env.example .env  # Configure AI provider (default: Ollama, free)
 npx prisma migrate dev
-npx tsx prisma/seed.ts  # Seeds: 47 RSS sources, 15 quiz questions, 36 stickers, 20 achievements, 15 team stats
+npx tsx prisma/seed.ts  # Seeds: 182 RSS sources, 15 quiz questions, 36 stickers, 20 achievements, 15 team stats
 cd ../..
 
 # Start development
@@ -99,7 +99,7 @@ sportykids/
 |--------|-------|-------------|
 | GET | `/api/news?sport=&userId=&age=` | Smart feed with personalized ranking |
 | GET | `/api/news/:id/resumen?age=&locale=` | AI summary adapted by age |
-| GET | `/api/news/fuentes/catalogo` | Full RSS source catalog (47+) |
+| GET | `/api/news/fuentes/catalogo` | Full RSS source catalog (182+) |
 | POST | `/api/news/fuentes/custom` | Add custom RSS source (with validation) |
 | GET | `/api/reels` | Video reels feed |
 | GET | `/api/quiz/questions?age=&count=` | Quiz (daily AI + seed fallback) |

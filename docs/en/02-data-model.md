@@ -23,6 +23,8 @@ erDiagram
         int loginStreak
         datetime lastLoginDate "nullable"
         string notificationPreferences "JSON, nullable"
+        string locale "es|en, default es"
+        string country "ES|GB|US|FR|IT|DE, default ES"
         datetime createdAt
         datetime updatedAt
     }
@@ -64,9 +66,30 @@ erDiagram
         int minAge
         int maxAge
         int durationSeconds
-        string videoType "youtube | native"
-        string aspectRatio "9:16 | 16:9"
+        string videoType "youtube_embed|instagram_embed|tiktok_embed|mp4"
+        string aspectRatio "9:16 | 16:9 | 1:1"
         string previewGifUrl "nullable"
+        string rssGuid "unique, nullable"
+        string videoSourceId "nullable"
+        string safetyStatus "approved|rejected|pending"
+        string safetyReason "nullable"
+        datetime moderatedAt "nullable"
+        datetime publishedAt "nullable"
+        datetime createdAt
+    }
+
+    VideoSource {
+        string id PK
+        string name
+        string platform "youtube_channel|youtube_playlist"
+        string feedUrl "unique"
+        string channelId "nullable"
+        string playlistId "nullable"
+        string sport
+        boolean active
+        boolean isCustom
+        string addedBy "nullable"
+        datetime lastSyncedAt "nullable"
         datetime createdAt
     }
 
@@ -139,6 +162,8 @@ erDiagram
         string allowedFeeds "JSON array"
         string allowedFormats "JSON array"
         int maxDailyTimeMinutes
+        int failedAttempts "default 0"
+        datetime lockedUntil "nullable"
     }
 
     ActivityLog {
@@ -188,11 +213,23 @@ Age-adapted summary of a news article, generated on-demand by the AI summarizer.
 - Accessed via `GET /api/news/:id/resumen?age=&locale=`
 
 ### Reel
-Short sports video. In the MVP, they are loaded from a seed with embedded YouTube URLs. The `videoUrl` field contains the embed URL.
+Short sports video. Reels can be seeded manually or imported automatically from YouTube channels via the Video Aggregator.
 
-**Phase 5 additions:**
-- `videoType` -- `youtube` (embed) or `native` (future direct video)
-- `aspectRatio` -- `9:16` (vertical/portrait) or `16:9` (landscape)
+- `videoType`: `youtube_embed`, `instagram_embed`, `tiktok_embed`, `mp4`
+- `aspectRatio`: `16:9`, `9:16` (vertical/stories), `1:1` (square)
+- `previewGifUrl`: optional animated thumbnail
+- `rssGuid`: unique identifier from the RSS feed (for deduplication)
+- `videoSourceId`: reference to the VideoSource that imported the reel
+- `safetyStatus`: moderation status (`approved`, `rejected`, `pending`)
+- `publishedAt`: original publication date of the video
+
+### VideoSource
+Video source (YouTube channels or playlists). Synced every 6 hours via cron job.
+- `platform`: `youtube_channel` or `youtube_playlist`
+- `feedUrl`: YouTube Atom feed URL (unique)
+- `channelId`/`playlistId`: YouTube identifiers
+- `isCustom`: whether it was added by a user (vs. predefined catalog)
+- 182 predefined sources covering all 8 sports (45 direct RSS + 10 Google News outlets + 127 team/athlete news)
 - `previewGifUrl` -- animated preview thumbnail (nullable)
 
 ### QuizQuestion
@@ -238,6 +275,7 @@ Parental control settings, linked 1:1 with User.
 
 **Phase 5 changes:**
 - PIN is now stored as a **bcrypt hash** (transparent migration from legacy SHA-256 hashes on first successful verification)
+- **PIN lockout**: `failedAttempts` (Int, default 0) tracks consecutive wrong attempts; `lockedUntil` (DateTime, nullable) stores when the lockout expires. After 5 failed attempts, the account is locked for 15 minutes.
 - Session tokens with 5-minute TTL for authenticated parental access
 - `allowedFormats` controls which sections of the app are visible and is now **enforced server-side** via parental guard middleware
 
@@ -261,7 +299,7 @@ RSS feed that the aggregator consumes periodically. It can be enabled/disabled w
 - `isCustom` -- whether this source was added by a user (vs. built-in)
 - `addedBy` -- user ID who added the custom source (nullable)
 - `metadata` -- JSON for additional source metadata
-- 47 total sources across 8 sports (up from 4 in MVP)
+- 182 total sources across 8 sports (up from 4 in MVP), including 10 Google News RSS sources for Spanish outlets without native RSS and 127 team/athlete-specific Google News feeds covering La Liga, Premier League, Serie A, Bundesliga, Ligue 1, national teams, NBA, EuroLeague/ACB, tennis, F1, cycling, swimming, athletics, and padel
 - Custom sources can be added/removed via API (`POST/DELETE /api/news/fuentes/custom`)
 
 ## Notes on SQLite

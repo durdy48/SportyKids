@@ -20,6 +20,7 @@ SportyKids is aimed at children aged 6 to 14. Content security and privacy are *
 ### Parental control (Robust -- M5)
 - Access protected by a 4-digit PIN
 - **PIN stored as bcrypt hash** (upgraded from SHA-256; transparent migration on first successful verification of legacy hashes)
+- **PIN lockout**: after 5 consecutive failed attempts, the account is locked for 15 minutes. The `ParentalProfile` model tracks `failedAttempts` (Int, default 0) and `lockedUntil` (DateTime, nullable). Failed attempts return 401 with `attemptsRemaining`; locked accounts return 423 with `lockedUntil` and `remainingSeconds`.
 - **Session tokens**: 5-minute TTL issued after PIN verification, required for parental dashboard operations
 - Parents control:
   - Allowed formats (news, reels, quiz)
@@ -37,6 +38,19 @@ SportyKids is aimed at children aged 6 to 14. Content security and privacy are *
 - Only HTTP/HTTPS protocols are allowed
 - Source URLs are stored and fetched server-side only
 
+### Rate limiting
+All API endpoints are protected by `express-rate-limit` middleware with 5 tiers:
+
+| Tier | Routes | Limit | Env var |
+|------|--------|-------|---------|
+| Auth | `/api/auth/login`, `/api/auth/register` | 5 req/min | `RATE_LIMIT_AUTH` |
+| PIN | `/api/parents/verify-pin` | 10 req/min | `RATE_LIMIT_PIN` |
+| Content | `/api/news/*`, `/api/reels/*`, `/api/quiz/*` | 60 req/min | `RATE_LIMIT_CONTENT` |
+| Sync | `/api/news/sync`, `/api/reels/sync`, `/api/teams/sync` | 2 req/min | `RATE_LIMIT_SYNC` |
+| Default | All other `/api/*` | 100 req/min | `RATE_LIMIT_DEFAULT` |
+
+All limits are configurable via environment variables. Exceeded limits return `429 Too Many Requests` with standard rate-limit headers.
+
 ### User data
 - No emails or passwords are collected
 - No identity verification is required
@@ -45,7 +59,7 @@ SportyKids is aimed at children aged 6 to 14. Content security and privacy are *
 - Notification preferences are stored but not acted upon (MVP -- no push notifications sent)
 
 ### External content
-- News comes from 47 verified sports press RSS sources across 8 sports
+- News comes from 182 verified sports press RSS sources across 8 sports with global coverage
 - Reels are manually curated (seed)
 - No user-generated content
 - No chat or interaction between users
@@ -113,13 +127,13 @@ Duration tracking uses `sendBeacon` for reliable reporting even when the user na
 - Sessions with expiration
 
 ### PIN lockout
-- Implement lockout after 5 failed PIN verification attempts
+- ~~Implement lockout after 5 failed PIN verification attempts~~ -- **Implemented**: 5 failed attempts = 15-minute lockout with `failedAttempts` and `lockedUntil` fields on `ParentalProfile`
 - PIN recovery option via parent's email
 
 ### HTTPS and network
 - Enforce HTTPS on all endpoints
 - Configure CORS with specific domains (not `*`)
-- Implement rate limiting (express-rate-limit)
+- ~~Implement rate limiting (express-rate-limit)~~ -- **Implemented**: 5 tiers (auth, PIN, content, sync, default) with configurable limits via env vars
 - Security headers (Helmet.js)
 
 ### Data

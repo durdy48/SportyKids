@@ -21,6 +21,8 @@ export default function ParentsPage() {
   const [tempPin, setTempPin] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [lockedUntil, setLockedUntil] = useState<string | null>(null);
+  const [attemptsRemaining, setAttemptsRemaining] = useState<number | null>(null);
 
   useEffect(() => {
     if (!userLoading && !user) {
@@ -68,13 +70,24 @@ export default function ParentsPage() {
     if (!user) return;
     setLoading(true);
     setError(null);
+    setAttemptsRemaining(null);
 
     try {
       const result = await verifyPin(user.id, pin);
       if (result.verified && result.profile) {
         setProfile(result.profile);
         setParentalProfile(result.profile);
+        setLockedUntil(null);
+        setAttemptsRemaining(null);
         setState('panel');
+      } else if (result.status === 423) {
+        setLockedUntil(result.lockedUntil ?? null);
+        setError(result.error ?? t('parental.pin_locked', locale, { minutes: '15' }));
+      } else if (result.status === 429) {
+        setError(t('errors.rate_limited', locale));
+      } else if (result.status === 401) {
+        setAttemptsRemaining(result.attemptsRemaining ?? null);
+        setError(result.error ?? t('errors.incorrect_pin', locale));
       } else {
         setError(t('errors.incorrect_pin', locale));
       }
@@ -95,6 +108,7 @@ export default function ParentsPage() {
           subtitle={t('parental.create_pin_subtitle', locale)}
           buttonText={t('buttons.next', locale)}
           onSubmit={handleCreatePin}
+          locale={locale}
         />
       )}
 
@@ -106,6 +120,7 @@ export default function ParentsPage() {
           onSubmit={handleConfirmPin}
           loading={loading}
           error={error}
+          locale={locale}
         />
       )}
 
@@ -117,6 +132,9 @@ export default function ParentsPage() {
           onSubmit={handleVerifyPin}
           loading={loading}
           error={error}
+          lockedUntil={lockedUntil}
+          attemptsRemaining={attemptsRemaining}
+          locale={locale}
         />
       )}
 

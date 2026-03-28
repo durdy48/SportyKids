@@ -67,7 +67,7 @@ graph LR
 Express server that exposes the REST API. Single entry point for all clients.
 
 - **Port**: 3001 (configurable via `PORT`)
-- **Middleware**: CORS, JSON parser, global error handler, parental guard
+- **Middleware**: CORS, JSON parser, rate limiting (`express-rate-limit`, 5 tiers), global error handler, parental guard
 - **Routes**: `/api/news`, `/api/reels`, `/api/quiz`, `/api/users`, `/api/parents`, `/api/gamification`, `/api/teams`
 - **Health check**: `GET /api/health` (includes AI provider status)
 
@@ -120,6 +120,24 @@ Service that consumes external RSS feeds and converts them into database records
 - **Resilience**: if a feed fails, continues with the next one
 - **Custom sources**: users can add their own RSS sources via API
 
+### Video Aggregator (`apps/api/src/services/video-aggregator.ts`)
+Service that consumes YouTube Atom feeds and converts them into Reel records.
+
+- **Input**: YouTube Atom feed URLs from the `VideoSource` table (22+ sources, 8 sports)
+- **Process**: parses Atom XML, extracts videoId from `yt:video:...`, generates embed/thumbnail URLs
+- **Output**: `Reel` records in the DB (upsert by `rssGuid` for dedup)
+- **Pipeline**: parse -> classify -> moderate -> insert
+- **Helpers**: `buildFeedUrl`, `extractYouTubeVideoId`, `buildEmbedUrl`, `buildThumbnailUrl`
+- **YouTube only**: filters sources with `platform` starting with `youtube_`
+- **Resilience**: if a feed fails, continues; moderation fail-open
+
+### Cron: Sync Videos (`apps/api/src/jobs/sync-videos.ts`)
+Scheduled job that syncs video sources.
+
+- **Frequency**: every 6 hours (`0 */6 * * *`)
+- **Also runs**: on server startup
+- **Function**: `syncAllVideoSources()` -> consumes YouTube Atom feeds from active sources
+
 ### Content Classifier (`apps/api/src/services/classifier.ts`)
 Labels each news item with the detected team and age range.
 
@@ -144,10 +162,19 @@ Manages points, stickers, achievements, and login streaks.
 ### Feed Ranker (`apps/api/src/services/feed-ranker.ts`)
 Scores and orders articles for personalized feeds.
 
-- **Scoring**:
+- **Base scoring**:
   - +5 for articles about the user's favorite team
   - +3 for articles about a favorite sport
-  - Unfollowed sources are filtered out
+  - Unfollowed sports are filtered out
+- **Behavioral scoring** (when user has activity history):
+  - `sportFrequencyBoost` — proportional to engagement share (0-5 scale)
+  - `sourceBoost` — based on source affinity from viewed articles (0-2 scale)
+  - `recencyDecay` — exponential decay curve with 12h half-life (0-3 scale)
+  - `-8` penalty for already-read articles (unweighted)
+  - `+2` locale/language match, `+1` country match
+- **Diversity injection**: every 5th position swaps dominant sport (>40% engagement) with a non-dominant sport item to prevent filter bubbles
+- **Configurable weights**: `RANKING_WEIGHTS` constant controls relative importance of each signal (all default to 1.0)
+- **Cache invalidation**: `invalidateBehavioralCache(userId)` evicts stale behavioral signals on new activity (5-min TTL as fallback)
 - **Feed modes**: Headlines (title only), Cards (image + summary), Explain (with AI summary button)
 - **Integration**: called by the news list endpoint when `userId` is provided
 
@@ -266,7 +293,7 @@ The shared package (`packages/shared/src/i18n/`) provides a translation system u
 
 | Metric | Current value |
 |--------|--------------|
-| Active RSS sources | 47 (across 8 sports) |
+| Active RSS sources | 182 (across 8 sports, global coverage) |
 | News per sync | ~500+ |
 | Reels in seed | 10 |
 | Quiz questions (seed) | 15 |
@@ -290,4 +317,11 @@ The shared package (`packages/shared/src/i18n/`) provides a translation system u
 | `AI_PROVIDER` | API | AI provider: `ollama`, `openrouter`, `anthropic` | `ollama` |
 | `OPENROUTER_API_KEY` | API | OpenRouter API key | -- |
 | `ANTHROPIC_API_KEY` | API | Anthropic Claude API key | -- |
+| `RATE_LIMIT_AUTH` | API | Auth endpoint rate limit (req/min) | `5` |
+| `RATE_LIMIT_PIN` | API | PIN verification rate limit (req/min) | `10` |
+| `RATE_LIMIT_CONTENT` | API | Content endpoint rate limit (req/min) | `60` |
+| `RATE_LIMIT_SYNC` | API | Sync endpoint rate limit (req/min) | `2` |
+| `RATE_LIMIT_DEFAULT` | API | Default rate limit (req/min) | `100` |
+| `CACHE_PROVIDER` | API | Cache backend: `memory` or `redis` | `memory` |
+| `REDIS_URL` | API | Redis connection URL | `redis://localhost:6379` |
 | `NEXT_PUBLIC_API_URL` | Web | API base URL | `http://localhost:3001/api` |

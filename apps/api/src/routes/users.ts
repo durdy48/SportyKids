@@ -1,5 +1,6 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
+import { SUPPORTED_LOCALES, SUPPORTED_COUNTRIES } from '@sportykids/shared';
 import { prisma } from '../config/database';
 import { formatUser } from '../utils/format-user';
 
@@ -11,6 +12,8 @@ const createUserSchema = z.object({
   favoriteSports: z.array(z.string()).min(1),
   favoriteTeam: z.string().optional(),
   selectedFeeds: z.array(z.string()).default([]),
+  locale: z.enum(SUPPORTED_LOCALES).optional(),
+  country: z.enum(SUPPORTED_COUNTRIES).optional(),
 });
 
 const updateUserSchema = createUserSchema.partial();
@@ -23,13 +26,15 @@ router.post('/', async (req: Request, res: Response) => {
     return;
   }
 
-  const { favoriteSports, selectedFeeds, ...rest } = parsed.data;
+  const { favoriteSports, selectedFeeds, locale, country, ...rest } = parsed.data;
 
   const user = await prisma.user.create({
     data: {
       ...rest,
       favoriteSports: JSON.stringify(favoriteSports),
       selectedFeeds: JSON.stringify(selectedFeeds),
+      ...(locale ? { locale } : {}),
+      ...(country ? { country } : {}),
     },
   });
 
@@ -64,10 +69,12 @@ router.put('/:id', async (req: Request, res: Response) => {
     return;
   }
 
-  const { favoriteSports, selectedFeeds, ...rest } = parsed.data;
+  const { favoriteSports, selectedFeeds, locale, country, ...rest } = parsed.data;
   const data: Record<string, unknown> = { ...rest };
   if (favoriteSports) data.favoriteSports = JSON.stringify(favoriteSports);
   if (selectedFeeds) data.selectedFeeds = JSON.stringify(selectedFeeds);
+  if (locale !== undefined) data.locale = locale;
+  if (country !== undefined) data.country = country;
 
   const user = await prisma.user.update({
     where: { id: req.params.id },

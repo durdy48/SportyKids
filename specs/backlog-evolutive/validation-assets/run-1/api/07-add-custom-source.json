@@ -1,0 +1,25 @@
+{
+  "request": {
+    "name": "Validation Test Channel",
+    "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=UCtest1774632760227",
+    "platform": "youtube_channel",
+    "sport": "athletics",
+    "userId": "cmn96if3z001v26vsgy3uqi4u",
+    "channelId": "UCtest1774632760227"
+  },
+  "status": 201,
+  "response": {
+    "id": "cmn96ixet001z26vsr1g293nk",
+    "name": "Validation Test Channel",
+    "platform": "youtube_channel",
+    "feedUrl": "https://www.youtube.com/feeds/videos.xml?channel_id=UCtest1774632760227",
+    "channelId": "UCtest1774632760227",
+    "playlistId": null,
+    "sport": "athletics",
+    "active": true,
+    "isCustom": true,
+    "addedBy": "cmn96if3z001v26vsgy3uqi4u",
+    "lastSyncedAt": null,
+    "createdAt": "2026-03-27T17:32:40.229Z"
+  }
+}

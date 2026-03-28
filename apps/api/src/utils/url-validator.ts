@@ -30,6 +30,13 @@ export function isPublicUrl(urlString: string): { valid: boolean; reason?: strin
     return { valid: false, reason: 'Internal URLs are not allowed' };
   }
 
+  // Block IPv6-mapped IPv4 addresses (e.g., ::ffff:127.0.0.1, ::ffff:10.0.0.1)
+  const ipv6MappedMatch = strippedHostname.match(/^::ffff:(\d+\.\d+\.\d+\.\d+)$/i);
+  if (ipv6MappedMatch) {
+    // Recursively validate the embedded IPv4 address
+    return isPublicUrl(`http://${ipv6MappedMatch[1]}/`);
+  }
+
   // Block private IP ranges
   const ipMatch = hostname.match(/^(\d+)\.(\d+)\.(\d+)\.(\d+)$/);
   if (ipMatch) {

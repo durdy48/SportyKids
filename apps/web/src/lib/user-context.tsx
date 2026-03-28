@@ -3,7 +3,7 @@
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
 import type { User, ParentalProfile } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
-import { getUser, getParentalProfile, checkIn } from './api';
+import { getUser, getParentalProfile, checkIn, updateUser } from './api';
 import { celebrateSticker, celebrateAchievement, celebrateStreak } from './celebrations';
 
 type Theme = 'system' | 'light' | 'dark';
@@ -116,6 +116,11 @@ export function UserProvider({ children }: { children: ReactNode }) {
     getUser(id)
       .then(async (u) => {
         setUserState(u);
+        // Sync locale from server if available
+        if (u.locale && (u.locale === 'es' || u.locale === 'en')) {
+          setLocaleState(u.locale as Locale);
+          localStorage.setItem(LOCALE_KEY, u.locale);
+        }
         await loadParentalProfile(u.id);
         // Daily check-in: only once per calendar day
         const today = new Date().toISOString().slice(0, 10);
@@ -169,6 +174,12 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const setLocale = (l: Locale) => {
     setLocaleState(l);
     localStorage.setItem(LOCALE_KEY, l);
+    // Sync locale preference to server if user exists
+    if (user) {
+      updateUser(user.id, { locale: l }).catch(() => {
+        // Non-critical — locale persists locally regardless
+      });
+    }
   };
 
   const logout = () => {

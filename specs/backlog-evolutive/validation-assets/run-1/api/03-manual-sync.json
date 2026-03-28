@@ -1,0 +1,198 @@
+{
+  "totalProcessed": 60,
+  "totalCreated": 1,
+  "totalApproved": 1,
+  "totalRejected": 0,
+  "totalErrors": 0,
+  "sources": [
+    {
+      "sourceName": "La Liga Official",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "FC Barcelona",
+      "itemsProcessed": 15,
+      "itemsCreated": 0,
+      "itemsSkipped": 15,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "Real Madrid CF",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "Premier League",
+      "itemsProcessed": 15,
+      "itemsCreated": 1,
+      "itemsSkipped": 14,
+      "moderationApproved": 1,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "UEFA Champions League",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "NBA",
+      "itemsProcessed": 15,
+      "itemsCreated": 0,
+      "itemsSkipped": 15,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "ACB Liga Endesa",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "EuroLeague Basketball",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "ATP Tour",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "WTA Tennis",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "Roland Garros",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "World Aquatics",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "SwimSwam Video",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "World Athletics",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "Olympics",
+      "itemsProcessed": 15,
+      "itemsCreated": 0,
+      "itemsSkipped": 15,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "GCN en Espanol",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "Tour de France",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "Formula 1",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "Scuderia Ferrari",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "Premier Padel",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    },
+    {
+      "sourceName": "World Padel Tour",
+      "itemsProcessed": 0,
+      "itemsCreated": 0,
+      "itemsSkipped": 0,
+      "moderationApproved": 0,
+      "moderationRejected": 0,
+      "moderationErrors": 0
+    }
+  ]
+}

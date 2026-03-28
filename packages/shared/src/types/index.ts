@@ -20,8 +20,19 @@ export interface User {
   totalPoints?: number;
   pushEnabled?: boolean;
   pushPreferences?: PushPreferences;
+  locale?: string;
+  country?: string;
   createdAt: Date;
 }
+
+/**
+ * Authentication provider type.
+ * - anonymous: auto-created user without credentials
+ * - email: email + password authentication
+ * - google: Google OAuth 2.0 (planned)
+ * - apple: Apple Sign In (planned)
+ */
+export type AuthProvider = 'anonymous' | 'email' | 'google' | 'apple';
 
 export interface AuthResponse {
   accessToken: string;
@@ -79,6 +90,35 @@ export interface Reel {
   videoType?: string;
   aspectRatio?: string;
   previewGifUrl?: string;
+  rssGuid?: string;
+  videoSourceId?: string;
+  safetyStatus?: SafetyStatus;
+  safetyReason?: string;
+  moderatedAt?: string;
+  publishedAt?: string;
+}
+
+export type VideoPlatform = 'youtube_channel' | 'youtube_playlist' | 'instagram_account' | 'tiktok_account' | 'manual';
+
+export interface VideoSource {
+  id: string;
+  name: string;
+  platform: VideoPlatform;
+  feedUrl: string;
+  channelId?: string;
+  playlistId?: string;
+  sport: string;
+  active: boolean;
+  isCustom: boolean;
+  addedBy?: string;
+  lastSyncedAt?: string;
+  createdAt?: string;
+}
+
+export interface VideoSourceCatalogResponse {
+  sources: VideoSource[];
+  total: number;
+  bySport: Record<string, number>;
 }
 
 export interface QuizQuestion {

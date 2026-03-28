@@ -1,6 +1,7 @@
 import cron from 'node-cron';
 import { prisma } from '../config/database';
 import { generateDigestData, renderDigestHtml } from '../services/digest-generator';
+import { t, type Locale } from '@sportykids/shared';
 
 let activeJob: cron.ScheduledTask | null = null;
 
@@ -48,10 +49,10 @@ async function processWeeklyDigests(): Promise<void> {
   for (const profile of profiles) {
     try {
       const data = await generateDigestData(profile.userId);
-      const locale = 'es'; // Default locale; could be extended per-user
+      const locale = (profile.user?.locale as Locale) || 'es';
 
       if (profile.digestEmail) {
-        const subject = `SportyKids — Resumen semanal de ${data.userName}`;
+        const subject = t('digest.email_subject', locale, { name: data.userName });
         const html = renderDigestHtml(data, locale);
         const sent = await sendDigestEmail(profile.digestEmail, subject, html);
 

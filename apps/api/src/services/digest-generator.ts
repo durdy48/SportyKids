@@ -108,19 +108,19 @@ export function renderDigestHtml(data: DigestData, locale: Locale): string {
     .map((s) => `<tr><td style="padding:4px 12px;">${escapeHtml(s.sport)}</td><td style="padding:4px 12px;text-align:right;">${s.count}</td></tr>`)
     .join('');
 
-  const title = locale === 'es' ? 'Resumen Semanal' : 'Weekly Digest';
-  const periodLabel = locale === 'es' ? 'Periodo' : 'Period';
-  const totalTimeLabel = locale === 'es' ? 'Tiempo total' : 'Total time';
-  const dailyAvgLabel = locale === 'es' ? 'Media diaria' : 'Daily average';
-  const activityLabel = locale === 'es' ? 'Actividad' : 'Activity';
+  const title = t('digest.weekly_digest', locale);
+  const periodLabel = t('digest.period', locale);
+  const totalTimeLabel = t('digest.total_time', locale);
+  const dailyAvgLabel = t('digest.daily_average', locale);
+  const activityLabel = t('digest.activity', locale);
   const newsLabel = t('parental.news_read', locale);
   const reelsLabel = t('parental.reels_viewed', locale);
   const quizLabel = t('parental.quizzes_played', locale);
-  const topSportsLabel = locale === 'es' ? 'Deportes favoritos' : 'Top Sports';
+  const topSportsLabel = t('digest.top_sports', locale);
   const streakLabel = t('streak.current', locale);
   const longestStreakLabel = t('streak.longest', locale);
-  const blockedLabel = locale === 'es' ? 'Contenido bloqueado por moderación' : 'Content blocked by moderation';
-  const quizPerfLabel = locale === 'es' ? 'Rendimiento en quiz' : 'Quiz performance';
+  const blockedLabel = t('digest.content_blocked_moderation', locale);
+  const quizPerfLabel = t('digest.quiz_performance', locale);
   const minutesUnit = 'min';
 
   return `<!DOCTYPE html>
@@ -157,9 +157,9 @@ export function renderDigestHtml(data: DigestData, locale: Locale): string {
       <tr style="background:#FACC15;color:#1E293B;">
         <th style="padding:8px 12px;text-align:left;" colspan="2">${quizPerfLabel}</th>
       </tr>
-      <tr><td style="padding:8px 12px;">${locale === 'es' ? 'Quizzes jugados' : 'Quizzes played'}</td><td style="padding:8px 12px;text-align:right;">${data.quizPerformance.total}</td></tr>
-      <tr style="background:#F1F5F9;"><td style="padding:8px 12px;">${locale === 'es' ? 'Aciertos' : 'Correct'}</td><td style="padding:8px 12px;text-align:right;">${data.quizPerformance.correctPercent}%</td></tr>
-      <tr><td style="padding:8px 12px;">${locale === 'es' ? 'Quizzes perfectos' : 'Perfect quizzes'}</td><td style="padding:8px 12px;text-align:right;">${data.quizPerformance.perfectCount}</td></tr>
+      <tr><td style="padding:8px 12px;">${t('digest.quizzes_played', locale)}</td><td style="padding:8px 12px;text-align:right;">${data.quizPerformance.total}</td></tr>
+      <tr style="background:#F1F5F9;"><td style="padding:8px 12px;">${t('digest.correct', locale)}</td><td style="padding:8px 12px;text-align:right;">${data.quizPerformance.correctPercent}%</td></tr>
+      <tr><td style="padding:8px 12px;">${t('digest.perfect_quizzes', locale)}</td><td style="padding:8px 12px;text-align:right;">${data.quizPerformance.perfectCount}</td></tr>
     </table>
 
     <table style="width:100%;border-collapse:collapse;margin-bottom:20px;background:#fff;border-radius:8px;overflow:hidden;">
@@ -172,7 +172,7 @@ export function renderDigestHtml(data: DigestData, locale: Locale): string {
     </table>
 
     <p style="text-align:center;color:#94A3B8;font-size:12px;margin-top:32px;">
-      SportyKids — ${locale === 'es' ? 'Noticias deportivas seguras para niños' : 'Safe sports news for kids'}
+      SportyKids — ${t('digest.safe_news_tagline', locale)}
     </p>
   </div>
 </body>
@@ -184,7 +184,7 @@ export async function renderDigestPdf(data: DigestData, locale: Locale): Promise
     const { jsPDF } = await import('jspdf');
     const doc = new jsPDF({ unit: 'mm', format: 'a4' });
 
-    const title = locale === 'es' ? 'Resumen Semanal' : 'Weekly Digest';
+    const title = t('digest.weekly_digest', locale);
     const fromDate = new Date(data.period.from).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US');
     const toDate = new Date(data.period.to).toLocaleDateString(locale === 'es' ? 'es-ES' : 'en-US');
 
@@ -210,13 +210,13 @@ export async function renderDigestPdf(data: DigestData, locale: Locale): Promise
     // Activity summary
     doc.setFontSize(13);
     doc.setTextColor(30, 41, 59);
-    doc.text(locale === 'es' ? 'Actividad' : 'Activity', left, y);
+    doc.text(t('digest.activity', locale), left, y);
     y += 7;
 
     doc.setFontSize(10);
     const lines = [
-      `${locale === 'es' ? 'Tiempo total' : 'Total time'}: ${data.totalMinutes} min`,
-      `${locale === 'es' ? 'Media diaria' : 'Daily average'}: ${data.dailyAverage} min`,
+      `${t('digest.total_time', locale)}: ${data.totalMinutes} min`,
+      `${t('digest.daily_average', locale)}: ${data.dailyAverage} min`,
       `${t('parental.news_read', locale)}: ${data.byType.news_viewed}`,
       `${t('parental.reels_viewed', locale)}: ${data.byType.reels_viewed}`,
       `${t('parental.quizzes_played', locale)}: ${data.byType.quizzes_played}`,
@@ -230,7 +230,7 @@ export async function renderDigestPdf(data: DigestData, locale: Locale): Promise
     // Top sports
     if (data.topSports.length > 0) {
       doc.setFontSize(13);
-      doc.text(locale === 'es' ? 'Deportes favoritos' : 'Top Sports', left, y);
+      doc.text(t('digest.top_sports', locale), left, y);
       y += 7;
       doc.setFontSize(10);
       for (const s of data.topSports) {
@@ -249,25 +249,25 @@ export async function renderDigestPdf(data: DigestData, locale: Locale): Promise
     y += 6;
     doc.text(`${t('streak.longest', locale)}: ${data.streak.longest} ${t('streak.days', locale)}`, left, y);
     y += 6;
-    doc.text(`${locale === 'es' ? 'Contenido bloqueado' : 'Content blocked'}: ${data.moderationBlocked}`, left, y);
+    doc.text(`${t('digest.content_blocked', locale)}: ${data.moderationBlocked}`, left, y);
     y += 10;
 
     // Quiz
     doc.setFontSize(13);
-    doc.text(locale === 'es' ? 'Rendimiento en quiz' : 'Quiz performance', left, y);
+    doc.text(t('digest.quiz_performance', locale), left, y);
     y += 7;
     doc.setFontSize(10);
-    doc.text(`${locale === 'es' ? 'Quizzes jugados' : 'Quizzes played'}: ${data.quizPerformance.total}`, left, y);
+    doc.text(`${t('digest.quizzes_played', locale)}: ${data.quizPerformance.total}`, left, y);
     y += 6;
-    doc.text(`${locale === 'es' ? 'Aciertos' : 'Correct'}: ${data.quizPerformance.correctPercent}%`, left, y);
+    doc.text(`${t('digest.correct', locale)}: ${data.quizPerformance.correctPercent}%`, left, y);
     y += 6;
-    doc.text(`${locale === 'es' ? 'Quizzes perfectos' : 'Perfect quizzes'}: ${data.quizPerformance.perfectCount}`, left, y);
+    doc.text(`${t('digest.perfect_quizzes', locale)}: ${data.quizPerformance.perfectCount}`, left, y);
 
     // Footer
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
     doc.text(
-      `SportyKids — ${locale === 'es' ? 'Noticias deportivas seguras para ninos' : 'Safe sports news for kids'}`,
+      `SportyKids — ${t('digest.safe_news_tagline', locale)}`,
       left,
       285,
     );
@@ -276,7 +276,7 @@ export async function renderDigestPdf(data: DigestData, locale: Locale): Promise
   } catch {
     // Fallback: plain text PDF-like buffer if jsPDF fails in Node
     const text = [
-      `SportyKids - ${locale === 'es' ? 'Resumen Semanal' : 'Weekly Digest'}`,
+      `SportyKids - ${t('digest.weekly_digest', locale)}`,
       `${data.userName}`,
       `${new Date(data.period.from).toLocaleDateString()} - ${new Date(data.period.to).toLocaleDateString()}`,
       '',

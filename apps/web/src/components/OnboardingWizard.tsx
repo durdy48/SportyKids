@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { SPORTS, TEAMS, AGE_RANGES, sportToEmoji, t, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
+import { SPORTS, TEAMS, AGE_RANGES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale } from '@sportykids/shared';
 import type { AgeRange, RssSource } from '@sportykids/shared';
 import { createUser, fetchSourceCatalog, addCustomSource, setupParentalPin } from '@/lib/api';
 import { useUser } from '@/lib/user-context';
@@ -20,9 +20,14 @@ const COUNTRY_FLAGS: Record<string, string> = {
   DE: '\u{1F1E9}\u{1F1EA}',
 };
 
+const LOCALE_OPTIONS = [
+  { value: 'es' as const, flag: '\u{1F1EA}\u{1F1F8}', label: 'Espa\u00f1ol' },
+  { value: 'en' as const, flag: '\u{1F1EC}\u{1F1E7}', label: 'English' },
+];
+
 export function OnboardingWizard() {
   const router = useRouter();
-  const { setUser, setParentalProfile, locale } = useUser();
+  const { setUser, setParentalProfile, locale, setLocale } = useUser();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
@@ -69,23 +74,41 @@ export function OnboardingWizard() {
     }
   }, [step]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Sources grouped by sport → country (only sports selected in step 2)
-  const sourcesBySport = useMemo(() => {
-    const grouped: Record<string, Record<string, RssSource[]>> = {};
-    for (const sport of sports) {
-      const sportSources = catalogSources.filter((s) => s.sport === sport);
-      if (sportSources.length > 0) {
-        const byCountry: Record<string, RssSource[]> = {};
-        for (const src of sportSources) {
-          const country = src.country || 'XX';
-          if (!byCountry[country]) byCountry[country] = [];
-          byCountry[country].push(src);
-        }
-        grouped[sport] = byCountry;
+  // Search query for filtering sources
+  const [searchQuery, setSearchQuery] = useState('');
+  // Expanded country sections (user's locale country starts expanded)
+  const [expandedCountries, setExpandedCountries] = useState<Set<string>>(() => {
+    const defaultCountry = inferCountryFromLocale(locale);
+    return new Set([defaultCountry]);
+  });
+
+  // Sources grouped by country (filtered by selected sports + search query)
+  const sourcesByCountry = useMemo(() => {
+    const filtered = catalogSources.filter((s) => {
+      if (!sports.includes(s.sport)) return false;
+      if (searchQuery.trim()) {
+        return s.name.toLowerCase().includes(searchQuery.trim().toLowerCase());
       }
+      return true;
+    });
+
+    const grouped: Record<string, RssSource[]> = {};
+    for (const src of filtered) {
+      const country = src.country || 'XX';
+      if (!grouped[country]) grouped[country] = [];
+      grouped[country].push(src);
     }
-    return grouped;
-  }, [catalogSources, sports]);
+
+    // Sort countries: user's locale country first, then alphabetical
+    const userCountry = inferCountryFromLocale(locale);
+    const sortedEntries = Object.entries(grouped).sort(([a], [b]) => {
+      if (a === userCountry) return -1;
+      if (b === userCountry) return 1;
+      return a.localeCompare(b);
+    });
+
+    return sortedEntries;
+  }, [catalogSources, sports, searchQuery, locale]);
 
   const toggleSport = (s: string) => {
     setSports((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
@@ -95,28 +118,34 @@ export function OnboardingWizard() {
     setSelectedFeeds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
   };
 
-  const selectAllForSport = (sport: string) => {
-    const sportSourceIds = catalogSources
-      .filter((s) => s.sport === sport)
-      .map((s) => s.id);
+  const selectAllForCountry = (countrySources: RssSource[]) => {
+    const sourceIds = countrySources.map((s) => s.id);
     setSelectedFeeds((prev) => {
-      const withoutSport = prev.filter((id) => !sportSourceIds.includes(id));
-      return [...withoutSport, ...sportSourceIds];
+      const idSet = new Set(prev);
+      for (const id of sourceIds) idSet.add(id);
+      return Array.from(idSet);
     });
   };
 
-  const deselectAllForSport = (sport: string) => {
-    const sportSourceIds = new Set(
-      catalogSources.filter((s) => s.sport === sport).map((s) => s.id)
-    );
-    setSelectedFeeds((prev) => prev.filter((id) => !sportSourceIds.has(id)));
+  const deselectAllForCountry = (countrySources: RssSource[]) => {
+    const sourceIds = new Set(countrySources.map((s) => s.id));
+    setSelectedFeeds((prev) => prev.filter((id) => !sourceIds.has(id)));
   };
 
-  const areAllSelectedForSport = (sport: string): boolean => {
-    const sportSourceIds = catalogSources
-      .filter((s) => s.sport === sport)
-      .map((s) => s.id);
-    return sportSourceIds.length > 0 && sportSourceIds.every((id) => selectedFeeds.includes(id));
+  const areAllSelectedForCountry = (countrySources: RssSource[]): boolean => {
+    return countrySources.length > 0 && countrySources.every((s) => selectedFeeds.includes(s.id));
+  };
+
+  const toggleCountryExpanded = (country: string) => {
+    setExpandedCountries((prev) => {
+      const next = new Set(prev);
+      if (next.has(country)) {
+        next.delete(country);
+      } else {
+        next.add(country);
+      }
+      return next;
+    });
   };
 
   const handleAddCustomSource = async () => {
@@ -178,12 +207,15 @@ export function OnboardingWizard() {
     setSubmitting(true);
     try {
       const age = AGE_RANGES[ageRange].min;
+      const inferredCountry = inferCountryFromLocale(locale);
       const user = await createUser({
         name: name.trim(),
         age,
         favoriteSports: sports,
         favoriteTeam: team || undefined,
         selectedFeeds,
+        locale,
+        country: inferredCountry,
       });
       // Set up parental controls
       const parentalProfile = await setupParentalPin(user.id, pin, {
@@ -224,12 +256,33 @@ export function OnboardingWizard() {
                 {t('onboarding.step1_title', locale)}
               </h2>
             </div>
+
+            {/* Language selector */}
+            <div>
+              <p className="text-sm text-gray-500 mb-3">{t('settings.language', locale)}</p>
+              <div className="flex gap-3">
+                {LOCALE_OPTIONS.map((opt) => (
+                  <button
+                    key={opt.value}
+                    onClick={() => setLocale(opt.value)}
+                    className={`flex-1 py-3 rounded-xl text-sm font-medium transition-colors flex items-center justify-center gap-2 ${
+                      locale === opt.value
+                        ? 'bg-[var(--color-blue)] text-white'
+                        : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    }`}
+                  >
+                    <span className="text-lg">{opt.flag}</span> {opt.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+
             <input
               type="text"
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t('onboarding.name_placeholder', locale)}
-              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-lg focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 text-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
               maxLength={50}
             />
             <div>
@@ -325,77 +378,101 @@ export function OnboardingWizard() {
               {t('sources.selected_count', locale, { count: String(selectedFeeds.length) })}
             </p>
 
+            {/* Search input */}
+            <div className="relative">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder={t('sources.search_sources_placeholder', locale)}
+                className="w-full px-3 py-2.5 pl-9 rounded-xl border border-gray-200 text-sm focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent bg-white"
+              />
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+              </svg>
+            </div>
+
             {catalogLoading ? (
               <div className="text-center py-8 text-gray-400">
                 {t('buttons.loading', locale)}
               </div>
             ) : (
-              <div className="space-y-5 max-h-72 overflow-y-auto">
-                {Object.entries(sourcesBySport).map(([sport, countrySources]) => (
-                  <div key={sport}>
-                    {/* Sport group header */}
-                    <div className="flex items-center justify-between mb-2">
-                      <h3 className="font-[family-name:var(--font-poppins)] text-sm font-semibold text-[var(--color-text)]">
-                        {sportToEmoji(sport)} {getSportLabel(sport, locale)}
-                      </h3>
-                      <button
-                        onClick={() =>
-                          areAllSelectedForSport(sport)
-                            ? deselectAllForSport(sport)
-                            : selectAllForSport(sport)
-                        }
-                        className="text-xs text-[var(--color-blue)] hover:underline"
-                      >
-                        {areAllSelectedForSport(sport)
-                          ? t('sources.deselect_all', locale)
-                          : t('sources.select_all', locale)}
-                      </button>
-                    </div>
+              <div className="space-y-3 max-h-72 overflow-y-auto">
+                {sourcesByCountry.map(([country, sources]) => {
+                  const isExpanded = expandedCountries.has(country);
+                  const allSelected = areAllSelectedForCountry(sources);
+                  const countryName = t(`sources.country_${country}`, locale) !== `sources.country_${country}`
+                    ? t(`sources.country_${country}`, locale)
+                    : country;
 
-                    {/* Sources grouped by country within this sport */}
-                    <div className="space-y-3">
-                      {Object.entries(countrySources).map(([country, sources]) => (
-                        <div key={country}>
-                          <p className="text-xs text-gray-400 font-medium mb-1.5 flex items-center gap-1.5">
-                            <span>{COUNTRY_FLAGS[country] || '\u{1F30D}'}</span>
-                            {t(`sources.country_${country}`, locale) !== `sources.country_${country}`
-                              ? t(`sources.country_${country}`, locale)
-                              : country}
-                          </p>
-                          <div className="space-y-1.5">
-                            {sources.map((src) => (
-                              <button
-                                key={src.id}
-                                onClick={() => toggleFeed(src.id)}
-                                className={`w-full py-2.5 px-3 rounded-xl text-sm transition-colors text-left flex items-start gap-2 ${
-                                  selectedFeeds.includes(src.id)
-                                    ? 'bg-[var(--color-yellow)]/20 border-2 border-[var(--color-yellow)]'
-                                    : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border-2 border-transparent'
-                                }`}
-                              >
-                                <div className="flex-1 min-w-0">
-                                  <div className="flex items-center gap-2">
-                                    <span className="font-medium text-[var(--color-text)] truncate">
-                                      {src.name}
+                  return (
+                    <div key={country} className="border border-gray-200 rounded-xl overflow-hidden">
+                      {/* Country header */}
+                      <div
+                        className="flex items-center justify-between px-3 py-2.5 bg-gray-50 cursor-pointer select-none"
+                        onClick={() => toggleCountryExpanded(country)}
+                      >
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm">{isExpanded ? '\u25BC' : '\u25B6'}</span>
+                          <span className="text-base">{COUNTRY_FLAGS[country] || '\u{1F30D}'}</span>
+                          <span className="font-[family-name:var(--font-poppins)] text-sm font-semibold text-[var(--color-text)]">
+                            {countryName}
+                          </span>
+                          <span className="text-xs text-gray-400">({sources.length})</span>
+                        </div>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            allSelected ? deselectAllForCountry(sources) : selectAllForCountry(sources);
+                          }}
+                          className="text-xs text-[var(--color-blue)] hover:underline"
+                        >
+                          {allSelected
+                            ? t('sources.deselect_all', locale)
+                            : t('sources.select_all', locale)}
+                        </button>
+                      </div>
+
+                      {/* Sources list (collapsible) */}
+                      {isExpanded && (
+                        <div className="space-y-1.5 p-2">
+                          {sources.map((src) => (
+                            <button
+                              key={src.id}
+                              onClick={() => toggleFeed(src.id)}
+                              className={`w-full py-2.5 px-3 rounded-xl text-sm transition-colors text-left flex items-start gap-2 ${
+                                selectedFeeds.includes(src.id)
+                                  ? 'bg-[var(--color-yellow)]/20 border-2 border-[var(--color-yellow)]'
+                                  : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border-2 border-transparent'
+                              }`}
+                            >
+                              <div className="flex-1 min-w-0">
+                                <span className="block font-medium text-[var(--color-text)] truncate">
+                                  {src.name}
+                                </span>
+                                <div className="flex items-center gap-1.5 mt-1">
+                                  <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500 font-medium">
+                                    {sportToEmoji(src.sport)} {getSportLabel(src.sport, locale)}
+                                  </span>
+                                  {src.isCustom && (
+                                    <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-blue)]/10 text-[var(--color-blue)] font-medium">
+                                      {t('sources.custom_badge', locale)}
                                     </span>
-                                    {src.isCustom && (
-                                      <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-[var(--color-blue)]/10 text-[var(--color-blue)] font-medium flex-shrink-0">
-                                        {t('sources.custom_badge', locale)}
-                                      </span>
-                                    )}
-                                  </div>
+                                  )}
+                                </div>
+                                {src.description && (
                                   <p className="text-xs text-gray-400 truncate mt-0.5">
                                     {src.description}
                                   </p>
-                                </div>
-                              </button>
-                            ))}
-                          </div>
+                                )}
+                              </div>
+                            </button>
+                          ))}
                         </div>
-                      ))}
+                      )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             )}
 
@@ -501,7 +578,7 @@ export function OnboardingWizard() {
                   setPinError('');
                 }}
                 placeholder="----"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-2xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-2xl text-gray-900 tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
               />
             </div>
 
@@ -520,7 +597,7 @@ export function OnboardingWizard() {
                   setPinError('');
                 }}
                 placeholder="----"
-                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-2xl tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
+                className="w-full px-4 py-3 rounded-xl border border-gray-200 text-center text-2xl text-gray-900 tracking-[0.5em] font-bold focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent"
               />
               {pinError && <p className="text-red-500 text-xs">{pinError}</p>}
               {pin.length === 4 && pinConfirm.length === 4 && pin !== pinConfirm && (

@@ -1,0 +1,15 @@
+HTTP/1.1 200 OK
+X-Powered-By: Express
+Access-Control-Allow-Origin: *
+RateLimit-Policy: 100;w=60
+RateLimit-Limit: 100
+RateLimit-Remaining: 85
+RateLimit-Reset: 59
+Content-Type: application/json; charset=utf-8
+Content-Length: 700
+ETag: W/"2bc-e8I9dP0zYWXYuIWPQRJYPPOAyZo"
+Date: Fri, 27 Mar 2026 22:40:50 GMT
+Connection: keep-alive
+Keep-Alive: timeout=5
+
+{"news":[{"id":"cmn9geido000826sg93h9qcvk","title":"White booed by England fans on scoring return","summary":"England fans booed Ben White after he scored the opening goal in England 's friendly against Uruguay at Wembley.","imageUrl":"","source":"ESPN - Football","sourceUrl":"https://www.espn.com/soccer/story/_/id/48324077/ben-white-booed-england-fans-uruguay-friendly-wembley","sport":"football","team":null,"minAge":6,"maxAge":14,"publishedAt":"2026-03-27T22:59:36.000Z","createdAt":"2026-03-27T22:09:10.284Z","rssGuid":"US-EN-48324077","safetyStatus":"approved","safetyReason":"auto-approved: AI unavailable","moderatedAt":"2026-03-27T22:09:10.283Z"}],"total":18889,"page":1,"totalPages":18889}

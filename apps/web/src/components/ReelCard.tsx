@@ -37,34 +37,85 @@ export function ReelCard({ reel, locale }: ReelCardProps) {
     } catch { /* ignore */ }
   }, [reel.videoUrl]);
 
-  const buildEmbedUrl = (baseUrl: string, params: Record<string, string>): string => {
-    const url = new URL(baseUrl);
-    for (const [key, value] of Object.entries(params)) {
-      url.searchParams.set(key, value);
+  const buildYouTubeEmbedUrl = (baseUrl: string, params: Record<string, string>): string => {
+    try {
+      const url = new URL(baseUrl);
+      for (const [key, value] of Object.entries(params)) {
+        url.searchParams.set(key, value);
+      }
+      return url.toString();
+    } catch {
+      return baseUrl;
     }
-    return url.toString();
   };
 
-  const embedUrl = playing
-    ? buildEmbedUrl(reel.videoUrl, { autoplay: '1', mute: '0', controls: '1', modestbranding: '1', rel: '0' })
-    : buildEmbedUrl(reel.videoUrl, { autoplay: '0', controls: '0', modestbranding: '1', rel: '0' });
+  const isYouTube = !reel.videoType || reel.videoType === 'youtube_embed';
+  const isInstagram = reel.videoType === 'instagram_embed';
+  const isTikTok = reel.videoType === 'tiktok_embed';
+  const isMp4 = reel.videoType === 'mp4';
+
+  const embedUrl = isYouTube
+    ? playing
+      ? buildYouTubeEmbedUrl(reel.videoUrl, { autoplay: '1', mute: '0', controls: '1', modestbranding: '1', rel: '0' })
+      : buildYouTubeEmbedUrl(reel.videoUrl, { autoplay: '0', controls: '0', modestbranding: '1', rel: '0' })
+    : reel.videoUrl;
 
   // Extract YouTube video ID for thumbnail
   const ytId = reel.videoUrl.match(/embed\/([a-zA-Z0-9_-]+)/)?.[1];
   const thumbnail = reel.thumbnailUrl || (ytId ? `https://img.youtube.com/vi/${ytId}/mqdefault.jpg` : '');
+
+  const renderPlayer = () => {
+    if (isMp4) {
+      return (
+        <video
+          src={reel.videoUrl}
+          className="w-full h-full object-cover"
+          controls
+          autoPlay
+          playsInline
+        />
+      );
+    }
+    if (isInstagram) {
+      return (
+        <iframe
+          src={reel.videoUrl}
+          className="w-full h-full"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+          title={reel.title}
+        />
+      );
+    }
+    if (isTikTok) {
+      return (
+        <iframe
+          src={reel.videoUrl}
+          className="w-full h-full"
+          allow="autoplay; encrypted-media"
+          allowFullScreen
+          title={reel.title}
+        />
+      );
+    }
+    // Default: YouTube embed
+    return (
+      <iframe
+        src={embedUrl}
+        className="w-full h-full"
+        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+        allowFullScreen
+        title={reel.title}
+      />
+    );
+  };
 
   return (
     <div className="group rounded-2xl overflow-hidden bg-[var(--color-surface)] shadow-sm hover:shadow-md transition-shadow border border-[var(--color-border)]">
       {/* Video / Thumbnail area */}
       <div className="relative aspect-video bg-gray-900 cursor-pointer" onClick={() => setPlaying(!playing)}>
         {playing ? (
-          <iframe
-            src={embedUrl}
-            className="w-full h-full"
-            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-            allowFullScreen
-            title={reel.title}
-          />
+          renderPlayer()
         ) : (
           <>
             {thumbnail ? (
