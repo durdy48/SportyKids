@@ -23,6 +23,10 @@ export interface User {
   pushPreferences?: PushPreferences;
   locale?: string;
   country?: string;
+  ageGateCompleted?: boolean;
+  consentGiven?: boolean;
+  consentDate?: string | null;
+  consentBy?: string | null;
   createdAt: Date;
 }
 

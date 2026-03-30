@@ -4,8 +4,9 @@ import { useState, useEffect, useMemo } from 'react';
 import type { ParentalProfile } from '@sportykids/shared';
 import { SPORTS, sportToEmoji, t, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
 import type { AgeRange } from '@sportykids/shared';
-import { updateParentalProfile, fetchActivity, fetchActivityDetail, verifyPin, setupParentalPin, updateUser, getDigestPreferences, updateDigestPreferences, previewDigest, downloadDigestPdf, sendTestDigestEmail } from '@/lib/api';
+import { updateParentalProfile, fetchActivity, fetchActivityDetail, verifyPin, setupParentalPin, updateUser, getDigestPreferences, updateDigestPreferences, previewDigest, downloadDigestPdf, sendTestDigestEmail, deleteUserData } from '@/lib/api';
 import { useUser } from '@/lib/user-context';
+import Link from 'next/link';
 import { FeedPreviewModal } from './FeedPreviewModal';
 import { ContentReportList } from './ContentReportList';
 
@@ -76,6 +77,10 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
 
   // Profile edit state
   const [editName, setEditName] = useState(user?.name ?? '');
+
+  // Delete account state
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [deleting, setDeleting] = useState(false);
 
   // PIN change state
   const [currentPin, setCurrentPin] = useState('');
@@ -986,6 +991,89 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
           </div>
         </div>
       )}
+
+      {/* Danger Zone — Delete Account */}
+      <div className="mt-8 pt-6 border-t border-red-200 dark:border-red-900">
+        <h3 className="text-lg font-bold text-red-600 dark:text-red-400 mb-2">
+          {t('delete_account.title', locale)}
+        </h3>
+        <p className="text-sm text-[var(--color-muted)] mb-4">
+          {t('delete_account.description', locale)}
+        </p>
+        <button
+          onClick={() => setShowDeleteConfirm(true)}
+          className="px-6 py-3 rounded-xl font-medium bg-red-600 text-white hover:bg-red-700 transition-colors"
+          data-testid="delete-account-btn"
+        >
+          {t('delete_account.button', locale)}
+        </button>
+      </div>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-[var(--color-surface)] rounded-2xl p-6 max-w-md w-full shadow-xl">
+            <h3 className="text-xl font-bold text-[var(--color-text)] mb-3">
+              {t('delete_account.confirm_title', locale)}
+            </h3>
+            <p className="text-sm text-[var(--color-muted)] mb-3">
+              {t('delete_account.confirm_body', locale, { name: user?.name ?? '' })}
+            </p>
+            <ul className="text-sm text-[var(--color-muted)] mb-3 space-y-1 ml-4 list-disc">
+              <li>{t('delete_account.confirm_reading', locale)}</li>
+              <li>{t('delete_account.confirm_quiz', locale)}</li>
+              <li>{t('delete_account.confirm_stickers', locale)}</li>
+              <li>{t('delete_account.confirm_streaks', locale)}</li>
+              <li>{t('delete_account.confirm_parental', locale)}</li>
+              <li>{t('delete_account.confirm_activity', locale)}</li>
+            </ul>
+            <p className="text-sm font-semibold text-red-600 dark:text-red-400 mb-4">
+              {t('delete_account.confirm_warning', locale)}
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                className="flex-1 py-3 rounded-xl font-medium bg-gray-100 dark:bg-gray-700 text-[var(--color-text)] hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                {t('delete_account.confirm_cancel', locale)}
+              </button>
+              <button
+                onClick={async () => {
+                  if (!user) return;
+                  setDeleting(true);
+                  try {
+                    const { getParentalSessionToken } = await import('@/lib/api');
+                    const sessionToken = getParentalSessionToken() ?? undefined;
+                    await deleteUserData(user.id, sessionToken);
+                    // Clear all sportykids-prefixed localStorage keys
+                    const keysToRemove = Object.keys(localStorage).filter(k => k.startsWith('sportykids'));
+                    keysToRemove.forEach(k => localStorage.removeItem(k));
+                    window.location.href = '/age-gate';
+                  } catch (err) {
+                    // eslint-disable-next-line no-console
+                    console.error('Delete failed:', err);
+                    setDeleting(false);
+                    setShowDeleteConfirm(false);
+                    alert(t('delete_account.error', locale));
+                  }
+                }}
+                disabled={deleting}
+                className="flex-1 py-3 rounded-xl font-medium bg-red-600 text-white hover:bg-red-700 transition-colors disabled:opacity-50"
+                data-testid="delete-confirm-btn"
+              >
+                {deleting ? '...' : t('delete_account.confirm_delete', locale)}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Legal Links Footer */}
+      <div className="mt-6 pt-4 border-t border-[var(--color-border)] text-center text-sm text-[var(--color-muted)]">
+        <Link href="/privacy" className="hover:underline">{t('legal.privacy_policy', locale)}</Link>
+        {' · '}
+        <Link href="/terms" className="hover:underline">{t('legal.terms_of_service', locale)}</Link>
+      </div>
     </div>
   );
 }

@@ -80,6 +80,9 @@ export interface CreateUserData {
   selectedFeeds: string[];
   locale?: string;
   country?: string;
+  ageGateCompleted?: boolean;
+  consentGiven?: boolean;
+  consentBy?: string;
 }
 
 export async function createUser(data: CreateUserData): Promise<User> {
@@ -546,5 +549,25 @@ export async function fetchTodayMission(userId: string) {
 export async function claimMission(userId: string) {
   const res = await fetch(`${API_BASE}/missions/claim`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ userId }) });
   if (!res.ok) throw new Error('Failed');
+  return res.json();
+}
+
+export async function deleteUserData(userId: string, sessionToken?: string) {
+  const { getAccessToken } = await import('./auth');
+  const headers: Record<string, string> = {
+    'Content-Type': 'application/json',
+  };
+  const token = getAccessToken();
+  if (token) {
+    headers['Authorization'] = `Bearer ${token}`;
+  }
+  if (sessionToken) {
+    headers['X-Parental-Session'] = sessionToken;
+  }
+  const res = await fetch(`${API_BASE}/users/${userId}/data`, {
+    method: 'DELETE',
+    headers,
+  });
+  if (!res.ok) throw new Error('Failed to delete user data');
   return res.json();
 }

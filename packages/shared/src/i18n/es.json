@@ -523,7 +523,8 @@
     "end_time": "Hora de fin",
     "timezone": "Zona horaria",
     "locked_title": "Hora de descansar!",
-    "locked_message": "SportyKids está disponible de {start}:00 a {end}:00. ¡Vuelve más tarde!",
+    "locked_message": "SportyKids está disponible de {start} a {end}. ¡Vuelve más tarde!",
+    "available_hours": "Horario disponible",
     "all_day": "Todo el día"
   },
   "kid_errors": {
@@ -588,5 +589,52 @@
     "mission_ready_body": "Completa tu mision para ganar un sticker {rarity}.",
     "mission_almost_title": "Casi lo tienes!",
     "mission_almost_body": "Estas cerca de completar la mision de hoy. No te rindas!"
+  },
+  "age_gate": {
+    "title": "¿Cuántos años tienes?",
+    "parent_option": "Soy padre/madre o adulto (18+)",
+    "teen_option": "Soy adolescente (13-17)",
+    "child_option": "Soy menor de 13 años",
+    "teen_notice_title": "Antes de empezar...",
+    "teen_notice_body": "SportyKids recopila tus preferencias deportivas y actividad de lectura para personalizar tu feed de noticias. Nunca compartimos tus datos con terceros para publicidad.",
+    "teen_accept": "He leído y acepto la Política de Privacidad y los Términos de Servicio",
+    "child_consent_title": "Se necesita un adulto",
+    "child_consent_hand_device": "Por favor, entrega el dispositivo a tu padre, madre o tutor.",
+    "child_consent_for_parents": "Para padres y tutores:",
+    "child_consent_we_collect": "SportyKids es una app de noticias deportivas para niños. Recopilamos:",
+    "child_consent_collect_prefs": "Preferencias deportivas",
+    "child_consent_collect_activity": "Actividad de lectura",
+    "child_consent_collect_quiz": "Puntuaciones de quiz",
+    "child_consent_we_dont_collect": "NO recopilamos:",
+    "child_consent_no_location": "Datos de ubicación",
+    "child_consent_no_photos": "Fotos ni contactos",
+    "child_consent_no_ads": "Datos para publicidad",
+    "child_consent_checkbox": "Soy el padre/madre/tutor legal y consiento que mi hijo/a use SportyKids",
+    "child_consent_set_pin": "Configurar PIN Parental",
+    "continue": "Continuar"
+  },
+  "legal": {
+    "privacy_policy": "Política de Privacidad",
+    "terms_of_service": "Términos de Servicio",
+    "last_updated": "Última actualización: {date}",
+    "back": "Volver"
+  },
+  "delete_account": {
+    "title": "Zona de peligro",
+    "description": "Eliminar todos los datos asociados a esta cuenta. Esta acción es permanente y no se puede deshacer.",
+    "button": "Eliminar cuenta",
+    "confirm_title": "¿Eliminar cuenta?",
+    "confirm_body": "Esto eliminará permanentemente TODOS los datos de {name}:",
+    "confirm_reading": "Historial de lectura",
+    "confirm_quiz": "Puntuaciones de quiz",
+    "confirm_stickers": "Stickers y logros",
+    "confirm_streaks": "Rachas y misiones",
+    "confirm_parental": "Configuración parental",
+    "confirm_activity": "Todos los registros de actividad",
+    "confirm_warning": "Esta acción no se puede deshacer.",
+    "confirm_cancel": "Cancelar",
+    "confirm_delete": "Eliminar definitivamente",
+    "success": "Cuenta eliminada correctamente",
+    "error": "Error al eliminar la cuenta. Inténtalo de nuevo."
   }
 }

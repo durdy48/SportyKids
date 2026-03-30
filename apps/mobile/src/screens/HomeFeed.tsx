@@ -28,6 +28,7 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [trendingIds, setTrendingIds] = useState<Set<string>>(new Set());
   const [recentlyRead, setRecentlyRead] = useState<NewsItem[]>([]);
+  const [scheduleLock, setScheduleLock] = useState<{ locked: boolean; start: number; end: number } | null>(null);
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchInput(text);
@@ -64,8 +65,13 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
       setNews((prev) => accumulate ? [...prev, ...result.news] : result.news);
       setTotalPages(result.totalPages);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error('Error loading news:', err);
+      const schedErr = err as Error & { scheduleLocked?: boolean; allowedHoursStart?: number; allowedHoursEnd?: number };
+      if (schedErr.scheduleLocked) {
+        setScheduleLock({ locked: true, start: schedErr.allowedHoursStart ?? 0, end: schedErr.allowedHoursEnd ?? 24 });
+      } else {
+        // eslint-disable-next-line no-console
+        console.error('Error loading news:', err);
+      }
     } finally {
       setLoading(false);
       setRefreshing(false);
@@ -141,6 +147,30 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
       ) : null}
     </View>
   );
+
+  // Schedule lock screen — friendly bedtime message
+  if (scheduleLock?.locked) {
+    const formatHour = (h: number) => `${h}:00`;
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+        <Text style={{ fontSize: 64, marginBottom: 16 }}>&#x1F319;</Text>
+        <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 22, color: colors.text, textAlign: 'center', marginBottom: 8 }}>
+          {t('schedule.locked_title', locale)}
+        </Text>
+        <Text style={{ fontSize: 15, color: colors.muted, textAlign: 'center', lineHeight: 22, marginBottom: 20 }}>
+          {t('schedule.locked_message', locale, { start: formatHour(scheduleLock.start), end: formatHour(scheduleLock.end) })}
+        </Text>
+        <View style={{ backgroundColor: colors.surface, borderRadius: 16, padding: 16, width: '100%', alignItems: 'center', borderWidth: 1, borderColor: colors.border }}>
+          <Text style={{ fontSize: 14, color: colors.muted }}>
+            {t('schedule.available_hours', locale)}
+          </Text>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.blue, marginTop: 4 }}>
+            {formatHour(scheduleLock.start)} – {formatHour(scheduleLock.end)}
+          </Text>
+        </View>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>

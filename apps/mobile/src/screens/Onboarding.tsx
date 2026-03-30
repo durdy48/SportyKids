@@ -2,11 +2,13 @@ import { useState, useEffect, useMemo } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { SPORTS, TEAMS, AGE_RANGES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
 import type { AgeRange, RssSource } from '@sportykids/shared';
 import { createUser, fetchSourceCatalog, setupParentalPin } from '../lib/api';
 import { useUser } from '../lib/user-context';
+import { WEB_BASE } from '../config';
 
 const COUNTRY_FLAGS: Record<string, string> = {
   ES: '\u{1F1EA}\u{1F1F8}',
@@ -171,6 +173,8 @@ export function OnboardingScreen() {
         selectedFeeds,
         locale,
         country: inferredCountry,
+        ageGateCompleted: true,
+        consentGiven: true,
       });
 
       // Set up parental PIN if provided
@@ -248,6 +252,17 @@ export function OnboardingScreen() {
                   </Text>
                 </TouchableOpacity>
               ))}
+            </View>
+
+            {/* Legal links */}
+            <View style={s.legalRow}>
+              <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/privacy?locale=${locale}`)}>
+                <Text style={s.legalLink}>{t('legal.privacy_policy', locale)}</Text>
+              </TouchableOpacity>
+              <Text style={s.legalDot}> · </Text>
+              <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/terms?locale=${locale}`)}>
+                <Text style={s.legalLink}>{t('legal.terms_of_service', locale)}</Text>
+              </TouchableOpacity>
             </View>
           </View>
         )}
@@ -531,6 +546,9 @@ function createStyles(colors: ThemeColors) {
   },
   timeLimitActive: { backgroundColor: colors.blue },
   timeLimitText: { fontSize: 13, fontWeight: '600', color: colors.muted },
+  legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 20 },
+  legalLink: { fontSize: 13, color: colors.blue, textDecorationLine: 'underline' },
+  legalDot: { fontSize: 13, color: colors.muted },
   buttons: { flexDirection: 'row', gap: 12, marginTop: 32 },
   buttonPrimary: { flex: 1, backgroundColor: colors.blue, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
   buttonGreen: { flex: 1, backgroundColor: colors.green, paddingVertical: 14, borderRadius: 12, alignItems: 'center' },

@@ -53,7 +53,26 @@ export async function fetchNews(filters: NewsFilters = {}): Promise<NewsResponse
   if (filters.limit) params.set('limit', String(filters.limit));
 
   const res = await fetch(`${API_BASE}/news?${params.toString()}`);
-  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    // Parse schedule lock from parental guard 403
+    if (res.status === 403) {
+      try {
+        const body = await res.json();
+        const details = body?.error?.details ?? body?.error ?? {};
+        if (details.error === 'schedule_locked' || body?.error?.code === 'AUTHORIZATION_ERROR') {
+          const err = new Error('schedule_locked') as Error & { scheduleLocked: boolean; allowedHoursStart: number; allowedHoursEnd: number; timezone: string };
+          err.scheduleLocked = true;
+          err.allowedHoursStart = details.allowedHoursStart ?? 0;
+          err.allowedHoursEnd = details.allowedHoursEnd ?? 24;
+          err.timezone = details.timezone ?? 'Europe/Madrid';
+          throw err;
+        }
+      } catch (e) {
+        if (e instanceof Error && (e as unknown as { scheduleLocked?: boolean }).scheduleLocked) throw e;
+      }
+    }
+    throw new Error(`Error ${res.status}: ${res.statusText}`);
+  }
   return res.json();
 }
 
@@ -142,6 +161,8 @@ export interface CreateUserData {
   selectedFeeds: string[];
   locale?: string;
   country?: string;
+  ageGateCompleted?: boolean;
+  consentGiven?: boolean;
 }
 
 export async function createUser(data: CreateUserData): Promise<User> {
@@ -252,6 +273,10 @@ export async function setupParentalPin(
 
 // Parental session token management
 let parentalSessionToken: string | null = null;
+
+export function getParentalSessionToken(): string | null {
+  return parentalSessionToken;
+}
 
 export function setParentalSessionToken(token: string | null): void {
   parentalSessionToken = token;

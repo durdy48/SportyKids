@@ -11,10 +11,12 @@ import {
   Platform,
   ScrollView,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { t } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
 import { useUser } from '../lib/user-context';
 import { register, fetchAuthProviders } from '../lib/auth';
+import { WEB_BASE } from '../config';
 
 export function RegisterScreen({ navigation }: { navigation: { goBack: () => void } }) {
   const { setUser, locale, colors } = useUser();
@@ -173,6 +175,16 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
           >
             <Text style={styles.linkButtonText}>{t('auth.login', locale)}</Text>
           </TouchableOpacity>
+
+          <View style={styles.legalRow}>
+            <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/privacy?locale=${locale}`)}>
+              <Text style={styles.legalLink}>{t('legal.privacy_policy', locale)}</Text>
+            </TouchableOpacity>
+            <Text style={styles.legalDot}> · </Text>
+            <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/terms?locale=${locale}`)}>
+              <Text style={styles.legalLink}>{t('legal.terms_of_service', locale)}</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -295,6 +307,21 @@ function createStyles(colors: ThemeColors) {
     fontSize: 14,
     fontWeight: '500',
     textDecorationLine: 'underline',
+  },
+  legalRow: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 16,
+  },
+  legalLink: {
+    fontSize: 13,
+    color: colors.blue,
+    textDecorationLine: 'underline',
+  },
+  legalDot: {
+    fontSize: 13,
+    color: colors.muted,
   },
   });
 }
