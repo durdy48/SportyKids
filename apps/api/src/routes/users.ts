@@ -4,7 +4,9 @@ import { SUPPORTED_LOCALES, SUPPORTED_COUNTRIES } from '@sportykids/shared';
 import { prisma } from '../config/database';
 import { formatUser } from '../utils/format-user';
 import { trackEvent } from '../services/monitoring';
-import { ValidationError, NotFoundError } from '../errors';
+import { requireAuth } from '../middleware/auth';
+import { verifyParentalSession } from '../services/parental-session';
+import { ValidationError, NotFoundError, AuthorizationError } from '../errors';
 
 const router = Router();
 
@@ -16,9 +18,13 @@ const createUserSchema = z.object({
   selectedFeeds: z.array(z.string()).default([]),
   locale: z.enum(SUPPORTED_LOCALES).optional(),
   country: z.enum(SUPPORTED_COUNTRIES).optional(),
+  ageGateCompleted: z.boolean().default(false),
+  consentGiven: z.boolean().default(false),
 });
 
-const updateUserSchema = createUserSchema.partial();
+const updateUserSchema = createUserSchema.partial().extend({
+  consentBy: z.string().optional(),
+});
 
 // POST /api/users — Create user
 router.post('/', async (req: Request, res: Response) => {
@@ -27,13 +33,16 @@ router.post('/', async (req: Request, res: Response) => {
     throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
-  const { favoriteSports, selectedFeeds, locale, country, ...rest } = parsed.data;
+  const { favoriteSports, selectedFeeds, locale, country, ageGateCompleted, consentGiven, ...rest } = parsed.data;
 
   const user = await prisma.user.create({
     data: {
       ...rest,
       favoriteSports,
       selectedFeeds,
+      ageGateCompleted,
+      consentGiven,
+      ...(consentGiven ? { consentDate: new Date() } : {}),
       ...(locale ? { locale } : {}),
       ...(country ? { country } : {}),
     },
@@ -69,17 +78,29 @@ router.put('/:id', async (req: Request, res: Response) => {
     throw new ValidationError('Invalid data', parsed.error.flatten());
   }
 
-  const exists = await prisma.user.findUnique({ where: { id: req.params.id } });
+  const exists = await prisma.user.findUnique({
+    where: { id: req.params.id },
+    select: { id: true, consentGiven: true },
+  });
   if (!exists) {
     throw new NotFoundError('User not found');
   }
 
-  const { favoriteSports, selectedFeeds, locale, country, ...rest } = parsed.data;
+  const { favoriteSports, selectedFeeds, locale, country, ageGateCompleted, consentGiven, consentBy, ...rest } = parsed.data;
   const data: Record<string, unknown> = { ...rest };
   if (favoriteSports) data.favoriteSports = favoriteSports;
   if (selectedFeeds) data.selectedFeeds = selectedFeeds;
   if (locale !== undefined) data.locale = locale;
   if (country !== undefined) data.country = country;
+  if (ageGateCompleted !== undefined) data.ageGateCompleted = ageGateCompleted;
+  if (consentGiven !== undefined) {
+    data.consentGiven = consentGiven;
+    // Auto-set consentDate when transitioning to true
+    if (consentGiven && !exists.consentGiven) {
+      data.consentDate = new Date();
+    }
+  }
+  if (consentBy !== undefined) data.consentBy = consentBy;
 
   const user = await prisma.user.update({
     where: { id: req.params.id },
@@ -87,6 +108,60 @@ router.put('/:id', async (req: Request, res: Response) => {
   });
 
   res.json(formatUser(user));
+});
+
+// DELETE /api/users/:id/data — Delete user and all related data (GDPR/COPPA)
+// Authorization: valid JWT (self or parent) OR valid parental session for the user.
+// Anonymous users without JWT can delete via parental session (PIN-verified).
+router.delete('/:id/data', async (req: Request, res: Response) => {
+  const userId = req.params.id;
+
+  // Find the target user
+  const targetUser = await prisma.user.findUnique({
+    where: { id: userId },
+    include: { parentalProfile: true },
+  });
+
+  if (!targetUser) {
+    throw new NotFoundError('User not found');
+  }
+
+  // Check authorization: JWT auth OR parental session
+  const authUser = req.auth; // may be null for anonymous users
+  const sessionToken = req.headers['x-parental-session'] as string | undefined;
+  const sessionUserId = await verifyParentalSession(sessionToken);
+
+  const hasJwtAuth = authUser && (authUser.userId === userId || authUser.userId === targetUser.parentUserId);
+  const hasParentalSession = sessionUserId === userId;
+
+  if (!hasJwtAuth && !hasParentalSession) {
+    throw new AuthorizationError('Not authorized to delete this user. Provide a valid JWT or parental session.');
+  }
+
+  // Child accounts with parental profile always require a valid parental session
+  if (targetUser.parentalProfile && !hasParentalSession) {
+    throw new AuthorizationError('Valid parental session required to delete child account');
+  }
+
+  // Delete all related records in a transaction
+  await prisma.$transaction([
+    prisma.pushToken.deleteMany({ where: { userId } }),
+    prisma.refreshToken.deleteMany({ where: { userId } }),
+    prisma.parentalSession.deleteMany({ where: { userId } }),
+    prisma.activityLog.deleteMany({ where: { userId } }),
+    prisma.contentReport.deleteMany({ where: { userId } }),
+    prisma.userSticker.deleteMany({ where: { userId } }),
+    prisma.userAchievement.deleteMany({ where: { userId } }),
+    prisma.dailyMission.deleteMany({ where: { userId } }),
+    prisma.parentalProfile.deleteMany({ where: { userId } }),
+    // Unlink children before deleting parent (FK constraint)
+    prisma.user.updateMany({ where: { parentUserId: userId }, data: { parentUserId: null } }),
+    prisma.user.delete({ where: { id: userId } }),
+  ]);
+
+  trackEvent('user_data_deleted', { userId });
+
+  res.json({ deleted: true, userId, deletedAt: new Date().toISOString() });
 });
 
 // POST /api/users/:id/notifications/subscribe — Update push notification preferences

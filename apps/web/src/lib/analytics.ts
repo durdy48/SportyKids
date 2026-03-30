@@ -2,13 +2,25 @@
  * Analytics integration for web (B-TF6).
  *
  * PostHog for product analytics.
- * Gated by NEXT_PUBLIC_POSTHOG_KEY environment variable.
+ * Gated by NEXT_PUBLIC_POSTHOG_KEY environment variable AND user consent.
+ * If consent is not given, all tracking calls are no-ops.
  */
 
 let posthogLoaded = false;
 let posthog: { capture: (event: string, properties?: Record<string, unknown>) => void } | null = null;
 
-export function initAnalytics(): void {
+/**
+ * Initialize analytics, gated on user consent.
+ * If `consentGiven` is false, PostHog is NOT initialized and all
+ * tracking calls remain no-ops. This ensures COPPA/GDPR-K compliance.
+ */
+export function initAnalytics(consentGiven?: boolean): void {
+  // Only initialize if consent is explicitly given
+  if (consentGiven !== true) return;
+
+  // Avoid re-initialization
+  if (posthogLoaded) return;
+
   const apiKey = process.env.NEXT_PUBLIC_POSTHOG_KEY;
   if (!apiKey || typeof window === 'undefined') return;
 

@@ -3,6 +3,8 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
   ActivityIndicator, Alert, Modal, Image, Linking,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NewsItem, Reel } from '@sportykids/shared';
 import { COLORS, SPORTS, t, sportToEmoji, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
@@ -12,7 +14,8 @@ import {
   updateParentalProfile, fetchActivity, fetchFeedPreview,
   getDigestPreferences, updateDigestPreferences,
 } from '../lib/api';
-import { API_BASE } from '../config';
+import { API_BASE, WEB_BASE } from '../config';
+import { getAccessToken } from '../lib/auth';
 import { useUser } from '../lib/user-context';
 import { ParentalTour } from '../components/ParentalTour';
 
@@ -52,7 +55,7 @@ const FORMATS = [
 const TIME_PRESETS = [15, 30, 60, 90, 120, 0]; // 0 = no limit
 
 export function ParentalControlScreen() {
-  const { user, setParentalProfile, locale, colors, theme, setTheme } = useUser();
+  const { user, setParentalProfile, locale, colors, theme, setTheme, logout } = useUser();
   const s = createStyles(colors);
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [pin, setPin] = useState('');
@@ -863,6 +866,73 @@ export function ParentalControlScreen() {
         </View>
       )}
 
+      {/* Legal links */}
+      <View style={s.legalRow}>
+        <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/privacy?locale=${locale}`)}>
+          <Text style={s.legalLink}>{t('legal.privacy_policy', locale)}</Text>
+        </TouchableOpacity>
+        <Text style={s.legalDot}> · </Text>
+        <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/terms?locale=${locale}`)}>
+          <Text style={s.legalLink}>{t('legal.terms_of_service', locale)}</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Danger Zone — Delete Account */}
+      <View style={s.dangerZone}>
+        <Text style={s.dangerTitle}>{t('delete_account.title', locale)}</Text>
+        <Text style={s.dangerDescription}>{t('delete_account.description', locale)}</Text>
+        <TouchableOpacity
+          style={s.dangerButton}
+          onPress={() => {
+            if (!user) return;
+            Alert.alert(
+              t('delete_account.confirm_title', locale),
+              [
+                t('delete_account.confirm_body', locale, { name: user.name }),
+                '',
+                `- ${t('delete_account.confirm_reading', locale)}`,
+                `- ${t('delete_account.confirm_quiz', locale)}`,
+                `- ${t('delete_account.confirm_stickers', locale)}`,
+                `- ${t('delete_account.confirm_streaks', locale)}`,
+                `- ${t('delete_account.confirm_parental', locale)}`,
+                `- ${t('delete_account.confirm_activity', locale)}`,
+                '',
+                t('delete_account.confirm_warning', locale),
+              ].join('\n'),
+              [
+                { text: t('delete_account.confirm_cancel', locale), style: 'cancel' },
+                {
+                  text: t('delete_account.confirm_delete', locale),
+                  style: 'destructive',
+                  onPress: async () => {
+                    try {
+                      const token = await getAccessToken();
+                      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+                      if (token) headers['Authorization'] = `Bearer ${token}`;
+                      const { getParentalSessionToken } = await import('../lib/api');
+                      const sessionToken = getParentalSessionToken();
+                      if (sessionToken) headers['X-Parental-Session'] = sessionToken;
+                      const res = await fetch(`${API_BASE}/users/${user.id}/data`, {
+                        method: 'DELETE',
+                        headers,
+                      });
+                      if (!res.ok) throw new Error(`Error ${res.status}`);
+                      await AsyncStorage.clear();
+                      logout();
+                    } catch {
+                      Alert.alert(t('errors.connection_error', locale));
+                    }
+                  },
+                },
+              ],
+            );
+          }}
+          testID="delete-account-button"
+        >
+          <Text style={s.dangerButtonText}>{t('delete_account.button', locale)}</Text>
+        </TouchableOpacity>
+      </View>
+
     </ScrollView>
 
     {/* Feed Preview Modal */}
@@ -1040,5 +1110,17 @@ function createStyles(colors: ThemeColors) {
     previewReelTitleText: { color: '#fff', fontSize: 11, fontWeight: '500' },
     previewEmpty: { alignItems: 'center', paddingVertical: 40 },
     previewEmptyText: { fontSize: 14, color: colors.muted, marginTop: 8 },
+    legalRow: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', marginTop: 24 },
+    legalLink: { fontSize: 13, color: colors.blue, textDecorationLine: 'underline' },
+    legalDot: { fontSize: 13, color: colors.muted },
+    dangerZone: { backgroundColor: '#FEF2F2', borderRadius: 16, padding: 20, marginTop: 24, borderWidth: 1, borderColor: '#FECACA' },
+    dangerTitle: { fontSize: 16, fontWeight: '700', color: '#DC2626', marginBottom: 8 },
+    dangerDescription: { fontSize: 13, color: '#7F1D1D', lineHeight: 18, marginBottom: 16 },
+    dangerButton: { backgroundColor: '#DC2626', paddingVertical: 14, borderRadius: 12, alignItems: 'center' },
+    dangerButtonText: { color: '#FFFFFF', fontSize: 15, fontWeight: '600' },
+    timeChip: { paddingHorizontal: 12, paddingVertical: 8, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, marginRight: 8 },
+    timeChipActive: { backgroundColor: colors.blue, borderColor: colors.blue },
+    timeChipText: { fontSize: 12, color: colors.text },
+    timeChipTextActive: { color: '#FFFFFF' },
   });
 }

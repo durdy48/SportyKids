@@ -17,6 +17,25 @@ import { OnboardingScreen } from '../screens/Onboarding';
 import { RssCatalogScreen } from '../screens/RssCatalog';
 import { LoginScreen } from '../screens/Login';
 import { RegisterScreen } from '../screens/Register';
+import { AgeGateScreen } from '../screens/AgeGate';
+import { ScheduleLockGuard } from '../components/ScheduleLockGuard';
+
+// Wrap content screens with schedule lock guard (Parents tab stays accessible)
+function GuardedHomeFeed(props: { navigation: { navigate: (s: string) => void } }) {
+  return <ScheduleLockGuard><HomeFeedScreen {...props} /></ScheduleLockGuard>;
+}
+function GuardedReels() {
+  return <ScheduleLockGuard><ReelsScreen /></ScheduleLockGuard>;
+}
+function GuardedQuiz() {
+  return <ScheduleLockGuard><QuizScreen /></ScheduleLockGuard>;
+}
+function GuardedCollection() {
+  return <ScheduleLockGuard><CollectionScreen /></ScheduleLockGuard>;
+}
+function GuardedFavoriteTeam() {
+  return <ScheduleLockGuard><FavoriteTeamScreen /></ScheduleLockGuard>;
+}
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
@@ -56,7 +75,7 @@ function MainTabs() {
     >
       <Tab.Screen
         name="HomeFeed"
-        component={HomeFeedScreen}
+        component={GuardedHomeFeed}
         options={{
           title: t('nav.news', locale),
           tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>📰</Text>,
@@ -64,7 +83,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Reels"
-        component={ReelsScreen}
+        component={GuardedReels}
         options={{
           title: t('nav.reels', locale),
           headerStyle: { backgroundColor: colors.background },
@@ -74,7 +93,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Quiz"
-        component={QuizScreen}
+        component={GuardedQuiz}
         options={{
           title: t('nav.quiz', locale),
           tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>🧠</Text>,
@@ -82,7 +101,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="Collection"
-        component={CollectionScreen}
+        component={GuardedCollection}
         options={{
           title: t('nav.collection', locale),
           tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>🏆</Text>,
@@ -90,7 +109,7 @@ function MainTabs() {
       />
       <Tab.Screen
         name="FavoriteTeam"
-        component={FavoriteTeamScreen}
+        component={GuardedFavoriteTeam}
         options={{
           title: t('nav.my_team', locale),
           tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>⚽</Text>,
@@ -113,10 +132,12 @@ export function AppNavigator() {
 
   if (loading) return null;
 
+  const needsAgeGate = user && user.ageGateCompleted === false;
+
   return (
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
-        {user ? (
+        {user && !needsAgeGate ? (
           <>
             <Stack.Screen name="Main" component={MainTabs} />
             <Stack.Screen
@@ -128,10 +149,17 @@ export function AppNavigator() {
               }}
             />
           </>
+        ) : needsAgeGate ? (
+          <>
+            <Stack.Screen name="AgeGate" component={AgeGateScreen} />
+            <Stack.Screen name="Onboarding" component={OnboardingScreen} />
+            <Stack.Screen name="Main" component={MainTabs} />
+          </>
         ) : (
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
+            <Stack.Screen name="AgeGate" component={AgeGateScreen} />
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
           </>
         )}

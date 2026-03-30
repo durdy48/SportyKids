@@ -111,14 +111,16 @@ sportykids/
 ├── apps/web/src/
 │   ├── app/             # / (home, 3 feed modes), /onboarding (5 steps), /reels (TikTok vertical),
 │   │                    # /quiz, /team (stats hub), /parents (5 tabs), /collection,
-│   │                    # auth/callback/ (OAuth callback landing)
+│   │                    # auth/callback/ (OAuth callback landing),
+│   │                    # /age-gate (age verification gate), /privacy (Privacy Policy),
+│   │                    # /terms (Terms of Service)
 │   ├── components/      # NewsCard, FiltersBar, SearchBar, NavBar, OnboardingWizard, ReelCard,
 │   │                    # QuizGame, PinInput, ParentalPanel, AgeAdaptedSummary,
 │   │                    # StickerCard, StreakCounter, AchievementBadge, RewardToast,
 │   │                    # FeedModeToggle, HeadlineRow, TeamStatsCard, TeamReelsStrip,
 │   │                    # ReelPlayer, VerticalFeed, NotificationSettings, LimitReached,
 │   │                    # ReportButton, ContentReportList, FeedPreviewModal, MissionCard,
-│   │                    # ErrorState, OfflineBanner, ParentalTour, VideoPlayer
+│   │                    # ErrorState, OfflineBanner, ParentalTour, VideoPlayer, AgeGate
 │   ├── lib/             # api.ts (cliente API), user-context.tsx (UserProvider + useUser), celebrations.ts (confetti animations), favorites.ts (client-side bookmarks), offline-cache.ts, analytics.ts
 │   └── styles/          # globals.css (Tailwind + CSS vars)
 ├── apps/mobile/
@@ -127,7 +129,7 @@ sportykids/
 │   ├── app.json          # Expo config
 │   └── src/
 │       ├── App.tsx        # Root component (SafeAreaProvider + UserProvider + Navigation)
-│       ├── screens/       # HomeFeed, Reels, Quiz, FavoriteTeam, Onboarding, ParentalControl, Collection, Login, Register, RssCatalog
+│       ├── screens/       # HomeFeed, Reels, Quiz, FavoriteTeam, Onboarding, ParentalControl, Collection, Login, Register, RssCatalog, AgeGate
 │       ├── components/    # NewsCard, FiltersBar, StreakCounter, BrandedRefreshControl,
 │       │                  # ErrorState, OfflineBanner, VideoPlayer, ParentalTour
 │       ├── navigation/    # Bottom tabs (6): News, Reels, Quiz, Collection, My Team, Parents + Stack (RssCatalog)
@@ -173,9 +175,10 @@ sportykids/
 | GET | `/api/gamification/achievements/:userId` | Logros desbloqueados del usuario |
 | GET | `/api/gamification/streaks/:userId` | Info de racha del usuario |
 | POST | `/api/gamification/check-in` | Check-in diario (racha + sticker + logros) |
-| POST | `/api/users` | Crear usuario (onboarding) |
-| GET | `/api/users/:id` | Obtener usuario |
-| PUT | `/api/users/:id` | Actualizar preferencias |
+| POST | `/api/users` | Crear usuario (onboarding). Acepta opcional `ageGateCompleted`, `consentGiven` |
+| GET | `/api/users/:id` | Obtener usuario (incluye campos de consentimiento) |
+| PUT | `/api/users/:id` | Actualizar preferencias y campos de consentimiento |
+| DELETE | `/api/users/:id/data` | Eliminar todos los datos del usuario (requireAuth + parental session para menores). GDPR Art. 17 |
 | POST | `/api/parents/setup` | Crear PIN parental |
 | POST | `/api/parents/verify-pin` | Verificar PIN |
 | GET | `/api/parents/profile/:userId` | Perfil parental |
@@ -216,7 +219,7 @@ sportykids/
 ## Modelos de datos (Prisma)
 
 - **NewsItem** — noticias agregadas de RSS (`rssGuid` único para dedup). Campos M1: `safetyStatus` (pending/approved/rejected), `safetyReason`, `moderatedAt`
-- **User** — perfil del niño (`favoriteSports` y `selectedFeeds` son arrays nativos PostgreSQL `String[]`). Campos M4: `currentStreak`, `longestStreak`, `lastActiveDate`, `currentQuizCorrectStreak`, `quizPerfectCount`. Campos auth: `email` (unique), `passwordHash`, `authProvider` (anonymous/email/google/apple), `socialId` (String?, provider's external user ID), `role` (child/parent), `parentUserId`, `lastLoginAt`. Campo `locale` (default 'es'). Campo `country` (default 'ES', supported: ES/GB/US/FR/IT/DE). `pushPreferences` es `Json?` nativo.
+- **User** — perfil del niño (`favoriteSports` y `selectedFeeds` son arrays nativos PostgreSQL `String[]`). Campos M4: `currentStreak`, `longestStreak`, `lastActiveDate`, `currentQuizCorrectStreak`, `quizPerfectCount`. Campos auth: `email` (unique), `passwordHash`, `authProvider` (anonymous/email/google/apple), `socialId` (String?, provider's external user ID), `role` (child/parent), `parentUserId`, `lastLoginAt`. Campo `locale` (default 'es'). Campo `country` (default 'ES', supported: ES/GB/US/FR/IT/DE). `pushPreferences` es `Json?` nativo. Campos legal/consent: `ageGateCompleted` (Boolean, default false), `consentGiven` (Boolean, default false), `consentDate` (DateTime?), `consentBy` (String? — who gave consent).
 - **Sticker** — cromos digitales coleccionables (M4). Rarezas: common, rare, epic, legendary
 - **UserSticker** — relación usuario-sticker (M4). Unique: `[userId, stickerId]`
 - **Achievement** — definiciones de logros (M4). 20 predefinidos. Unique: `key`
@@ -266,6 +269,7 @@ getAgeRangeLabel('6-8', 'en')   // "6-8 years"
 
 - Locale se almacena en `UserContext` (default `'es'`), accesible via `useUser().locale`
 - Ficheros: `packages/shared/src/i18n/es.json` y `en.json`
+- Namespaces de traducciones incluyen: `age_gate.*`, `legal.*`, `delete_account.*` (entre otros)
 - Para añadir un idioma: crear `XX.json`, importar en `i18n/index.ts`, añadir a tipo `Locale`
 
 ## Tokens de diseño
@@ -297,8 +301,13 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 - **Schedule lock (bedtime)**: Parents can set allowed hours (default 0-24, no restriction) with timezone support. Enforced server-side.
 - Fuentes de contenido exclusivamente de prensa deportiva verificada.
 - **M1: Moderación automática** — Todas las noticias pasan por un moderador AI que filtra contenido inapropiado (apuestas, violencia, contenido sexual, etc.). Solo las noticias `approved` se muestran a niños. Las rechazadas se guardan para auditoría parental.
+- **Age gate al primer uso** — 3 caminos: adultos (acceso directo), adolescentes 13-17 (acceso con aviso), menores de 13 (requiere consentimiento parental).
+- **Consentimiento parental** obligatorio para menores de 13 (COPPA/GDPR-K): confirmación en pantalla + PIN parental obligatorio antes de usar la app.
+- **GDPR Art. 17 — derecho de supresion**: `DELETE /api/users/:id/data` elimina todos los datos del usuario en transaccion (hard delete).
+- **Analytics condicionado a consentimiento** — PostHog y Sentry solo se inicializan si `consentGiven` es true. Sin tracking hasta que el padre consiente.
+- **Politica de Privacidad y Terminos de Servicio** accesibles publicamente en `/privacy` y `/terms` (con i18n ES/EN).
 - **Error monitoring**: Sentry (opt-in via `SENTRY_DSN`) tracks unhandled errors. No PII sent.
-- **Analytics**: PostHog (opt-in via `POSTHOG_API_KEY`) with minimal anonymized events.
+- **Analytics**: PostHog (opt-in via `POSTHOG_API_KEY`) with minimal anonymized events. Gated on user consent.
 
 ## Estado del MVP
 
@@ -309,6 +318,7 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 | 2 | ✅ Completada | Onboarding (4 pasos), equipo favorito |
 | 3 | ✅ Completada | Reels (10 seed), Quiz (15 preguntas, sistema de puntos) |
 | 4 | ✅ Completada | Control parental (PIN, formatos, actividad semanal) |
+| 4.5 | ✅ Completada | Legal & Compliance (age gate, COPPA/GDPR-K consent, data deletion, privacy/terms pages) |
 | 5 | 🔲 Pendiente | Test interno + beta cerrada (5-10 familias) |
 
 ## Fuentes RSS
@@ -360,6 +370,10 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 - ~~Related articles endpoint not wired to UI~~ → "You Might Also Like" section in NewsCard (web + mobile)
 - ~~Reading history endpoint not wired to UI~~ → "Recently Read" section on HomeFeed (web + mobile)
 - ~~Locale not passed to news endpoint from frontends~~ → Both web and mobile pass locale param to fetchNews()
+- ~~No privacy policy or terms of service~~ → `/privacy` and `/terms` pages with i18n ES/EN
+- ~~No age gate or parental consent~~ → Age gate pre-onboarding with COPPA/GDPR-K consent flow (3 paths: adult, teen 13-17, child <13)
+- ~~No data deletion endpoint~~ → `DELETE /api/users/:id/data` with transactional hard delete (GDPR Art. 17)
+- ~~Analytics initialize without consent~~ → PostHog/Sentry gated on `consentGiven` field
 
 ## Variables de entorno
 

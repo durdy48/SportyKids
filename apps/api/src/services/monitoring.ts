@@ -11,6 +11,7 @@
  *   POSTHOG_HOST         — PostHog host (default: https://app.posthog.com)
  */
 
+import { prisma } from '../config/database';
 import { logger } from './logger';
 
 let Sentry: typeof import('@sentry/node') | null = null;
@@ -73,7 +74,24 @@ export function addBreadcrumb(message: string, category: string, level: 'info' |
 }
 
 /**
+ * Check if a user has given consent for analytics tracking.
+ * Returns true only when the user record exists and consentGiven is true.
+ */
+export async function shouldTrackUser(userId: string): Promise<boolean> {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { consentGiven: true },
+    });
+    return user?.consentGiven === true;
+  } catch {
+    return false;
+  }
+}
+
+/**
  * Track a server-side event in PostHog.
+ * When a userId is present in properties, checks consent before sending.
  */
 export function trackEvent(eventName: string, properties?: Record<string, unknown>): void {
   const apiKey = process.env.POSTHOG_API_KEY;
@@ -81,20 +99,34 @@ export function trackEvent(eventName: string, properties?: Record<string, unknow
 
   const host = process.env.POSTHOG_HOST || 'https://app.posthog.com';
 
-  // Fire and forget — don't block the response
-  fetch(`${host}/capture/`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      api_key: apiKey,
-      event: eventName,
-      properties: {
-        ...properties,
-        $lib: 'sportykids-api',
-      },
-      timestamp: new Date().toISOString(),
-    }),
-  }).catch(() => {
-    // Silently ignore analytics failures
-  });
+  const sendEvent = () => {
+    fetch(`${host}/capture/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        api_key: apiKey,
+        event: eventName,
+        properties: {
+          ...properties,
+          $lib: 'sportykids-api',
+        },
+        timestamp: new Date().toISOString(),
+      }),
+    }).catch(() => {
+      // Silently ignore analytics failures
+    });
+  };
+
+  // If a userId is present, gate on consent
+  const userId = properties?.userId as string | undefined;
+  if (userId) {
+    shouldTrackUser(userId).then((allowed) => {
+      if (allowed) sendEvent();
+    }).catch(() => {
+      // Silently ignore consent check failures
+    });
+  } else {
+    // No userId — system event, send without consent check
+    sendEvent();
+  }
 }

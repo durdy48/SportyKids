@@ -142,6 +142,10 @@ vi.mock('expo-status-bar', () => ({
   StatusBar: 'StatusBar',
 }));
 
+vi.mock('expo-web-browser', () => ({
+  openBrowserAsync: vi.fn().mockResolvedValue({ type: 'cancel' }),
+}));
+
 // ---------------------------------------------------------------------------
 // React Navigation
 // ---------------------------------------------------------------------------

@@ -523,7 +523,8 @@
     "end_time": "End time",
     "timezone": "Timezone",
     "locked_title": "Time to rest!",
-    "locked_message": "SportyKids is available from {start}:00 to {end}:00. Come back later!",
+    "locked_message": "SportyKids is available from {start} to {end}. Come back later!",
+    "available_hours": "Available hours",
     "all_day": "All day"
   },
   "kid_errors": {
@@ -588,5 +589,52 @@
     "mission_ready_body": "Complete your mission for a {rarity} sticker.",
     "mission_almost_title": "Almost there!",
     "mission_almost_body": "You're close to finishing today's mission. Don't give up!"
+  },
+  "age_gate": {
+    "title": "How old are you?",
+    "parent_option": "I am a parent or adult (18+)",
+    "teen_option": "I am a teenager (13-17)",
+    "child_option": "I am a child (under 13)",
+    "teen_notice_title": "Before you start...",
+    "teen_notice_body": "SportyKids collects your sport preferences and reading activity to personalize your news feed. We never share your data with third parties for advertising.",
+    "teen_accept": "I have read and accept the Privacy Policy and Terms of Service",
+    "child_consent_title": "Parent Required",
+    "child_consent_hand_device": "Please hand the device to your parent or guardian.",
+    "child_consent_for_parents": "For parents:",
+    "child_consent_we_collect": "SportyKids is a sports news app for kids. We collect:",
+    "child_consent_collect_prefs": "Sport preferences",
+    "child_consent_collect_activity": "Reading activity",
+    "child_consent_collect_quiz": "Quiz scores",
+    "child_consent_we_dont_collect": "We do NOT collect:",
+    "child_consent_no_location": "Location data",
+    "child_consent_no_photos": "Photos or contacts",
+    "child_consent_no_ads": "Data for advertising",
+    "child_consent_checkbox": "I am the parent/legal guardian and I consent to my child using SportyKids",
+    "child_consent_set_pin": "Set Up Parental PIN",
+    "continue": "Continue"
+  },
+  "legal": {
+    "privacy_policy": "Privacy Policy",
+    "terms_of_service": "Terms of Service",
+    "last_updated": "Last updated: {date}",
+    "back": "Back"
+  },
+  "delete_account": {
+    "title": "Danger Zone",
+    "description": "Delete all data associated with this account. This action is permanent and cannot be undone.",
+    "button": "Delete Account",
+    "confirm_title": "Delete Account?",
+    "confirm_body": "This will permanently delete ALL data for {name}:",
+    "confirm_reading": "Reading history",
+    "confirm_quiz": "Quiz scores",
+    "confirm_stickers": "Stickers & achievements",
+    "confirm_streaks": "Streaks & missions",
+    "confirm_parental": "Parental settings",
+    "confirm_activity": "All activity logs",
+    "confirm_warning": "This cannot be undone.",
+    "confirm_cancel": "Cancel",
+    "confirm_delete": "Delete Forever",
+    "success": "Account deleted successfully",
+    "error": "Failed to delete account. Please try again."
   }
 }

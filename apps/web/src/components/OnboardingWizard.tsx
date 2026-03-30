@@ -6,6 +6,7 @@ import { SPORTS, TEAMS, AGE_RANGES, sportToEmoji, t, getSportLabel, getAgeRangeL
 import type { AgeRange, RssSource } from '@sportykids/shared';
 import { createUser, fetchSourceCatalog, addCustomSource, setupParentalPin, fetchAuthProviders } from '@/lib/api';
 import { getGoogleLoginUrl, getAppleLoginUrl } from '@/lib/auth';
+import Link from 'next/link';
 import { useUser } from '@/lib/user-context';
 
 const TOTAL_STEPS = 5;
@@ -228,6 +229,8 @@ export function OnboardingWizard() {
         selectedFeeds,
         locale,
         country: inferredCountry,
+        ageGateCompleted: true,
+        consentGiven: true,
       });
       // Set up parental controls
       const parentalProfile = await setupParentalPin(user.id, pin, {
@@ -353,6 +356,13 @@ export function OnboardingWizard() {
                   </button>
                 ))}
               </div>
+            </div>
+
+            {/* Legal links */}
+            <div className="text-center text-xs text-gray-400 dark:text-gray-500 mt-2">
+              <Link href="/privacy" className="hover:underline">{t('legal.privacy_policy', locale)}</Link>
+              {' · '}
+              <Link href="/terms" className="hover:underline">{t('legal.terms_of_service', locale)}</Link>
             </div>
           </div>
         )}

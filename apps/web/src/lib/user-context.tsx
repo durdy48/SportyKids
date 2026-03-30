@@ -1,10 +1,12 @@
 'use client';
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import type { User, ParentalProfile } from '@sportykids/shared';
 import type { Locale } from '@sportykids/shared';
 import { getUser, getParentalProfile, checkIn, updateUser } from './api';
 import { celebrateSticker, celebrateAchievement, celebrateStreak } from './celebrations';
+import { initAnalytics } from './analytics';
 
 type Theme = 'system' | 'light' | 'dark';
 
@@ -57,6 +59,8 @@ function applyThemeClass(resolved: 'light' | 'dark') {
   }
 }
 
+const AGE_GATE_EXEMPT_PATHS = ['/age-gate', '/privacy', '/terms'];
+
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [parentalProfile, setParentalProfileState] = useState<ParentalProfile | null>(null);
@@ -64,6 +68,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
   const [locale, setLocaleState] = useState<Locale>('es');
   const [theme, setThemeState] = useState<Theme>('system');
   const [resolvedTheme, setResolvedTheme] = useState<'light' | 'dark'>('light');
+  const pathname = usePathname();
+  const router = useRouter();
 
   const loadParentalProfile = useCallback(async (userId: string) => {
     try {
@@ -149,6 +155,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
       .catch(() => localStorage.removeItem(STORAGE_KEY))
       .finally(() => setLoading(false));
   }, [loadParentalProfile]);
+
+  // Age gate redirect: if user exists and hasn't completed age gate, redirect
+  useEffect(() => {
+    if (loading) return;
+    if (!user) return;
+    if (user.ageGateCompleted === false && !AGE_GATE_EXEMPT_PATHS.includes(pathname)) {
+      router.replace('/age-gate');
+    }
+  }, [loading, user, pathname, router]);
+
+  // Initialize analytics gated on consent
+  useEffect(() => {
+    if (loading) return;
+    if (user) {
+      initAnalytics(user.consentGiven === true);
+    }
+  }, [loading, user]);
 
   const setUser = (u: User) => {
     setUserState(u);
