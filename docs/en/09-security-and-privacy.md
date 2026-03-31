@@ -14,7 +14,9 @@ SportyKids is aimed at children aged 6 to 14. Content security and privacy are *
 ### AI Content Moderation (M1)
 - The content moderator (`content-moderator.ts`) uses AI to classify every ingested news article
 - Articles receive a `safetyStatus`: `pending` (not yet checked), `approved` (safe), or `rejected` (inappropriate)
-- **Fail-open policy**: if the AI provider is unavailable, content defaults to `approved` to avoid blocking all content
+- **Fail-closed in production**: if the AI provider is unavailable, content stays `pending` (not auto-approved). Override with `MODERATION_FAIL_OPEN=true`. Dev mode remains fail-open.
+- **Stale pending alert**: the sync cron job warns when content has been pending for over 24 hours
+- **Admin endpoint**: `GET /api/admin/moderation/pending` returns all pending items (requires `admin` role)
 - Only articles from verified sports press sources are ingested -- no user-generated content
 
 ### Parental control (Robust -- M5)
@@ -44,6 +46,26 @@ SportyKids is aimed at children aged 6 to 14. Content security and privacy are *
 - **Apple Sign In**: CSRF `state` validation, `id_token` verified against Apple's JWKS endpoint, `nonce` verification to prevent replay attacks. Apple callback uses POST (per Apple's specification).
 - **Mobile flows**: Dedicated `/token` endpoints for native SDKs (Google ID token / Apple identity token verification server-side).
 - **Account linking**: OAuth accounts are linked by email. Existing email/password users who sign in via OAuth are merged (not duplicated).
+
+### Mobile App Security
+
+#### Error Boundary
+- The mobile app wraps the entire UI in an `ErrorBoundary` (class component) that catches unhandled JS errors
+- Shows a kid-friendly crash screen with stadium emoji and restart button
+- Reports errors to Sentry via dynamic import (no hard dependency)
+- Dev mode shows the full stack trace
+- i18n supported (`kid_errors.crash_title`, `kid_errors.crash_message`, `kid_errors.restart`)
+
+#### Secure JWT Storage
+- JWT tokens (access and refresh) are stored in `expo-secure-store` (iOS keychain / Android keystore, encrypted)
+- Automatic fallback to `AsyncStorage` if SecureStore is unavailable
+- Transparent migration: on app startup, existing AsyncStorage tokens are moved to SecureStore
+- User preferences (non-sensitive) remain in AsyncStorage
+
+#### YouTube Embed Sandbox
+- Child-safe parameters centralized in `packages/shared/src/utils/youtube.ts`: `modestbranding=1`, `rel=0`, `iv_load_policy=3`, `playsinline=1`
+- Web: `fs=0` (disable fullscreen) + `sandbox="allow-scripts allow-same-origin allow-presentation"` on all iframes
+- Mobile: same parameters applied via YouTube IFrame Player API (`playerVars`)
 
 ### JWT Authentication
 - **Access tokens**: 15-minute TTL, signed with `JWT_SECRET`. Included in `Authorization: Bearer <token>` header.

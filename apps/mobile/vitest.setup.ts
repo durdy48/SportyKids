@@ -129,6 +129,12 @@ vi.mock('expo-constants', () => ({
   },
 }));
 
+vi.mock('expo-secure-store', () => ({
+  getItemAsync: vi.fn().mockResolvedValue(null),
+  setItemAsync: vi.fn().mockResolvedValue(undefined),
+  deleteItemAsync: vi.fn().mockResolvedValue(undefined),
+}));
+
 vi.mock('expo-video', () => ({
   VideoView: 'VideoView',
   useVideoPlayer: vi.fn(() => ({
@@ -195,6 +201,15 @@ vi.mock('@sportykids/shared', () => ({
   SPORTS: ['football', 'basketball', 'tennis', 'swimming', 'athletics', 'cycling', 'formula1', 'padel'],
   TEAMS: {},
   AGE_RANGES: ['6-8', '9-11', '12-14'],
+  KID_FRIENDLY_ERRORS: {
+    crash: { titleKey: 'kid_errors.crash_title', messageKey: 'kid_errors.crash_message', emoji: '\u{1F3DF}\uFE0F' },
+    network: { titleKey: 'kid_errors.network_title', messageKey: 'kid_errors.network_message', emoji: '\uD83C\uDFC8' },
+    generic: { titleKey: 'kid_errors.generic_title', messageKey: 'kid_errors.generic_message', emoji: '\u26BD' },
+  },
+  getErrorType: vi.fn(() => 'generic'),
+  extractYouTubeVideoId: vi.fn(() => 'dQw4w9WgXcQ'),
+  buildYouTubeEmbedUrl: vi.fn((id: string) => `https://www.youtube.com/embed/${id}?modestbranding=1&rel=0`),
+  getYouTubePlayerVars: vi.fn(() => ({ modestbranding: 1, rel: 0, iv_load_policy: 3, playsinline: 1, autoplay: 1 })),
 }));
 
 // ---------------------------------------------------------------------------

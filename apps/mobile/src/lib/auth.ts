@@ -1,9 +1,17 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { AuthResponse, LoginRequest, RegisterRequest } from '@sportykids/shared';
 import { API_BASE } from '../config';
+import { secureGetItem, secureSetItem, secureDeleteItem, migrateTokensToSecureStore } from './secure-storage';
 
 const ACCESS_TOKEN_KEY = 'sportykids_access_token';
 const REFRESH_TOKEN_KEY = 'sportykids_refresh_token';
+
+/**
+ * Migrate existing tokens from AsyncStorage to expo-secure-store.
+ * Safe to call on every app startup -- it no-ops after the first migration.
+ */
+export async function initSecureTokenStorage(): Promise<void> {
+  await migrateTokensToSecureStore([ACCESS_TOKEN_KEY, REFRESH_TOKEN_KEY]);
+}
 
 export async function register(data: RegisterRequest): Promise<AuthResponse> {
   const res = await fetch(`${API_BASE}/auth/register`, {
@@ -40,11 +48,11 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 }
 
 export async function getAccessToken(): Promise<string | null> {
-  return AsyncStorage.getItem(ACCESS_TOKEN_KEY);
+  return secureGetItem(ACCESS_TOKEN_KEY);
 }
 
 export async function refreshToken(): Promise<string | null> {
-  const stored = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+  const stored = await secureGetItem(REFRESH_TOKEN_KEY);
   if (!stored) return null;
 
   try {
@@ -68,7 +76,7 @@ export async function refreshToken(): Promise<string | null> {
 }
 
 export async function logout(): Promise<void> {
-  const stored = await AsyncStorage.getItem(REFRESH_TOKEN_KEY);
+  const stored = await secureGetItem(REFRESH_TOKEN_KEY);
   if (stored) {
     fetch(`${API_BASE}/auth/logout`, {
       method: 'POST',
@@ -80,13 +88,13 @@ export async function logout(): Promise<void> {
 }
 
 export async function storeTokens(accessToken: string, refreshTokenValue: string): Promise<void> {
-  await AsyncStorage.setItem(ACCESS_TOKEN_KEY, accessToken);
-  await AsyncStorage.setItem(REFRESH_TOKEN_KEY, refreshTokenValue);
+  await secureSetItem(ACCESS_TOKEN_KEY, accessToken);
+  await secureSetItem(REFRESH_TOKEN_KEY, refreshTokenValue);
 }
 
 async function clearTokens(): Promise<void> {
-  await AsyncStorage.removeItem(ACCESS_TOKEN_KEY);
-  await AsyncStorage.removeItem(REFRESH_TOKEN_KEY);
+  await secureDeleteItem(ACCESS_TOKEN_KEY);
+  await secureDeleteItem(REFRESH_TOKEN_KEY);
 }
 
 export async function fetchAuthProviders(): Promise<{ google: boolean; apple: boolean }> {
@@ -117,4 +125,3 @@ export async function loginWithSocialToken(
   await storeTokens(data.accessToken, data.refreshToken);
   return data;
 }
-

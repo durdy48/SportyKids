@@ -41,7 +41,7 @@ export function requireAuth(req: Request, _res: Response, next: NextFunction): v
 /**
  * Factory: requires a specific role.
  */
-export function requireRole(role: 'child' | 'parent') {
+export function requireRole(role: 'child' | 'parent' | 'admin') {
   return (req: Request, _res: Response, next: NextFunction): void => {
     if (!req.auth) {
       throw new AuthenticationError('Authentication required');

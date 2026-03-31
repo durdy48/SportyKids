@@ -1,0 +1,16 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/api
+
+ ✓ src/__tests__/admin-moderation.test.ts > GET /api/admin/moderation/pending > returns 401 without auth token 12ms
+ ✓ src/__tests__/admin-moderation.test.ts > GET /api/admin/moderation/pending > returns 403 for non-admin user 2ms
+ ✓ src/__tests__/admin-moderation.test.ts > GET /api/admin/moderation/pending > returns pending items for admin user 2ms
+ ✓ src/__tests__/admin-moderation.test.ts > GET /api/admin/moderation/pending > returns empty lists when nothing is pending 1ms
+ ✓ src/__tests__/admin-moderation.test.ts > GET /api/admin/moderation/pending > queries with safetyStatus: pending 2ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  18:46:31
+   Duration  507ms (transform 45ms, setup 0ms, import 412ms, tests 19ms, environment 0ms)
+

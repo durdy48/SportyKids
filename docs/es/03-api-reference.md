@@ -1029,6 +1029,34 @@ Todos los limites son configurables via las variables de entorno correspondiente
 
 ---
 
+## Admin
+
+### `GET /api/admin/moderation/pending`
+Devuelve todo el contenido (noticias y reels) en estado `pending` de moderacion.
+
+**Requiere**: `Authorization: Bearer <token>` con rol `admin`.
+
+**Respuesta:**
+```json
+{
+  "news": {
+    "count": 3,
+    "items": [
+      { "id": "...", "title": "...", "source": "AS", "sport": "football", "safetyReason": null, "createdAt": "..." }
+    ]
+  },
+  "reels": {
+    "count": 1,
+    "items": [
+      { "id": "...", "title": "...", "sport": "tennis", "safetyReason": null, "createdAt": "..." }
+    ]
+  },
+  "totalPending": 4
+}
+```
+
+---
+
 ## Nota sobre i18n
 
 Los endpoints devuelven los datos con identificadores en ingles (nombres de campos, valores de deporte, tipos de actividad). Los clientes (webapp y app movil) son responsables de traducir estos valores al idioma del usuario utilizando la funcion `t(key, locale)` del paquete `@sportykids/shared`.

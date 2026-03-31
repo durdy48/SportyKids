@@ -16,6 +16,7 @@ import teamsRouter from './routes/teams';
 import reportRoutes from './routes/reports';
 import missionRoutes from './routes/missions';
 import authRouter from './routes/auth';
+import adminRouter from './routes/admin';
 import { errorHandler } from './middleware/error-handler';
 import { requestIdMiddleware } from './middleware/request-id';
 import { authMiddleware } from './middleware/auth';
@@ -68,6 +69,7 @@ app.use('/api/gamification', gamificationRouter);
 app.use('/api/teams', teamsRouter);
 app.use('/api/reports', reportRoutes);
 app.use('/api/missions', missionRoutes);
+app.use('/api/admin', adminRouter);
 
 // Global error handler
 app.use(errorHandler);

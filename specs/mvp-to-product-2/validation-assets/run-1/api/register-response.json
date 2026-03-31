@@ -1,0 +1,36 @@
+{
+  "status": 201,
+  "body": {
+    "accessToken": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VySWQiOiJjbW5ldW15ZmIwMDB1MjZtbmgzaW1ycmplIiwicm9sZSI6InBhcmVudCIsImlhdCI6MTc3NDk3NTU4OSwiZXhwIjoxNzc0OTc2NDg5fQ.Xg9msJf6KPgZew0mExTcyMefJ944L8TKc4cjLEM8Y6s",
+    "refreshToken": "e4dc1caf638c37599462823923375d684e16e53a56a523e10b69bf907e96ae4d019661ff8f57282de49ef770a36c3724",
+    "user": {
+      "id": "cmneumyfb000u26mnh3imrrje",
+      "name": "Validation Bot",
+      "age": 10,
+      "email": "validation-run1-1774975589611@test.sportykids.dev",
+      "authProvider": "email",
+      "role": "parent",
+      "parentUserId": null,
+      "lastLoginAt": "2026-03-31T16:46:29.831Z",
+      "favoriteSports": [],
+      "favoriteTeam": null,
+      "selectedFeeds": [],
+      "pushEnabled": false,
+      "pushPreferences": null,
+      "totalPoints": 0,
+      "currentStreak": 0,
+      "longestStreak": 0,
+      "lastActiveDate": null,
+      "currentQuizCorrectStreak": 0,
+      "quizPerfectCount": 0,
+      "createdAt": "2026-03-31T16:46:29.831Z",
+      "updatedAt": "2026-03-31T16:46:29.831Z",
+      "locale": "es",
+      "country": "ES",
+      "ageGateCompleted": false,
+      "consentGiven": false,
+      "consentDate": null,
+      "consentBy": null
+    }
+  }
+}

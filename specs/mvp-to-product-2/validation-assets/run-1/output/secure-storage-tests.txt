@@ -1,0 +1,25 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/mobile
+
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > secureGetItem > reads from SecureStore when available 1ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > secureGetItem > falls back to AsyncStorage when SecureStore throws 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > secureGetItem > falls back to AsyncStorage when SecureStore is unavailable 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > secureSetItem > writes to SecureStore when available 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > secureSetItem > falls back to AsyncStorage when SecureStore throws on write 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > secureSetItem > writes to AsyncStorage when SecureStore is unavailable 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > secureDeleteItem > deletes from both SecureStore and AsyncStorage 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > secureDeleteItem > only deletes from AsyncStorage when SecureStore is unavailable 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > migrateTokensToSecureStore > migrates tokens from AsyncStorage to SecureStore 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > migrateTokensToSecureStore > skips migration if already done 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > migrateTokensToSecureStore > skips migration when SecureStore is unavailable 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > migrateTokensToSecureStore > continues migrating other keys if one fails 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > isSecureStoreAvailable > returns true when SecureStore is available 0ms
+ ✓ src/lib/__tests__/secure-storage.test.ts > secure-storage > isSecureStoreAvailable > returns false when SecureStore probe fails 0ms
+
+ Test Files  1 passed (1)
+      Tests  14 passed (14)
+   Start at  18:46:28
+   Duration  161ms (transform 36ms, setup 32ms, import 41ms, tests 4ms, environment 0ms)
+

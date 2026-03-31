@@ -1,0 +1,279 @@
+{
+  "date": "2026-03-31T17:13:45.111Z",
+  "duration": "4.5",
+  "total": 45,
+  "passed": 45,
+  "failed": 0,
+  "results": [
+    {
+      "id": "V1.1",
+      "name": "ErrorBoundary.tsx exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V1.2",
+      "name": "ErrorBoundary is class component with lifecycle methods",
+      "status": "PASS",
+      "detail": "class=true, getDerivedStateFromError=true, componentDidCatch=true"
+    },
+    {
+      "id": "V1.3",
+      "name": "ErrorBoundary wraps entire app in App.tsx",
+      "status": "PASS",
+      "detail": "imports=true, wraps=true"
+    },
+    {
+      "id": "V1.4",
+      "name": "ErrorBoundary uses KID_FRIENDLY_ERRORS.crash",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V1.5",
+      "name": "Sentry reporting via dynamic import with catch fallback",
+      "status": "PASS",
+      "detail": "hasSentry=true, dynamicImport=true, catchFallback=true"
+    },
+    {
+      "id": "V2.1",
+      "name": "secure-storage.ts exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V2.2",
+      "name": "secure-storage exports all required functions",
+      "status": "PASS",
+      "detail": "all present"
+    },
+    {
+      "id": "V2.3",
+      "name": "secure-storage uses expo-secure-store",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V2.4",
+      "name": "secure-storage falls back to AsyncStorage",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V2.5",
+      "name": "auth.ts uses secure-storage for token operations",
+      "status": "PASS",
+      "detail": "importsSecure=true, usesSecureFns=true"
+    },
+    {
+      "id": "V2.6",
+      "name": "App.tsx calls initSecureTokenStorage on startup",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V2.7",
+      "name": "expo-secure-store in mobile package.json",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V3.1",
+      "name": "youtube.ts exists in shared utils",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V3.2",
+      "name": "youtube.ts exports all 3 public functions",
+      "status": "PASS",
+      "detail": "all present"
+    },
+    {
+      "id": "V3.3",
+      "name": "Child-safe params present in CHILD_SAFE_PARAMS",
+      "status": "PASS",
+      "detail": "modestbranding=true, rel=true, iv_load_policy=true, disablekb=true, playsinline=true"
+    },
+    {
+      "id": "V3.4",
+      "name": "Web-only fs=0 param in WEB_ONLY_PARAMS",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V3.5",
+      "name": "shared/utils/index.ts re-exports YouTube functions",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V3.6",
+      "name": "Web VideoPlayer uses buildYouTubeEmbedUrl from shared",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V3.7",
+      "name": "Web VideoPlayer uses sandbox attribute on iframes",
+      "status": "PASS",
+      "detail": "sandbox=true, allow-scripts=true, allow-same-origin=true"
+    },
+    {
+      "id": "V3.8",
+      "name": "Mobile VideoPlayer uses getYouTubePlayerVars from shared",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V4.1",
+      "name": "content-moderator.ts exports shouldFailOpen",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V4.2",
+      "name": "shouldFailOpen checks NODE_ENV and MODERATION_FAIL_OPEN",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V4.3",
+      "name": "moderateContent returns pending on AI failure (fail-closed path)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V4.4",
+      "name": "moderateContent returns approved on AI failure (fail-open path)",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V4.5",
+      "name": "admin.ts route exists",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V4.6",
+      "name": "Admin router registered in index.ts",
+      "status": "PASS",
+      "detail": "imports=true, uses=true"
+    },
+    {
+      "id": "V4.7",
+      "name": "Admin endpoint requires auth + admin role",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V4.8",
+      "name": "KID_FRIENDLY_ERRORS has crash entry",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V4.9a",
+      "name": "i18n es.json has crash_title, crash_message, restart",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V4.9b",
+      "name": "i18n en.json has crash_title, crash_message, restart",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V-T1",
+      "name": "ErrorBoundary tests pass",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V-T2",
+      "name": "secure-storage tests pass",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V-T3",
+      "name": "auth tests pass",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V-T4",
+      "name": "YouTube utils tests pass",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V-T5",
+      "name": "content-moderator tests pass",
+      "status": "PASS",
+      "detail": ""
+    },
+    {
+      "id": "V-A1",
+      "name": "GET /api/health returns 200",
+      "status": "PASS",
+      "detail": "status=200"
+    },
+    {
+      "id": "V-A2",
+      "name": "Admin endpoint rejects unauthenticated (401)",
+      "status": "PASS",
+      "detail": "status=401"
+    },
+    {
+      "id": "V-A3",
+      "name": "Admin endpoint rejects non-admin JWT (403)",
+      "status": "PASS",
+      "detail": "status=403"
+    },
+    {
+      "id": "A16",
+      "name": "buildYouTubeEmbedUrl uses disablekb=1 (not 0)",
+      "status": "PASS",
+      "detail": "source has disablekb:'1'=true, no '0'=true, extracted=1"
+    },
+    {
+      "id": "A17",
+      "name": "Admin moderation endpoint returns correct shape",
+      "status": "PASS",
+      "detail": "status=200, shape=true, itemShape=true, order=true, limit=true, count=0"
+    },
+    {
+      "id": "A18",
+      "name": "Stale pending threshold is 30 minutes",
+      "status": "PASS",
+      "detail": "value=30"
+    },
+    {
+      "id": "A19",
+      "name": "ErrorBoundary uses COLORS constants (no hardcoded theme hex)",
+      "status": "PASS",
+      "detail": "import=true, bg=true, text=true, muted=true, blue=true, noHardcodedBg=true, noHardcodedText=true, noHardcodedMuted=true"
+    },
+    {
+      "id": "A20",
+      "name": "Web VideoPlayer: ALL iframes have allowFullScreen={false}",
+      "status": "PASS",
+      "detail": "total iframes=2, with false=2, with true/default=0"
+    },
+    {
+      "id": "A21",
+      "name": "ErrorBoundary tests include render-based tests",
+      "status": "PASS",
+      "detail": "throwingChild=true, crashUI=true, renderTest=true, restartTest=true, renderer=true"
+    },
+    {
+      "id": "A22",
+      "name": "All original V-checks pass (regression)",
+      "status": "PASS",
+      "detail": "38/38 passed"
+    }
+  ]
+}

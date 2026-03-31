@@ -1,0 +1,36 @@
+{
+  "status": 201,
+  "body": {
+    "accessToken": "[REDACTED]",
+    "refreshToken": "da497f9843b4076ca35684603c6a21306874e0579a3ec5979699c73ecafe4297bba75407ae9efe3fe8d4cee54a09ef81",
+    "user": {
+      "id": "cmndeymnx000d267il5qj2rbi",
+      "name": "del_auth_1774888794206_lb2t4s",
+      "age": 10,
+      "email": "del_1774888794121_y28pue@test.com",
+      "authProvider": "email",
+      "role": "parent",
+      "parentUserId": null,
+      "lastLoginAt": "2026-03-30T16:39:54.429Z",
+      "favoriteSports": [],
+      "favoriteTeam": null,
+      "selectedFeeds": [],
+      "pushEnabled": false,
+      "pushPreferences": null,
+      "totalPoints": 0,
+      "currentStreak": 0,
+      "longestStreak": 0,
+      "lastActiveDate": null,
+      "currentQuizCorrectStreak": 0,
+      "quizPerfectCount": 0,
+      "createdAt": "2026-03-30T16:39:54.429Z",
+      "updatedAt": "2026-03-30T16:39:54.429Z",
+      "locale": "es",
+      "country": "ES",
+      "ageGateCompleted": false,
+      "consentGiven": false,
+      "consentDate": null,
+      "consentBy": null
+    }
+  }
+}

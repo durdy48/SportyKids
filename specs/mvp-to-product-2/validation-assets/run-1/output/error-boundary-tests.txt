@@ -1,0 +1,18 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/mobile
+
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > can be imported without errors 27ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > is a class component with getDerivedStateFromError 0ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > getDerivedStateFromError returns hasError true 1ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > has componentDidCatch method for Sentry reporting 0ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > componentDidCatch does not throw when Sentry is unavailable 52ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > exports ErrorBoundary that can wrap children 0ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > uses crash error info from KID_FRIENDLY_ERRORS 0ms
+
+ Test Files  1 passed (1)
+      Tests  7 passed (7)
+   Start at  18:46:27
+   Duration  265ms (transform 48ms, setup 38ms, import 33ms, tests 81ms, environment 0ms)
+

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { extractYouTubeVideoId, buildYouTubeEmbedUrl } from '@sportykids/shared';
 
 interface VideoPlayerProps {
   videoUrl: string;
@@ -12,6 +13,8 @@ interface VideoPlayerProps {
 /**
  * Native video player for web (B-MP6).
  * Uses HTML5 video for MP4/HLS sources, falls back to iframe for YouTube.
+ * YouTube embeds use child-safe parameters from shared utility.
+ * Iframes include sandbox attribute for security.
  */
 export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio }: VideoPlayerProps) {
   const [isPlaying, setIsPlaying] = useState(false);
@@ -22,11 +25,16 @@ export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio }: 
 
   const paddingTop = aspectRatio === '9:16' ? '177.78%' : '56.25%'; // 9:16 or 16:9
 
+  /** Sandbox attribute for all iframes — restricts capabilities while allowing video playback. */
+  const iframeSandbox = 'allow-scripts allow-same-origin allow-presentation';
+
   if (isYouTube) {
-    // Extract YouTube video ID
-    const match = videoUrl.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|watch\?v=))([^?&]+)/);
-    const videoId = match?.[1] ?? '';
-    const embedUrl = `https://www.youtube.com/embed/${videoId}?autoplay=${isPlaying ? 1 : 0}`;
+    const videoId = extractYouTubeVideoId(videoUrl);
+    const embedUrl = buildYouTubeEmbedUrl(
+      videoId ?? videoUrl,
+      'web',
+      isPlaying ? { autoplay: 1 } : {},
+    );
 
     return (
       <div className="relative w-full" style={{ paddingTop }}>
@@ -51,7 +59,8 @@ export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio }: 
             src={embedUrl}
             className="absolute inset-0 w-full h-full rounded-xl"
             allow="autoplay; encrypted-media"
-            allowFullScreen
+            allowFullScreen={false}
+            sandbox={iframeSandbox}
           />
         )}
       </div>
@@ -103,7 +112,8 @@ export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio }: 
         src={videoUrl}
         className="absolute inset-0 w-full h-full rounded-xl"
         allow="autoplay; encrypted-media"
-        allowFullScreen
+        allowFullScreen={false}
+        sandbox={iframeSandbox}
       />
     </div>
   );

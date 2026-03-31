@@ -1,7 +1,7 @@
 import Parser from 'rss-parser';
 import { prisma } from '../config/database';
 import { classifyNews } from './classifier';
-import { moderateContent } from './content-moderator';
+import { moderateContent, shouldFailOpen } from './content-moderator';
 import { generateSummary } from './summarizer';
 import type { AgeRange } from './summarizer';
 import type { Locale } from '@sportykids/shared';
@@ -176,20 +176,26 @@ export async function syncSource(
         const modResult = await moderateContent(item.title, summary);
         safetyStatus = modResult.status;
         safetyReason = modResult.reason ?? null;
-        moderatedAt = new Date();
+        moderatedAt = modResult.status !== 'pending' ? new Date() : null;
 
         if (modResult.status === 'approved') {
           result.moderationApproved++;
-        } else {
+        } else if (modResult.status === 'rejected') {
           result.moderationRejected++;
+        } else {
+          result.moderationErrors++;
         }
       } catch {
         result.moderationErrors++;
-        // Fail open — leave as pending, will be retried by backfill
-        safetyStatus = 'approved';
-        safetyReason = 'auto-approved: moderation error';
-        moderatedAt = new Date();
-        result.moderationApproved++;
+        if (shouldFailOpen()) {
+          safetyStatus = 'approved';
+          safetyReason = 'auto-approved: moderation error';
+          moderatedAt = new Date();
+          result.moderationApproved++;
+        } else {
+          safetyStatus = 'pending';
+          safetyReason = 'moderation-unavailable';
+        }
       }
 
       try {

@@ -38,12 +38,12 @@ describe('Privacy Page', () => {
 
   it('has a back link', () => {
     render(<PrivacyPage />);
-    expect(screen.getByText('legal.back')).toBeInTheDocument();
+    expect(screen.getByText(/legal\.back/)).toBeInTheDocument();
   });
 
   it('has a link to terms page', () => {
     render(<PrivacyPage />);
-    expect(screen.getByText('legal.terms_of_service')).toBeInTheDocument();
+    expect(screen.getAllByText('legal.terms_of_service').length).toBeGreaterThan(0);
   });
 });
 
@@ -66,7 +66,7 @@ describe('Terms Page', () => {
 
   it('has a back link', () => {
     render(<TermsPage />);
-    expect(screen.getByText('legal.back')).toBeInTheDocument();
+    expect(screen.getByText(/legal\.back/)).toBeInTheDocument();
   });
 
   it('has a link to privacy page', () => {

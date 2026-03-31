@@ -1,0 +1,8 @@
+COLORS import: true
+COLORS.background: true
+COLORS.text: true
+COLORS.muted: true
+COLORS.blue: true
+Hardcoded #F8FAFC: false
+Hardcoded #1E293B: false
+Hardcoded #6B7280: false

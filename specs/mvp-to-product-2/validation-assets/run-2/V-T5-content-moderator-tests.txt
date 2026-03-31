@@ -1,0 +1,28 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/api
+
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > shouldFailOpen > returns true in development (NODE_ENV !== production) 1ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > shouldFailOpen > returns true in test environment 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > shouldFailOpen > returns false in production by default 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > shouldFailOpen > returns true in production when MODERATION_FAIL_OPEN=true 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > shouldFailOpen > returns false in production when MODERATION_FAIL_OPEN=false 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContent — AI responds > returns approved for safe content 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContent — AI responds > returns rejected for unsafe content 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContent — AI responds > handles JSON wrapped in markdown code blocks 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContent — AI failure in dev (fail-open) > auto-approves when AI throws 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContent — AI failure in dev (fail-open) > auto-approves when response is unparseable 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContent — AI failure in dev (fail-open) > auto-approves when response has unknown status 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContent — AI failure in production (fail-closed) > returns pending when AI throws 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContent — AI failure in production (fail-closed) > returns pending when response is unparseable 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContent — AI failure in production (fail-closed) > returns pending for unknown status values 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContent — MODERATION_FAIL_OPEN override > auto-approves in production when override is set 0ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContentBatch > returns results for all items 51ms
+ ✓ src/services/__tests__/content-moderator.test.ts > content-moderator > moderateContentBatch > handles mixed results with pending in production 51ms
+
+ Test Files  1 passed (1)
+      Tests  17 passed (17)
+   Start at  19:13:44
+   Duration  229ms (transform 26ms, setup 0ms, import 44ms, tests 105ms, environment 0ms)
+

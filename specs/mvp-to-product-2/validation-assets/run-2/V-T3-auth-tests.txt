@@ -1,0 +1,22 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/mobile
+
+ ✓ src/lib/__tests__/auth.test.ts > auth > register > stores tokens on successful registration 1ms
+ ✓ src/lib/__tests__/auth.test.ts > auth > register > throws on failed registration 1ms
+ ✓ src/lib/__tests__/auth.test.ts > auth > login > stores tokens on successful login 0ms
+ ✓ src/lib/__tests__/auth.test.ts > auth > login > throws descriptive error on failure 0ms
+ ✓ src/lib/__tests__/auth.test.ts > auth > getAccessToken > returns token from SecureStore 0ms
+ ✓ src/lib/__tests__/auth.test.ts > auth > getAccessToken > returns null when no token stored 0ms
+ ✓ src/lib/__tests__/auth.test.ts > auth > refreshToken > exchanges refresh token for new access token 0ms
+ ✓ src/lib/__tests__/auth.test.ts > auth > refreshToken > returns null and clears tokens on failed refresh 0ms
+ ✓ src/lib/__tests__/auth.test.ts > auth > refreshToken > returns null when no refresh token stored 0ms
+ ✓ src/lib/__tests__/auth.test.ts > auth > logout > calls logout endpoint and clears tokens 1ms
+ ✓ src/lib/__tests__/auth.test.ts > auth > logout > clears tokens even when no refresh token exists 0ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  19:13:42
+   Duration  154ms (transform 34ms, setup 28ms, import 39ms, tests 4ms, environment 0ms)
+

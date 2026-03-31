@@ -4,6 +4,8 @@ import { StatusBar } from 'expo-status-bar';
 import { UserProvider, useUser } from './lib/user-context';
 import { AppNavigator, navigationRef } from './navigation';
 import { setupNotificationTapHandler } from './lib/push-notifications';
+import { ErrorBoundary } from './components/ErrorBoundary';
+import { initSecureTokenStorage } from './lib/auth';
 
 function StatusBarManager() {
   const { resolvedTheme } = useUser();
@@ -12,6 +14,11 @@ function StatusBarManager() {
 
 export default function App() {
   const unsubscribeRef = useRef<(() => void) | null>(null);
+
+  useEffect(() => {
+    // Migrate JWT tokens from AsyncStorage to SecureStore on startup
+    initSecureTokenStorage().catch(() => {});
+  }, []);
 
   useEffect(() => {
     unsubscribeRef.current = setupNotificationTapHandler((screen, params) => {
@@ -26,11 +33,13 @@ export default function App() {
   }, []);
 
   return (
-    <SafeAreaProvider>
-      <UserProvider>
-        <StatusBarManager />
-        <AppNavigator />
-      </UserProvider>
-    </SafeAreaProvider>
+    <ErrorBoundary>
+      <SafeAreaProvider>
+        <UserProvider>
+          <StatusBarManager />
+          <AppNavigator />
+        </UserProvider>
+      </SafeAreaProvider>
+    </ErrorBoundary>
   );
 }

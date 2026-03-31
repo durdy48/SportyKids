@@ -1,0 +1,6 @@
+ThrowingChild component: true
+Crash UI verification: true
+Render test: true
+Restart button test: true
+Renderer import: true
+Create/render call: true

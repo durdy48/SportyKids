@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, StyleSheet, Dimensions, TouchableOpacity, Text, Linking } from 'react-native';
 import { WebView, WebViewMessageEvent } from 'react-native-webview';
 import type { Locale } from '@sportykids/shared';
-import { t } from '@sportykids/shared';
+import { t, getYouTubePlayerVars, extractYouTubeVideoId } from '@sportykids/shared';
 import { htmlEncode, getYouTubeWatchUrl } from '../lib/html-utils';
 
 interface VideoPlayerProps {
@@ -115,8 +115,9 @@ export function VideoPlayer({ videoUrl, videoType, thumbnailUrl: _thumbnailUrl, 
 }
 
 function getYouTubeEmbed(url: string): string {
-  const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:embed\/|watch\?v=))([^?&]+)/);
-  const videoId = match?.[1] ?? '';
+  const videoId = extractYouTubeVideoId(url) ?? '';
+  const playerVars = getYouTubePlayerVars({ autoplay: 1 });
+  const playerVarsJson = JSON.stringify(playerVars);
   // Use YouTube IFrame Player API directly (not raw iframe) to get onError callback.
   // Error codes 101/150 = embed restricted (error 153 in UI).
   return `
@@ -130,7 +131,7 @@ function getYouTubeEmbed(url: string): string {
           width: '100%',
           height: '100%',
           videoId: '${htmlEncode(videoId)}',
-          playerVars: { autoplay: 1, playsinline: 1, modestbranding: 1, rel: 0 },
+          playerVars: ${playerVarsJson},
           events: {
             onError: function(e) {
               window.ReactNativeWebView.postMessage('EMBED_ERROR');

@@ -171,6 +171,16 @@ export function ParentalControlScreen() {
     setSaving(false);
   };
 
+  const toggleSport = async (sport: string) => {
+    if (!user || !profile) return;
+    const current = (profile.allowedSports as string[]) ?? [...SPORTS];
+    const next = current.includes(sport)
+      ? current.filter((s) => s !== sport)
+      : [...current, sport];
+    if (next.length === 0) return; // at least one sport must be allowed
+    await saveProfile({ allowedSports: next });
+  };
+
   const toggleFormat = async (format: string) => {
     if (!user || !profile) return;
     const formats = (profile.allowedFormats as string[]).includes(format)
@@ -423,16 +433,18 @@ export function ParentalControlScreen() {
             <Text style={s.cardTitle}>{t('onboarding.step2_title', locale)}</Text>
             <View style={s.sportsGrid}>
               {SPORTS.map((sport) => {
-                const active = (user.favoriteSports ?? []).includes(sport);
+                const allowed = (profile?.allowedSports as string[]) ?? [...SPORTS];
+                const active = allowed.includes(sport);
                 return (
-                  <View
+                  <TouchableOpacity
                     key={sport}
                     style={[s.sportChip, active ? s.sportChipActive : s.sportChipInactive]}
+                    onPress={() => toggleSport(sport)}
                   >
                     <Text style={[s.sportChipText, active && { color: '#fff' }]}>
                       {sportToEmoji(sport)} {getSportLabel(sport, locale)}
                     </Text>
-                  </View>
+                  </TouchableOpacity>
                 );
               })}
             </View>
