@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, vi } from 'vitest';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 
 const mockFetch = globalThis.fetch as ReturnType<typeof vi.fn>;
 
@@ -7,6 +7,9 @@ vi.mock('../../config', () => ({
   API_BASE: 'http://localhost:3001/api',
 }));
 
+// Reset the secure-storage module's cached SecureStore reference between tests
+// so each test gets a fresh state.
+import { _resetSecureStoreCache } from '../secure-storage';
 import { register, login, getAccessToken, refreshToken, logout } from '../auth';
 
 const ACCESS_TOKEN_KEY = 'sportykids_access_token';
@@ -15,9 +18,10 @@ const REFRESH_TOKEN_KEY = 'sportykids_refresh_token';
 describe('auth', () => {
   beforeEach(() => {
     mockFetch.mockReset();
-    vi.mocked(AsyncStorage.getItem).mockReset();
-    vi.mocked(AsyncStorage.setItem).mockReset();
-    vi.mocked(AsyncStorage.removeItem).mockReset();
+    _resetSecureStoreCache();
+    vi.mocked(SecureStore.getItemAsync).mockReset().mockResolvedValue(null);
+    vi.mocked(SecureStore.setItemAsync).mockReset().mockResolvedValue(undefined);
+    vi.mocked(SecureStore.deleteItemAsync).mockReset().mockResolvedValue(undefined);
   });
 
   // -------------------------------------------------------------------------
@@ -39,8 +43,8 @@ describe('auth', () => {
       const result = await register({ email: 'leo@test.com', password: 'pass123', name: 'Leo', age: 10 });
 
       expect(result.accessToken).toBe('at-123');
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY, 'at-123');
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, 'rt-456');
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(ACCESS_TOKEN_KEY, 'at-123');
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, 'rt-456');
     });
 
     it('throws on failed registration', async () => {
@@ -74,8 +78,8 @@ describe('auth', () => {
       const result = await login({ email: 'ana@test.com', password: 'pwd' });
 
       expect(result.user.name).toBe('Ana');
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY, 'at-abc');
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, 'rt-def');
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(ACCESS_TOKEN_KEY, 'at-abc');
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, 'rt-def');
     });
 
     it('throws descriptive error on failure', async () => {
@@ -95,16 +99,15 @@ describe('auth', () => {
   // -------------------------------------------------------------------------
 
   describe('getAccessToken', () => {
-    it('returns token from AsyncStorage', async () => {
-      vi.mocked(AsyncStorage.getItem).mockResolvedValueOnce('my-token');
+    it('returns token from SecureStore', async () => {
+      vi.mocked(SecureStore.getItemAsync).mockResolvedValue('my-token');
 
       const token = await getAccessToken();
       expect(token).toBe('my-token');
-      expect(AsyncStorage.getItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
     });
 
     it('returns null when no token stored', async () => {
-      vi.mocked(AsyncStorage.getItem).mockResolvedValueOnce(null);
+      vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
 
       const token = await getAccessToken();
       expect(token).toBeNull();
@@ -117,7 +120,9 @@ describe('auth', () => {
 
   describe('refreshToken', () => {
     it('exchanges refresh token for new access token', async () => {
-      vi.mocked(AsyncStorage.getItem).mockResolvedValueOnce('old-rt');
+      vi.mocked(SecureStore.getItemAsync)
+        .mockResolvedValueOnce(null) // probe
+        .mockResolvedValueOnce('old-rt'); // actual read
       mockFetch.mockResolvedValueOnce({
         ok: true,
         json: () => Promise.resolve({ accessToken: 'new-at', refreshToken: 'new-rt' }),
@@ -126,23 +131,25 @@ describe('auth', () => {
       const newAt = await refreshToken();
 
       expect(newAt).toBe('new-at');
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY, 'new-at');
-      expect(AsyncStorage.setItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, 'new-rt');
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(ACCESS_TOKEN_KEY, 'new-at');
+      expect(SecureStore.setItemAsync).toHaveBeenCalledWith(REFRESH_TOKEN_KEY, 'new-rt');
     });
 
     it('returns null and clears tokens on failed refresh', async () => {
-      vi.mocked(AsyncStorage.getItem).mockResolvedValueOnce('old-rt');
+      vi.mocked(SecureStore.getItemAsync)
+        .mockResolvedValueOnce(null) // probe
+        .mockResolvedValueOnce('old-rt');
       mockFetch.mockResolvedValueOnce({ ok: false, status: 401 });
 
       const result = await refreshToken();
 
       expect(result).toBeNull();
-      expect(AsyncStorage.removeItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
-      expect(AsyncStorage.removeItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
+      expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
+      expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
     });
 
     it('returns null when no refresh token stored', async () => {
-      vi.mocked(AsyncStorage.getItem).mockResolvedValueOnce(null);
+      vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
 
       const result = await refreshToken();
       expect(result).toBeNull();
@@ -156,7 +163,9 @@ describe('auth', () => {
 
   describe('logout', () => {
     it('calls logout endpoint and clears tokens', async () => {
-      vi.mocked(AsyncStorage.getItem).mockResolvedValueOnce('rt-to-revoke');
+      vi.mocked(SecureStore.getItemAsync)
+        .mockResolvedValueOnce(null) // probe
+        .mockResolvedValueOnce('rt-to-revoke');
       mockFetch.mockResolvedValueOnce({ ok: true });
 
       await logout();
@@ -165,17 +174,17 @@ describe('auth', () => {
         expect.stringContaining('/auth/logout'),
         expect.objectContaining({ method: 'POST' }),
       );
-      expect(AsyncStorage.removeItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
-      expect(AsyncStorage.removeItem).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
+      expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
+      expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(REFRESH_TOKEN_KEY);
     });
 
     it('clears tokens even when no refresh token exists', async () => {
-      vi.mocked(AsyncStorage.getItem).mockResolvedValueOnce(null);
+      vi.mocked(SecureStore.getItemAsync).mockResolvedValue(null);
 
       await logout();
 
       expect(mockFetch).not.toHaveBeenCalled();
-      expect(AsyncStorage.removeItem).toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
+      expect(SecureStore.deleteItemAsync).toHaveBeenCalledWith(ACCESS_TOKEN_KEY);
     });
   });
 });

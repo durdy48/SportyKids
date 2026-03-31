@@ -13,7 +13,9 @@ El servicio `content-moderator.ts` clasifica automaticamente cada noticia agrega
 - **Pipeline**: RSS -> Aggregator -> Classifier -> **Content Moderator** -> BD
 - **Clasificacion**: cada noticia recibe un `safetyStatus`: `pending`, `approved` o `rejected`
 - **Criterios**: evalua si el contenido es apropiado para ninos (sin violencia explicita, lenguaje inapropiado, etc.)
-- **Modo fail-open**: si el proveedor AI no esta disponible, aprueba automaticamente (las fuentes son de prensa deportiva verificada)
+- **Modo fail-closed en produccion**: si el proveedor AI no esta disponible, el contenido queda en `pending` (no se auto-aprueba). Override con `MODERATION_FAIL_OPEN=true`. En desarrollo se mantiene fail-open.
+- **Alerta de contenido pendiente**: el cron job de sincronizacion verifica y advierte si hay contenido en estado `pending` por mas de 24 horas
+- **Endpoint admin**: `GET /api/admin/moderation/pending` permite revisar todo el contenido pendiente (requiere rol `admin`)
 - **Solo contenido aprobado** se muestra a los usuarios
 
 ### Filtrado de contenido por edad
@@ -58,6 +60,26 @@ Las restricciones parentales se aplican en **dos niveles**:
 - **Apple Sign In**: Validacion CSRF de `state`, `id_token` verificado contra el endpoint JWKS de Apple, verificacion de `nonce` para prevenir ataques de replay. El callback de Apple usa POST (segun la especificacion de Apple).
 - **Flujos mobile**: Endpoints `/token` dedicados para SDKs nativos (verificacion server-side de Google ID token / Apple identity token).
 - **Vinculacion de cuentas**: Las cuentas OAuth se vinculan por email. Los usuarios con email/password existentes que inician sesion via OAuth se fusionan (no se duplican).
+
+### Seguridad de la app movil
+
+#### Error Boundary
+- La app movil envuelve toda la UI en un `ErrorBoundary` (class component) que captura errores de JavaScript no controlados
+- Muestra una pantalla kid-friendly con emoji de estadio y boton de reinicio
+- Reporta errores a Sentry via import dinamico (sin dependencia dura)
+- En modo desarrollo muestra el stack trace completo
+- i18n soportado (claves `kid_errors.crash_title`, `kid_errors.crash_message`, `kid_errors.restart`)
+
+#### Almacenamiento seguro de tokens JWT
+- Los tokens JWT (access y refresh) se almacenan en `expo-secure-store` (keychain de iOS / keystore de Android, cifrado)
+- Fallback automatico a `AsyncStorage` si SecureStore no esta disponible (e.g. algunos entornos de Expo Go)
+- Migracion transparente: al arrancar la app, los tokens existentes en AsyncStorage se mueven a SecureStore
+- Las preferencias del usuario (no-sensibles) siguen en AsyncStorage
+
+#### YouTube Embed Sandbox
+- Parametros child-safe centralizados en `packages/shared/src/utils/youtube.ts`: `modestbranding=1`, `rel=0` (sin videos relacionados de otros canales), `iv_load_policy=3` (ocultar anotaciones), `playsinline=1`
+- En web: `fs=0` (desactiva fullscreen) + atributo `sandbox="allow-scripts allow-same-origin allow-presentation"` en todos los iframes
+- En movil: los mismos parametros se aplican via YouTube IFrame Player API (`playerVars`)
 
 ### Autenticacion JWT
 - **Access tokens**: TTL de 15 minutos, firmados con `JWT_SECRET`. Se incluyen en el header `Authorization: Bearer <token>`.

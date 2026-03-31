@@ -1,0 +1,117 @@
+# Validation Report — Run 2 (post /t-review #1)
+
+**Date**: 2026-03-30T16:56:59.517Z
+
+**Summary**: 36 PASS, 0 FAIL, 6 SKIP (42 total)
+
+---
+
+## Re-run of Original Checks (steps 1-31)
+
+**Sub-total**: 29 PASS, 0 FAIL, 6 SKIP
+
+### API Endpoints
+
+| Step | Test | Status | Details |
+|------|------|--------|---------|
+| 31 | GET user returns consent fields | PASS | All 4 consent fields present |
+| 31b | GET /api/users/:id has consent fields | PASS |  |
+| 29 | DELETE /users/:id/data without auth returns 401 | PASS | Got status 401 |
+| 30 | DELETE /users/nonexistent/data returns 404 | PASS | Got status 404 |
+
+### Consent Fields
+
+| Step | Test | Status | Details |
+|------|------|--------|---------|
+| 1 | ageGateCompleted defaults to false | PASS | Value: false |
+| 1b | consentGiven defaults to false | PASS | Value: false |
+| 1c | consentDate defaults to null | PASS | Value: null |
+| 2 | ageGateCompleted updated to true | PASS |  |
+| 2b | consentGiven updated to true | PASS |  |
+| 2c | consentDate auto-set on consent | PASS | Value: 2026-03-30T16:56:58.761Z |
+| 2d | consentBy set to parent | PASS | Value: parent |
+| 8 | Consent fields persisted on re-read | PASS |  |
+
+### Legal Pages
+
+| Step | Test | Status | Details |
+|------|------|--------|---------|
+| 9 | GET /privacy returns 200 with SportyKids | PASS | Status: 200, contains SportyKids: true |
+| 10 | GET /privacy?locale=en returns English content | PASS | Status: 200 |
+| 11 | GET /terms returns 200 with SportyKids | PASS | Status: 200 |
+| 12 | GET /terms?locale=en returns 200 | PASS | Status: 200 |
+| 13 | Legal pages accessible without auth | PASS | Privacy no-auth status: 200 |
+
+### Data Deletion
+
+| Step | Test | Status | Details |
+|------|------|--------|---------|
+| 14 | Create anonymous user | PASS | ID: cmndfkl5t0011267ido7y7mts |
+| 15 | Create parental profile | PASS | Status: 200 |
+| 16 | Log activity | PASS | Status: 200 |
+| 17 | Register user and get JWT | PASS |  |
+| 19 | DELETE /users/:id/data (self-delete with JWT) | PASS | Status: 200, body: {"deleted":true,"userId":"cmndfkld20018267i6o113syy","deletedAt":"2026-03-30T16:56:59.185Z"} |
+| 20 | Verify deleted user returns 404 | PASS | Status: 404 |
+| 18 | Verify PIN returns session token | PASS | Status: 200, hasToken: true |
+
+### Analytics Consent
+
+| Step | Test | Status | Details |
+|------|------|--------|---------|
+| 21 | Web analytics.ts has consent gating | PASS | consentGiven ref: true, strict !== true check: true |
+| 22 | API monitoring.ts has shouldTrackUser with consent check | PASS | shouldTrackUser: true, consentGiven: true, gates events: true |
+
+### Legal Links
+
+| Step | Test | Status | Details |
+|------|------|--------|---------|
+| 14 | OnboardingWizard contains /privacy link | PASS |  |
+| 15 | OnboardingWizard contains /terms link | PASS |  |
+| 15b | Onboarding page renders (200) | PASS | Status: 200 |
+
+### Mobile
+
+| Step | Test | Status | Details |
+|------|------|--------|---------|
+| 23 | Age gate screen renders on mobile | SKIP | Requires physical device/emulator |
+| 24 | Parental consent flow on mobile | SKIP | Requires physical device/emulator |
+| 25 | Privacy/terms links in mobile onboarding | SKIP | Requires physical device/emulator |
+| 26 | Data deletion from mobile parental panel | SKIP | Requires physical device/emulator |
+| 27 | Push notification consent on mobile | SKIP | Requires physical device/emulator |
+| 28 | Analytics opt-out on mobile | SKIP | Requires physical device/emulator |
+
+## Appendix A Checks (steps 34-40)
+
+**Sub-total**: 7 PASS, 0 FAIL
+
+| Step | Test | Status | Details |
+|------|------|--------|---------|
+| 34 | Parent-child delete: parent deleted, child survives with null parentUserId | PASS | Linked: true, parent gone: true, child exists: true, child.parentUserId: null |
+| 35 | Mobile config.ts exports WEB_BASE | PASS | WEB_BASE found: true, exported: true |
+| 36 | No hardcoded localhost:3000 in mobile screens | PASS | Zero occurrences found |
+| 37 | Age gate has error handling with setError in catch blocks | PASS | Error state: true, catch+setError: true |
+| 38 | Analytics uses consentGiven !== true (not === false) | PASS | !== true: true, === false: false |
+| 39 | ParentalPanel clears all sportykids-prefixed localStorage keys | PASS | Dynamic prefix clearing: true |
+| 40 | ParentalPanel legal links use next/link <Link> | PASS | imports next/link: true, Link for /privacy: true, Link for /terms: true |
+
+## Comparison with Run 1
+
+| Metric | Run 1 | Run 2 | Delta |
+|--------|-------|-------|-------|
+| PASS | 29 | 36 | +7 |
+| FAIL | 0 | 0 | 0 |
+| SKIP | 6 | 6 | +0 |
+| Total | 35 | 42 | +7 |
+
+**No regressions detected.** All original checks continue to pass.
+
+**Appendix A checks**: All 7 review-fix verifications passed.
+
+## Evidence Files
+
+All API request/response payloads saved in:
+`specs/mvp-to-product-1/validation-assets/run-2/api/`
+
+---
+
+*Generated by validate-run2.mjs*

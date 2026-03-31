@@ -6,6 +6,9 @@ import { sendPushToUsers } from '../services/push-sender';
 import { t } from '@sportykids/shared';
 import { logger } from '../services/logger';
 
+/** Threshold in minutes for warning about stale pending content (PRD: 30min). */
+const STALE_PENDING_THRESHOLD_MINUTES = 30;
+
 let activeJob: cron.ScheduledTask | null = null;
 
 /**
@@ -78,12 +81,38 @@ export function startSyncJob(): void {
     const syncStart = new Date();
     await syncAllSources();
     await notifyTeamNews(syncStart);
+    await checkStalePendingContent();
   });
 
   logger.info('Sync job scheduled: every 30 minutes.');
 
   // Start daily quiz generation job
   startDailyQuizJob();
+}
+
+/**
+ * Check for stale pending content and emit a warning.
+ * Exported for testing.
+ */
+export async function checkStalePendingContent(): Promise<void> {
+  try {
+    const threshold = new Date(Date.now() - STALE_PENDING_THRESHOLD_MINUTES * 60_000);
+    const stalePendingCount = await prisma.newsItem.count({
+      where: {
+        safetyStatus: 'pending',
+        createdAt: { lte: threshold },
+      },
+    });
+
+    if (stalePendingCount > 0) {
+      logger.warn(
+        { stalePendingCount, thresholdMinutes: STALE_PENDING_THRESHOLD_MINUTES },
+        `${stalePendingCount} news items have been in pending moderation status for over ${STALE_PENDING_THRESHOLD_MINUTES}min. Review via GET /api/admin/moderation/pending.`,
+      );
+    }
+  } catch (err) {
+    logger.error({ err }, 'Error checking stale pending content');
+  }
 }
 
 // Manual synchronization (on startup or from admin route)

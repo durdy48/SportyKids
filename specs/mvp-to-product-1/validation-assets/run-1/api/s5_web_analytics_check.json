@@ -1,0 +1,6 @@
+{
+  "file": "apps/web/src/lib/analytics.ts",
+  "hasConsentGiven": true,
+  "hasInitAnalytics": true,
+  "hasNoOpLogic": true
+}

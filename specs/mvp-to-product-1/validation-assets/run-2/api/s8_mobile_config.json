@@ -1,0 +1,6 @@
+{
+  "file": "apps/mobile/src/config.ts",
+  "hasWebBase": true,
+  "isExported": true,
+  "content": "// Environment-aware API configuration\n// Currently uses a manual switch between dev/preview/production.\n// TODO: Replace with expo-constants dynamic detection using\n// Constants.expoConfig?.extra?.eas?.channel to automatically select\n// the correct environment (e.g., 'preview' -> staging, 'production' -> prod).\nconst ENV = {\n  dev: 'http://192.168.1.147:3001/api',\n  preview: 'https://api-staging.sportykids.app/api',\n  production: 'https://api.sportykids.app/api',\n};\n\nexport const API_BASE = ENV"
+}

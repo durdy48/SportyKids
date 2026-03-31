@@ -1,0 +1,41 @@
+{
+  "request": {
+    "name": "val_user",
+    "age": 10,
+    "favoriteSports": [
+      "football"
+    ]
+  },
+  "response": {
+    "id": "cmndeym4c0001267it0kingre",
+    "name": "val_user_1774888793722_j7jclx",
+    "age": 10,
+    "email": null,
+    "authProvider": "anonymous",
+    "role": "child",
+    "parentUserId": null,
+    "lastLoginAt": null,
+    "favoriteSports": [
+      "football"
+    ],
+    "favoriteTeam": null,
+    "selectedFeeds": [],
+    "pushEnabled": false,
+    "pushPreferences": null,
+    "totalPoints": 0,
+    "currentStreak": 0,
+    "longestStreak": 0,
+    "lastActiveDate": null,
+    "currentQuizCorrectStreak": 0,
+    "quizPerfectCount": 0,
+    "createdAt": "2026-03-30T16:39:53.725Z",
+    "updatedAt": "2026-03-30T16:39:53.725Z",
+    "locale": "es",
+    "country": "ES",
+    "ageGateCompleted": false,
+    "consentGiven": false,
+    "consentDate": null,
+    "consentBy": null
+  },
+  "status": 201
+}

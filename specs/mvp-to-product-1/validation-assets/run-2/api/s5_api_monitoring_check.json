@@ -1,0 +1,6 @@
+{
+  "file": "apps/api/src/services/monitoring.ts",
+  "hasShouldTrackUser": true,
+  "checksConsentGiven": true,
+  "gatesEventsOnConsent": true
+}

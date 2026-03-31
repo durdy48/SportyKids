@@ -1,0 +1,20 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/mobile
+
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > can be imported without errors 1ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > is a class component with getDerivedStateFromError 0ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > getDerivedStateFromError returns hasError true 0ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > has componentDidCatch method for Sentry reporting 0ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > componentDidCatch does not throw when Sentry is unavailable 52ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > renders children when no error occurs 4ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > renders crash UI when a child throws 3ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > clears error state when restart button is pressed 1ms
+ ✓ src/components/__tests__/ErrorBoundary.test.tsx > ErrorBoundary > uses crash error info from KID_FRIENDLY_ERRORS 0ms
+
+ Test Files  1 passed (1)
+      Tests  9 passed (9)
+   Start at  19:13:41
+   Duration  239ms (transform 40ms, setup 31ms, import 67ms, tests 62ms, environment 0ms)
+

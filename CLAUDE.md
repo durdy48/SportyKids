@@ -36,6 +36,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Analytics | PostHog (opt-in) | Privacy-first analytics |
 | Video | expo-video (mobile) | Native MP4 player |
 | Rate Limiting | express-rate-limit 7 | IP-based tiered rate limiting |
+| Secure Storage | expo-secure-store (mobile) | JWT token encryption |
 | Haptics | expo-haptics (mobile) | Tactile feedback |
 | Logging | Pino 9 | Structured JSON logging |
 | Linting | ESLint 9 + Prettier | Flat config |
@@ -76,12 +77,12 @@ sportykids/
 │   │                    # VideoSource, VideoPlatform, VideoSourceCatalogResponse,
 │   │                    # AuthProvider ('anonymous'|'email'|'google'|'apple')
 │   ├── constants/       # SPORTS, TEAMS, AGE_RANGES, COLORS, KID_FRIENDLY_ERRORS, ERROR_CODES
-│   ├── utils/           # sportToColor, sportToEmoji, formatDate, truncateText
+│   ├── utils/           # sportToColor, sportToEmoji, formatDate, truncateText, youtube.ts (child-safe embed)
 │   └── i18n/            # es.json, en.json, t(), getSportLabel(), getAgeRangeLabel()
 ├── apps/api/
 │   ├── prisma/          # schema.prisma, migrations/, seed.ts
 │   └── src/
-│       ├── routes/      # news.ts, reels.ts, quiz.ts, users.ts, parents.ts, reports.ts, missions.ts, auth.ts
+│       ├── routes/      # news.ts, reels.ts, quiz.ts, users.ts, parents.ts, reports.ts, missions.ts, auth.ts, admin.ts
 │       ├── services/    # aggregator.ts (RSS), video-aggregator.ts (YouTube video RSS),
 │       │                # classifier.ts (team detection),
 │       │                # ai-client.ts (multi-provider), content-moderator.ts,
@@ -131,9 +132,9 @@ sportykids/
 │       ├── App.tsx        # Root component (SafeAreaProvider + UserProvider + Navigation)
 │       ├── screens/       # HomeFeed, Reels, Quiz, FavoriteTeam, Onboarding, ParentalControl, Collection, Login, Register, RssCatalog, AgeGate
 │       ├── components/    # NewsCard, FiltersBar, StreakCounter, BrandedRefreshControl,
-│       │                  # ErrorState, OfflineBanner, VideoPlayer, ParentalTour
+│       │                  # ErrorState, ErrorBoundary, OfflineBanner, VideoPlayer, ParentalTour
 │       ├── navigation/    # Bottom tabs (6): News, Reels, Quiz, Collection, My Team, Parents + Stack (RssCatalog)
-│       └── lib/           # api.ts, user-context.tsx, favorites.ts, auth.ts, push-notifications.ts, haptics.ts, offline-cache.ts, theme.ts (dark mode colors)
+│       └── lib/           # api.ts, user-context.tsx, favorites.ts, auth.ts, push-notifications.ts, haptics.ts, offline-cache.ts, theme.ts (dark mode colors), secure-storage.ts (expo-secure-store abstraction)
 ├── eslint.config.js      # ESLint 9 flat config (monorepo root)
 ├── .prettierrc           # Prettier config
 └── docs/
@@ -213,6 +214,7 @@ sportykids/
 | GET | `/api/news/history?userId=&page=&limit=` | Historial de lectura del usuario (paginado) |
 | GET | `/api/news/:id/related?limit=3` | Artículos relacionados por equipo/deporte |
 | POST | `/api/teams/sync` | Sincronización manual de stats desde TheSportsDB |
+| GET | `/api/admin/moderation/pending` | Contenido pendiente de moderación (requireAuth + requireRole('admin')) |
 
 **NOTA**: Todas las rutas API están en **inglés**. Verificar siempre contra `apps/api/src/routes/` antes de consumir desde frontends.
 
@@ -300,7 +302,10 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 - **Rate limiting**: `express-rate-limit` con tiers por endpoint — auth (5/min), PIN (10/min), content (60/min), sync (2/min), default (100/min). Configurable via env vars.
 - **Schedule lock (bedtime)**: Parents can set allowed hours (default 0-24, no restriction) with timezone support. Enforced server-side.
 - Fuentes de contenido exclusivamente de prensa deportiva verificada.
-- **M1: Moderación automática** — Todas las noticias pasan por un moderador AI que filtra contenido inapropiado (apuestas, violencia, contenido sexual, etc.). Solo las noticias `approved` se muestran a niños. Las rechazadas se guardan para auditoría parental.
+- **M1: Moderación automática** — Todas las noticias pasan por un moderador AI que filtra contenido inapropiado (apuestas, violencia, contenido sexual, etc.). Solo las noticias `approved` se muestran a niños. Las rechazadas se guardan para auditoría parental. **Fail-closed en producción**: si el AI no responde, el contenido queda en `pending` (no se auto-aprueba). Override con `MODERATION_FAIL_OPEN=true`.
+- **Error Boundary** — La app móvil envuelve toda la UI en un `ErrorBoundary` que muestra una pantalla kid-friendly ante crashes y reporta a Sentry (si disponible).
+- **JWT en SecureStore** — Los tokens JWT en móvil se almacenan en `expo-secure-store` (keychain/keystore cifrado), con fallback automático a AsyncStorage y migración transparente. `authFetch()` wrapper adjunta `Authorization: Bearer` a todas las peticiones y auto-refresca tokens expirados.
+- **YouTube Embed Sandbox** — Los iframes de YouTube usan parámetros child-safe centralizados (`modestbranding`, `rel=0`, `iv_load_policy=3`) y atributo `sandbox` en web para restringir capacidades.
 - **Age gate al primer uso** — 3 caminos: adultos (acceso directo), adolescentes 13-17 (acceso con aviso), menores de 13 (requiere consentimiento parental).
 - **Consentimiento parental** obligatorio para menores de 13 (COPPA/GDPR-K): confirmación en pantalla + PIN parental obligatorio antes de usar la app.
 - **GDPR Art. 17 — derecho de supresion**: `DELETE /api/users/:id/data` elimina todos los datos del usuario en transaccion (hard delete).
@@ -340,7 +345,7 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 
 ## Deuda técnica conocida
 
-- ~~Sin tests automatizados~~ → 64 archivos de test, 561 tests (Vitest) — API 423 tests (39 archivos), Web 69 tests (14 archivos), Mobile 69 tests (11 archivos)
+- ~~Sin tests automatizados~~ → 74+ archivos de test, 652+ tests (Vitest) — API 464 tests (44 archivos), Web 85 tests (16 archivos), Mobile 103 tests (14 archivos)
 - ~~Sin linting~~ → ESLint 9 flat config + Prettier. `npx eslint . --max-warnings 0` en CI.
 - ~~Mobile no typechecked en CI~~ → Mobile typecheck en CI. Prisma generate cacheado con `actions/cache@v4`.
 - ~~Logging no estructurado (88 console.*)~~ → Pino structured logging con request ID correlation. `pino-pretty` en dev.
@@ -374,6 +379,10 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 - ~~No age gate or parental consent~~ → Age gate pre-onboarding with COPPA/GDPR-K consent flow (3 paths: adult, teen 13-17, child <13)
 - ~~No data deletion endpoint~~ → `DELETE /api/users/:id/data` with transactional hard delete (GDPR Art. 17)
 - ~~Analytics initialize without consent~~ → PostHog/Sentry gated on `consentGiven` field
+- ~~No app-level error boundary on mobile~~ → ErrorBoundary class component wrapping entire app, kid-friendly crash screen, Sentry reporting
+- ~~JWT tokens in AsyncStorage (unencrypted)~~ → expo-secure-store with auto-migration and AsyncStorage fallback. `authFetch()` wrapper in mobile API client sends Authorization header and auto-refreshes expired tokens.
+- ~~YouTube embed params scattered across web/mobile~~ → Centralized child-safe YouTube utils in shared package, iframe sandbox on web
+- ~~Content moderation fails open in production~~ → Fail-closed by default in production (content stays pending), override via MODERATION_FAIL_OPEN
 
 ## Variables de entorno
 
@@ -403,6 +412,7 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 | `APPLE_TEAM_ID` | No | Apple Developer Team ID |
 | `APPLE_KEY_ID` | No | Apple private key ID |
 | `APPLE_PRIVATE_KEY` | No | Apple .p8 private key contents |
+| `MODERATION_FAIL_OPEN` | No | `true` to auto-approve content when AI moderation fails (default: fail-closed in production) |
 
 ## Infraestructura
 

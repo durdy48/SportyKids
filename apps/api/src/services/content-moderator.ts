@@ -1,7 +1,10 @@
 /**
  * Content moderator for child safety.
  * Uses the AI client to classify news content as safe or unsafe for children.
- * Fails open — if AI is unavailable, content is approved by default.
+ *
+ * Behaviour on AI failure:
+ * - Development / MODERATION_FAIL_OPEN=true  -> content is auto-approved (fail-open)
+ * - Production (default)                     -> content stays pending (fail-closed)
  */
 
 import { getAIClient } from './ai-client';
@@ -12,7 +15,7 @@ import { logger } from './logger';
 // ---------------------------------------------------------------------------
 
 export interface ModerationResult {
-  status: 'approved' | 'rejected';
+  status: 'approved' | 'rejected' | 'pending';
   reason?: string;
 }
 
@@ -26,8 +29,29 @@ export interface ModerationMetrics {
   total: number;
   approved: number;
   rejected: number;
+  pending: number;
   errors: number;
   durationMs: number;
+}
+
+// ---------------------------------------------------------------------------
+// Fail-open / fail-closed logic
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true if the moderator should fail-open (auto-approve on AI error).
+ * Fail-open when:
+ *  - NODE_ENV !== 'production'  (dev / test)
+ *  - MODERATION_FAIL_OPEN env var is explicitly 'true'
+ *
+ * Reads process.env on every call intentionally — env vars can change at
+ * runtime (e.g. via feature flags or config reloads) and must always
+ * reflect the current state.
+ */
+export function shouldFailOpen(): boolean {
+  if (process.env.MODERATION_FAIL_OPEN === 'true') return true;
+  if (process.env.NODE_ENV !== 'production') return true;
+  return false;
 }
 
 // ---------------------------------------------------------------------------
@@ -79,10 +103,15 @@ export async function moderateContent(
 
     return parseModerationResponse(response.content);
   } catch (err) {
-    // Fail open — if AI is unavailable, approve the content
     const errorMsg = err instanceof Error ? err.message : String(err);
-    logger.warn({ err: errorMsg }, 'AI moderation failed, approving by default');
-    return { status: 'approved', reason: 'auto-approved: AI unavailable' };
+
+    if (shouldFailOpen()) {
+      logger.warn({ err: errorMsg }, 'AI moderation failed, approving by default (fail-open)');
+      return { status: 'approved', reason: 'auto-approved: AI unavailable' };
+    }
+
+    logger.warn({ err: errorMsg }, 'AI moderation failed, content stays pending (fail-closed)');
+    return { status: 'pending', reason: 'moderation-unavailable' };
   }
 }
 
@@ -96,7 +125,7 @@ function parseModerationResponse(raw: string): ModerationResult {
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
       logger.warn({ response: raw.substring(0, 200) }, 'Could not find JSON in moderation response');
-      return { status: 'approved', reason: 'auto-approved: unparseable response' };
+      return failOpenOrPending('auto: unparseable response');
     }
 
     const parsed = JSON.parse(jsonMatch[0]);
@@ -112,13 +141,23 @@ function parseModerationResponse(raw: string): ModerationResult {
       return { status: 'approved' };
     }
 
-    // Unknown status — fail open
+    // Unknown status
     logger.warn({ status: parsed.status }, 'Unknown status in moderation response');
-    return { status: 'approved', reason: 'auto-approved: unknown status' };
+    return failOpenOrPending('auto: unknown status');
   } catch {
     logger.warn({ response: raw.substring(0, 200) }, 'Failed to parse moderation response');
-    return { status: 'approved', reason: 'auto-approved: parse error' };
+    return failOpenOrPending('auto: parse error');
   }
+}
+
+/**
+ * Helper: return approved if fail-open, pending if fail-closed.
+ */
+function failOpenOrPending(reason: string): ModerationResult {
+  if (shouldFailOpen()) {
+    return { status: 'approved', reason: `auto-approved: ${reason}` };
+  }
+  return { status: 'pending', reason };
 }
 
 // ---------------------------------------------------------------------------
@@ -132,6 +171,7 @@ export async function moderateContentBatch(
   const startTime = Date.now();
   let approved = 0;
   let rejected = 0;
+  let pending = 0;
   let errors = 0;
 
   for (const item of items) {
@@ -140,12 +180,14 @@ export async function moderateContentBatch(
       results.set(item.id, result);
 
       if (result.status === 'approved') approved++;
-      else rejected++;
+      else if (result.status === 'rejected') rejected++;
+      else pending++;
     } catch {
       errors++;
-      // Fail open on unexpected errors
-      results.set(item.id, { status: 'approved', reason: 'auto-approved: batch error' });
-      approved++;
+      const fallback = failOpenOrPending('batch error');
+      results.set(item.id, fallback);
+      if (fallback.status === 'approved') approved++;
+      else pending++;
     }
 
     // Small delay between items to avoid overwhelming the AI service
@@ -159,11 +201,15 @@ export async function moderateContentBatch(
     total: items.length,
     approved,
     rejected,
+    pending,
     errors,
     durationMs,
   };
 
-  logger.info({ total: metrics.total, approved: metrics.approved, rejected: metrics.rejected, errors: metrics.errors, durationMs: metrics.durationMs }, 'Moderation batch complete');
+  logger.info(
+    { total: metrics.total, approved: metrics.approved, rejected: metrics.rejected, pending: metrics.pending, errors: metrics.errors, durationMs: metrics.durationMs },
+    'Moderation batch complete',
+  );
 
   return results;
 }

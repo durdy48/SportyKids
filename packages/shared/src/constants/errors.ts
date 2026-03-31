@@ -82,6 +82,11 @@ export const KID_FRIENDLY_ERRORS: Record<string, KidFriendlyError> = {
     messageKey: 'kid_errors.unauthorized_message',
     emoji: '\u{1F510}', // closed lock with key
   },
+  crash: {
+    titleKey: 'kid_errors.crash_title',
+    messageKey: 'kid_errors.crash_message',
+    emoji: '\u{1F3DF}\uFE0F', // stadium
+  },
   generic: {
     titleKey: 'kid_errors.generic_title',
     messageKey: 'kid_errors.generic_message',

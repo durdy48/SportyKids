@@ -556,6 +556,9 @@
     "limit_reached_message": "Has usado todo tu tiempo por hoy. Vuelve manana para mas deportes!",
     "unauthorized_title": "Necesitas tu entrada!",
     "unauthorized_message": "Inicia sesion para poder entrar al estadio!",
+    "crash_title": "Oh no, el partido se detuvo!",
+    "crash_message": "Algo inesperado ocurrio. Volvamos al juego!",
+    "restart": "Reiniciar",
     "generic_title": "Falta!",
     "generic_message": "Algo salió mal. ¡Vamos a intentar de nuevo!",
     "retry": "Intentar de nuevo"

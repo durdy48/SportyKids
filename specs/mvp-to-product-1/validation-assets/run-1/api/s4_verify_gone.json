@@ -1,0 +1,11 @@
+{
+  "status": 404,
+  "body": {
+    "error": {
+      "code": "NOT_FOUND",
+      "message": "User not found",
+      "stack": "NotFoundError: User not found\n    at <anonymous> (/Users/antonioduarteruiz/personal/sportykids/apps/api/src/routes/users.ts:68:11)",
+      "requestId": "47264583-85c8-462f-9556-61fd0c45a07a"
+    }
+  }
+}

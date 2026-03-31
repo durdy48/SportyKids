@@ -1,0 +1,11 @@
+{
+  "parentId": "cmndfkllb001b267inapr4n5n",
+  "childId": "cmndfkllh001e267iw5r0fhdr",
+  "linkedParentUserId": "cmndfkllb001b267inapr4n5n",
+  "deleteStatus": 200,
+  "deleteBody": {
+    "deleted": true,
+    "userId": "cmndfkllb001b267inapr4n5n",
+    "deletedAt": "2026-03-30T16:56:59.501Z"
+  }
+}

@@ -1,0 +1,6 @@
+{
+  "linkedBeforeDelete": true,
+  "parentGoneStatus": 404,
+  "childCheckStatus": 200,
+  "childParentUserId": null
+}

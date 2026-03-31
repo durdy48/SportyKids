@@ -932,6 +932,34 @@ All limits are configurable via the corresponding environment variables.
 
 ---
 
+## Admin
+
+### `GET /api/admin/moderation/pending`
+Returns all content (news and reels) in `pending` moderation status.
+
+**Requires**: `Authorization: Bearer <token>` with `admin` role.
+
+**Response:**
+```json
+{
+  "news": {
+    "count": 3,
+    "items": [
+      { "id": "...", "title": "...", "source": "AS", "sport": "football", "safetyReason": null, "createdAt": "..." }
+    ]
+  },
+  "reels": {
+    "count": 1,
+    "items": [
+      { "id": "...", "title": "...", "sport": "tennis", "safetyReason": null, "createdAt": "..." }
+    ]
+  },
+  "totalPending": 4
+}
+```
+
+---
+
 ## Internationalization (i18n)
 
 All user-facing strings returned by the API support internationalization. The shared package (`@sportykids/shared`) includes an i18n system at `packages/shared/src/i18n/` with locale files (`es.json`, `en.json`) and a `t(key, locale)` translation function.

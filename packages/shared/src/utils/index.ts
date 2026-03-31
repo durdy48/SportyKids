@@ -33,6 +33,9 @@ export function truncateText(text: string, maxChars: number): string {
   return text.substring(0, maxChars).replace(/\s+\S*$/, '') + '...';
 }
 
+export { extractYouTubeVideoId, buildYouTubeEmbedUrl, getYouTubePlayerVars } from './youtube';
+export type { YouTubePlatform } from './youtube';
+
 export function formatDate(date: Date | string, locale: string = 'es'): string {
   const now = new Date();
   const d = typeof date === 'string' ? new Date(date) : date;

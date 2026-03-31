@@ -556,6 +556,9 @@
     "limit_reached_message": "You've used all your time for today. Come back tomorrow for more sports!",
     "unauthorized_title": "You need your ticket!",
     "unauthorized_message": "Log in to enter the stadium!",
+    "crash_title": "Oh no! The game crashed!",
+    "crash_message": "Something unexpected happened. Let's get back in the game!",
+    "restart": "Restart",
     "generic_title": "Foul play!",
     "generic_message": "Something went wrong. Let's try again!",
     "retry": "Try again"

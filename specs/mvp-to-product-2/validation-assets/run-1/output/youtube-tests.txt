@@ -1,0 +1,30 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids
+
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > extracts ID from watch URL 1ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > extracts ID from short URL 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > extracts ID from embed URL 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > extracts ID from shorts URL 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > extracts ID with extra query params 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > returns null for empty string 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > returns null for non-YouTube URL 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > returns null for malformed URL 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > builds URL with child-safe params from video ID 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > includes fs=0 on web platform 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > excludes fs=0 on mobile platform 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > accepts a full YouTube URL instead of just ID 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > applies overrides 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > overrides default params 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > returns original URL if video ID cannot be extracted 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > defaults to web platform 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > getYouTubePlayerVars > returns base child-safe player vars 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > getYouTubePlayerVars > applies overrides 0ms
+ ✓ packages/shared/src/utils/__tests__/youtube.test.ts > getYouTubePlayerVars > allows overriding base params 0ms
+
+ Test Files  1 passed (1)
+      Tests  19 passed (19)
+   Start at  18:46:29
+   Duration  108ms (transform 17ms, setup 0ms, import 30ms, tests 2ms, environment 0ms)
+

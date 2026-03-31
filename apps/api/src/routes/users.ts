@@ -4,7 +4,6 @@ import { SUPPORTED_LOCALES, SUPPORTED_COUNTRIES } from '@sportykids/shared';
 import { prisma } from '../config/database';
 import { formatUser } from '../utils/format-user';
 import { trackEvent } from '../services/monitoring';
-import { requireAuth } from '../middleware/auth';
 import { verifyParentalSession } from '../services/parental-session';
 import { ValidationError, NotFoundError, AuthorizationError } from '../errors';
 
