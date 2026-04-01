@@ -2,7 +2,7 @@
 
 Centralized backlog of items deferred from each phase. Prioritized by necessity for production/store launch. Updated as new phases leave items out of scope — never delete entries, mark them as done when addressed.
 
-**Last updated**: 2026-04-01 (Phase 4 PRD generation)
+**Last updated**: 2026-04-01 (Phase 4 implementation complete)
 
 ---
 
@@ -43,8 +43,9 @@ Centralized backlog of items deferred from each phase. Prioritized by necessity 
 - **Package**: `@sentry/nextjs` (wraps both server and client).
 
 ### Screen Reader Announcements for Dynamic Content
-- **What**: `aria-live` regions for toasts (RewardToast), score updates, feed refresh notifications, quiz feedback.
+- **What**: `aria-live` regions for toasts (RewardToast), feed refresh notifications.
 - **Why**: Screen reader users miss dynamic content changes without live regions.
+- **Partially done (Phase 4)**: Quiz feedback has `role="status"` + `aria-live="polite"`, quiz score display has `aria-live="polite"`. Remaining: RewardToast, feed refresh, sticker/achievement celebrations.
 
 ---
 
@@ -61,6 +62,21 @@ Centralized backlog of items deferred from each phase. Prioritized by necessity 
 ### Performance / Lighthouse CI Tests
 - **What**: Automated Lighthouse performance audits in CI. Track Core Web Vitals regressions.
 - **Why**: Performance impacts user experience, especially on low-end devices common with younger users.
+
+### Age Gate Before Onboarding (Web)
+- **What**: Show `/age-gate` as first screen before onboarding for new users (currently goes direct to `/onboarding`).
+- **Why**: COPPA/GDPR-K requires age verification before collecting any data. The onboarding wizard collects name and preferences. Mobile app has the age gate before onboarding; web should match.
+- **Current state**: Web redirects new users (no localStorage) to `/onboarding`. Users with existing account but `ageGateCompleted=false` correctly see `/age-gate`. The onboarding already sets `ageGateCompleted=true` + `consentGiven=true` at user creation, but the gate should happen first.
+
+### Playwright E2E Sandbox Compatibility
+- **What**: Make Playwright tests run inside sandboxed `execSync` (validation scripts, CI containers).
+- **Why**: Chromium headless shell needs `bootstrap_check_in` mach port which fails in sandboxed environments. Tests pass when run directly but fail inside validation automation.
+- **Workaround**: Run `npx playwright test` directly, not via `execSync` in Node scripts.
+
+### E2E Step 4 Source Loading Wait
+- **What**: Replace `waitForTimeout(2000)` in E2E onboarding step 4 (feed sources) with a condition-based wait.
+- **Why**: The 2s timeout works locally but may flake in CI if the catalog API is slow. Ideally wait for the "Next" button to be enabled (indicating sources loaded and pre-selected).
+- **Blocked by**: Playwright doesn't easily detect React state changes; may need a `data-testid` on the source list container.
 
 ---
 
