@@ -111,6 +111,9 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
             onPress={handleParentPath}
             disabled={loading}
             testID="age-gate-parent"
+            accessible={true}
+            accessibilityLabel={t('a11y.age_gate.adult_option', locale)}
+            accessibilityRole="button"
           >
             <Text style={s.optionEmoji}>👨‍👩‍👧</Text>
             <Text style={s.optionText}>{t('age_gate.parent_option', locale)}</Text>
@@ -121,6 +124,9 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
             style={s.optionCard}
             onPress={() => setStep('teen-notice')}
             testID="age-gate-teen"
+            accessible={true}
+            accessibilityLabel={t('a11y.age_gate.teen_option', locale)}
+            accessibilityRole="button"
           >
             <Text style={s.optionEmoji}>🧑</Text>
             <Text style={s.optionText}>{t('age_gate.teen_option', locale)}</Text>
@@ -130,6 +136,9 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
             style={s.optionCard}
             onPress={() => setStep('child-consent')}
             testID="age-gate-child"
+            accessible={true}
+            accessibilityLabel={t('a11y.age_gate.child_option', locale)}
+            accessibilityRole="button"
           >
             <Text style={s.optionEmoji}>👧</Text>
             <Text style={s.optionText}>{t('age_gate.child_option', locale)}</Text>
@@ -137,11 +146,11 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
 
           {/* Legal links */}
           <View style={s.legalRow}>
-            <TouchableOpacity onPress={openPrivacy}>
+            <TouchableOpacity onPress={openPrivacy} accessibilityLabel={t('a11y.legal.open_privacy', locale)} accessibilityRole="link">
               <Text style={s.legalLink}>{t('legal.privacy_policy', locale)}</Text>
             </TouchableOpacity>
             <Text style={s.legalDot}> · </Text>
-            <TouchableOpacity onPress={openTerms}>
+            <TouchableOpacity onPress={openTerms} accessibilityLabel={t('a11y.legal.open_terms', locale)} accessibilityRole="link">
               <Text style={s.legalLink}>{t('legal.terms_of_service', locale)}</Text>
             </TouchableOpacity>
           </View>
@@ -155,7 +164,7 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
     return (
       <SafeAreaView style={s.container}>
         <ScrollView contentContainerStyle={s.scroll}>
-          <TouchableOpacity onPress={() => setStep('select')} style={s.backButton}>
+          <TouchableOpacity onPress={() => setStep('select')} style={s.backButton} accessibilityLabel={t('a11y.age_gate.go_back', locale)} accessibilityRole="button">
             <Text style={s.backButtonText}>{t('legal.back', locale)}</Text>
           </TouchableOpacity>
 
@@ -165,11 +174,11 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
 
           {/* Legal links inline */}
           <View style={s.legalRow}>
-            <TouchableOpacity onPress={openPrivacy}>
+            <TouchableOpacity onPress={openPrivacy} accessibilityLabel={t('a11y.legal.open_privacy', locale)} accessibilityRole="link">
               <Text style={s.legalLink}>{t('legal.privacy_policy', locale)}</Text>
             </TouchableOpacity>
             <Text style={s.legalDot}> · </Text>
-            <TouchableOpacity onPress={openTerms}>
+            <TouchableOpacity onPress={openTerms} accessibilityLabel={t('a11y.legal.open_terms', locale)} accessibilityRole="link">
               <Text style={s.legalLink}>{t('legal.terms_of_service', locale)}</Text>
             </TouchableOpacity>
           </View>
@@ -179,6 +188,10 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
             style={s.checkboxRow}
             onPress={() => setTeenAccepted(!teenAccepted)}
             testID="teen-accept-checkbox"
+            accessible={true}
+            accessibilityLabel={t('a11y.age_gate.consent_checkbox', locale, { state: teenAccepted ? 'checked' : 'unchecked' })}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: teenAccepted }}
           >
             <View style={[s.checkbox, teenAccepted && s.checkboxChecked]}>
               {teenAccepted && <Text style={s.checkmark}>✓</Text>}
@@ -190,6 +203,9 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
             style={[s.primaryButton, (!teenAccepted || loading) && s.buttonDisabled]}
             onPress={handleTeenAccept}
             disabled={!teenAccepted || loading}
+            accessibilityLabel={t('a11y.age_gate.continue_button', locale)}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !teenAccepted || loading }}
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
@@ -207,7 +223,7 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
     return (
       <SafeAreaView style={s.container}>
         <ScrollView contentContainerStyle={s.scroll}>
-          <TouchableOpacity onPress={() => setStep('select')} style={s.backButton}>
+          <TouchableOpacity onPress={() => setStep('select')} style={s.backButton} accessibilityLabel={t('a11y.age_gate.go_back', locale)} accessibilityRole="button">
             <Text style={s.backButtonText}>{t('legal.back', locale)}</Text>
           </TouchableOpacity>
 
@@ -231,11 +247,11 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
 
           {/* Legal links */}
           <View style={s.legalRow}>
-            <TouchableOpacity onPress={openPrivacy}>
+            <TouchableOpacity onPress={openPrivacy} accessibilityLabel={t('a11y.legal.open_privacy', locale)} accessibilityRole="link">
               <Text style={s.legalLink}>{t('legal.privacy_policy', locale)}</Text>
             </TouchableOpacity>
             <Text style={s.legalDot}> · </Text>
-            <TouchableOpacity onPress={openTerms}>
+            <TouchableOpacity onPress={openTerms} accessibilityLabel={t('a11y.legal.open_terms', locale)} accessibilityRole="link">
               <Text style={s.legalLink}>{t('legal.terms_of_service', locale)}</Text>
             </TouchableOpacity>
           </View>
@@ -245,6 +261,10 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
             style={s.checkboxRow}
             onPress={() => setParentConsent(!parentConsent)}
             testID="child-consent-checkbox"
+            accessible={true}
+            accessibilityLabel={t('a11y.age_gate.consent_checkbox', locale, { state: parentConsent ? 'checked' : 'unchecked' })}
+            accessibilityRole="checkbox"
+            accessibilityState={{ checked: parentConsent }}
           >
             <View style={[s.checkbox, parentConsent && s.checkboxChecked]}>
               {parentConsent && <Text style={s.checkmark}>✓</Text>}
@@ -256,6 +276,9 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
             style={[s.primaryButton, !parentConsent && s.buttonDisabled]}
             onPress={() => setStep('child-pin')}
             disabled={!parentConsent}
+            accessibilityLabel={t('a11y.age_gate.set_pin_button', locale)}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: !parentConsent }}
           >
             <Text style={s.primaryButtonText}>{t('age_gate.child_consent_set_pin', locale)}</Text>
           </TouchableOpacity>
@@ -268,7 +291,7 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
   return (
     <SafeAreaView style={s.container}>
       <ScrollView contentContainerStyle={s.scroll}>
-        <TouchableOpacity onPress={() => setStep('child-consent')} style={s.backButton}>
+        <TouchableOpacity onPress={() => setStep('child-consent')} style={s.backButton} accessibilityLabel={t('a11y.age_gate.go_back', locale)} accessibilityRole="button">
           <Text style={s.backButtonText}>{t('legal.back', locale)}</Text>
         </TouchableOpacity>
 
@@ -320,6 +343,9 @@ export function AgeGateScreen({ navigation }: { navigation: { navigate: (screen:
           ]}
           onPress={handleChildPinCreate}
           disabled={pin.length !== 4 || confirmPin.length !== 4 || loading}
+          accessibilityLabel={t('a11y.age_gate.continue_button', locale)}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: pin.length !== 4 || confirmPin.length !== 4 || loading }}
         >
           {loading ? (
             <ActivityIndicator color="#FFFFFF" />

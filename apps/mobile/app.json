@@ -25,6 +25,12 @@
     },
     "web": {
       "favicon": "./src/assets/favicon.png"
-    }
+    },
+    "plugins": [
+      ["@sentry/react-native/expo", {
+        "organization": "sportykids",
+        "project": "mobile"
+      }]
+    ]
   }
 }

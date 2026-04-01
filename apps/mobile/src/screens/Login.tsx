@@ -64,6 +64,7 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
+            accessibilityLabel={t('a11y.auth.email_input', locale)}
           />
           <TextInput
             style={styles.input}
@@ -73,12 +74,17 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
             onChangeText={setPassword}
             secureTextEntry
             autoComplete="password"
+            accessibilityLabel={t('a11y.auth.password_input', locale)}
           />
 
           <TouchableOpacity
             style={[styles.primaryButton, loading && styles.buttonDisabled]}
             onPress={handleLogin}
             disabled={loading}
+            accessible={true}
+            accessibilityLabel={t('a11y.auth.login_button', locale)}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: loading }}
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />
@@ -90,6 +96,9 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
           <TouchableOpacity
             style={styles.secondaryButton}
             onPress={() => navigation.navigate('Register')}
+            accessible={true}
+            accessibilityLabel={t('a11y.auth.register_button', locale)}
+            accessibilityRole="button"
           >
             <Text style={styles.secondaryButtonText}>{t('auth.register', locale)}</Text>
           </TouchableOpacity>
@@ -112,6 +121,9 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
                     t('auth.google_signin', locale),
                     'OAuth login requires app configuration. Use email login for now.',
                   )}
+                  accessible={true}
+                  accessibilityLabel={t('a11y.auth.google_signin', locale)}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.socialButtonText}>{t('auth.google_signin', locale)}</Text>
                 </TouchableOpacity>
@@ -124,6 +136,9 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
                     t('auth.apple_signin', locale),
                     'OAuth login requires app configuration. Use email login for now.',
                   )}
+                  accessible={true}
+                  accessibilityLabel={t('a11y.auth.apple_signin', locale)}
+                  accessibilityRole="button"
                 >
                   <Text style={[styles.socialButtonText, styles.appleButtonText]}>{t('auth.apple_signin', locale)}</Text>
                 </TouchableOpacity>
@@ -134,6 +149,9 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
           <TouchableOpacity
             style={styles.anonymousButton}
             onPress={() => navigation.navigate('Onboarding')}
+            accessible={true}
+            accessibilityLabel={t('a11y.auth.anonymous_continue', locale)}
+            accessibilityRole="button"
           >
             <Text style={styles.anonymousButtonText}>{t('auth.continue_anonymous', locale)}</Text>
           </TouchableOpacity>

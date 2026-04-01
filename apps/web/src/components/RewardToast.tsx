@@ -41,6 +41,8 @@ export function RewardToast({ message, type = 'achievement', onClose }: RewardTo
 
   return (
     <div
+      role="alert"
+      aria-live="assertive"
       className={`fixed bottom-6 right-6 z-[100] max-w-sm px-5 py-3 rounded-xl shadow-lg transition-all duration-300 toast-enter ${glowOrShake} ${bgColor} ${textColor} ${
         visible ? 'translate-x-0 opacity-100' : 'translate-x-full opacity-0'
       }`}
@@ -53,6 +55,7 @@ export function RewardToast({ message, type = 'achievement', onClose }: RewardTo
             setVisible(false);
             setTimeout(onClose, 300);
           }}
+          aria-label="Dismiss notification"
           className="ml-auto text-current opacity-70 hover:opacity-100 text-lg leading-none"
         >
           &times;

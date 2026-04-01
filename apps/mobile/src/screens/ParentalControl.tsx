@@ -334,6 +334,10 @@ export function ParentalControlScreen() {
             style={[s.button, (pin.length < 4 || isLocked) && s.buttonDisabled]}
             onPress={action}
             disabled={pin.length < 4 || isLocked}
+            accessible={true}
+            accessibilityLabel={screenState === 'verify-pin' ? t('a11y.parental.verify_pin', locale) : t('a11y.parental.setup_pin', locale)}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: pin.length < 4 || isLocked }}
           >
             <Text style={s.buttonText}>
               {screenState === 'verify-pin' ? t('buttons.access', locale) : t('buttons.next', locale)}
@@ -370,6 +374,10 @@ export function ParentalControlScreen() {
               key={tab}
               style={[s.tab, activeTab === tab && s.tabActive]}
               onPress={() => setActiveTab(tab)}
+              accessible={true}
+              accessibilityLabel={labels[tab]}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: activeTab === tab }}
             >
               <Text style={[s.tabText, activeTab === tab && s.tabTextActive]}>{labels[tab]}</Text>
             </TouchableOpacity>
@@ -419,6 +427,10 @@ export function ParentalControlScreen() {
                   key={f.id}
                   style={[s.formatRow, active ? s.formatActive : s.formatInactive]}
                   onPress={() => toggleFormat(f.id)}
+                  accessible={true}
+                  accessibilityLabel={t('a11y.parental.toggle_format', locale, { format: t(f.labelKey, locale), state: active ? t('parental.enabled', locale) : t('parental.blocked', locale) })}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: active }}
                 >
                   <Text style={s.formatText}>{f.emoji} {t(f.labelKey, locale)}</Text>
                   <Text style={[s.formatBadge, active ? s.badgeOn : s.badgeOff]}>
@@ -440,6 +452,10 @@ export function ParentalControlScreen() {
                     key={sport}
                     style={[s.sportChip, active ? s.sportChipActive : s.sportChipInactive]}
                     onPress={() => toggleSport(sport)}
+                    accessible={true}
+                    accessibilityLabel={t('a11y.parental.toggle_sport', locale, { sport: getSportLabel(sport, locale), state: active ? t('a11y.parental.sport_allowed', locale) : t('a11y.parental.sport_blocked', locale) })}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
                     <Text style={[s.sportChipText, active && { color: '#fff' }]}>
                       {sportToEmoji(sport)} {getSportLabel(sport, locale)}
@@ -455,6 +471,9 @@ export function ParentalControlScreen() {
             style={s.previewButton}
             onPress={openFeedPreview}
             disabled={previewLoading}
+            accessible={true}
+            accessibilityLabel={t('a11y.parental.preview_feed', locale, { name: user.name })}
+            accessibilityRole="button"
           >
             {previewLoading ? (
               <ActivityIndicator color={colors.surface} />
@@ -481,6 +500,10 @@ export function ParentalControlScreen() {
                   key={f.id}
                   style={[s.formatRow, active ? s.formatActive : s.formatInactive]}
                   onPress={() => toggleFormat(f.id)}
+                  accessible={true}
+                  accessibilityLabel={t('a11y.parental.toggle_format', locale, { format: t(f.labelKey, locale), state: active ? t('parental.enabled', locale) : t('parental.blocked', locale) })}
+                  accessibilityRole="switch"
+                  accessibilityState={{ checked: active }}
                 >
                   <Text style={s.formatText}>{f.emoji} {t(f.labelKey, locale)}</Text>
                   <Text style={[s.formatBadge, active ? s.badgeOn : s.badgeOff]}>
@@ -502,6 +525,10 @@ export function ParentalControlScreen() {
                     key={mins}
                     style={[s.timeLimitChip, active && s.timeLimitActive]}
                     onPress={() => updateTimeLimit(mins)}
+                    accessible={true}
+                    accessibilityLabel={mins === 0 ? t('a11y.parental.no_time_limit', locale) : t('a11y.parental.select_time_limit', locale, { time: label })}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
                     <Text style={[s.timeLimitText, active && { color: '#fff' }]}>{label}</Text>
                   </TouchableOpacity>
@@ -525,6 +552,10 @@ export function ParentalControlScreen() {
                   saveProfile({ allowedHoursStart: 7, allowedHoursEnd: 21 });
                 }
               }}
+              accessible={true}
+              accessibilityLabel={t('a11y.parental.toggle_schedule', locale)}
+              accessibilityRole="switch"
+              accessibilityState={{ checked: ((profile?.allowedHoursStart ?? 0) !== 0 || (profile?.allowedHoursEnd ?? 24) !== 24) }}
             >
               <Text style={[s.profileLabel, { flex: 1 }]}>{t('schedule.enable', locale)}</Text>
               <View style={[s.toggleTrack, ((profile?.allowedHoursStart ?? 0) !== 0 || (profile?.allowedHoursEnd ?? 24) !== 24) && s.toggleTrackActive]}>
@@ -544,6 +575,8 @@ export function ParentalControlScreen() {
                           const val = ((profile?.allowedHoursStart as number) ?? 7) - 1;
                           if (val >= 0 && val < ((profile?.allowedHoursEnd as number) ?? 21)) saveProfile({ allowedHoursStart: val });
                         }}
+                        accessibilityLabel={t('a11y.parental.decrease_start', locale)}
+                        accessibilityRole="button"
                       >
                         <Text style={s.scheduleBtnText}>-</Text>
                       </TouchableOpacity>
@@ -554,6 +587,8 @@ export function ParentalControlScreen() {
                           const val = ((profile?.allowedHoursStart as number) ?? 7) + 1;
                           if (val <= 23 && val < ((profile?.allowedHoursEnd as number) ?? 21)) saveProfile({ allowedHoursStart: val });
                         }}
+                        accessibilityLabel={t('a11y.parental.increase_start', locale)}
+                        accessibilityRole="button"
                       >
                         <Text style={s.scheduleBtnText}>+</Text>
                       </TouchableOpacity>
@@ -568,6 +603,8 @@ export function ParentalControlScreen() {
                           const val = ((profile?.allowedHoursEnd as number) ?? 21) - 1;
                           if (val >= 0 && val > ((profile?.allowedHoursStart as number) ?? 7)) saveProfile({ allowedHoursEnd: val });
                         }}
+                        accessibilityLabel={t('a11y.parental.decrease_end', locale)}
+                        accessibilityRole="button"
                       >
                         <Text style={s.scheduleBtnText}>-</Text>
                       </TouchableOpacity>
@@ -578,6 +615,8 @@ export function ParentalControlScreen() {
                           const val = ((profile?.allowedHoursEnd as number) ?? 21) + 1;
                           if (val <= 24) saveProfile({ allowedHoursEnd: val });
                         }}
+                        accessibilityLabel={t('a11y.parental.increase_end', locale)}
+                        accessibilityRole="button"
                       >
                         <Text style={s.scheduleBtnText}>+</Text>
                       </TouchableOpacity>
@@ -593,6 +632,10 @@ export function ParentalControlScreen() {
                       key={tz}
                       style={[s.timeChip, (profile?.timezone ?? 'Europe/Madrid') === tz && s.timeChipActive]}
                       onPress={() => saveProfile({ timezone: tz })}
+                      accessible={true}
+                      accessibilityLabel={t('a11y.parental.select_timezone', locale, { tz: tz.split('/')[1]?.replace('_', ' ') ?? tz })}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: (profile?.timezone ?? 'Europe/Madrid') === tz }}
                     >
                       <Text style={[s.timeChipText, (profile?.timezone ?? 'Europe/Madrid') === tz && s.timeChipTextActive]}>
                         {tz.split('/')[1]?.replace('_', ' ') ?? tz}
@@ -642,6 +685,10 @@ export function ParentalControlScreen() {
                     key={`news-${mins}`}
                     style={[s.timeLimitChip, active && s.timeLimitActive]}
                     onPress={() => saveProfile({ maxNewsMinutes: mins === 0 ? null : mins })}
+                    accessible={true}
+                    accessibilityLabel={mins === 0 ? t('a11y.parental.no_time_limit', locale) : t('a11y.parental.news_limit', locale, { time: label })}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
                     <Text style={[s.timeLimitText, active && { color: '#fff' }]}>{label}</Text>
                   </TouchableOpacity>
@@ -667,6 +714,10 @@ export function ParentalControlScreen() {
                     key={`reels-${mins}`}
                     style={[s.timeLimitChip, active && s.timeLimitActive]}
                     onPress={() => saveProfile({ maxReelsMinutes: mins === 0 ? null : mins })}
+                    accessible={true}
+                    accessibilityLabel={mins === 0 ? t('a11y.parental.no_time_limit', locale) : t('a11y.parental.reels_limit', locale, { time: label })}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
                     <Text style={[s.timeLimitText, active && { color: '#fff' }]}>{label}</Text>
                   </TouchableOpacity>
@@ -692,6 +743,10 @@ export function ParentalControlScreen() {
                     key={`quiz-${mins}`}
                     style={[s.timeLimitChip, active && s.timeLimitActive]}
                     onPress={() => saveProfile({ maxQuizMinutes: mins === 0 ? null : mins })}
+                    accessible={true}
+                    accessibilityLabel={mins === 0 ? t('a11y.parental.no_time_limit', locale) : t('a11y.parental.quiz_limit', locale, { time: label })}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
                     <Text style={[s.timeLimitText, active && { color: '#fff' }]}>{label}</Text>
                   </TouchableOpacity>
@@ -745,6 +800,10 @@ export function ParentalControlScreen() {
               setDigestEnabledState(next);
               if (user) updateDigestPreferences(user.id, { digestEnabled: next }).catch(() => {});
             }}
+            accessible={true}
+            accessibilityLabel={t('a11y.parental.toggle_digest', locale)}
+            accessibilityRole="switch"
+            accessibilityState={{ checked: digestEnabled }}
           >
             <View style={{ width: 24, height: 24, borderRadius: 6, borderWidth: 2, borderColor: colors.blue, backgroundColor: digestEnabled ? colors.blue : 'transparent', justifyContent: 'center', alignItems: 'center' }}>
               {digestEnabled && <Text style={{ color: '#fff', fontSize: 14, fontWeight: '700' }}>✓</Text>}
@@ -781,6 +840,10 @@ export function ParentalControlScreen() {
                         setDigestDayState(day);
                         if (user) updateDigestPreferences(user.id, { digestDay: day }).catch(() => {});
                       }}
+                      accessible={true}
+                      accessibilityLabel={t('a11y.parental.select_digest_day', locale, { day: t(`digest.days.${day}`, locale) })}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: digestDay === day }}
                     >
                       <Text style={{ fontSize: 13, fontWeight: digestDay === day ? '600' : '500', color: digestDay === day ? '#fff' : colors.text }}>
                         {t(`digest.days.${day}`, locale)}
@@ -797,6 +860,9 @@ export function ParentalControlScreen() {
                   const url = `${API_BASE}/parents/digest/${user.id}/download`;
                   Linking.openURL(url);
                 }}
+                accessible={true}
+                accessibilityLabel={t('a11y.parental.download_pdf', locale)}
+                accessibilityRole="button"
               >
                 <Text style={s.buttonText}>{t('digest.download_pdf', locale)}</Text>
               </TouchableOpacity>
@@ -815,6 +881,10 @@ export function ParentalControlScreen() {
                 key={mode}
                 style={[s.timeLimitChip, theme === mode && { backgroundColor: colors.blue }]}
                 onPress={() => setTheme(mode)}
+                accessible={true}
+                accessibilityLabel={t('a11y.parental.select_theme', locale, { mode: t(`theme.${mode}`, locale) })}
+                accessibilityRole="button"
+                accessibilityState={{ selected: theme === mode }}
               >
                 <Text style={[s.timeLimitText, theme === mode && { color: '#fff' }]}>
                   {mode === 'system' ? '🔄' : mode === 'dark' ? '🌙' : '☀️'} {t(`theme.${mode}`, locale)}
@@ -872,6 +942,10 @@ export function ParentalControlScreen() {
             style={[s.button, { marginTop: 16 }, (currentPinInput.length < 4 || newPinInput.length < 4 || confirmNewPin.length < 4) && s.buttonDisabled]}
             onPress={handleChangePin}
             disabled={currentPinInput.length < 4 || newPinInput.length < 4 || confirmNewPin.length < 4}
+            accessible={true}
+            accessibilityLabel={t('a11y.parental.change_pin_button', locale)}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: currentPinInput.length < 4 || newPinInput.length < 4 || confirmNewPin.length < 4 }}
           >
             <Text style={s.buttonText}>{t('parental.change_pin', locale)}</Text>
           </TouchableOpacity>
@@ -880,11 +954,11 @@ export function ParentalControlScreen() {
 
       {/* Legal links */}
       <View style={s.legalRow}>
-        <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/privacy?locale=${locale}`)}>
+        <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/privacy?locale=${locale}`)} accessibilityLabel={t('a11y.legal.open_privacy', locale)} accessibilityRole="link">
           <Text style={s.legalLink}>{t('legal.privacy_policy', locale)}</Text>
         </TouchableOpacity>
         <Text style={s.legalDot}> · </Text>
-        <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/terms?locale=${locale}`)}>
+        <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/terms?locale=${locale}`)} accessibilityLabel={t('a11y.legal.open_terms', locale)} accessibilityRole="link">
           <Text style={s.legalLink}>{t('legal.terms_of_service', locale)}</Text>
         </TouchableOpacity>
       </View>
@@ -895,6 +969,9 @@ export function ParentalControlScreen() {
         <Text style={s.dangerDescription}>{t('delete_account.description', locale)}</Text>
         <TouchableOpacity
           style={s.dangerButton}
+          accessible={true}
+          accessibilityLabel={t('delete_account.button', locale)}
+          accessibilityRole="button"
           onPress={() => {
             if (!user) return;
             Alert.alert(
@@ -954,7 +1031,7 @@ export function ParentalControlScreen() {
           <Text style={s.previewTitle} numberOfLines={1}>
             {t('preview.title', locale, { name: user.name })}
           </Text>
-          <TouchableOpacity style={s.previewClose} onPress={() => setPreviewVisible(false)}>
+          <TouchableOpacity style={s.previewClose} onPress={() => setPreviewVisible(false)} accessibilityLabel={t('a11y.parental.close_preview', locale)} accessibilityRole="button">
             <Text style={s.previewCloseText}>{t('preview.close', locale)}</Text>
           </TouchableOpacity>
         </View>

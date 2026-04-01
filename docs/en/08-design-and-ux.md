@@ -398,3 +398,51 @@ The webapp supports 3 theme modes: `system` (default), `light`, `dark`.
 - Inline script in `layout.tsx` prevents theme flash on load
 - `UserContext` exposes `theme`, `setTheme`, `resolvedTheme`
 - Listens for `prefers-color-scheme` changes in system mode
+
+## Accessibility (a11y)
+
+The web app includes ARIA attributes on all interactive elements for screen reader compatibility:
+
+- **Navigation**: `aria-label` on main nav, parental controls link, theme and language toggles
+- **Filters**: `role="tablist"` + `role="tab"` + `aria-selected` on sport and age filters (FiltersBar)
+- **Search**: `aria-label` on search input and clear button (SearchBar)
+- **PIN**: Each digit has `aria-label="Digit N of 4"` (PinInput)
+- **Quiz**: Answer buttons with descriptive `aria-label`, feedback with `role="status"` (QuizGame)
+- **Parental panel**: Tabs with `role="tablist"`/`role="tab"`/`aria-selected`, format toggles with `role="switch"`/`aria-checked`, sliders with `aria-valuenow/min/max` (ParentalPanel)
+- **Onboarding**: Sport, age, and team selection with `aria-pressed` (OnboardingWizard)
+- **Feed**: Mode buttons with `aria-pressed` in `role="group"` (FeedModeToggle)
+- **Modals**: `role="dialog"` + `aria-modal="true"` (FeedPreviewModal)
+- **Alerts**: `role="alert"` on errors (ErrorState), offline (OfflineBanner), toasts (RewardToast)
+- **Content**: Stickers and achievements with `aria-label` indicating name/rarity/status
+- **Progress**: Progress bars with `role="progressbar"` + `aria-valuenow/min/max` (MissionCard)
+- **Notifications**: Toggle with `role="switch"` + `aria-checked` (NotificationSettings)
+- **Age gate**: Option buttons and consent checkboxes with descriptive `aria-label`
+- **Video**: Controls with `aria-label`, iframes with `title` (VideoPlayer, ReelCard)
+
+ARIA labels are in English (screen reader context, not visible UI). Total: ~66 `aria-label` attributes across 25+ components.
+
+### Mobile Accessibility (React Native)
+
+The mobile app (React Native + Expo) includes accessibility props on all interactive elements for VoiceOver (iOS) and TalkBack (Android):
+
+- **i18n a11y keys**: `a11y.*` namespace in `packages/shared/src/i18n/{es,en}.json` with 21 sub-categories and ~100+ localized labels
+- **Navigation tabs**: `tabBarAccessibilityLabel` on all 6 bottom tabs (News, Reels, Quiz, Collection, My Team, Parents)
+- **Language toggle**: `accessibilityLabel` with target language name, `accessibilityRole="button"`
+- **NewsCard**: Save/unsave with `accessibilityState.selected`, read links with `accessibilityRole="link"`, trending badge with label
+- **FiltersBar**: Sport filter chips with `accessibilityState.selected` and localized sport name labels
+- **Quiz**: Answer options with dynamic correct/incorrect labels, start/next buttons with role and state
+- **Reels**: Play/like/share buttons with labels, sport filters with selected state
+- **Collection**: Tab switcher with `accessibilityRole="tab"`, sticker cards with name/rarity labels, achievements with locked/unlocked state
+- **Parental Controls**: PIN verify/setup button labels, tab bar with `accessibilityRole="tab"`, format toggles with `accessibilityRole="switch"`
+- **AgeGate**: Option buttons (adult/teen/child) with labels, consent checkboxes with `accessibilityRole="checkbox"` and `accessibilityState.checked`
+- **Onboarding**: Sport select/deselect with dynamic labels, team selection, step navigation with back/next
+- **Auth (Login/Register)**: Input fields with `accessibilityLabel`, social sign-in buttons, role selection with selected state
+- **RssCatalog**: Source toggle switches with `accessibilityRole="switch"` and source name labels
+- **ErrorState/ErrorBoundary**: `accessibilityRole="alert"` on error containers, emoji with text alternatives, restart button with label
+- **OfflineBanner**: `accessibilityRole="alert"` for screen reader announcement
+- **LimitReached/ScheduleLockGuard**: Alert roles with descriptive labels
+- **StreakCounter**: Counter with "{days} day streak" label, fire emoji with text alternative
+- **Shimmer**: Loading label via `t('a11y.common.loading')`
+- **MissionCard**: Claim button with role/state, progress with descriptive label
+
+All mobile labels use `t('a11y.*', locale)` from `@sportykids/shared` for full i18n support. Tests verify presence of key a11y attributes.

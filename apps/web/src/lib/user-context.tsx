@@ -156,10 +156,18 @@ export function UserProvider({ children }: { children: ReactNode }) {
       .finally(() => setLoading(false));
   }, [loadParentalProfile]);
 
-  // Age gate redirect: if user exists and hasn't completed age gate, redirect
+  // Redirect logic:
+  // - No user at all → send to /onboarding (first-time visitor)
+  // - User exists but ageGateCompleted === false → send to /age-gate
   useEffect(() => {
     if (loading) return;
-    if (!user) return;
+    const exempt = [...AGE_GATE_EXEMPT_PATHS, '/onboarding'];
+    if (!user) {
+      if (!exempt.includes(pathname)) {
+        router.replace('/onboarding');
+      }
+      return;
+    }
     if (user.ageGateCompleted === false && !AGE_GATE_EXEMPT_PATHS.includes(pathname)) {
       router.replace('/age-gate');
     }

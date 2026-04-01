@@ -64,9 +64,9 @@ export function ScheduleLockGuard({ children }: { children: React.ReactNode }) {
   if (lockInfo?.locked) {
     const formatHour = (h: number) => `${h}:00`;
     return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, backgroundColor: colors.background }}>
-        <Text style={{ fontSize: 64, marginBottom: 16 }}>&#x1F319;</Text>
-        <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 8 }}>
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', padding: 32, backgroundColor: colors.background }} accessibilityRole="alert" accessibilityLabel={t('a11y.schedule.locked_message', locale)}>
+        <Text style={{ fontSize: 64, marginBottom: 16 }} accessibilityLabel={t('a11y.schedule.bedtime_mode', locale)}>&#x1F319;</Text>
+        <Text style={{ fontSize: 22, fontWeight: '700', color: colors.text, textAlign: 'center', marginBottom: 8 }} accessibilityRole="header">
           {t('schedule.locked_title', locale)}
         </Text>
         <Text style={{ fontSize: 15, color: colors.muted, textAlign: 'center', lineHeight: 22, marginBottom: 20 }}>

@@ -57,7 +57,13 @@ export function VideoPlayer({ videoUrl, videoType, thumbnailUrl: _thumbnailUrl, 
         <Text style={styles.errorText}>
           {isYouTube ? t('reels.video_inline_error', locale) : t('reels.video_unavailable', locale)}
         </Text>
-        <TouchableOpacity style={styles.errorButton} onPress={openExternal}>
+        <TouchableOpacity
+          style={styles.errorButton}
+          onPress={openExternal}
+          accessible={true}
+          accessibilityLabel={isYouTube ? t('reels.open_in_youtube', locale) : t('reels.open_video', locale)}
+          accessibilityRole="link"
+        >
           <Text style={styles.errorButtonText}>
             {isYouTube ? t('reels.open_in_youtube', locale) : t('reels.open_video', locale)}
           </Text>

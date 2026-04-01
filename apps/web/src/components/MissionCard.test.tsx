@@ -129,4 +129,53 @@ describe('MissionCard', () => {
       expect(mockFetchTodayMission).toHaveBeenCalledTimes(2);
     });
   });
+
+  describe('accessibility', () => {
+    it('claim button has aria-label when mission is completed', async () => {
+      mockFetchTodayMission.mockResolvedValue({
+        mission: {
+          id: 'm1',
+          type: 'read_news',
+          title: 'Read 3 news',
+          description: 'Done!',
+          progress: 3,
+          target: 3,
+          completed: true,
+          claimed: false,
+          reward: { type: 'sticker', amount: 0 },
+        },
+      });
+
+      render(<MissionCard userId="u1" locale="en" />);
+
+      await waitFor(() => {
+        expect(screen.getByLabelText('Claim mission reward')).toBeInTheDocument();
+      });
+    });
+
+    it('progress bar has role="progressbar" with aria values', async () => {
+      mockFetchTodayMission.mockResolvedValue({
+        mission: {
+          id: 'm1',
+          type: 'read_news',
+          title: 'Read 3 news',
+          description: 'Read 3 news today',
+          progress: 1,
+          target: 3,
+          completed: false,
+          claimed: false,
+          reward: { type: 'sticker', amount: 0, label: 'sticker' },
+        },
+      });
+
+      render(<MissionCard userId="u1" locale="en" />);
+
+      await waitFor(() => {
+        const progressBar = screen.getByRole('progressbar');
+        expect(progressBar).toHaveAttribute('aria-valuenow', '33');
+        expect(progressBar).toHaveAttribute('aria-valuemin', '0');
+        expect(progressBar).toHaveAttribute('aria-valuemax', '100');
+      });
+    });
+  });
 });

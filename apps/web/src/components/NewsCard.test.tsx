@@ -75,4 +75,18 @@ describe('NewsCard', () => {
     const link = screen.getByText('buttons.read_more');
     expect(link).toHaveAttribute('href', 'https://marca.com/article');
   });
+
+  describe('accessibility', () => {
+    it('favorite button has aria-label', () => {
+      render(<NewsCard news={mockNews} locale="es" />);
+      const favButtons = screen.getAllByLabelText(/favorites\./);
+      expect(favButtons.length).toBeGreaterThanOrEqual(1);
+    });
+
+    it('explain button has aria-pressed and aria-label', () => {
+      render(<NewsCard news={mockNews} locale="es" />);
+      const explainBtn = screen.getByLabelText('Explain in simple terms');
+      expect(explainBtn).toHaveAttribute('aria-pressed', 'false');
+    });
+  });
 });

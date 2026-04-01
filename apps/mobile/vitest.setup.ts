@@ -157,6 +157,14 @@ vi.mock('expo-splash-screen', () => ({
   hideAsync: vi.fn().mockResolvedValue(true),
 }));
 
+vi.mock('@sentry/react-native', () => ({
+  init: vi.fn(),
+  wrap: vi.fn((component: unknown) => component),
+  captureException: vi.fn(),
+  addBreadcrumb: vi.fn(),
+  withScope: vi.fn(),
+}));
+
 // ---------------------------------------------------------------------------
 // React Navigation
 // ---------------------------------------------------------------------------

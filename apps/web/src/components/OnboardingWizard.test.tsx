@@ -99,4 +99,28 @@ describe('OnboardingWizard', () => {
     fireEvent.click(screen.getByText('buttons.back'));
     expect(screen.getByText('onboarding.step1_title')).toBeInTheDocument();
   });
+
+  describe('accessibility', () => {
+    it('age range buttons have aria-pressed', () => {
+      render(<OnboardingWizard />);
+      const ageButtons = screen.getAllByRole('button').filter((btn) => btn.getAttribute('aria-label')?.startsWith('Age range'));
+      expect(ageButtons.length).toBe(3);
+      ageButtons.forEach((btn) => {
+        expect(btn).toHaveAttribute('aria-pressed');
+      });
+    });
+
+    it('sport selection buttons have aria-pressed on step 2', () => {
+      render(<OnboardingWizard />);
+      fireEvent.change(screen.getByPlaceholderText('onboarding.name_placeholder'), { target: { value: 'Pablo' } });
+      fireEvent.click(screen.getByText('9-11'));
+      fireEvent.click(screen.getByText('buttons.next'));
+
+      const sportButtons = screen.getAllByRole('button').filter((btn) => btn.getAttribute('aria-label')?.startsWith('Sport:'));
+      expect(sportButtons.length).toBe(3);
+      sportButtons.forEach((btn) => {
+        expect(btn).toHaveAttribute('aria-pressed', 'false');
+      });
+    });
+  });
 });

@@ -55,4 +55,11 @@ describe('LimitReached', () => {
     render(<LimitReached />);
     expect(screen.getByText('limit.go_home')).toBeTruthy();
   });
+
+  describe('accessibility', () => {
+    it('go home button has aria-label', () => {
+      render(<LimitReached />);
+      expect(screen.getByLabelText('Go back to home')).toBeInTheDocument();
+    });
+  });
 });

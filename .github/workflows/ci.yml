@@ -184,6 +184,40 @@ jobs:
       - name: Build
         run: cd apps/web && npm run build
 
+  e2e:
+    name: E2E Tests
+    runs-on: ubuntu-latest
+    needs: [setup]
+    if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - name: Restore dependencies
+        uses: actions/cache/restore@v4
+        with:
+          path: |
+            node_modules
+            apps/api/node_modules
+            apps/web/node_modules
+            apps/mobile/node_modules
+            packages/shared/node_modules
+          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Install Playwright browsers
+        run: cd apps/web && npx playwright install chromium --with-deps
+      - name: Build shared
+        run: cd packages/shared && npx tsc
+      - name: Run E2E tests
+        run: cd apps/web && npx playwright test
+      - name: Upload Playwright report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: apps/web/playwright-report/
+          retention-days: 7
+
   deploy:
     name: Deploy to Fly.io
     needs: [build-api, build-web]

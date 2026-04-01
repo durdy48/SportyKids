@@ -130,6 +130,10 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
           style={styles.explainButton}
           onPress={() => handleExplainEasy(item)}
           disabled={loadingSummary === item.id}
+          accessible={true}
+          accessibilityLabel={t('summary.explain_easy', locale)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: !!expandedSummaries[item.id] }}
         >
           {loadingSummary === item.id ? (
             <ActivityIndicator size="small" color={COLORS.blue} />
@@ -190,6 +194,9 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
               <TouchableOpacity
                 onPress={() => navigation.navigate('RssCatalog')}
                 style={styles.settingsButton}
+                accessible={true}
+                accessibilityLabel={t('sources.catalog_title', locale)}
+                accessibilityRole="button"
               >
                 <Text style={styles.settingsIcon}>{'\u2699\uFE0F'}</Text>
               </TouchableOpacity>
@@ -215,11 +222,15 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
                 placeholderTextColor="#9CA3AF"
                 returnKeyType="search"
                 clearButtonMode="while-editing"
+                accessibilityLabel={t('a11y.common.search', locale)}
               />
               {searchInput.length > 0 && (
                 <TouchableOpacity
                   onPress={() => { setSearchInput(''); setSearchQuery(''); setPage(1); }}
                   style={styles.searchClear}
+                  accessible={true}
+                  accessibilityLabel={t('a11y.common.clear_search', locale)}
+                  accessibilityRole="button"
                 >
                   <Text style={styles.searchClearText}>{'\u2715'}</Text>
                 </TouchableOpacity>
@@ -235,6 +246,9 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
                       key={item.id}
                       style={styles.recentlyReadCard}
                       onPress={() => Linking.openURL(item.sourceUrl)}
+                      accessible={true}
+                      accessibilityLabel={t('a11y.news_card.read', locale, { title: item.title })}
+                      accessibilityRole="link"
                     >
                       <Text style={styles.recentlyReadSport}>
                         {sportToEmoji(item.sport)} {getSportLabel(item.sport, locale)}

@@ -3,7 +3,12 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import { PinInput } from './PinInput';
 
 vi.mock('@sportykids/shared', () => ({
-  t: (key: string) => key,
+  t: (key: string, _locale?: string, params?: Record<string, string>) => {
+    if (key === 'a11y.parental.pin_digit' && params) {
+      return `Digit ${params.n} of ${params.total}`;
+    }
+    return key;
+  },
 }));
 
 describe('PinInput', () => {
@@ -46,5 +51,23 @@ describe('PinInput', () => {
   it('shows error message when provided', () => {
     render(<PinInput onSubmit={vi.fn()} title="PIN" error="Wrong PIN" />);
     expect(screen.getByText('Wrong PIN')).toBeInTheDocument();
+  });
+
+  describe('accessibility', () => {
+    it('each digit input has an aria-label indicating its position', () => {
+      render(<PinInput onSubmit={vi.fn()} title="PIN" />);
+      expect(screen.getByLabelText('Digit 1 of 4')).toBeInTheDocument();
+      expect(screen.getByLabelText('Digit 2 of 4')).toBeInTheDocument();
+      expect(screen.getByLabelText('Digit 3 of 4')).toBeInTheDocument();
+      expect(screen.getByLabelText('Digit 4 of 4')).toBeInTheDocument();
+    });
+
+    it('all digit inputs have type="password" for screen reader context', () => {
+      render(<PinInput onSubmit={vi.fn()} title="PIN" />);
+      const inputs = screen.getAllByLabelText(/Digit \d of 4/);
+      inputs.forEach((input) => {
+        expect(input).toHaveAttribute('type', 'password');
+      });
+    });
   });
 });

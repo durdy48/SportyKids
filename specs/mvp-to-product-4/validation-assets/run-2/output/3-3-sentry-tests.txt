@@ -1,0 +1,14 @@
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids
+
+ ✓ apps/mobile/src/__tests__/sentry-before-send.test.ts > Sentry beforeSend PII stripping > removes event.user 1ms
+ ✓ apps/mobile/src/__tests__/sentry-before-send.test.ts > Sentry beforeSend PII stripping > removes event.contexts.profile 0ms
+ ✓ apps/mobile/src/__tests__/sentry-before-send.test.ts > Sentry beforeSend PII stripping > returns the event (not null) 0ms
+ ✓ apps/mobile/src/__tests__/sentry-before-send.test.ts > Sentry beforeSend PII stripping > handles event without contexts gracefully 0ms
+ ✓ apps/mobile/src/__tests__/sentry-before-send.test.ts > Sentry beforeSend PII stripping > handles event without user gracefully 0ms
+
+ Test Files  1 passed (1)
+      Tests  5 passed (5)
+   Start at  18:32:02
+   Duration  127ms (transform 25ms, setup 0ms, import 43ms, tests 2ms, environment 0ms)
+

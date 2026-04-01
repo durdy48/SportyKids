@@ -21,6 +21,10 @@ export function FiltersBar({ activeSport, onSportChange }: FiltersBarProps) {
       <TouchableOpacity
         style={[styles.chip, !activeSport && styles.chipActive]}
         onPress={() => onSportChange(null)}
+        accessible={true}
+        accessibilityLabel={t('a11y.filters.all_filter', locale)}
+        accessibilityRole="button"
+        accessibilityState={{ selected: !activeSport }}
       >
         <Text style={[styles.chipText, !activeSport && styles.chipTextActive]}>
           {t('filters.all', locale)}
@@ -32,6 +36,10 @@ export function FiltersBar({ activeSport, onSportChange }: FiltersBarProps) {
           key={sport}
           style={[styles.chip, sport === activeSport && styles.chipActive]}
           onPress={() => onSportChange(sport === activeSport ? null : sport)}
+          accessible={true}
+          accessibilityLabel={t('a11y.filters.sport_filter', locale, { sport: getSportLabel(sport, locale) })}
+          accessibilityRole="button"
+          accessibilityState={{ selected: sport === activeSport }}
         >
           <Text style={[styles.chipText, sport === activeSport && styles.chipTextActive]}>
             {sportToEmoji(sport)} {getSportLabel(sport, locale)}

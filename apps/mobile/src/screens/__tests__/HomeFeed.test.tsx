@@ -32,4 +32,20 @@ describe('HomeFeedScreen', () => {
     // Verify it is a function that can be called as a component
     expect(HomeFeedScreen.length).toBeGreaterThanOrEqual(0);
   });
+
+  describe('accessibility', () => {
+    it('references a11y keys for search and clear search', async () => {
+      const { HomeFeedScreen } = await import('../HomeFeed');
+      const source = HomeFeedScreen.toString();
+      expect(source).toContain('a11y.common.search');
+      expect(source).toContain('a11y.common.clear_search');
+    });
+
+    it('references a11y key for settings/catalog button', async () => {
+      const { HomeFeedScreen } = await import('../HomeFeed');
+      const source = HomeFeedScreen.toString();
+      expect(source).toContain('accessibilityRole');
+      expect(source).toContain('accessibilityLabel');
+    });
+  });
 });

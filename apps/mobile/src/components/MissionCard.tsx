@@ -118,6 +118,10 @@ export function MissionCard({ userId, locale, colors }: MissionCardProps) {
           style={[s.claimButton, { backgroundColor: colors.yellow }]}
           onPress={handleClaim}
           disabled={claiming}
+          accessible={true}
+          accessibilityLabel={t('a11y.mission.claim_reward', locale)}
+          accessibilityRole="button"
+          accessibilityState={{ disabled: claiming }}
         >
           <Text style={s.claimButtonText}>
             {claiming ? t('buttons.loading', locale) : t('mission.claim', locale)}
@@ -146,7 +150,10 @@ export function MissionCard({ userId, locale, colors }: MissionCardProps) {
       <View style={[s.progressBar, { backgroundColor: colors.border }]}>
         <View style={[s.progressFill, { width: `${progressPercent}%`, backgroundColor: colors.blue }]} />
       </View>
-      <Text style={[s.progressText, { color: colors.muted }]}>
+      <Text
+        style={[s.progressText, { color: colors.muted }]}
+        accessibilityLabel={t('a11y.mission.progress', locale, { progress: String(mission.progress), target: String(mission.target) })}
+      >
         {t('mission.progress', locale, { progress: String(mission.progress), target: String(mission.target) })}
       </Text>
     </View>

@@ -119,6 +119,8 @@ export function RssCatalogScreen() {
         onValueChange={() => toggleSource(item.id)}
         trackColor={{ false: '#D1D5DB', true: '#93C5FD' }}
         thumbColor={selectedIds.has(item.id) ? colors.blue : colors.border}
+        accessibilityLabel={t('a11y.catalog.toggle_source', locale, { source: item.name, state: selectedIds.has(item.id) ? t('a11y.catalog.source_enabled', locale) : t('a11y.catalog.source_disabled', locale) })}
+        accessibilityRole="switch"
       />
     </View>
   );
@@ -159,6 +161,10 @@ export function RssCatalogScreen() {
             style={styles.saveButton}
             onPress={handleSave}
             disabled={saving}
+            accessible={true}
+            accessibilityLabel={t('favorites.save', locale)}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: saving }}
           >
             {saving ? (
               <ActivityIndicator size="small" color="#FFFFFF" />

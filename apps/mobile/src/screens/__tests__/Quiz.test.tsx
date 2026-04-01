@@ -25,4 +25,21 @@ describe('QuizScreen', () => {
     const { QuizScreen } = await import('../Quiz');
     expect(QuizScreen).toBeTruthy();
   });
+
+  describe('accessibility', () => {
+    it('references a11y keys for quiz interactions', async () => {
+      const { QuizScreen } = await import('../Quiz');
+      const source = QuizScreen.toString();
+      expect(source).toContain('a11y.quiz.start_quiz');
+      expect(source).toContain('a11y.quiz.answer_option');
+      expect(source).toContain('a11y.quiz.next_question');
+    });
+
+    it('answer options have accessibilityRole button', async () => {
+      const { QuizScreen } = await import('../Quiz');
+      const source = QuizScreen.toString();
+      expect(source).toContain('accessibilityRole');
+      expect(source).toContain('accessibilityState');
+    });
+  });
 });

@@ -95,4 +95,25 @@ describe('AgeGatePage', () => {
     expect(screen.getByText('legal.privacy_policy')).toBeInTheDocument();
     expect(screen.getByText('legal.terms_of_service')).toBeInTheDocument();
   });
+
+  describe('accessibility', () => {
+    it('age option buttons have aria-labels', () => {
+      render(<AgeGatePage />);
+      expect(screen.getByLabelText('I am a parent or guardian')).toBeInTheDocument();
+      expect(screen.getByLabelText('I am a teenager, 13 to 17')).toBeInTheDocument();
+      expect(screen.getByLabelText('I am under 13')).toBeInTheDocument();
+    });
+
+    it('teen consent checkbox has aria-label', () => {
+      render(<AgeGatePage />);
+      fireEvent.click(screen.getByTestId('age-option-teen'));
+      expect(screen.getByLabelText('Accept terms as a teenager')).toBeInTheDocument();
+    });
+
+    it('child consent checkbox has aria-label', () => {
+      render(<AgeGatePage />);
+      fireEvent.click(screen.getByTestId('age-option-child'));
+      expect(screen.getByLabelText('Parental consent for child under 13')).toBeInTheDocument();
+    });
+  });
 });

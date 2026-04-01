@@ -16,6 +16,7 @@ export function AchievementBadge({ achievement, unlocked, locale }: AchievementB
 
   return (
     <div
+      aria-label={unlocked ? `${name} achievement, unlocked` : 'Locked achievement'}
       className={`flex items-center gap-3 rounded-xl px-4 py-3 border transition-colors ${
         unlocked
           ? 'bg-[var(--color-surface)] border-[var(--color-green)]/30 shadow-sm'

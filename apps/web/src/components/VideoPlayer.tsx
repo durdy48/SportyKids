@@ -41,6 +41,8 @@ export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio }: 
         {!isPlaying && thumbnailUrl ? (
           <div
             className="absolute inset-0 cursor-pointer"
+            role="button"
+            aria-label="Play video"
             onClick={() => setIsPlaying(true)}
           >
             <img
@@ -61,6 +63,7 @@ export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio }: 
             allow="autoplay; encrypted-media"
             allowFullScreen={false}
             sandbox={iframeSandbox}
+            title="Video player"
           />
         )}
       </div>
@@ -77,6 +80,7 @@ export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio }: 
           controls
           playsInline
           preload="metadata"
+          aria-label="Video player"
           className="absolute inset-0 w-full h-full object-cover rounded-xl"
           onPlay={() => setIsPlaying(true)}
           onPause={() => setIsPlaying(false)}
@@ -114,6 +118,7 @@ export function VideoPlayer({ videoUrl, videoType, thumbnailUrl, aspectRatio }: 
         allow="autoplay; encrypted-media"
         allowFullScreen={false}
         sandbox={iframeSandbox}
+        title="Video player"
       />
     </div>
   );

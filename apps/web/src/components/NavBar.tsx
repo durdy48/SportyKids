@@ -34,7 +34,7 @@ export function NavBar() {
   };
 
   return (
-    <nav className="bg-[var(--color-surface)] border-b border-[var(--color-border)] sticky top-0 z-50">
+    <nav className="bg-[var(--color-surface)] border-b border-[var(--color-border)] sticky top-0 z-50" aria-label="Main navigation">
       <div className="max-w-6xl mx-auto px-4">
         <div className="flex items-center justify-between h-14">
           <div className="flex items-center gap-6">
@@ -85,6 +85,8 @@ export function NavBar() {
                         onClick={() => {
                           setLocale(opt.value);
                         }}
+                        aria-label={`Language: ${opt.label}`}
+                        aria-pressed={locale === opt.value}
                         className={`flex-1 py-1.5 rounded-lg text-xs font-medium transition-colors ${
                           locale === opt.value
                             ? 'bg-[var(--color-blue)] text-white'
@@ -97,6 +99,7 @@ export function NavBar() {
                   </div>
                   <p className="text-xs font-semibold text-[var(--color-muted)] mt-2">{t('settings.country', locale)}</p>
                   <select
+                    aria-label="Country"
                     value={user?.country ?? 'ES'}
                     onChange={async (e) => {
                       if (!user) return;
@@ -133,6 +136,7 @@ export function NavBar() {
             </button>
             <Link
               href="/parents"
+              aria-label="Parental controls"
               className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                 pathname === '/parents'
                   ? 'bg-[var(--color-blue)]/10 text-[var(--color-blue)]'

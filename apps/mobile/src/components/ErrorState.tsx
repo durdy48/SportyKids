@@ -21,12 +21,18 @@ export function ErrorState({ error, locale, onRetry, colors }: ErrorStateProps) 
   const styles = createStyles(colors);
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.emoji}>{errorInfo.emoji}</Text>
-      <Text style={styles.title}>{t(errorInfo.titleKey, locale)}</Text>
+    <View style={styles.container} accessibilityRole="alert">
+      <Text style={styles.emoji} accessibilityLabel={t('a11y.error.crash_emoji', locale)}>{errorInfo.emoji}</Text>
+      <Text style={styles.title} accessibilityRole="header">{t(errorInfo.titleKey, locale)}</Text>
       <Text style={styles.message}>{t(errorInfo.messageKey, locale)}</Text>
       {onRetry && (
-        <TouchableOpacity style={styles.retryButton} onPress={onRetry}>
+        <TouchableOpacity
+          style={styles.retryButton}
+          onPress={onRetry}
+          accessible={true}
+          accessibilityLabel={t('a11y.common.retry', locale)}
+          accessibilityRole="button"
+        >
           <Text style={styles.retryText}>{t('kid_errors.retry', locale)}</Text>
         </TouchableOpacity>
       )}

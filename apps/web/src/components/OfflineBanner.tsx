@@ -26,7 +26,7 @@ export function OfflineBanner() {
   if (!isOffline) return null;
 
   return (
-    <div className="bg-amber-500 text-white text-center py-2 px-4 text-sm font-medium">
+    <div role="alert" className="bg-amber-500 text-white text-center py-2 px-4 text-sm font-medium">
       {t('offline.banner', locale)}
     </div>
   );

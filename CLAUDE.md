@@ -335,6 +335,7 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 | 4 | ✅ Completada | Control parental (PIN, formatos, actividad semanal) |
 | 4.5 | ✅ Completada | Legal & Compliance (age gate, COPPA/GDPR-K consent, data deletion, privacy/terms pages) |
 | Store | ✅ Completada | Store Assets & Deployment (assets, dynamic API_BASE, Dockerfile, Fly.io, CI/CD deploy, EAS config, ASO metadata, splash screen) |
+| A11y | ✅ Completada | Accessibility & Production Quality (mobile a11y 27 files, web a11y 25 files, Sentry mobile, Playwright E2E 5 flows, i18n a11y namespace) |
 | 5 | 🔲 Pendiente | Test interno + beta cerrada (5-10 familias) |
 
 ## Fuentes RSS
@@ -356,7 +357,7 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 
 ## Deuda técnica conocida
 
-- ~~Sin tests automatizados~~ → 74+ archivos de test, 652+ tests (Vitest) — API 464 tests (44 archivos), Web 85 tests (16 archivos), Mobile 103 tests (14 archivos)
+- ~~Sin tests automatizados~~ → 76+ archivos de test, 679+ tests (Vitest) — API 434 tests (39 archivos), Web 109 tests (16 archivos), Mobile 136 tests (16 archivos). Plus 24 E2E tests (Playwright, 5 spec files).
 - ~~Sin linting~~ → ESLint 9 flat config + Prettier. `npx eslint . --max-warnings 0` en CI.
 - ~~Mobile no typechecked en CI~~ → Mobile typecheck en CI. Prisma generate cacheado con `actions/cache@v4`.
 - ~~Logging no estructurado (88 console.*)~~ → Pino structured logging con request ID correlation. `pino-pretty` en dev.
@@ -369,7 +370,7 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 - ~~SQLite sin plan de migración~~ → Migrado a PostgreSQL 16. Native types (String[], Json) para arrays y objetos. Composite indexes en NewsItem, Reel y ActivityLog. Trending endpoint usa `groupBy` nativo.
 - ~~`API_BASE` hardcodeado en cada screen del mobile~~ → Centralizado en `apps/mobile/src/config.ts` con fallback chain: env var → EAS channel → debugger host → localhost
 - ~~Sin CI/CD~~ → GitHub Actions pipeline (lint, typecheck, test, build) + EAS Build config
-- ~~Sin error monitoring~~ → Sentry integration (opt-in) + PostHog analytics (opt-in)
+- ~~Sin error monitoring~~ → Sentry integration (opt-in) + PostHog analytics (opt-in). Mobile: `@sentry/react-native` with global `Sentry.wrap(App)`, PII-free `beforeSend`. API: `@sentry/node` dynamic import.
 - ~~InMemoryCache es single-process~~ → CacheProvider interface with InMemoryCache (default) and RedisCache (optional via `CACHE_PROVIDER=redis`)
 - ~~Rutas API inconsistentes: mezcla de español e inglés~~ → Todas las rutas migradas a inglés
 - ~~Error handler genérico (500 para todo)~~ → Typed error classes (AppError hierarchy), centralized handler maps AppError/Prisma/Zod to correct HTTP codes. Sentry only 5xx. ERROR_CODES in shared package. Kid-friendly error mapping extended (auth_required, too_fast, forbidden).
@@ -401,6 +402,10 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 - ~~EAS submit credentials empty~~ → Structured with channels, autoIncrement, submit placeholders ready
 - ~~No ASO metadata~~ → `store-metadata/{en,es}.json` with name, description, keywords
 - ~~No splash screen integration~~ → expo-splash-screen with preventAutoHideAsync/hideAsync lifecycle
+- ~~Web components missing ARIA attributes~~ → Full a11y audit: 66+ aria-label/role/aria-selected/aria-checked/aria-pressed/aria-modal attributes across 25+ web components. Filters use role="tablist"/role="tab", toggles use role="switch", modals use role="dialog", alerts use role="alert", progress bars use role="progressbar".
+- ~~Solo 15 labels de accesibilidad en mobile~~ → Systematic audit of 27 files (15 components + 11 screens + navigation). ~100+ localized a11y keys via `t('a11y.*', locale)`. Every TouchableOpacity/Pressable has accessibilityLabel + accessibilityRole + accessibilityState where applicable. Emojis have textual alternatives.
+- ~~Sentry solo en API, no en mobile~~ → `@sentry/react-native` installed with global `Sentry.wrap(App)`. PII stripped via `beforeSend`. Always active (not consent-gated). Only works in production/preview EAS builds.
+- ~~Sin tests E2E~~ → Playwright configured for web with 5 critical flows (onboarding, parental PIN, feed+filters, quiz, schedule lock). 24 E2E tests. CI job runs on main/release branches only.
 
 ## Variables de entorno
 
@@ -432,6 +437,7 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 | `APPLE_PRIVATE_KEY` | No | Apple .p8 private key contents |
 | `MODERATION_FAIL_OPEN` | No | `true` to auto-approve content when AI moderation fails (default: fail-closed in production) |
 | `EXPO_PUBLIC_API_BASE` | No | Override API base URL in mobile builds (auto-detected from EAS channel if absent) |
+| `EXPO_PUBLIC_SENTRY_DSN` | No | Sentry DSN for mobile crash reporting. If absent, Sentry disabled. Only active in production builds. |
 | `FLY_API_TOKEN` | No (CI) | Fly.io deploy token for CI/CD (GitHub secret) |
 
 ## Infraestructura

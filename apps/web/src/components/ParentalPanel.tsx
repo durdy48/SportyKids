@@ -338,10 +338,12 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
       </div>
 
       {/* Tabs */}
-      <div className="flex gap-1 bg-[var(--color-background)] rounded-xl p-1 overflow-x-auto">
+      <div className="flex gap-1 bg-[var(--color-background)] rounded-xl p-1 overflow-x-auto" role="tablist" aria-label="Parental control tabs">
         {TABS.map((tab) => (
           <button
             key={tab}
+            role="tab"
+            aria-selected={activeTab === tab}
             onClick={() => setActiveTab(tab)}
             className={`flex-1 py-2 px-3 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
               activeTab === tab
@@ -485,6 +487,9 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                 return (
                   <button
                     key={f.id}
+                    role="switch"
+                    aria-checked={active}
+                    aria-label={`${t(f.key, locale)} format`}
                     onClick={() => toggleFormat(f.id)}
                     className={`w-full flex items-center justify-between px-4 py-3 rounded-xl border-2 transition-colors ${
                       active
@@ -578,6 +583,10 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
                         max={120}
                         step={5}
                         value={value}
+                        aria-label={t(label, locale)}
+                        aria-valuenow={value}
+                        aria-valuemin={0}
+                        aria-valuemax={120}
                         onChange={(e) => {
                           const num = parseInt(e.target.value, 10);
                           saveProfile({ [field]: num === 0 ? null : num });

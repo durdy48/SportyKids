@@ -1,0 +1,5 @@
+Start quiz label: FOUND
+Answer option label: FOUND
+Answer correct label: FOUND
+Answer incorrect label: FOUND
+Next question label: FOUND

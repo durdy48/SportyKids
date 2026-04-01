@@ -224,6 +224,10 @@ export function OnboardingScreen() {
                   key={opt.value}
                   style={[s.chip, locale === opt.value && s.chipActive]}
                   onPress={() => setLocale(opt.value)}
+                  accessible={true}
+                  accessibilityLabel={t('a11y.navigation.language_toggle', locale, { language: opt.label })}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: locale === opt.value }}
                 >
                   <Text style={[s.chipText, locale === opt.value && s.chipTextActive]}>
                     {opt.flag} {opt.label}
@@ -246,6 +250,10 @@ export function OnboardingScreen() {
                   key={r}
                   style={[s.chip, r === ageRange && s.chipActive]}
                   onPress={() => setAgeRange(r)}
+                  accessible={true}
+                  accessibilityLabel={t('a11y.onboarding.select_age', locale, { range: getAgeRangeLabel(r, locale) })}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: r === ageRange }}
                 >
                   <Text style={[s.chipText, r === ageRange && s.chipTextActive]}>
                     {getAgeRangeLabel(r, locale)}
@@ -256,11 +264,11 @@ export function OnboardingScreen() {
 
             {/* Legal links */}
             <View style={s.legalRow}>
-              <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/privacy?locale=${locale}`)}>
+              <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/privacy?locale=${locale}`)} accessibilityLabel={t('a11y.legal.open_privacy', locale)} accessibilityRole="link">
                 <Text style={s.legalLink}>{t('legal.privacy_policy', locale)}</Text>
               </TouchableOpacity>
               <Text style={s.legalDot}> · </Text>
-              <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/terms?locale=${locale}`)}>
+              <TouchableOpacity onPress={() => WebBrowser.openBrowserAsync(`${WEB_BASE}/terms?locale=${locale}`)} accessibilityLabel={t('a11y.legal.open_terms', locale)} accessibilityRole="link">
                 <Text style={s.legalLink}>{t('legal.terms_of_service', locale)}</Text>
               </TouchableOpacity>
             </View>
@@ -277,6 +285,10 @@ export function OnboardingScreen() {
                   key={sport}
                   style={[s.chip, sports.includes(sport) && s.chipGreen]}
                   onPress={() => toggleSport(sport)}
+                  accessible={true}
+                  accessibilityLabel={t(sports.includes(sport) ? 'a11y.onboarding.deselect_sport' : 'a11y.onboarding.select_sport', locale, { sport: getSportLabel(sport, locale) })}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: sports.includes(sport) }}
                 >
                   <Text style={[s.chipText, sports.includes(sport) && s.chipTextActive]}>
                     {sportToEmoji(sport)} {getSportLabel(sport, locale)}
@@ -298,6 +310,10 @@ export function OnboardingScreen() {
                   key={t_}
                   style={[s.chip, team === t_ && s.chipActive]}
                   onPress={() => setTeam(team === t_ ? '' : t_)}
+                  accessible={true}
+                  accessibilityLabel={t('a11y.onboarding.select_team', locale, { team: t_ })}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: team === t_ }}
                 >
                   <Text style={[s.chipText, team === t_ && s.chipTextActive]}>{t_}</Text>
                 </TouchableOpacity>
@@ -341,6 +357,10 @@ export function OnboardingScreen() {
                       key={source.id}
                       style={[s.sourceChip, selected && s.sourceActive]}
                       onPress={() => toggleFeed(source.id)}
+                      accessible={true}
+                      accessibilityLabel={t('a11y.onboarding.toggle_source', locale, { source: source.name, state: selected ? t('a11y.catalog.source_enabled', locale) : t('a11y.catalog.source_disabled', locale) })}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected }}
                     >
                       <View style={s.sourceRow}>
                         <View style={s.sourceInfo}>
@@ -423,6 +443,10 @@ export function OnboardingScreen() {
                     key={f.id}
                     style={[s.formatChip, active && s.formatChipActive]}
                     onPress={() => toggleFormat(f.id)}
+                    accessible={true}
+                    accessibilityLabel={t('a11y.onboarding.toggle_format', locale, { format: t(f.labelKey, locale), state: active ? t('parental.enabled', locale) : t('parental.blocked', locale) })}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
                     <Text style={{ fontSize: 20 }}>{f.emoji}</Text>
                     <Text style={[s.formatLabel, active && { color: '#fff' }]}>
@@ -444,6 +468,10 @@ export function OnboardingScreen() {
                     key={opt.minutes}
                     style={[s.timeLimitChip, active && s.timeLimitActive]}
                     onPress={() => setMaxDailyTime(opt.minutes)}
+                    accessible={true}
+                    accessibilityLabel={opt.minutes === 0 ? t('a11y.onboarding.no_limit', locale) : t('a11y.onboarding.select_time_limit', locale, { time: label })}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: active }}
                   >
                     <Text style={[s.timeLimitText, active && { color: '#fff' }]}>{label}</Text>
                   </TouchableOpacity>
@@ -456,7 +484,13 @@ export function OnboardingScreen() {
         {/* Buttons */}
         <View style={s.buttons}>
           {step > 1 && (
-            <TouchableOpacity style={s.buttonSecondary} onPress={() => setStep(step - 1)}>
+            <TouchableOpacity
+              style={s.buttonSecondary}
+              onPress={() => setStep(step - 1)}
+              accessible={true}
+              accessibilityLabel={t('a11y.common.back', locale)}
+              accessibilityRole="button"
+            >
               <Text style={s.buttonSecondaryText}>{t('buttons.back', locale)}</Text>
             </TouchableOpacity>
           )}
@@ -465,6 +499,10 @@ export function OnboardingScreen() {
               style={[s.buttonPrimary, !canAdvance() && s.buttonDisabled]}
               onPress={() => canAdvance() && setStep(step + 1)}
               disabled={!canAdvance()}
+              accessible={true}
+              accessibilityLabel={t('a11y.onboarding.next', locale)}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: !canAdvance() }}
             >
               <Text style={s.buttonPrimaryText}>{t('buttons.next', locale)}</Text>
             </TouchableOpacity>
@@ -473,6 +511,10 @@ export function OnboardingScreen() {
               style={[s.buttonGreen, (submitting || !canAdvance()) && s.buttonDisabled]}
               onPress={complete}
               disabled={submitting || !canAdvance()}
+              accessible={true}
+              accessibilityLabel={t('buttons.start', locale)}
+              accessibilityRole="button"
+              accessibilityState={{ disabled: submitting || !canAdvance() }}
             >
               <Text style={s.buttonPrimaryText}>
                 {submitting ? t('onboarding.creating_profile', locale) : t('buttons.start', locale)}

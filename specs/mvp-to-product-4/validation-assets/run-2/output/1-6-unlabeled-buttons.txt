@@ -1,0 +1,4 @@
+Total TouchableOpacity/Pressable: 104
+Total accessibilityLabel: 107
+Coverage ratio: 102.9%
+No significant gaps found

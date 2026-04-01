@@ -125,6 +125,8 @@ export function NewsCard({ news, locale, showExplainButton = false, isTrending =
           <button
             type="button"
             onClick={() => setShowSummary((prev) => !prev)}
+            aria-pressed={showSummary}
+            aria-label="Explain in simple terms"
             className="text-sm font-medium rounded-xl px-3 py-2 transition-colors border"
             style={{
               backgroundColor: showSummary ? 'var(--color-yellow)' : 'transparent',

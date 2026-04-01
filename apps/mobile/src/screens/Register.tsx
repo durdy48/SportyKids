@@ -69,6 +69,7 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
             value={name}
             onChangeText={setName}
             autoCapitalize="words"
+            accessibilityLabel={t('a11y.auth.name_input', locale)}
           />
           <TextInput
             style={styles.input}
@@ -79,6 +80,7 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
             keyboardType="email-address"
             autoCapitalize="none"
             autoComplete="email"
+            accessibilityLabel={t('a11y.auth.email_input', locale)}
           />
           <TextInput
             style={styles.input}
@@ -87,12 +89,17 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
             value={password}
             onChangeText={setPassword}
             secureTextEntry
+            accessibilityLabel={t('a11y.auth.password_input', locale)}
           />
 
           <View style={styles.roleRow}>
             <TouchableOpacity
               style={[styles.roleButton, role === 'parent' && styles.roleSelected]}
               onPress={() => setRole('parent')}
+              accessible={true}
+              accessibilityLabel={t('auth.role_parent', locale)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: role === 'parent' }}
             >
               <Text style={[styles.roleText, role === 'parent' && styles.roleTextSelected]}>
                 {t('auth.role_parent', locale)}
@@ -101,6 +108,10 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
             <TouchableOpacity
               style={[styles.roleButton, role === 'child' && styles.roleSelected]}
               onPress={() => setRole('child')}
+              accessible={true}
+              accessibilityLabel={t('auth.role_child', locale)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: role === 'child' }}
             >
               <Text style={[styles.roleText, role === 'child' && styles.roleTextSelected]}>
                 {t('auth.role_child', locale)}
@@ -124,6 +135,10 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
             style={[styles.primaryButton, loading && styles.buttonDisabled]}
             onPress={handleRegister}
             disabled={loading}
+            accessible={true}
+            accessibilityLabel={t('a11y.auth.register_button', locale)}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: loading }}
           >
             {loading ? (
               <ActivityIndicator color="#FFFFFF" />

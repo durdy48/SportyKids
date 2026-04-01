@@ -52,6 +52,25 @@ describe('AgeGateScreen', () => {
     expect(source).toContain('age_gate.child_option');
   });
 
+  describe('accessibility', () => {
+    it('age option buttons have accessibilityLabel and role', async () => {
+      const { AgeGateScreen } = await import('../AgeGate');
+      const source = AgeGateScreen.toString();
+      expect(source).toContain('a11y.age_gate.adult_option');
+      expect(source).toContain('a11y.age_gate.teen_option');
+      expect(source).toContain('a11y.age_gate.child_option');
+    });
+
+    it('consent checkboxes have checkbox role', async () => {
+      const { AgeGateScreen } = await import('../AgeGate');
+      const source = AgeGateScreen.toString();
+      expect(source).toContain('a11y.age_gate.consent_checkbox');
+      expect(source).toContain("accessibilityRole");
+      // Should contain checkbox role for consent
+      expect(source).toContain('checkbox');
+    });
+  });
+
   it('has navigation props for each age path', async () => {
     const { AgeGateScreen } = await import('../AgeGate');
     expect(AgeGateScreen.length).toBeGreaterThanOrEqual(0);

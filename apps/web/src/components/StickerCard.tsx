@@ -28,6 +28,7 @@ export function StickerCard({ sticker, owned, locale }: StickerCardProps) {
 
   return (
     <div
+      aria-label={owned ? `${sticker.name} sticker, ${rarityLabel} rarity` : `Locked sticker, ${rarityLabel} rarity`}
       className={`relative rounded-xl overflow-hidden transition-transform hover:scale-105 ${glowClass} ${
         !owned ? 'grayscale opacity-60' : ''
       }`}

@@ -1,0 +1,5 @@
+Sentry.init: FOUND
+Sentry.wrap: FOUND
+delete event.user: MISSING
+delete event.contexts.profile: MISSING
+beforeSend: FOUND

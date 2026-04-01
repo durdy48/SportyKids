@@ -27,4 +27,27 @@ describe('OnboardingScreen', () => {
     const { OnboardingScreen } = await import('../Onboarding');
     expect(OnboardingScreen.name).toBe('OnboardingScreen');
   });
+
+  describe('accessibility', () => {
+    it('sport selection buttons have a11y labels', async () => {
+      const { OnboardingScreen } = await import('../Onboarding');
+      const source = OnboardingScreen.toString();
+      expect(source).toContain('a11y.onboarding.select_sport');
+      expect(source).toContain('a11y.onboarding.deselect_sport');
+    });
+
+    it('team selection buttons have a11y labels', async () => {
+      const { OnboardingScreen } = await import('../Onboarding');
+      const source = OnboardingScreen.toString();
+      expect(source).toContain('a11y.onboarding.select_team');
+    });
+
+    it('navigation buttons have accessibilityRole', async () => {
+      const { OnboardingScreen } = await import('../Onboarding');
+      const source = OnboardingScreen.toString();
+      expect(source).toContain('accessibilityRole');
+      expect(source).toContain('a11y.common.back');
+      expect(source).toContain('a11y.onboarding.next');
+    });
+  });
 });

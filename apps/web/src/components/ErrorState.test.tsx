@@ -53,4 +53,16 @@ describe('ErrorState', () => {
     render(<ErrorState error={503} />);
     expect(screen.getByText('kid_errors.server_title')).toBeInTheDocument();
   });
+
+  describe('accessibility', () => {
+    it('error container has role="alert"', () => {
+      render(<ErrorState error={404} />);
+      expect(screen.getByRole('alert')).toBeInTheDocument();
+    });
+
+    it('retry button has aria-label', () => {
+      render(<ErrorState error="network error" onRetry={vi.fn()} />);
+      expect(screen.getByLabelText('Retry')).toBeInTheDocument();
+    });
+  });
 });
