@@ -76,6 +76,7 @@ export function LimitReached({ type = 'limit_reached', allowedHoursStart, allowe
         <p className="text-[var(--color-muted)] mb-8">{message}</p>
         <button
           onClick={() => router.push('/')}
+          aria-label="Go back to home"
           className="px-8 py-3 bg-[var(--color-blue)] text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
         >
           {t('limit.go_home', locale)}

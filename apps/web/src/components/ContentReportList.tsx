@@ -143,6 +143,7 @@ export function ContentReportList({ userId, locale }: ContentReportListProps) {
                     type="button"
                     onClick={() => handleUpdateStatus(report.id, 'reviewed')}
                     disabled={updatingId === report.id}
+                    aria-label={t('a11y.report.mark_reviewed', locale)}
                     className="flex-1 text-xs font-medium py-1.5 rounded-lg bg-green-100 dark:bg-green-900/30 text-green-700 dark:text-green-300 hover:bg-green-200 dark:hover:bg-green-800/40 transition-colors disabled:opacity-50"
                   >
                     {t('report.mark_reviewed', locale)}
@@ -151,6 +152,7 @@ export function ContentReportList({ userId, locale }: ContentReportListProps) {
                     type="button"
                     onClick={() => handleUpdateStatus(report.id, 'dismissed')}
                     disabled={updatingId === report.id}
+                    aria-label={t('a11y.report.dismiss', locale)}
                     className="flex-1 text-xs font-medium py-1.5 rounded-lg bg-[var(--color-background)] text-[var(--color-muted)] hover:bg-[var(--color-border)] transition-colors disabled:opacity-50"
                   >
                     {t('report.dismiss', locale)}

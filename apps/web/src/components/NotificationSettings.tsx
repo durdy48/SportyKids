@@ -72,6 +72,8 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
         </span>
         <button
           onClick={handleToggleEnabled}
+          role="switch"
+          aria-checked={enabled}
           className={`relative w-12 h-7 rounded-full transition-colors ${
             enabled ? 'bg-[var(--color-blue)]' : 'bg-[var(--color-border)]'
           }`}

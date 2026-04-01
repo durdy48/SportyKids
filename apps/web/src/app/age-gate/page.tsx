@@ -109,6 +109,7 @@ export default function AgeGatePage() {
         <header className="px-4 py-3 border-b border-[var(--color-border)] bg-[var(--color-surface)]">
           <button
             onClick={() => setScreen('child')}
+            aria-label="Go back"
             className="text-[var(--color-blue)] hover:underline text-sm font-medium"
           >
             {t('legal.back', locale)}
@@ -192,6 +193,7 @@ export default function AgeGatePage() {
                 type="checkbox"
                 checked={teenAccepted}
                 onChange={(e) => setTeenAccepted(e.target.checked)}
+                aria-label="Accept terms as a teenager"
                 className="mt-1 w-4 h-4 rounded border-[var(--color-border)] accent-[var(--color-blue)]"
               />
               <span className="text-sm text-[var(--color-text)]">
@@ -278,6 +280,7 @@ export default function AgeGatePage() {
                 type="checkbox"
                 checked={childAccepted}
                 onChange={(e) => setChildAccepted(e.target.checked)}
+                aria-label="Parental consent for child under 13"
                 className="mt-1 w-4 h-4 rounded border-[var(--color-border)] accent-[var(--color-blue)]"
               />
               <span className="text-sm text-[var(--color-text)]">
@@ -318,6 +321,7 @@ export default function AgeGatePage() {
           <button
             onClick={handleParentPath}
             disabled={submitting}
+            aria-label="I am a parent or guardian"
             className="w-full p-4 rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-blue)] transition-colors text-left flex items-center gap-3"
             data-testid="age-option-parent"
           >
@@ -329,6 +333,7 @@ export default function AgeGatePage() {
 
           <button
             onClick={() => setScreen('teen')}
+            aria-label="I am a teenager, 13 to 17"
             className="w-full p-4 rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-blue)] transition-colors text-left flex items-center gap-3"
             data-testid="age-option-teen"
           >
@@ -340,6 +345,7 @@ export default function AgeGatePage() {
 
           <button
             onClick={() => setScreen('child')}
+            aria-label="I am under 13"
             className="w-full p-4 rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] hover:border-[var(--color-blue)] transition-colors text-left flex items-center gap-3"
             data-testid="age-option-child"
           >

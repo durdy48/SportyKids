@@ -113,7 +113,7 @@ export function ReelCard({ reel, locale }: ReelCardProps) {
   return (
     <div className="group rounded-2xl overflow-hidden bg-[var(--color-surface)] shadow-sm hover:shadow-md transition-shadow border border-[var(--color-border)]">
       {/* Video / Thumbnail area */}
-      <div className="relative aspect-video bg-gray-900 cursor-pointer" onClick={() => setPlaying(!playing)}>
+      <div className="relative aspect-video bg-gray-900 cursor-pointer" role="button" aria-label={playing ? 'Pause video' : 'Play video'} onClick={() => setPlaying(!playing)}>
         {playing ? (
           renderPlayer()
         ) : (

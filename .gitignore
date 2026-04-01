@@ -15,3 +15,9 @@ apps/mobile/.env.local
 
 # Google Play service account key
 google-service-account.json
+
+# Playwright
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/

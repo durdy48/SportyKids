@@ -12,9 +12,9 @@ export function StreakCounter({ currentStreak, longestStreak, locale }: StreakCo
   if (currentStreak <= 0 && longestStreak <= 0) return null;
 
   return (
-    <View style={styles.container}>
+    <View style={styles.container} accessibilityLabel={t('a11y.streak.counter', locale, { days: String(currentStreak) })}>
       <View style={styles.streakBadge}>
-        <Text style={styles.fireIcon}>{'\uD83D\uDD25'}</Text>
+        <Text style={styles.fireIcon} accessibilityLabel={t('a11y.streak.fire_emoji', locale)}>{'\uD83D\uDD25'}</Text>
         <Text style={styles.streakCount}>{currentStreak}</Text>
         <Text style={styles.streakLabel}>{t('streak.days', locale)}</Text>
       </View>

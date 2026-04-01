@@ -346,6 +346,8 @@ export function OnboardingWizard() {
                   <button
                     key={range}
                     onClick={() => setAgeRange(range)}
+                    aria-pressed={range === ageRange}
+                    aria-label={`Age range ${range}`}
                     className={`flex-1 py-3 rounded-xl text-sm font-medium transition-colors ${
                       range === ageRange
                         ? 'bg-[var(--color-blue)] text-white'
@@ -382,6 +384,8 @@ export function OnboardingWizard() {
                 <button
                   key={s}
                   onClick={() => toggleSport(s)}
+                  aria-pressed={sports.includes(s)}
+                  aria-label={`Sport: ${getSportLabel(s, locale)}`}
                   className={`py-3 px-4 rounded-xl text-sm font-medium transition-colors ${
                     sports.includes(s)
                       ? 'bg-[var(--color-green)] text-white'
@@ -410,6 +414,8 @@ export function OnboardingWizard() {
                 <button
                   key={tm}
                   onClick={() => setTeam(team === tm ? '' : tm)}
+                  aria-pressed={team === tm}
+                  aria-label={`Team: ${tm}`}
                   className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-colors text-left ${
                     team === tm
                       ? 'bg-[var(--color-blue)] text-white'

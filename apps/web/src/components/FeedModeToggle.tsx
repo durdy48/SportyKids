@@ -19,11 +19,13 @@ const MODES: { key: FeedMode; icon: string; labelKey: string }[] = [
 
 export function FeedModeToggle({ mode, onChange, locale }: FeedModeToggleProps) {
   return (
-    <div className="inline-flex items-center bg-[var(--color-background)] rounded-full p-1 gap-1">
+    <div className="inline-flex items-center bg-[var(--color-background)] rounded-full p-1 gap-1" role="group" aria-label="Feed display mode">
       {MODES.map(({ key, icon, labelKey }) => (
         <button
           key={key}
           onClick={() => onChange(key)}
+          aria-pressed={mode === key}
+          aria-label={`${t(labelKey, locale)} mode`}
           className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
             mode === key
               ? 'bg-[var(--color-surface)] text-[var(--color-text)] shadow-sm'

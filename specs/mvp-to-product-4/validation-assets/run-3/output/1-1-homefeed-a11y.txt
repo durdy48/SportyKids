@@ -1,0 +1,5 @@
+NewsCard save/unsave a11y labels: FOUND
+FiltersBar sport_filter label: FOUND
+FiltersBar all_filter label: FOUND
+FiltersBar selected state: FOUND
+HomeFeed search label: FOUND

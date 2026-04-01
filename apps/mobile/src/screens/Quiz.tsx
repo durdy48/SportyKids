@@ -116,7 +116,15 @@ export function QuizScreen() {
             <Text style={s.pointsLabel}>{t('quiz.total_score', locale)}</Text>
             <Text style={s.pointsValue}>{totalPoints} {t('quiz.pts', locale)}</Text>
           </View>
-          <TouchableOpacity style={s.buttonGreen} onPress={startQuiz} disabled={loading}>
+          <TouchableOpacity
+            style={s.buttonGreen}
+            onPress={startQuiz}
+            disabled={loading}
+            accessible={true}
+            accessibilityLabel={t('a11y.quiz.start_quiz', locale)}
+            accessibilityRole="button"
+            accessibilityState={{ disabled: loading }}
+          >
             {loading ? <ActivityIndicator color="#fff" /> : <Text style={s.buttonText}>{t('buttons.start_quiz', locale)}</Text>}
           </TouchableOpacity>
         </View>
@@ -159,6 +167,18 @@ export function QuizScreen() {
                   style={[s.option, { backgroundColor: bgColor, borderColor }]}
                   onPress={() => answer(i)}
                   disabled={!!feedback}
+                  accessible={true}
+                  accessibilityLabel={
+                    feedback
+                      ? (i === feedback.correctAnswer
+                        ? t('a11y.quiz.answer_correct', locale, { text: op })
+                        : (i === selection && !feedback.correct
+                          ? t('a11y.quiz.answer_incorrect', locale, { text: op })
+                          : t('a11y.quiz.answer_option', locale, { index: String(i + 1), text: op })))
+                      : t('a11y.quiz.answer_option', locale, { index: String(i + 1), text: op })
+                  }
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: i === selection, disabled: !!feedback }}
                 >
                   <Text style={s.optionLetter}>{String.fromCharCode(65 + i)}</Text>
                   <Text style={s.optionText}>{op}</Text>
@@ -189,7 +209,13 @@ export function QuizScreen() {
           */}
 
           {feedback && (
-            <TouchableOpacity style={s.buttonBlue} onPress={next}>
+            <TouchableOpacity
+              style={s.buttonBlue}
+              onPress={next}
+              accessible={true}
+              accessibilityLabel={t('a11y.quiz.next_question', locale)}
+              accessibilityRole="button"
+            >
               <Text style={s.buttonText}>
                 {index === questions.length - 1 ? t('quiz.view_results', locale) : t('buttons.next_question', locale)}
               </Text>
@@ -207,7 +233,13 @@ export function QuizScreen() {
             <Text style={[s.pointsValue, { color: colors.green }]}>+{roundPoints}</Text>
           </View>
           <Text style={s.subtitle}>Total: {totalPoints} {t('quiz.pts', locale)}</Text>
-          <TouchableOpacity style={s.buttonBlue} onPress={startQuiz}>
+          <TouchableOpacity
+            style={s.buttonBlue}
+            onPress={startQuiz}
+            accessible={true}
+            accessibilityLabel={t('a11y.quiz.start_quiz', locale)}
+            accessibilityRole="button"
+          >
             <Text style={s.buttonText}>{t('buttons.play_again', locale)}</Text>
           </TouchableOpacity>
         </View>

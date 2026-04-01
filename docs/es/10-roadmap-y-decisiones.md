@@ -242,7 +242,7 @@ Nuevos ficheros y componentes clave:
 El Backlog de Deuda Tecnica abordo problemas sistemicos en 4 PRDs:
 
 ### PRD1: Infraestructura de Testing + Calidad de Codigo
-- **Testing**: Infraestructura Vitest expandida a 526 tests en 63 archivos (API: 388 tests/38 archivos, Web: 69 tests/14 archivos, Mobile: 69 tests/11 archivos)
+- **Testing**: Infraestructura Vitest expandida a 676+ tests en 74+ archivos (API: 464 tests/44 archivos, Web: 109 tests/16 archivos, Mobile: 103 tests/14 archivos)
 - **ESLint 9**: Configuracion flat (`eslint.config.mjs`) + Prettier para formateo consistente
 - **Logging estructurado**: Pino 9 con salida JSON, correlacion de request ID (middleware `X-Request-Id`), `pino-pretty` en desarrollo
 - **Sesiones parentales persistentes**: Modelo `ParentalSession` en Prisma reemplaza el Map volatil en memoria. Las sesiones sobreviven reinicios del servidor con limpieza automatica de entradas expiradas.

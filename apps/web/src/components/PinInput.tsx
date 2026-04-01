@@ -137,6 +137,7 @@ export function PinInput({ onSubmit, title, subtitle, buttonText, loading, error
             onChange={(e) => handleChange(i, e.target.value)}
             onKeyDown={(e) => handleKeyDown(i, e)}
             disabled={isLocked}
+            aria-label={t('a11y.parental.pin_digit', locale, { n: String(i + 1), total: '4' })}
             className={`w-14 h-14 text-center text-2xl font-bold rounded-xl border-2 border-[var(--color-border)] bg-[var(--color-surface)] focus:border-[var(--color-blue)] focus:outline-none transition-colors ${popIndex === i ? 'pin-pop' : ''} ${isLocked ? 'opacity-40 cursor-not-allowed' : ''}`}
           />
         ))}

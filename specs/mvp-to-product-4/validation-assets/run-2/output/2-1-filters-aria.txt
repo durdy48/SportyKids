@@ -1,0 +1,4 @@
+role="tablist": FOUND
+role="tab": FOUND
+aria-selected: FOUND
+Occurrences of role="tab": 4

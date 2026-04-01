@@ -34,7 +34,7 @@ export function OfflineBanner({ locale }: OfflineBannerProps) {
   if (!isOffline) return null;
 
   return (
-    <View style={styles.banner}>
+    <View style={styles.banner} accessibilityRole="alert" accessibilityLabel={t('a11y.common.offline_banner', locale)}>
       <Text style={styles.text}>{t('offline.banner', locale)}</Text>
     </View>
   );

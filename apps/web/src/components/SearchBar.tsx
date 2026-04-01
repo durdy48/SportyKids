@@ -83,6 +83,7 @@ export function SearchBar({ onSearch, locale }: SearchBarProps) {
             // Delay to allow click on suggestions
             setTimeout(() => setIsFocused(false), 150);
           }}
+          aria-label="Search news"
           placeholder={t('search.placeholder', locale)}
           className="w-full pl-10 pr-10 py-2.5 bg-[var(--color-surface)] border border-[var(--color-border)] rounded-full shadow-sm text-sm text-[var(--color-text)] placeholder:text-[var(--color-muted)] focus:outline-none focus:ring-2 focus:ring-[var(--color-blue)] focus:border-transparent transition-shadow"
         />

@@ -57,4 +57,22 @@ describe('ReelPlayer', () => {
     expect(screen.getByLabelText('reels.like')).toBeInTheDocument();
     expect(screen.getByLabelText('reels.share')).toBeInTheDocument();
   });
+
+  describe('accessibility', () => {
+    it('like button has aria-label', () => {
+      render(<ReelPlayer reel={mockReel} isActive={true} locale="es" />);
+      expect(screen.getByLabelText('reels.like')).toBeInTheDocument();
+    });
+
+    it('share button has aria-label', () => {
+      render(<ReelPlayer reel={mockReel} isActive={true} locale="es" />);
+      expect(screen.getByLabelText('reels.share')).toBeInTheDocument();
+    });
+
+    it('iframe has a title attribute for accessibility', () => {
+      render(<ReelPlayer reel={mockReel} isActive={true} locale="es" />);
+      const iframe = document.querySelector('iframe');
+      expect(iframe).toHaveAttribute('title', 'Amazing goal compilation');
+    });
+  });
 });

@@ -46,7 +46,15 @@ export function NewsCard({ item, isTrending = false }: NewsCardProps) {
           </View>
           {/* Heart button */}
           <Animated.View style={[styles.heartButton, { transform: [{ scale: scaleAnim }] }]}>
-            <TouchableOpacity onPress={handleToggleFavorite} activeOpacity={0.7}>
+            <TouchableOpacity
+              onPress={handleToggleFavorite}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityLabel={t(liked ? 'a11y.news_card.unsave' : 'a11y.news_card.save', locale)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: liked }}
+              accessibilityHint={t('a11y.news_card.save_hint', locale)}
+            >
               <Text style={styles.heartIcon}>{liked ? '\u2764\uFE0F' : '\u{1F90D}'}</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -57,7 +65,14 @@ export function NewsCard({ item, isTrending = false }: NewsCardProps) {
         {/* Heart button when no image */}
         {!item.imageUrl && (
           <Animated.View style={[styles.heartButtonNoImage, { transform: [{ scale: scaleAnim }] }]}>
-            <TouchableOpacity onPress={handleToggleFavorite} activeOpacity={0.7}>
+            <TouchableOpacity
+              onPress={handleToggleFavorite}
+              activeOpacity={0.7}
+              accessible={true}
+              accessibilityLabel={t(liked ? 'a11y.news_card.unsave' : 'a11y.news_card.save', locale)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: liked }}
+            >
               <Text style={styles.heartIcon}>{liked ? '\u2764\uFE0F' : '\u{1F90D}'}</Text>
             </TouchableOpacity>
           </Animated.View>
@@ -78,7 +93,7 @@ export function NewsCard({ item, isTrending = false }: NewsCardProps) {
           <Text style={styles.separator}>&middot;</Text>
           <Text style={styles.date}>{formatDate(item.publishedAt, locale)}</Text>
           {isTrending && (
-            <View style={styles.trendingBadge}>
+            <View style={styles.trendingBadge} accessibilityLabel={t('a11y.news_card.trending', locale)}>
               <Text style={styles.trendingText}>{'\uD83D\uDD25'} {t('news.trending', locale)}</Text>
             </View>
           )}
@@ -86,6 +101,9 @@ export function NewsCard({ item, isTrending = false }: NewsCardProps) {
 
         <TouchableOpacity
           style={styles.button}
+          accessible={true}
+          accessibilityLabel={t('a11y.news_card.read', locale, { title: item.title })}
+          accessibilityRole="link"
           onPress={() => {
             Linking.openURL(item.sourceUrl);
             // Load related articles on first read
@@ -109,6 +127,9 @@ export function NewsCard({ item, isTrending = false }: NewsCardProps) {
                 key={r.id}
                 style={styles.relatedItem}
                 onPress={() => Linking.openURL(r.sourceUrl)}
+                accessible={true}
+                accessibilityLabel={t('a11y.news_card.read', locale, { title: r.title })}
+                accessibilityRole="link"
               >
                 <Text style={styles.relatedEmoji}>{sportToEmoji(r.sport)}</Text>
                 <Text style={styles.relatedText} numberOfLines={1}>{r.title}</Text>

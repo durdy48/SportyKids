@@ -1,0 +1,4 @@
+PIN verify/setup label: FOUND
+Format toggle switch role: FOUND
+Format toggle a11y label: FOUND
+Tab role on tabs: FOUND

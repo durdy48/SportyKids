@@ -65,6 +65,10 @@ export function FavoriteTeamScreen() {
               key={team}
               style={[s.teamChip, team === user.favoriteTeam && s.teamActive]}
               onPress={() => changeTeam(team)}
+              accessible={true}
+              accessibilityLabel={t('a11y.team.select_team', locale, { team })}
+              accessibilityRole="button"
+              accessibilityState={{ selected: team === user.favoriteTeam }}
             >
               <Text style={[s.teamText, team === user.favoriteTeam && { color: '#fff' }]}>{team}</Text>
             </TouchableOpacity>
@@ -83,7 +87,12 @@ export function FavoriteTeamScreen() {
     <View>
       <View style={s.header}>
         <Text style={s.title}>{user.favoriteTeam}</Text>
-        <TouchableOpacity onPress={() => setChanging(true)}>
+        <TouchableOpacity
+          onPress={() => setChanging(true)}
+          accessible={true}
+          accessibilityLabel={t('buttons.change_team', locale)}
+          accessibilityRole="button"
+        >
           <Text style={s.change}>{t('buttons.change_team', locale)}</Text>
         </TouchableOpacity>
       </View>

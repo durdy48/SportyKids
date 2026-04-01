@@ -71,4 +71,31 @@ describe('ParentalPanel', () => {
     fireEvent.click(screen.getByText('parental.tab_restrictions'));
     expect(screen.getByText('parental.allowed_formats')).toBeInTheDocument();
   });
+
+  describe('accessibility', () => {
+    it('tabs have role="tablist" and individual role="tab"', () => {
+      render(<ParentalPanel profile={mockProfile} />);
+      expect(screen.getByRole('tablist', { name: 'Parental control tabs' })).toBeInTheDocument();
+      const tabs = screen.getAllByRole('tab');
+      expect(tabs.length).toBeGreaterThanOrEqual(3);
+    });
+
+    it('active tab has aria-selected="true"', () => {
+      render(<ParentalPanel profile={mockProfile} />);
+      const profileTab = screen.getByText('parental.tab_profile');
+      expect(profileTab).toHaveAttribute('aria-selected', 'true');
+      const contentTab = screen.getByText('parental.tab_content');
+      expect(contentTab).toHaveAttribute('aria-selected', 'false');
+    });
+
+    it('format toggle buttons have role="switch" and aria-checked in restrictions tab', () => {
+      render(<ParentalPanel profile={mockProfile} />);
+      fireEvent.click(screen.getByText('parental.tab_restrictions'));
+      const switches = screen.getAllByRole('switch');
+      expect(switches.length).toBeGreaterThanOrEqual(1);
+      switches.forEach((sw) => {
+        expect(sw).toHaveAttribute('aria-checked');
+      });
+    });
+  });
 });

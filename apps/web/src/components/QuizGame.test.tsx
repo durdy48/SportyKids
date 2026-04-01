@@ -81,4 +81,26 @@ describe('QuizGame', () => {
       expect(screen.getByText('buttons.next_question')).toBeInTheDocument();
     });
   });
+
+  describe('accessibility', () => {
+    it('answer buttons have aria-labels with option text', () => {
+      render(<QuizGame questions={questions} userId="u1" onFinish={vi.fn()} locale="es" />);
+      expect(screen.getByLabelText('Option A: Messi')).toBeInTheDocument();
+      expect(screen.getByLabelText('Option B: Vinicius')).toBeInTheDocument();
+      expect(screen.getByLabelText('Option C: Haaland')).toBeInTheDocument();
+      expect(screen.getByLabelText('Option D: Mbappe')).toBeInTheDocument();
+    });
+
+    it('shows feedback with role="status" after answering', async () => {
+      mockSubmitAnswer.mockResolvedValueOnce({ correct: true, correctAnswer: 1, pointsEarned: 10 });
+      render(<QuizGame questions={questions} userId="u1" onFinish={vi.fn()} locale="es" />);
+      fireEvent.click(screen.getByText('Vinicius'));
+
+      await waitFor(() => {
+        const feedback = screen.getByRole('status');
+        expect(feedback).toBeInTheDocument();
+        expect(feedback).toHaveTextContent('quiz.correct');
+      });
+    });
+  });
 });

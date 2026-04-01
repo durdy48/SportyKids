@@ -61,9 +61,9 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
     const isDev = typeof __DEV__ !== 'undefined' ? __DEV__ : process.env.NODE_ENV !== 'production';
 
     return (
-      <View style={styles.container}>
-        <Text style={styles.emoji}>{errorInfo.emoji}</Text>
-        <Text style={styles.title}>{t(errorInfo.titleKey, locale)}</Text>
+      <View style={styles.container} accessibilityRole="alert">
+        <Text style={styles.emoji} accessibilityLabel={t('a11y.error.crash_emoji', locale)}>{errorInfo.emoji}</Text>
+        <Text style={styles.title} accessibilityRole="header">{t(errorInfo.titleKey, locale)}</Text>
         <Text style={styles.message}>{t(errorInfo.messageKey, locale)}</Text>
 
         {isDev && this.state.error && (
@@ -77,7 +77,13 @@ export class ErrorBoundary extends React.Component<ErrorBoundaryProps, ErrorBoun
           </View>
         )}
 
-        <TouchableOpacity style={styles.restartButton} onPress={this.handleRestart}>
+        <TouchableOpacity
+          style={styles.restartButton}
+          onPress={this.handleRestart}
+          accessible={true}
+          accessibilityLabel={t('a11y.error.restart_app', locale)}
+          accessibilityRole="button"
+        >
           <Text style={styles.restartText}>{t('kid_errors.restart', locale)}</Text>
         </TouchableOpacity>
       </View>

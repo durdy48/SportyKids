@@ -1,0 +1,7 @@
+Total TouchableOpacity/Pressable: 104
+Total accessibilityLabel: 69
+Coverage ratio: 66.3%
+Files with potential gaps:
+apps/mobile/src/screens/AgeGate.tsx: 17 touchables, 5 labels (gap: 12)
+apps/mobile/src/screens/Onboarding.tsx: 12 touchables, 6 labels (gap: 6)
+apps/mobile/src/screens/ParentalControl.tsx: 25 touchables, 5 labels (gap: 20)

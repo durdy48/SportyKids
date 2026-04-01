@@ -1,0 +1,4 @@
+Play video label: FOUND
+Like/unlike label: FOUND
+Share label: FOUND
+Button roles: FOUND

@@ -1,0 +1,117 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+> test:all
+> npm run test --workspace=apps/api && npm run test --workspace=apps/web && npm run test --workspace=apps/mobile
+
+npm warn Unknown env config "email". This will stop working in the next major version of npm.
+npm warn Unknown env config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+> @sportykids/api@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/api
+
+[16:48:38] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "La Liga YouTube"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[16:48:38] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[16:48:38] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 0
+    [35mrejected[39m: 1
+[16:48:38] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[16:48:38] [31mERROR[39m: [36mError syncing video source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Broken Channel"
+    err: "Network timeout"
+[16:48:38] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[16:48:38] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[16:48:38] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "YouTube Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[16:48:39] [32mINFO[39m: [36mVideo sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35mcreated[39m: 0
+    [35msources[39m: 1
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+    [35merrors[39m: 0
+[16:48:39] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[16:48:39] [32mINFO[39m: [36mNo active video sources found.[39m
+    [35mservice[39m: "sportykids-api"
+[16:48:39] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[16:48:39] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Channel A"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+ ❯ src/routes/reels.test.ts (13 tests | 1 failed) 61ms
+     × deletes a custom video source 11ms
+Sourcemap for "/Users/antonioduarteruiz/personal/sportykids/node_modules/node-cron/dist/esm/node-cron.js" points to missing source files
+
+⎯⎯⎯⎯⎯⎯⎯ Failed Tests 1 ⎯⎯⎯⎯⎯⎯⎯
+
+ FAIL  src/routes/reels.test.ts > DELETE /api/reels/sources/custom/:id > deletes a custom video source
+AssertionError: expected 404 to be 200 // Object.is equality
+
+- Expected
++ Received
+
+- 200
++ 404
+
+ ❯ src/routes/reels.test.ts:337:24
+    335|       .send({ userId: 'user-1' });
+    336|
+    337|     expect(res.status).toBe(200);
+       |                        ^
+    338|   });
+    339|
+
+⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/1]⎯
+
+
+ Test Files  1 failed | 38 passed (39)
+      Tests  1 failed | 433 passed (434)
+   Start at  18:48:37
+   Duration  10.67s (transform 571ms, setup 0ms, import 3.86s, tests 3.42s, environment 2ms)
+
+npm error Lifecycle script `test` failed with error:
+npm error code 1
+npm error path /Users/antonioduarteruiz/personal/sportykids/apps/api
+npm error workspace @sportykids/api@0.1.0
+npm error location /Users/antonioduarteruiz/personal/sportykids/apps/api
+npm error command failed
+npm error command sh -c vitest run
+

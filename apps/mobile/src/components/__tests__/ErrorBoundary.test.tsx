@@ -160,6 +160,57 @@ describe('ErrorBoundary', () => {
     expect(findAllByText(renderer!, 'kid_errors.crash_title').length).toBe(1);
   });
 
+  describe('accessibility', () => {
+    it('crash UI container has alert role', () => {
+      let renderer: ReactTestRenderer;
+      act(() => {
+        renderer = create(
+          <ErrorBoundary locale="en">
+            <ThrowingChild />
+          </ErrorBoundary>,
+        );
+      });
+
+      const alertView = renderer!.root.findAll(
+        (node) => node.props.accessibilityRole === 'alert',
+      );
+      expect(alertView.length).toBeGreaterThan(0);
+    });
+
+    it('restart button has accessibilityLabel and button role', () => {
+      let renderer: ReactTestRenderer;
+      act(() => {
+        renderer = create(
+          <ErrorBoundary locale="en">
+            <ThrowingChild />
+          </ErrorBoundary>,
+        );
+      });
+
+      const restartButton = renderer!.root.findAll(
+        (node) => node.type === 'TouchableOpacity' && node.props.accessibilityRole === 'button',
+      );
+      expect(restartButton.length).toBeGreaterThan(0);
+      expect(restartButton[0].props.accessibilityLabel).toBeTruthy();
+    });
+
+    it('emoji has accessibilityLabel', () => {
+      let renderer: ReactTestRenderer;
+      act(() => {
+        renderer = create(
+          <ErrorBoundary locale="en">
+            <ThrowingChild />
+          </ErrorBoundary>,
+        );
+      });
+
+      const emojiNodes = renderer!.root.findAll(
+        (node) => node.props.accessibilityLabel === 'a11y.error.crash_emoji',
+      );
+      expect(emojiNodes.length).toBeGreaterThan(0);
+    });
+  });
+
   it('uses crash error info from KID_FRIENDLY_ERRORS', async () => {
     const { KID_FRIENDLY_ERRORS } = await import('@sportykids/shared');
     expect(KID_FRIENDLY_ERRORS.crash).toBeDefined();

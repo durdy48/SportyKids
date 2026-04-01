@@ -58,7 +58,7 @@ export function FeedPreviewModal({ userId, userName, locale, restrictions, onClo
       className="fixed inset-0 z-60 flex items-start justify-center bg-black/50 overflow-y-auto"
       onClick={handleOverlayClick}
     >
-      <div className="w-full max-w-4xl mx-auto my-8 bg-[var(--color-surface)] rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
+      <div role="dialog" aria-modal="true" aria-label="Feed preview" className="w-full max-w-4xl mx-auto my-8 bg-[var(--color-surface)] rounded-2xl shadow-xl max-h-[90vh] overflow-y-auto">
         {/* Header */}
         <div className="sticky top-0 bg-[var(--color-surface)] border-b border-[var(--color-border)] px-6 py-4 rounded-t-2xl z-10">
           <div className="flex items-center justify-between">

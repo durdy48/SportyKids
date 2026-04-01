@@ -112,6 +112,8 @@ export function QuizGame({ questions, userId, onFinish, locale }: QuizGameProps)
               key={i}
               onClick={() => answer(i)}
               disabled={!!result}
+              data-testid="quiz-option"
+              aria-label={`Option ${String.fromCharCode(65 + i)}: ${option}`}
               className={`w-full text-left px-4 py-3 rounded-xl border-2 text-sm font-medium transition-all ${optionColor(i)}`}
             >
               <span className="inline-block w-6 h-6 rounded-full bg-[var(--color-background)] text-center text-xs leading-6 mr-3 font-bold">
@@ -126,7 +128,7 @@ export function QuizGame({ questions, userId, onFinish, locale }: QuizGameProps)
       {/* Feedback and next */}
       {result && (
         <div className="space-y-4">
-          <div className={`p-4 rounded-xl text-sm font-medium ${
+          <div role="status" aria-live="polite" className={`p-4 rounded-xl text-sm font-medium ${
             result.correct
               ? 'bg-green-50 dark:bg-green-900/20 text-green-700 dark:text-green-300 border border-green-200 dark:border-green-700'
               : 'bg-red-50 dark:bg-red-900/20 text-red-700 dark:text-red-300 border border-red-200 dark:border-red-700'
@@ -153,7 +155,7 @@ export function QuizGame({ questions, userId, onFinish, locale }: QuizGameProps)
       )}
 
       {/* Accumulated points */}
-      <div className="text-center mt-4 text-sm text-[var(--color-muted)]">
+      <div className="text-center mt-4 text-sm text-[var(--color-muted)]" aria-live="polite">
         {t('quiz.round_points', locale)} <span className="font-bold text-[var(--color-yellow)]">{accumulatedPoints}</span>
       </div>
     </div>

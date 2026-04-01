@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { Animated, type ViewStyle, type StyleProp, AccessibilityInfo } from 'react-native';
+import { t } from '@sportykids/shared';
 
 interface ShimmerProps {
   children: React.ReactNode;
@@ -42,7 +43,7 @@ export function Shimmer({ children, style }: ShimmerProps) {
   }, [opacity]);
 
   return (
-    <Animated.View style={[{ opacity }, style]} accessibilityLabel="Loading">
+    <Animated.View style={[{ opacity }, style]} accessibilityLabel={t('a11y.common.loading', 'en')}>
       {children}
     </Animated.View>
   );

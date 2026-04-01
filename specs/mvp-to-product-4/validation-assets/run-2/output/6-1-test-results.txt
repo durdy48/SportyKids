@@ -1,0 +1,119 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+> test:all
+> npm run test --workspace=apps/api && npm run test --workspace=apps/web && npm run test --workspace=apps/mobile
+
+npm warn Unknown env config "email". This will stop working in the next major version of npm.
+npm warn Unknown env config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+> @sportykids/api@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/api
+
+[16:32:04] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "La Liga YouTube"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[16:32:04] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[16:32:04] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 0
+    [35mrejected[39m: 1
+[16:32:04] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[16:32:04] [31mERROR[39m: [36mError syncing video source[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Broken Channel"
+    err: "Network timeout"
+[16:32:04] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Test Channel"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+[16:32:04] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[16:32:04] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "YouTube Channel"
+    [35mcreated[39m: 0
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+[16:32:05] [32mINFO[39m: [36mVideo sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35mcreated[39m: 0
+    [35msources[39m: 1
+    [35mapproved[39m: 0
+    [35mrejected[39m: 0
+    [35merrors[39m: 0
+[16:32:05] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[16:32:05] [32mINFO[39m: [36mNo active video sources found.[39m
+    [35mservice[39m: "sportykids-api"
+[16:32:05] [32mINFO[39m: [36mStarting video source synchronization...[39m
+    [35mservice[39m: "sportykids-api"
+[16:32:05] [32mINFO[39m: [36mVideo source sync complete[39m
+    [35mservice[39m: "sportykids-api"
+    [35msource[39m: "Channel A"
+    [35mcreated[39m: 1
+    [35mapproved[39m: 1
+    [35mrejected[39m: 0
+Sourcemap for "/Users/antonioduarteruiz/personal/sportykids/node_modules/node-cron/dist/esm/node-cron.js" points to missing source files
+
+ Test Files  39 passed (39)
+      Tests  434 passed (434)
+   Start at  18:32:04
+   Duration  12.21s (transform 772ms, setup 0ms, import 4.31s, tests 3.44s, environment 2ms)
+
+npm warn Unknown env config "email". This will stop working in the next major version of npm.
+npm warn Unknown env config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+> @sportykids/web@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/web
+
+
+ Test Files  16 passed (16)
+      Tests  109 passed (109)
+   Start at  18:32:17
+   Duration  3.41s (transform 1.35s, setup 3.51s, import 3.98s, tests 1.25s, environment 24.54s)
+
+npm warn Unknown env config "email". This will stop working in the next major version of npm.
+npm warn Unknown env config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+> @sportykids/mobile@0.1.0 test
+> vitest run
+
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/mobile
+
+
+ Test Files  16 passed (16)
+      Tests  136 passed (136)
+   Start at  18:32:21
+   Duration  542ms (transform 1.39s, setup 361ms, import 2.01s, tests 1.16s, environment 1ms)
+

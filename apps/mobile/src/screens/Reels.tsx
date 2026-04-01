@@ -98,6 +98,9 @@ export function ReelsScreen() {
           ) : (
             <TouchableOpacity
               style={s.thumbnailContainer}
+              accessible={true}
+              accessibilityLabel={t('a11y.reels.play_video', locale, { title: item.title })}
+              accessibilityRole="button"
               onPress={() => {
                 if (hasError) {
                   // Error: open in native app
@@ -156,10 +159,23 @@ export function ReelsScreen() {
               </View>
             </View>
             <View style={s.actions}>
-              <TouchableOpacity style={s.actionBtn} onPress={() => toggleLike(item.id)}>
+              <TouchableOpacity
+                style={s.actionBtn}
+                onPress={() => toggleLike(item.id)}
+                accessible={true}
+                accessibilityLabel={t(isLiked ? 'a11y.reels.unlike_video' : 'a11y.reels.like_video', locale)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: isLiked }}
+              >
                 <Text style={{ fontSize: 20 }}>{isLiked ? '❤️' : '🤍'}</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={s.actionBtn} onPress={() => handleShare(item)}>
+              <TouchableOpacity
+                style={s.actionBtn}
+                onPress={() => handleShare(item)}
+                accessible={true}
+                accessibilityLabel={t('a11y.reels.share_video', locale)}
+                accessibilityRole="button"
+              >
                 <Text style={{ fontSize: 20 }}>📤</Text>
               </TouchableOpacity>
             </View>
@@ -238,6 +254,10 @@ export function ReelsScreen() {
           <TouchableOpacity
             style={[s.chip, (item === activeSport || (!item && !activeSport)) && s.chipActive]}
             onPress={() => setActiveSport(item === activeSport ? null : item)}
+            accessible={true}
+            accessibilityLabel={item ? t('a11y.filters.sport_filter', locale, { sport: getSportLabel(item, locale) }) : t('a11y.filters.all_filter', locale)}
+            accessibilityRole="button"
+            accessibilityState={{ selected: item === activeSport || (!item && !activeSport) }}
           >
             <Text style={[s.chipText, (item === activeSport || (!item && !activeSport)) && s.chipTextActive]}>
               {item ? `${sportToEmoji(item)} ${getSportLabel(item, locale)}` : t('filters.all', locale)}

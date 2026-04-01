@@ -622,6 +622,177 @@
     "last_updated": "Last updated: {date}",
     "back": "Back"
   },
+  "a11y": {
+    "news_card": {
+      "save": "Save article",
+      "unsave": "Remove from saved",
+      "save_hint": "Double tap to save this article",
+      "read": "Read: {title}",
+      "share": "Share article",
+      "trending": "Trending article"
+    },
+    "filters": {
+      "sport_filter": "Filter by {sport}",
+      "all_filter": "Show all sports"
+    },
+    "quiz": {
+      "answer_option": "Option {index}: {text}",
+      "answer_correct": "Correct: {text}",
+      "answer_incorrect": "Incorrect: {text}",
+      "start_quiz": "Start quiz",
+      "next_question": "Next question",
+      "score": "Score: {score}"
+    },
+    "reels": {
+      "play_video": "Play video: {title}",
+      "pause_video": "Pause video",
+      "like_video": "Like",
+      "unlike_video": "Unlike",
+      "share_video": "Share video"
+    },
+    "parental": {
+      "pin_digit": "Digit {n} of {total}",
+      "toggle_format": "{format}: {state}",
+      "time_slider": "Time limit: {value}",
+      "schedule_start": "Start time: {hour}",
+      "schedule_end": "End time: {hour}",
+      "verify_pin": "Verify PIN",
+      "setup_pin": "Set up PIN",
+      "toggle_sport": "Sport {sport}: {state}",
+      "sport_allowed": "Allowed",
+      "sport_blocked": "Blocked",
+      "preview_feed": "Preview {name}'s feed",
+      "select_time_limit": "Limit: {time}",
+      "no_time_limit": "No limit",
+      "toggle_schedule": "Toggle schedule lock",
+      "decrease_start": "Decrease start time",
+      "increase_start": "Increase start time",
+      "decrease_end": "Decrease end time",
+      "increase_end": "Increase end time",
+      "select_timezone": "Timezone: {tz}",
+      "toggle_digest": "Toggle weekly digest",
+      "select_digest_day": "Send digest on {day}",
+      "download_pdf": "Download digest as PDF",
+      "select_theme": "Theme: {mode}",
+      "change_pin_button": "Confirm PIN change",
+      "close_preview": "Close preview",
+      "news_limit": "News limit: {time}",
+      "reels_limit": "Reels limit: {time}",
+      "quiz_limit": "Quiz limit: {time}"
+    },
+    "navigation": {
+      "tab_news": "News tab",
+      "tab_reels": "Reels tab",
+      "tab_quiz": "Quiz tab",
+      "tab_collection": "Collection tab",
+      "tab_team": "My Team tab",
+      "tab_parents": "Parents tab",
+      "language_toggle": "Switch language to {language}",
+      "theme_toggle": "Toggle theme"
+    },
+    "onboarding": {
+      "select_sport": "Select {sport}",
+      "deselect_sport": "Deselect {sport}",
+      "select_team": "Select team: {team}",
+      "step_indicator": "Step {current} of {total}",
+      "next": "Next",
+      "skip": "Skip",
+      "select_age": "Select age range {range}",
+      "toggle_source": "Source {source}: {state}",
+      "toggle_format": "Format {format}: {state}",
+      "select_time_limit": "Time limit: {time}",
+      "no_limit": "No time limit"
+    },
+    "age_gate": {
+      "adult_option": "I am an adult",
+      "teen_option": "I am a teenager",
+      "child_option": "I am under 13",
+      "consent_checkbox": "Consent checkbox: {state}",
+      "go_back": "Go back to previous step",
+      "continue_button": "Continue",
+      "set_pin_button": "Continue to create PIN"
+    },
+    "legal": {
+      "open_privacy": "Open privacy policy",
+      "open_terms": "Open terms of service"
+    },
+    "collection": {
+      "sticker": "Sticker {name}, rarity {rarity}",
+      "sticker_locked": "Sticker {name} locked",
+      "achievement": "Achievement {name}: {state}",
+      "tab_stickers": "Stickers tab",
+      "tab_achievements": "Achievements tab"
+    },
+    "mission": {
+      "claim_reward": "Claim reward",
+      "progress": "{progress} of {target} completed"
+    },
+    "common": {
+      "loading": "Loading",
+      "retry": "Try again",
+      "back": "Go back",
+      "next": "Next",
+      "close": "Close",
+      "search": "Search",
+      "clear_search": "Clear search",
+      "offline_banner": "Offline",
+      "error_restart": "Restart app",
+      "go_home": "Go to home",
+      "refresh": "Refresh"
+    },
+    "catalog": {
+      "toggle_source": "Source {source}: {state}",
+      "source_enabled": "Enabled",
+      "source_disabled": "Disabled"
+    },
+    "auth": {
+      "email_input": "Email input field",
+      "password_input": "Password input field",
+      "name_input": "Name input field",
+      "login_button": "Log in",
+      "register_button": "Create account",
+      "google_signin": "Sign in with Google",
+      "apple_signin": "Sign in with Apple",
+      "anonymous_continue": "Continue without account"
+    },
+    "team": {
+      "stats_value": "{stat}: {value}",
+      "select_team": "Select team: {team}",
+      "next_match": "Next match",
+      "recent_results": "Recent results"
+    },
+    "video": {
+      "play": "Play",
+      "pause": "Pause",
+      "mute": "Mute",
+      "unmute": "Unmute"
+    },
+    "streak": {
+      "counter": "{days} day streak",
+      "fire_emoji": "Fire, active streak"
+    },
+    "error": {
+      "crash_emoji": "Unexpected error",
+      "restart_app": "Restart app"
+    },
+    "limit": {
+      "time_exceeded": "Time exceeded",
+      "go_home": "Go to home"
+    },
+    "schedule": {
+      "bedtime_mode": "Bedtime mode",
+      "locked_message": "App locked by schedule"
+    },
+    "report": {
+      "report_content": "Report content",
+      "report_sent": "Report sent",
+      "mark_reviewed": "Mark as reviewed",
+      "dismiss": "Dismiss report"
+    },
+    "notification": {
+      "toggle": "Notification {type}: {state}"
+    }
+  },
   "delete_account": {
     "title": "Danger Zone",
     "description": "Delete all data associated with this account. This action is permanent and cannot be undone.",

@@ -69,10 +69,21 @@ export function ParentalTour({ locale, onComplete, colors }: ParentalTourProps) 
           <Text style={styles.message}>{t(step.messageKey, locale)}</Text>
 
           <View style={styles.buttons}>
-            <TouchableOpacity onPress={handleDone}>
+            <TouchableOpacity
+              onPress={handleDone}
+              accessible={true}
+              accessibilityLabel={t('a11y.onboarding.skip', locale)}
+              accessibilityRole="button"
+            >
               <Text style={styles.skipText}>{t('tour.skip', locale)}</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.nextButton} onPress={handleNext}>
+            <TouchableOpacity
+              style={styles.nextButton}
+              onPress={handleNext}
+              accessible={true}
+              accessibilityLabel={currentStep < TOUR_STEPS.length - 1 ? t('a11y.common.next', locale) : t('a11y.common.close', locale)}
+              accessibilityRole="button"
+            >
               <Text style={styles.nextText}>
                 {currentStep < TOUR_STEPS.length - 1
                   ? t('tour.next', locale)

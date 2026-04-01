@@ -210,6 +210,10 @@ export function CollectionScreen() {
         <TouchableOpacity
           style={[styles.tab, activeTab === 'stickers' && styles.tabActive]}
           onPress={() => setActiveTab('stickers')}
+          accessible={true}
+          accessibilityLabel={t('a11y.collection.tab_stickers', locale)}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'stickers' }}
         >
           <Text style={[styles.tabText, activeTab === 'stickers' && styles.tabTextActive]}>
             🎴 {t('collection.tab_stickers', locale)}
@@ -218,6 +222,10 @@ export function CollectionScreen() {
         <TouchableOpacity
           style={[styles.tab, activeTab === 'achievements' && styles.tabActive]}
           onPress={() => setActiveTab('achievements')}
+          accessible={true}
+          accessibilityLabel={t('a11y.collection.tab_achievements', locale)}
+          accessibilityRole="tab"
+          accessibilityState={{ selected: activeTab === 'achievements' }}
         >
           <Text style={[styles.tabText, activeTab === 'achievements' && styles.tabTextActive]}>
             🏆 {t('collection.achievements', locale)} ({unlockedCount}/{totalAchievements})
@@ -238,6 +246,10 @@ export function CollectionScreen() {
             <TouchableOpacity
               style={[styles.filterChip, sportFilter === 'all' && styles.filterChipActive]}
               onPress={() => setSportFilter('all')}
+              accessible={true}
+              accessibilityLabel={t('a11y.filters.all_filter', locale)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: sportFilter === 'all' }}
             >
               <Text
                 style={[
@@ -253,6 +265,10 @@ export function CollectionScreen() {
                 key={sport}
                 style={[styles.filterChip, sportFilter === sport && styles.filterChipActive]}
                 onPress={() => setSportFilter(sport)}
+                accessible={true}
+                accessibilityLabel={t('a11y.filters.sport_filter', locale, { sport: getSportLabel(sport, locale) })}
+                accessibilityRole="button"
+                accessibilityState={{ selected: sportFilter === sport }}
               >
                 <Text
                   style={[
@@ -277,6 +293,9 @@ export function CollectionScreen() {
                     style={[styles.stickerCard, !owned && styles.stickerLocked]}
                     activeOpacity={0.7}
                     onPress={() => haptic('light')}
+                    accessible={true}
+                    accessibilityLabel={t(owned ? 'a11y.collection.sticker' : 'a11y.collection.sticker_locked', locale, { name: sticker.name, rarity: t(`sticker.rarity.${sticker.rarity}`, locale) })}
+                    accessibilityRole="button"
                   >
                     <Text style={styles.stickerEmoji}>{sportToEmoji(sticker.sport)}</Text>
                     <Text style={styles.stickerName} numberOfLines={1}>
@@ -310,6 +329,7 @@ export function CollectionScreen() {
               <View
                 key={achievement.id}
                 style={[styles.achievementCard, !unlocked && styles.achievementLocked]}
+                accessibilityLabel={t('a11y.collection.achievement', locale, { name: t(achievement.nameKey, locale), state: unlocked ? t('collection.obtained', locale) : t('collection.locked', locale) })}
               >
                 <Text style={styles.achievementIcon}>{achievement.icon || '🏆'}</Text>
                 <View style={styles.achievementInfo}>

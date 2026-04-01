@@ -1,0 +1,5 @@
+Tab stickers label: FOUND
+Tab achievements label: FOUND
+Sticker card label: FOUND
+Achievement card label: FOUND
+Tab role: FOUND

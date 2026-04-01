@@ -72,4 +72,26 @@ describe('ParentalControlScreen', () => {
     expect(source).toContain('/data');
     expect(source).toContain('DELETE');
   });
+
+  describe('accessibility', () => {
+    it('PIN verification button has a11y label and role', async () => {
+      const { ParentalControlScreen } = await import('../ParentalControl');
+      const source = ParentalControlScreen.toString();
+      expect(source).toContain('a11y.parental.verify_pin');
+      expect(source).toContain('a11y.parental.setup_pin');
+    });
+
+    it('tab buttons have tab role and selected state', async () => {
+      const { ParentalControlScreen } = await import('../ParentalControl');
+      const source = ParentalControlScreen.toString();
+      expect(source).toContain("accessibilityRole");
+      expect(source).toContain('"tab"');
+    });
+
+    it('format toggles have a11y labels', async () => {
+      const { ParentalControlScreen } = await import('../ParentalControl');
+      const source = ParentalControlScreen.toString();
+      expect(source).toContain('a11y.parental.toggle_format');
+    });
+  });
 });

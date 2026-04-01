@@ -622,6 +622,177 @@
     "last_updated": "Última actualización: {date}",
     "back": "Volver"
   },
+  "a11y": {
+    "news_card": {
+      "save": "Guardar noticia",
+      "unsave": "Quitar de guardados",
+      "save_hint": "Toca dos veces para guardar esta noticia",
+      "read": "Leer: {title}",
+      "share": "Compartir noticia",
+      "trending": "Noticia en tendencia"
+    },
+    "filters": {
+      "sport_filter": "Filtrar por {sport}",
+      "all_filter": "Mostrar todos los deportes"
+    },
+    "quiz": {
+      "answer_option": "Opcion {index}: {text}",
+      "answer_correct": "Correcto: {text}",
+      "answer_incorrect": "Incorrecto: {text}",
+      "start_quiz": "Empezar quiz",
+      "next_question": "Siguiente pregunta",
+      "score": "Puntuacion: {score}"
+    },
+    "reels": {
+      "play_video": "Reproducir video: {title}",
+      "pause_video": "Pausar video",
+      "like_video": "Me gusta",
+      "unlike_video": "Quitar me gusta",
+      "share_video": "Compartir video"
+    },
+    "parental": {
+      "pin_digit": "Digito {n} de {total}",
+      "toggle_format": "{format}: {state}",
+      "time_slider": "Limite de tiempo: {value}",
+      "schedule_start": "Hora de inicio: {hour}",
+      "schedule_end": "Hora de fin: {hour}",
+      "verify_pin": "Verificar PIN",
+      "setup_pin": "Configurar PIN",
+      "toggle_sport": "Deporte {sport}: {state}",
+      "sport_allowed": "Permitido",
+      "sport_blocked": "Bloqueado",
+      "preview_feed": "Vista previa del feed de {name}",
+      "select_time_limit": "Limite: {time}",
+      "no_time_limit": "Sin limite",
+      "toggle_schedule": "Activar horario de uso",
+      "decrease_start": "Reducir hora de inicio",
+      "increase_start": "Aumentar hora de inicio",
+      "decrease_end": "Reducir hora de fin",
+      "increase_end": "Aumentar hora de fin",
+      "select_timezone": "Zona horaria: {tz}",
+      "toggle_digest": "Activar resumen semanal",
+      "select_digest_day": "Enviar resumen el {day}",
+      "download_pdf": "Descargar resumen en PDF",
+      "select_theme": "Tema: {mode}",
+      "change_pin_button": "Confirmar cambio de PIN",
+      "close_preview": "Cerrar vista previa",
+      "news_limit": "Limite noticias: {time}",
+      "reels_limit": "Limite reels: {time}",
+      "quiz_limit": "Limite quiz: {time}"
+    },
+    "navigation": {
+      "tab_news": "Pestana de noticias",
+      "tab_reels": "Pestana de reels",
+      "tab_quiz": "Pestana de quiz",
+      "tab_collection": "Pestana de coleccion",
+      "tab_team": "Pestana de mi equipo",
+      "tab_parents": "Pestana de padres",
+      "language_toggle": "Cambiar idioma a {language}",
+      "theme_toggle": "Cambiar tema"
+    },
+    "onboarding": {
+      "select_sport": "Seleccionar {sport}",
+      "deselect_sport": "Deseleccionar {sport}",
+      "select_team": "Seleccionar equipo: {team}",
+      "step_indicator": "Paso {current} de {total}",
+      "next": "Siguiente",
+      "skip": "Saltar",
+      "select_age": "Seleccionar rango de edad {range}",
+      "toggle_source": "Fuente {source}: {state}",
+      "toggle_format": "Formato {format}: {state}",
+      "select_time_limit": "Limite de tiempo: {time}",
+      "no_limit": "Sin limite de tiempo"
+    },
+    "age_gate": {
+      "adult_option": "Soy adulto",
+      "teen_option": "Soy adolescente",
+      "child_option": "Soy menor de 13",
+      "consent_checkbox": "Casilla de consentimiento: {state}",
+      "go_back": "Volver al paso anterior",
+      "continue_button": "Continuar",
+      "set_pin_button": "Continuar para crear PIN"
+    },
+    "legal": {
+      "open_privacy": "Abrir politica de privacidad",
+      "open_terms": "Abrir terminos de servicio"
+    },
+    "collection": {
+      "sticker": "Sticker {name}, rareza {rarity}",
+      "sticker_locked": "Sticker {name} bloqueado",
+      "achievement": "Logro {name}: {state}",
+      "tab_stickers": "Pestana de stickers",
+      "tab_achievements": "Pestana de logros"
+    },
+    "mission": {
+      "claim_reward": "Reclamar recompensa",
+      "progress": "{progress} de {target} completado"
+    },
+    "common": {
+      "loading": "Cargando",
+      "retry": "Intentar de nuevo",
+      "back": "Volver",
+      "next": "Siguiente",
+      "close": "Cerrar",
+      "search": "Buscar",
+      "clear_search": "Limpiar busqueda",
+      "offline_banner": "Sin conexion",
+      "error_restart": "Reiniciar aplicacion",
+      "go_home": "Ir al inicio",
+      "refresh": "Actualizar"
+    },
+    "catalog": {
+      "toggle_source": "Fuente {source}: {state}",
+      "source_enabled": "Activada",
+      "source_disabled": "Desactivada"
+    },
+    "auth": {
+      "email_input": "Campo de correo electronico",
+      "password_input": "Campo de contrasena",
+      "name_input": "Campo de nombre",
+      "login_button": "Iniciar sesion",
+      "register_button": "Crear cuenta",
+      "google_signin": "Iniciar sesion con Google",
+      "apple_signin": "Iniciar sesion con Apple",
+      "anonymous_continue": "Continuar sin cuenta"
+    },
+    "team": {
+      "stats_value": "{stat}: {value}",
+      "select_team": "Seleccionar equipo: {team}",
+      "next_match": "Proximo partido",
+      "recent_results": "Ultimos resultados"
+    },
+    "video": {
+      "play": "Reproducir",
+      "pause": "Pausar",
+      "mute": "Silenciar",
+      "unmute": "Activar sonido"
+    },
+    "streak": {
+      "counter": "Racha de {days} dias",
+      "fire_emoji": "Fuego, racha activa"
+    },
+    "error": {
+      "crash_emoji": "Error inesperado",
+      "restart_app": "Reiniciar aplicacion"
+    },
+    "limit": {
+      "time_exceeded": "Tiempo excedido",
+      "go_home": "Ir al inicio"
+    },
+    "schedule": {
+      "bedtime_mode": "Modo de descanso",
+      "locked_message": "Aplicacion bloqueada por horario"
+    },
+    "report": {
+      "report_content": "Reportar contenido",
+      "report_sent": "Reporte enviado",
+      "mark_reviewed": "Marcar como revisado",
+      "dismiss": "Descartar reporte"
+    },
+    "notification": {
+      "toggle": "Notificacion {type}: {state}"
+    }
+  },
   "delete_account": {
     "title": "Zona de peligro",
     "description": "Eliminar todos los datos asociados a esta cuenta. Esta acción es permanente y no se puede deshacer.",

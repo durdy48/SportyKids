@@ -139,6 +139,7 @@ export function MissionCard({ userId, locale }: MissionCardProps) {
         <button
           onClick={handleClaim}
           disabled={claiming}
+          aria-label="Claim mission reward"
           className="w-full py-3 rounded-xl text-sm font-bold bg-yellow-400 text-yellow-900 hover:bg-yellow-500 transition-colors animate-pulse disabled:opacity-60"
         >
           {claiming ? t('buttons.loading', locale) : t('mission.claim', locale)}
@@ -167,7 +168,7 @@ export function MissionCard({ userId, locale }: MissionCardProps) {
       </div>
       {/* Progress bar */}
       <div className="space-y-1">
-        <div className="w-full bg-[var(--color-border)] rounded-full h-2">
+        <div className="w-full bg-[var(--color-border)] rounded-full h-2" role="progressbar" aria-valuenow={progressPercent} aria-valuemin={0} aria-valuemax={100} aria-label="Mission progress">
           <div
             className="bg-[var(--color-blue)] h-2 rounded-full transition-all"
             style={{ width: `${progressPercent}%` }}

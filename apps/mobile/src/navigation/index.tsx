@@ -48,6 +48,9 @@ function LanguageToggle() {
     <TouchableOpacity
       onPress={() => setLocale(nextLocale)}
       style={{ marginRight: 12, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 8, paddingVertical: 4, borderRadius: 8, backgroundColor: colors.border }}
+      accessible={true}
+      accessibilityLabel={t('a11y.navigation.language_toggle', locale, { language: nextLocale === 'es' ? 'Español' : 'English' })}
+      accessibilityRole="button"
     >
       <Text style={{ fontSize: 16 }}>{flag}</Text>
       <Text style={{ fontSize: 12, fontWeight: '600', color: colors.muted, marginLeft: 4 }}>{locale.toUpperCase()}</Text>
@@ -78,6 +81,7 @@ function MainTabs() {
         component={GuardedHomeFeed}
         options={{
           title: t('nav.news', locale),
+          tabBarAccessibilityLabel: t('a11y.navigation.tab_news', locale),
           tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>📰</Text>,
         }}
       />
@@ -88,6 +92,7 @@ function MainTabs() {
           title: t('nav.reels', locale),
           headerStyle: { backgroundColor: colors.background },
           headerTintColor: colors.text,
+          tabBarAccessibilityLabel: t('a11y.navigation.tab_reels', locale),
           tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>🎬</Text>,
         }}
       />
@@ -96,6 +101,7 @@ function MainTabs() {
         component={GuardedQuiz}
         options={{
           title: t('nav.quiz', locale),
+          tabBarAccessibilityLabel: t('a11y.navigation.tab_quiz', locale),
           tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>🧠</Text>,
         }}
       />
@@ -104,6 +110,7 @@ function MainTabs() {
         component={GuardedCollection}
         options={{
           title: t('nav.collection', locale),
+          tabBarAccessibilityLabel: t('a11y.navigation.tab_collection', locale),
           tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>🏆</Text>,
         }}
       />
@@ -112,6 +119,7 @@ function MainTabs() {
         component={GuardedFavoriteTeam}
         options={{
           title: t('nav.my_team', locale),
+          tabBarAccessibilityLabel: t('a11y.navigation.tab_team', locale),
           tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>⚽</Text>,
         }}
       />
@@ -120,6 +128,7 @@ function MainTabs() {
         component={ParentalControlScreen}
         options={{
           title: t('nav.parents', locale),
+          tabBarAccessibilityLabel: t('a11y.navigation.tab_parents', locale),
           tabBarIcon: ({ color: _color }) => <Text style={{ fontSize: 20 }}>🔒</Text>,
         }}
       />

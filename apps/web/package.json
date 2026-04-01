@@ -8,7 +8,8 @@
     "start": "next start",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:coverage": "vitest run --coverage"
+    "test:coverage": "vitest run --coverage",
+    "test:e2e": "playwright test"
   },
   "dependencies": {
     "@sportykids/shared": "*",
@@ -32,6 +33,7 @@
     "postcss": "^8.4.31",
     "tailwindcss": "^4.2.2",
     "typescript": "^5.9.3",
-    "vitest": "^4.1.2"
+    "vitest": "^4.1.2",
+    "@playwright/test": "^1.52.0"
   }
 }

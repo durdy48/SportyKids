@@ -45,9 +45,9 @@ export function LimitReached({ type = 'limit_reached', locale, colors, allowedHo
   }
 
   return (
-    <View style={[s.container, { backgroundColor: colors.background }]}>
-      <Text style={s.emoji}>{emoji}</Text>
-      <Text style={[s.title, { color: colors.text }]}>{t(keys.title, locale)}</Text>
+    <View style={[s.container, { backgroundColor: colors.background }]} accessibilityRole="alert" accessibilityLabel={t('a11y.limit.time_exceeded', locale)}>
+      <Text style={s.emoji} accessibilityLabel={t('a11y.limit.time_exceeded', locale)}>{emoji}</Text>
+      <Text style={[s.title, { color: colors.text }]} accessibilityRole="header">{t(keys.title, locale)}</Text>
       <Text style={[s.message, { color: colors.muted }]}>{message}</Text>
     </View>
   );
