@@ -37,8 +37,8 @@ gantt
     PRD3 Parental Trust + Missions    :done, td3, after td2, 1d
     PRD4 OAuth + UX Polish            :done, td4, after td3, 1d
 
-    section Next
-    Internal test + Closed beta     :active, f6, after td4, 14d
+    section Phase 5
+    Beta Testing + Store Launch     :active, f5, after td4, 28d
 ```
 
 ## Phase 5 Differentiators -- Milestones
@@ -294,11 +294,25 @@ The Technical Debt Backlog addressed systemic issues across 4 PRDs:
 | ~~Dark mode~~ | ~~Low~~ | Done (Tech Debt PRD3) | ~~No dark mode support~~ — 3 modes (system/light/dark) |
 | ~~Structured logging~~ | ~~Low~~ | Done (Tech Debt PRD1) | ~~88 console.* calls~~ — Pino 9 structured JSON logging |
 
+## Phase 5: Beta Testing & Store Launch (in progress)
+
+- Staging environment (`fly.staging.toml`) with dedicated Fly.io app and PostgreSQL
+- Setup script (`scripts/setup-staging.sh`) for one-command staging provisioning
+- App version bumped to 1.0.0 with iOS buildNumber and Android versionCode
+- EAS preview channel points to staging API (`sportykids-api-staging.fly.dev`)
+- Store metadata completed with supportUrl, privacyPolicyUrl, ageRating, whatsNew, shortDescription
+- Screenshot generation script (`scripts/generate-screenshots.mjs`) for iOS and Android viewports
+- Beta testing guide for 2 families (3-week protocol with questionnaires)
+- Store review notes prepared for Apple and Google reviewers
+- Validation checklist covering infrastructure, builds, metadata, beta, and submission
+
 ## Next steps (post-Phase 5)
 
 ### Short term (1-2 weeks)
-- [ ] Internal test with 5-10 families
-- [ ] Fix reported bugs
+- [ ] Deploy staging environment and seed data
+- [ ] Distribute beta builds to 2 families via TestFlight and Google Play Internal Testing
+- [ ] Run 3-week beta protocol and collect feedback
+- [ ] Submit to Apple App Store and Google Play Store
 - [x] Automated tests — 526 tests across 63 files (Tech Debt PRD1)
 - [x] PIN lockout — 5 failed attempts = 15-min lockout (Tech Debt PRD3)
 - [x] Rate limiting — 5-tier rate limiting (Tech Debt PRD2)

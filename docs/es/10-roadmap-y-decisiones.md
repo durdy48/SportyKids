@@ -37,8 +37,8 @@ gantt
     PRD3 Parental Trust + Missions    :done, td3, after td2, 1d
     PRD4 OAuth + UX Polish            :done, td4, after td3, 1d
 
-    section Post-lanzamiento
-    Test interno + Beta cerrada   :active, beta, after td4, 14d
+    section Fase 5
+    Beta Testing + Store Launch   :active, f5, after td4, 28d
 ```
 
 ## Fase 5: Diferenciadores (6 milestones completados)
@@ -286,11 +286,25 @@ El Backlog de Deuda Tecnica abordo problemas sistemicos en 4 PRDs:
 | ~~Modo oscuro~~ | ~~Baja~~ | ~~Sin modo oscuro~~ — **Resuelto** (Tech Debt PRD3: 3 modos system/light/dark) |
 | ~~Logging estructurado~~ | ~~Baja~~ | ~~88 console.* calls~~ — **Resuelto** (Tech Debt PRD1: Pino 9 JSON logging) |
 
+## Fase 5: Beta Testing & Store Launch (en progreso)
+
+- Entorno staging (`fly.staging.toml`) con app Fly.io dedicada y PostgreSQL
+- Script de setup (`scripts/setup-staging.sh`) para provisionar staging con un comando
+- Version de la app actualizada a 1.0.0 con iOS buildNumber y Android versionCode
+- Canal preview de EAS apunta a la API de staging (`sportykids-api-staging.fly.dev`)
+- Metadata de las tiendas completada con supportUrl, privacyPolicyUrl, ageRating, whatsNew, shortDescription
+- Script de generacion de screenshots (`scripts/generate-screenshots.mjs`) para viewports iOS y Android
+- Guia de beta testing para 2 familias (protocolo de 3 semanas con cuestionarios)
+- Notas de review preparadas para revisores de Apple y Google
+- Checklist de validacion cubriendo infraestructura, builds, metadata, beta y submission
+
 ## Proximos pasos (post-Fase 5)
 
 ### Corto plazo (1-2 semanas)
-- [ ] Test interno con 5-10 familias
-- [ ] Corregir bugs reportados
+- [ ] Desplegar entorno staging y sembrar datos
+- [ ] Distribuir builds beta a 2 familias via TestFlight y Google Play Internal Testing
+- [ ] Ejecutar protocolo beta de 3 semanas y recoger feedback
+- [ ] Enviar a Apple App Store y Google Play Store
 - [x] Tests automatizados — 526 tests en 63 archivos (Tech Debt PRD1)
 - [x] Rate limiting — 5 niveles con variables de entorno (Tech Debt PRD2)
 - [x] CI/CD pipeline — GitHub Actions (Tech Debt PRD4)

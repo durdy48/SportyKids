@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **SportyKids** — app de noticias deportivas personalizada para niños (6-14 años) con control parental, feeds RSS configurables, vídeos cortos (Reels) y quizzes interactivos.
 
-**Estado**: MVP Fases 0-4 completadas. Fase 3 (Store Assets & Deployment) completada. Pendiente Fase 5 (test con familias).
+**Estado**: MVP Fases 0-4 completadas. Fase 5 (Beta Testing & Store Launch) en progreso — staging, metadata, beta guide, review notes listos.
 
 ## Stack tecnológico
 
@@ -336,7 +336,7 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 | 4.5 | ✅ Completada | Legal & Compliance (age gate, COPPA/GDPR-K consent, data deletion, privacy/terms pages) |
 | Store | ✅ Completada | Store Assets & Deployment (assets, dynamic API_BASE, Dockerfile, Fly.io, CI/CD deploy, EAS config, ASO metadata, splash screen) |
 | A11y | ✅ Completada | Accessibility & Production Quality (mobile a11y 27 files, web a11y 25 files, Sentry mobile, Playwright E2E 5 flows, i18n a11y namespace) |
-| 5 | 🔲 Pendiente | Test interno + beta cerrada (5-10 familias) |
+| 5 | 🔄 En progreso | Beta Testing & Store Launch — staging env, store metadata, beta guide, review notes |
 
 ## Fuentes RSS
 
@@ -451,6 +451,10 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 - **Mobile builds**: `apps/mobile/eas.json` — EAS Build profiles (development, preview, production) con channels y `appVersionSource: "remote"`
 - **Asset generation**: `npm run generate-assets --workspace=apps/mobile` — genera placeholders (icon, splash, adaptive-icon, favicon, feature-graphic) via sharp
 - **ASO metadata**: `apps/mobile/store-metadata/{en,es}.json` — nombre, descripción, keywords para App Store y Google Play
+- **Staging API**: Fly.io (`sportykids-api-staging.fly.dev`), región Madrid. `fly.staging.toml` en raíz. Setup: `bash scripts/setup-staging.sh`. CACHE_PROVIDER=memory, min_machines_running=0 (cost saving).
+- **Store screenshots**: `node scripts/generate-screenshots.mjs` — captura 5 pantallas para iOS (1179x2556) y Android (1080x2400) via Playwright. Requiere `npm run dev:web`.
+- **Beta testing**: `specs/mvp-to-product-5/beta-guide.md` — protocolo de 3 semanas para 2 familias con cuestionarios.
+- **Store review notes**: `specs/mvp-to-product-5/review-notes.md` — notas preparadas para revisores de Apple y Google.
 
 ## Entorno de desarrollo — notas
 

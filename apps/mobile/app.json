@@ -2,7 +2,7 @@
   "expo": {
     "name": "SportyKids",
     "slug": "sportykids",
-    "version": "0.1.0",
+    "version": "1.0.0",
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
@@ -14,14 +14,19 @@
     },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.sportykids.app"
+      "bundleIdentifier": "com.sportykids.app",
+      "buildNumber": "1",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
         "foregroundImage": "./src/assets/adaptive-icon.png",
         "backgroundColor": "#2563EB"
       },
-      "package": "com.sportykids.app"
+      "package": "com.sportykids.app",
+      "versionCode": 1
     },
     "web": {
       "favicon": "./src/assets/favicon.png"

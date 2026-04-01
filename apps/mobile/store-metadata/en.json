@@ -5,5 +5,12 @@
   "keywords": "kids sports news,safe news for kids,sports quiz,parental controls,football kids,sports reels",
   "promotionalText": "Daily sports quizzes and collectible stickers are here!",
   "category": "News",
-  "secondaryCategory": "Kids"
+  "secondaryCategory": "Kids",
+  "supportUrl": "https://sportykids-api.fly.dev/api/health",
+  "privacyPolicyUrl": "https://sportykids.app/privacy",
+  "marketingUrl": "",
+  "ageRating": "4+",
+  "copyright": "2026 SportyKids",
+  "whatsNew": "First public release. Safe sports news for kids.",
+  "shortDescription": "Safe sports news for kids aged 6-14"
 }

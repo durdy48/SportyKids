@@ -16,7 +16,7 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_BASE": "https://sportykids-api-preview.fly.dev/api"
+        "EXPO_PUBLIC_API_BASE": "https://sportykids-api-staging.fly.dev/api"
       },
       "ios": {
         "simulator": false
@@ -43,11 +43,15 @@
       "ios": {
         "appleId": "APPLE_ID_HERE",
         "ascAppId": "ASC_APP_ID_HERE",
-        "appleTeamId": "APPLE_TEAM_ID_HERE"
+        "appleTeamId": "APPLE_TEAM_ID_HERE",
+        "_docs_appleId": "Your Apple ID email used for App Store Connect",
+        "_docs_ascAppId": "Found in App Store Connect > App > General > App Information (numeric ID e.g. 6741234567)",
+        "_docs_appleTeamId": "Found in https://developer.apple.com/account > Membership (10-char alphanumeric e.g. ABCD1234EF). Set these AFTER creating the app in App Store Connect."
       },
       "android": {
         "serviceAccountKeyPath": "./google-service-account.json",
-        "track": "internal"
+        "track": "internal",
+        "_docs_setup": "1) Create Google Cloud service account with Service Account User role. 2) In Google Play Console > Setup > API access, link the service account. 3) Grant Release manager permission. 4) Download JSON key as apps/mobile/google-service-account.json. 5) google-service-account.json is in .gitignore. Track options: internal -> alpha -> beta -> production."
       }
     }
   }
