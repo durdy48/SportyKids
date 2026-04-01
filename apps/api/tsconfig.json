@@ -4,11 +4,13 @@
     "module": "CommonJS",
     "moduleResolution": "node",
     "strict": true,
+    "skipLibCheck": true,
     "outDir": "dist",
     "rootDir": "src",
     "esModuleInterop": true,
     "resolveJsonModule": true
   },
   "include": ["src"],
+  "exclude": ["src/**/*.test.ts", "src/**/*.integration.test.ts"],
   "references": [{ "path": "../../packages/shared" }]
 }

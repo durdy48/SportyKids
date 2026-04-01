@@ -7,6 +7,17 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 ## [Unreleased]
 
 ### Added
+- Asset generation script (`generate-assets.mjs`) — produces 5 PNG assets (icon, adaptive-icon, splash-icon, favicon, feature-graphic) via sharp SVG overlay with self-validation
+- Dynamic `API_BASE` resolution — fallback chain: env var → EAS channel → debugger host → localhost; exported `resolveApiBase()` for testability
+- Multi-stage production Dockerfile for API — deps/builder/runner stages, non-root user, OpenSSL for Prisma, PORT 8080
+- Fly.io deployment configuration (`fly.toml`) — Madrid region, health check, auto-stop/start, Prisma migrate as release command
+- CI/CD deploy job in GitHub Actions — automated `fly deploy` on push to main with concurrency protection
+- EAS Build & Submit config — channels (development/preview/production), env vars, autoIncrement, appVersionSource remote, submit placeholders
+- Store account setup documentation in EN and ES (`docs/en/11-store-deployment.md`, `docs/es/11-despliegue-tiendas.md`)
+- ASO metadata in EN and ES (`store-metadata/{en,es}.json`) — name, subtitle, description, keywords, category
+- Splash screen integration with `expo-splash-screen` — `preventAutoHideAsync` before mount, `hideAsync` on root layout
+- Mobile `.env.example` template for environment variables
+- 9 unit tests for `resolveApiBase()` covering all fallback paths
 - React Native Error Boundary — class component wrapping entire app, kid-friendly crash screen with restart button, Sentry reporting via dynamic import
 - JWT tokens in `expo-secure-store` — encrypted storage (Keychain/Keystore) with AsyncStorage fallback and transparent migration on startup
 - Centralized child-safe YouTube embed utilities in shared package (`buildYouTubeEmbedUrl`, `extractYouTubeVideoId`, `getYouTubePlayerVars`) with `sandbox` attribute on web iframes
@@ -19,6 +30,10 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 - `crash` entry in `KID_FRIENDLY_ERRORS` constants
 
 ### Changed
+- `apps/mobile/src/config.ts` replaced hardcoded local IP with environment-aware `resolveApiBase()` function
+- `apps/mobile/app.json` updated with icon, splash, adaptiveIcon, and favicon asset references
+- `apps/mobile/eas.json` restructured with channels, env vars, autoIncrement, and submit placeholders
+- `.gitignore` extended with mobile `.env` and `google-service-account.json` exclusions
 - Mobile API client uses `authFetch()` instead of bare `fetch()` for all API calls
 - Web VideoPlayer sets `allowFullScreen={false}` on all iframes (not just YouTube)
 - Mobile VideoPlayer uses centralized `getYouTubePlayerVars()` from shared package

@@ -6,12 +6,25 @@
     "orientation": "portrait",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
+    "icon": "./src/assets/icon.png",
+    "splash": {
+      "image": "./src/assets/splash-icon.png",
+      "backgroundColor": "#F8FAFC",
+      "resizeMode": "contain"
+    },
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.sportykids.app"
     },
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./src/assets/adaptive-icon.png",
+        "backgroundColor": "#2563EB"
+      },
       "package": "com.sportykids.app"
+    },
+    "web": {
+      "favicon": "./src/assets/favicon.png"
     }
   }
 }

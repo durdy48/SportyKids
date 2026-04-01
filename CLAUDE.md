@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **SportyKids** — app de noticias deportivas personalizada para niños (6-14 años) con control parental, feeds RSS configurables, vídeos cortos (Reels) y quizzes interactivos.
 
-**Estado**: MVP Fases 0-4 completadas. Pendiente Fase 5 (test con familias).
+**Estado**: MVP Fases 0-4 completadas. Fase 3 (Store Assets & Deployment) completada. Pendiente Fase 5 (test con familias).
 
 ## Stack tecnológico
 
@@ -36,10 +36,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 | Analytics | PostHog (opt-in) | Privacy-first analytics |
 | Video | expo-video (mobile) | Native MP4 player |
 | Rate Limiting | express-rate-limit 7 | IP-based tiered rate limiting |
+| Splash Screen | expo-splash-screen (mobile) | App launch splash |
 | Secure Storage | expo-secure-store (mobile) | JWT token encryption |
 | Haptics | expo-haptics (mobile) | Tactile feedback |
 | Logging | Pino 9 | Structured JSON logging |
 | Linting | ESLint 9 + Prettier | Flat config |
+| Asset Gen | sharp (devDep, mobile) | Placeholder icon/splash generation |
+| Deploy | Fly.io + Docker | Production API hosting (Madrid) |
 | OAuth | Passport.js + google-auth-library | Google & Apple Sign In |
 | Shared | @sportykids/shared | Tipos, constantes, utils, i18n |
 
@@ -81,6 +84,8 @@ sportykids/
 │   └── i18n/            # es.json, en.json, t(), getSportLabel(), getAgeRangeLabel()
 ├── apps/api/
 │   ├── prisma/          # schema.prisma, migrations/, seed.ts
+│   ├── Dockerfile       # Multi-stage production Docker image
+│   ├── .dockerignore    # Docker build exclusions
 │   └── src/
 │       ├── routes/      # news.ts, reels.ts, quiz.ts, users.ts, parents.ts, reports.ts, missions.ts, auth.ts, admin.ts
 │       ├── services/    # aggregator.ts (RSS), video-aggregator.ts (YouTube video RSS),
@@ -127,7 +132,11 @@ sportykids/
 ├── apps/mobile/
 │   ├── App.tsx           # Entry point (registerRootComponent)
 │   ├── metro.config.js   # Monorepo-aware Metro config (disableHierarchicalLookup)
-│   ├── app.json          # Expo config
+│   ├── app.json          # Expo config (icon, splash, adaptiveIcon, favicon)
+│   ├── eas.json          # EAS Build/Submit config with channels
+│   ├── .env.example      # Mobile env var template
+│   ├── scripts/          # generate-assets.mjs (sharp-based placeholder assets)
+│   ├── store-metadata/   # en.json, es.json (ASO metadata)
 │   └── src/
 │       ├── App.tsx        # Root component (SafeAreaProvider + UserProvider + Navigation)
 │       ├── screens/       # HomeFeed, Reels, Quiz, FavoriteTeam, Onboarding, ParentalControl, Collection, Login, Register, RssCatalog, AgeGate
@@ -135,6 +144,7 @@ sportykids/
 │       │                  # ErrorState, ErrorBoundary, OfflineBanner, VideoPlayer, ParentalTour
 │       ├── navigation/    # Bottom tabs (6): News, Reels, Quiz, Collection, My Team, Parents + Stack (RssCatalog)
 │       └── lib/           # api.ts, user-context.tsx, favorites.ts, auth.ts, push-notifications.ts, haptics.ts, offline-cache.ts, theme.ts (dark mode colors), secure-storage.ts (expo-secure-store abstraction)
+├── fly.toml              # Fly.io deployment config (API → sportykids-api, region: mad)
 ├── eslint.config.js      # ESLint 9 flat config (monorepo root)
 ├── .prettierrc           # Prettier config
 └── docs/
@@ -324,6 +334,7 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 | 3 | ✅ Completada | Reels (10 seed), Quiz (15 preguntas, sistema de puntos) |
 | 4 | ✅ Completada | Control parental (PIN, formatos, actividad semanal) |
 | 4.5 | ✅ Completada | Legal & Compliance (age gate, COPPA/GDPR-K consent, data deletion, privacy/terms pages) |
+| Store | ✅ Completada | Store Assets & Deployment (assets, dynamic API_BASE, Dockerfile, Fly.io, CI/CD deploy, EAS config, ASO metadata, splash screen) |
 | 5 | 🔲 Pendiente | Test interno + beta cerrada (5-10 familias) |
 
 ## Fuentes RSS
@@ -356,7 +367,7 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 - ~~Reels son placeholders~~ → Native video player (expo-video) para MP4, YouTube/Instagram/TikTok fallback. Video Aggregator importa reels automáticamente de 20+ canales YouTube
 - ~~Quiz con preguntas estáticas del seed~~ → M3 implementado: quiz dinámico con generación AI diaria (cron 06:00 UTC) + fallback a seed
 - ~~SQLite sin plan de migración~~ → Migrado a PostgreSQL 16. Native types (String[], Json) para arrays y objetos. Composite indexes en NewsItem, Reel y ActivityLog. Trending endpoint usa `groupBy` nativo.
-- ~~`API_BASE` hardcodeado en cada screen del mobile~~ → Centralizado en `apps/mobile/src/config.ts`
+- ~~`API_BASE` hardcodeado en cada screen del mobile~~ → Centralizado en `apps/mobile/src/config.ts` con fallback chain: env var → EAS channel → debugger host → localhost
 - ~~Sin CI/CD~~ → GitHub Actions pipeline (lint, typecheck, test, build) + EAS Build config
 - ~~Sin error monitoring~~ → Sentry integration (opt-in) + PostHog analytics (opt-in)
 - ~~InMemoryCache es single-process~~ → CacheProvider interface with InMemoryCache (default) and RedisCache (optional via `CACHE_PROVIDER=redis`)
@@ -383,6 +394,13 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 - ~~JWT tokens in AsyncStorage (unencrypted)~~ → expo-secure-store with auto-migration and AsyncStorage fallback. `authFetch()` wrapper in mobile API client sends Authorization header and auto-refreshes expired tokens.
 - ~~YouTube embed params scattered across web/mobile~~ → Centralized child-safe YouTube utils in shared package, iframe sandbox on web
 - ~~Content moderation fails open in production~~ → Fail-closed by default in production (content stays pending), override via MODERATION_FAIL_OPEN
+- ~~No app icon, splash screen, or store assets~~ → Generated via sharp script (`npm run generate-assets`). Placeholder "SK" branding.
+- ~~API_BASE hardcoded to local IP~~ → Dynamic fallback chain: env var → EAS channel → debugger host → localhost
+- ~~No Dockerfile or production server~~ → Multi-stage Dockerfile, Fly.io deployment (Madrid), non-root user
+- ~~No CD pipeline~~ → GitHub Actions deploys to Fly.io on push to main
+- ~~EAS submit credentials empty~~ → Structured with channels, autoIncrement, submit placeholders ready
+- ~~No ASO metadata~~ → `store-metadata/{en,es}.json` with name, description, keywords
+- ~~No splash screen integration~~ → expo-splash-screen with preventAutoHideAsync/hideAsync lifecycle
 
 ## Variables de entorno
 
@@ -413,6 +431,8 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 | `APPLE_KEY_ID` | No | Apple private key ID |
 | `APPLE_PRIVATE_KEY` | No | Apple .p8 private key contents |
 | `MODERATION_FAIL_OPEN` | No | `true` to auto-approve content when AI moderation fails (default: fail-closed in production) |
+| `EXPO_PUBLIC_API_BASE` | No | Override API base URL in mobile builds (auto-detected from EAS channel if absent) |
+| `FLY_API_TOKEN` | No (CI) | Fly.io deploy token for CI/CD (GitHub secret) |
 
 ## Infraestructura
 
@@ -420,8 +440,11 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 - **Redis local**: `docker compose -f apps/api/docker-compose.yml up -d redis` (Redis 7)
 - **Migración a PostgreSQL**: `bash apps/api/scripts/migrate-to-postgres.sh` (backup, health check, seed, rollback)
 - **PostgreSQL es el provider por defecto**. SQLite ya no es soportado.
-- **CI/CD**: `.github/workflows/ci.yml` — lint, typecheck, test, build (API + web)
-- **Mobile builds**: `apps/mobile/eas.json` — EAS Build profiles (preview + production)
+- **Production API**: Fly.io (`sportykids-api.fly.dev`), región Madrid. `fly.toml` en raíz del proyecto. Docker multi-stage build en `apps/api/Dockerfile`.
+- **CI/CD**: `.github/workflows/ci.yml` — lint, typecheck, test, build (API + web) + deploy to Fly.io on push to main
+- **Mobile builds**: `apps/mobile/eas.json` — EAS Build profiles (development, preview, production) con channels y `appVersionSource: "remote"`
+- **Asset generation**: `npm run generate-assets --workspace=apps/mobile` — genera placeholders (icon, splash, adaptive-icon, favicon, feature-graphic) via sharp
+- **ASO metadata**: `apps/mobile/store-metadata/{en,es}.json` — nombre, descripción, keywords para App Store y Google Play
 
 ## Entorno de desarrollo — notas
 

@@ -152,6 +152,11 @@ vi.mock('expo-web-browser', () => ({
   openBrowserAsync: vi.fn().mockResolvedValue({ type: 'cancel' }),
 }));
 
+vi.mock('expo-splash-screen', () => ({
+  preventAutoHideAsync: vi.fn().mockResolvedValue(true),
+  hideAsync: vi.fn().mockResolvedValue(true),
+}));
+
 // ---------------------------------------------------------------------------
 // React Navigation
 // ---------------------------------------------------------------------------
