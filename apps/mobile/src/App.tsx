@@ -1,11 +1,16 @@
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
+import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
+import * as SplashScreen from 'expo-splash-screen';
 import { UserProvider, useUser } from './lib/user-context';
 import { AppNavigator, navigationRef } from './navigation';
 import { setupNotificationTapHandler } from './lib/push-notifications';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { initSecureTokenStorage } from './lib/auth';
+
+// Prevent splash screen from auto-hiding
+SplashScreen.preventAutoHideAsync();
 
 function StatusBarManager() {
   const { resolvedTheme } = useUser();
@@ -32,14 +37,20 @@ export default function App() {
     };
   }, []);
 
+  const onLayoutRootView = useCallback(async () => {
+    await SplashScreen.hideAsync();
+  }, []);
+
   return (
     <ErrorBoundary>
-      <SafeAreaProvider>
-        <UserProvider>
-          <StatusBarManager />
-          <AppNavigator />
-        </UserProvider>
-      </SafeAreaProvider>
+      <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+        <SafeAreaProvider>
+          <UserProvider>
+            <StatusBarManager />
+            <AppNavigator />
+          </UserProvider>
+        </SafeAreaProvider>
+      </View>
     </ErrorBoundary>
   );
 }

@@ -1,0 +1,26 @@
+=== MOBILE ===
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/mobile
+
+
+ Test Files  15 passed (15)
+      Tests  114 passed (114)
+   Start at  22:21:59
+   Duration  527ms (transform 1.25s, setup 388ms, import 1.90s, tests 761ms, environment 1ms)
+
+
+
+=== WEB ===
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/web
+
+
+ Test Files  16 passed (16)
+      Tests  85 passed (85)
+   Start at  22:22:00
+   Duration  3.21s (transform 1.47s, setup 4.11s, import 3.74s, tests 718ms, environment 22.44s)
+

@@ -8,3 +8,10 @@ dist/
 .DS_Store
 *.db
 *.db-journal
+
+# Mobile env
+apps/mobile/.env
+apps/mobile/.env.local
+
+# Google Play service account key
+google-service-account.json
