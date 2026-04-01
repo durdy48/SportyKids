@@ -16,6 +16,9 @@ export default [
       'apps/api/prisma/seed.ts',
       'apps/api/prisma/backfill-safety.ts',
       'specs/**',
+      'scripts/**',
+      '**/playwright-report/**',
+      '**/test-results/**',
     ],
   },
 

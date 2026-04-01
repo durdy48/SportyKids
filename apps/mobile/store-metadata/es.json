@@ -5,5 +5,12 @@
   "keywords": "noticias deportivas niños,noticias seguras niños,quiz deportivo,control parental,fútbol niños,reels",
   "promotionalText": "¡Quizzes deportivos diarios y cromos coleccionables!",
   "category": "Noticias",
-  "secondaryCategory": "Niños"
+  "secondaryCategory": "Niños",
+  "supportUrl": "https://sportykids-api.fly.dev/api/health",
+  "privacyPolicyUrl": "https://sportykids.app/privacy",
+  "marketingUrl": "",
+  "ageRating": "4+",
+  "copyright": "2026 SportyKids",
+  "whatsNew": "Primera version publica. Noticias deportivas seguras para ninos.",
+  "shortDescription": "Noticias deportivas seguras para ninos de 6-14 anos"
 }

@@ -21,3 +21,6 @@ test-results/
 playwright-report/
 blob-report/
 playwright/.cache/
+
+# Generated store screenshots
+apps/mobile/store-metadata/screenshots/
