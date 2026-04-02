@@ -21,6 +21,7 @@ export default function ReelsPage() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [parentalBlock, setParentalBlock] = useState<{ reason: string; allowedHoursStart?: number; allowedHoursEnd?: number } | null>(null);
+  const [hitFreeLimit, setHitFreeLimit] = useState(false);
 
   useActivityTracker(user?.id, 'reels_viewed');
 
@@ -35,10 +36,15 @@ export default function ReelsPage() {
       const result = await fetchReels({ sport: activeSport ?? undefined, page: pg, limit: 12, userId: user?.id });
       setReels((prev) => accumulate ? [...prev, ...result.reels] : result.reels);
       setTotalPages(result.totalPages);
+      setHitFreeLimit(false);
     } catch (err: unknown) {
       const e = err as Record<string, unknown>;
       if (e?.status === 403 && e?.reason) {
-        setParentalBlock({ reason: e.reason as string, allowedHoursStart: e.allowedHoursStart as number, allowedHoursEnd: e.allowedHoursEnd as number });
+        if (e.reason === 'subscription_limit_reached') {
+          setHitFreeLimit(true);
+        } else {
+          setParentalBlock({ reason: e.reason as string, allowedHoursStart: e.allowedHoursStart as number, allowedHoursEnd: e.allowedHoursEnd as number });
+        }
       } else {
         // eslint-disable-next-line no-console
         console.error(err);
@@ -138,8 +144,15 @@ export default function ReelsPage() {
             ))}
           </div>
 
+          {/* Free tier limit reached */}
+          {hitFreeLimit && (
+            <div className="mt-6">
+              <LimitReached type="subscription_limit_reached" />
+            </div>
+          )}
+
           {/* Load more */}
-          {page < totalPages && (
+          {page < totalPages && !hitFreeLimit && (
             <div className="flex justify-center mt-6">
               <button
                 onClick={loadMore}

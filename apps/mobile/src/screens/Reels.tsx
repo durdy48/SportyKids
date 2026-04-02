@@ -3,6 +3,7 @@ import {
   View, Text, FlatList, Dimensions, TouchableOpacity, StyleSheet,
   Image, Share, Linking,
 } from 'react-native';
+import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Reel } from '@sportykids/shared';
 import { SPORTS, COLORS, sportToEmoji, t, getSportLabel } from '@sportykids/shared';
@@ -32,6 +33,7 @@ export function ReelsScreen() {
   const [playingId, setPlayingId] = useState<string | null>(null);
   const [errorIds, setErrorIds] = useState<Set<string>>(new Set());
   const [refreshing, setRefreshing] = useState(false);
+  const [blocked, setBlocked] = useState(false);
 
   useEffect(() => {
     const key = getLikesStorageKey(user?.id);
@@ -65,21 +67,44 @@ export function ReelsScreen() {
     setErrorIds(new Set());
     setPlayingId(null);
     try {
-      const data = await fetchReels({ sport: activeSport ?? undefined, limit: 20 });
+      const data = await fetchReels({ sport: activeSport ?? undefined, limit: 20, userId: user?.id });
       setReels(data.reels);
     } catch (err) {
-      // eslint-disable-next-line no-console
-      console.error(err);
+      const blocked403 = err as Error & { formatBlocked?: boolean; scheduleLocked?: boolean };
+      if (blocked403.formatBlocked || blocked403.scheduleLocked) {
+        setBlocked(true);
+        setReels([]);
+      }
     } finally {
       setLoading(false);
     }
-  }, [activeSport]);
+  }, [activeSport, user?.id]);
 
-  useEffect(() => {
-    if (user) load();
-  }, [load, user]);
+  // Re-fetch when screen gains focus (e.g., after parental control changes)
+  useFocusEffect(
+    useCallback(() => {
+      if (user) {
+        setBlocked(false);
+        load();
+      }
+    }, [load, user]),
+  );
 
   if (!user) return null;
+
+  if (blocked) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+        <Text style={{ fontSize: 64, marginBottom: 16 }}>&#x1F6AB;</Text>
+        <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 20, color: COLORS.text, textAlign: 'center', marginBottom: 8 }}>
+          {t('parental.blocked_content', locale)}
+        </Text>
+        <Text style={{ fontSize: 14, color: COLORS.muted, textAlign: 'center' }}>
+          {t('parental.blocked_by_parent', locale)}
+        </Text>
+      </View>
+    );
+  }
 
   const renderReel = ({ item }: { item: Reel }) => {
     const isYouTube = item.videoType === 'youtube_embed' || item.videoUrl.includes('youtube.com') || item.videoUrl.includes('youtu.be');

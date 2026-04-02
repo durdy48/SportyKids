@@ -8,6 +8,7 @@ import { generateSummary } from '../services/summarizer';
 import type { AgeRange } from '../services/summarizer';
 import type { Locale } from '@sportykids/shared';
 import { parentalGuard } from '../middleware/parental-guard';
+import { subscriptionGuard } from '../middleware/subscription-guard';
 import { requireAuth } from '../middleware/auth';
 import { ValidationError, NotFoundError, ConflictError, AuthorizationError } from '../errors';
 // Note: this file reads ActivityLog but does not create entries.
@@ -45,7 +46,7 @@ const filtersSchema = z.object({
 });
 
 // GET /api/news — List with filters and pagination (only approved content)
-router.get('/', parentalGuard, async (req: Request, res: Response) => {
+router.get('/', parentalGuard, subscriptionGuard('news'), async (req: Request, res: Response) => {
   const parsed = filtersSchema.safeParse(req.query);
   if (!parsed.success) {
     throw new ValidationError('Invalid parameters', parsed.error.flatten());
@@ -594,7 +595,7 @@ router.get('/:id/related', async (req: Request, res: Response) => {
 });
 
 // GET /api/news/:id — News item detail (only approved)
-router.get('/:id', parentalGuard, async (req: Request, res: Response) => {
+router.get('/:id', parentalGuard, subscriptionGuard('news'), async (req: Request, res: Response) => {
   const newsItem = await prisma.newsItem.findUnique({
     where: { id: req.params.id },
   });

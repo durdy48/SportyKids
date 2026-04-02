@@ -61,6 +61,20 @@ export const COLORS = {
   darkText: '#1E293B',
 } as const;
 
+export const FREE_TIER_LIMITS = {
+  newsPerDay: 5,
+  reelsPerDay: 5,
+  quizPerDay: 3,
+  maxSports: 1,
+} as const;
+
+export const PREMIUM_PRICE = {
+  monthly: { amount: 2.99, currency: 'EUR' },
+  yearly: { amount: 24.99, currency: 'EUR' },
+} as const;
+
+export const FAMILY_PLAN_MAX_CHILDREN = 3;
+
 export const STICKER_RARITIES = ['common', 'rare', 'epic', 'legendary'] as const;
 
 export const RARITY_COLORS: Record<string, string> = {

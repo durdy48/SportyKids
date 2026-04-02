@@ -1,6 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import { prisma } from '../config/database';
 import { AuthorizationError } from '../errors';
+import { getCurrentHourInTimezone, isWithinSchedule } from '../services/schedule-check';
+
+// Re-export for backwards compatibility
+export { getCurrentHourInTimezone, isWithinSchedule };
 
 // In-memory cache with 60s TTL — only store needed fields, never the PIN hash
 interface CachedProfile {
@@ -32,40 +36,6 @@ const CACHE_TTL = 60_000;
 
 export function invalidateProfileCache(userId: string) {
   profileCache.delete(userId);
-}
-
-/**
- * Get the current hour (0-23) in a given IANA timezone.
- * Falls back to UTC if the timezone is invalid.
- */
-export function getCurrentHourInTimezone(timezone: string, now?: Date): number {
-  const date = now ?? new Date();
-  try {
-    const formatter = new Intl.DateTimeFormat('en-US', {
-      timeZone: timezone,
-      hour: 'numeric',
-      hour12: false,
-    });
-    const parts = formatter.formatToParts(date);
-    const hourPart = parts.find((p) => p.type === 'hour');
-    return hourPart ? parseInt(hourPart.value, 10) : date.getUTCHours();
-  } catch {
-    return date.getUTCHours();
-  }
-}
-
-/**
- * Check if the current time falls within the allowed schedule window.
- * Handles ranges that cross midnight (e.g., start=22, end=6).
- */
-export function isWithinSchedule(currentHour: number, start: number, end: number): boolean {
-  if (start <= end) {
-    // Normal range: e.g., 7-21
-    return currentHour >= start && currentHour < end;
-  } else {
-    // Crosses midnight: e.g., 22-6 means allowed from 22:00 to 05:59
-    return currentHour >= start || currentHour < end;
-  }
 }
 
 export async function parentalGuard(req: Request, res: Response, next: NextFunction) {

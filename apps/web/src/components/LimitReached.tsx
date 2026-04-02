@@ -4,7 +4,7 @@ import { useRouter } from 'next/navigation';
 import { t } from '@sportykids/shared';
 import { useUser } from '@/lib/user-context';
 
-export type LimitType = 'limit_reached' | 'format_blocked' | 'sport_blocked' | 'schedule_locked' | 'news_limit_reached' | 'reels_limit_reached' | 'quiz_limit_reached';
+export type LimitType = 'limit_reached' | 'format_blocked' | 'sport_blocked' | 'schedule_locked' | 'news_limit_reached' | 'reels_limit_reached' | 'quiz_limit_reached' | 'subscription_limit_reached' | 'subscription_sport_restricted';
 
 interface LimitReachedProps {
   type?: LimitType;
@@ -20,6 +20,8 @@ const EMOJIS: Record<LimitType, string> = {
   news_limit_reached: '\u{1F4F0}',
   reels_limit_reached: '\u{1F3AC}',
   quiz_limit_reached: '\u{1F9E0}',
+  subscription_limit_reached: '\u{1F512}',
+  subscription_sport_restricted: '\u{26BD}',
 };
 
 const MESSAGE_KEYS: Record<LimitType, { title: string; message: string }> = {
@@ -51,6 +53,14 @@ const MESSAGE_KEYS: Record<LimitType, { title: string; message: string }> = {
     title: 'limit.reached_title',
     message: 'limit.quiz_reached_message',
   },
+  subscription_limit_reached: {
+    title: 'subscription.limit_reached_cta',
+    message: 'subscription.limit_reached_news',
+  },
+  subscription_sport_restricted: {
+    title: 'subscription.limit_reached_cta',
+    message: 'subscription.limit_reached_sport',
+  },
 };
 
 export function LimitReached({ type = 'limit_reached', allowedHoursStart, allowedHoursEnd }: LimitReachedProps) {
@@ -58,6 +68,8 @@ export function LimitReached({ type = 'limit_reached', allowedHoursStart, allowe
   const { locale } = useUser();
   const keys = MESSAGE_KEYS[type];
   const emoji = EMOJIS[type];
+
+  const isSubscriptionType = type === 'subscription_limit_reached' || type === 'subscription_sport_restricted';
 
   let message = t(keys.message, locale);
   if (type === 'schedule_locked' && allowedHoursStart !== undefined && allowedHoursEnd !== undefined) {
@@ -74,13 +86,23 @@ export function LimitReached({ type = 'limit_reached', allowedHoursStart, allowe
           {t(keys.title, locale)}
         </h2>
         <p className="text-[var(--color-muted)] mb-8">{message}</p>
-        <button
-          onClick={() => router.push('/')}
-          aria-label="Go back to home"
-          className="px-8 py-3 bg-[var(--color-blue)] text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
-        >
-          {t('limit.go_home', locale)}
-        </button>
+        {isSubscriptionType ? (
+          <button
+            onClick={() => router.push('/upgrade')}
+            aria-label={t('subscription.upgrade', locale)}
+            className="px-8 py-3 bg-[var(--color-blue)] text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+          >
+            {t('subscription.upgrade', locale)}
+          </button>
+        ) : (
+          <button
+            onClick={() => router.push('/')}
+            aria-label="Go back to home"
+            className="px-8 py-3 bg-[var(--color-blue)] text-white rounded-xl font-medium hover:bg-blue-700 transition-colors"
+          >
+            {t('limit.go_home', locale)}
+          </button>
+        )}
       </div>
     </div>
   );

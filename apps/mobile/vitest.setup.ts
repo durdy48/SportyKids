@@ -21,6 +21,7 @@ vi.mock('react-native', () => {
     FlatList: 'FlatList',
     ActivityIndicator: 'ActivityIndicator',
     Image: 'Image',
+    Modal: 'Modal',
     RefreshControl: 'RefreshControl',
     Switch: 'Switch',
     SafeAreaView: 'SafeAreaView',
@@ -231,10 +232,12 @@ vi.mock('@sportykids/shared', () => ({
 
 vi.mock('./src/config', () => ({
   API_BASE: 'http://localhost:3001/api',
+  WEB_BASE: 'http://localhost:3000',
 }));
 
 vi.mock('../config', () => ({
   API_BASE: 'http://localhost:3001/api',
+  WEB_BASE: 'http://localhost:3000',
 }));
 
 // ---------------------------------------------------------------------------

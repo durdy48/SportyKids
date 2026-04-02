@@ -29,6 +29,7 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
   const [trendingIds, setTrendingIds] = useState<Set<string>>(new Set());
   const [recentlyRead, setRecentlyRead] = useState<NewsItem[]>([]);
   const [scheduleLock, setScheduleLock] = useState<{ locked: boolean; start: number; end: number } | null>(null);
+  const [subscriptionBlock, setSubscriptionBlock] = useState<{ type: string; allowedSports?: string[] } | null>(null);
 
   const handleSearchChange = useCallback((text: string) => {
     setSearchInput(text);
@@ -65,9 +66,15 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
       setNews((prev) => accumulate ? [...prev, ...result.news] : result.news);
       setTotalPages(result.totalPages);
     } catch (err) {
-      const schedErr = err as Error & { scheduleLocked?: boolean; allowedHoursStart?: number; allowedHoursEnd?: number };
-      if (schedErr.scheduleLocked) {
-        setScheduleLock({ locked: true, start: schedErr.allowedHoursStart ?? 0, end: schedErr.allowedHoursEnd ?? 24 });
+      const e = err as Error & { scheduleLocked?: boolean; allowedHoursStart?: number; allowedHoursEnd?: number; subscriptionError?: boolean; limitType?: string; allowedSports?: string[]; formatBlocked?: boolean };
+      if (e.scheduleLocked) {
+        setScheduleLock({ locked: true, start: e.allowedHoursStart ?? 0, end: e.allowedHoursEnd ?? 24 });
+      } else if (e.subscriptionError) {
+        setNews([]);
+        setSubscriptionBlock({ type: e.limitType ?? 'sport', allowedSports: e.allowedSports });
+      } else if (e.formatBlocked) {
+        setNews([]);
+        setSubscriptionBlock({ type: 'format_blocked' });
       } else {
         // eslint-disable-next-line no-console
         console.error('Error loading news:', err);
@@ -81,6 +88,7 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
   useEffect(() => {
     setLoading(true);
     setPage(1);
+    setSubscriptionBlock(null);
     loadNews(1);
   }, [loadNews]);
 
@@ -151,6 +159,38 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
       ) : null}
     </View>
   );
+
+  // Content blocked — parental restriction or subscription limit
+  if (subscriptionBlock) {
+    const isParentalBlock = subscriptionBlock.type === 'format_blocked';
+    return (
+      <View style={[styles.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+        <Text style={{ fontSize: 64, marginBottom: 16 }}>{isParentalBlock ? '\u{1F6AB}' : '\u26BD'}</Text>
+        <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 22, color: colors.text, textAlign: 'center', marginBottom: 8 }}>
+          {isParentalBlock ? t('parental.blocked_content', locale) : t('subscription.limit_reached_sport', locale)}
+        </Text>
+        <Text style={{ fontSize: 15, color: colors.muted, textAlign: 'center', lineHeight: 22, marginBottom: 20 }}>
+          {isParentalBlock ? t('parental.blocked_by_parent', locale) : t('subscription.limit_reached_cta', locale)}
+        </Text>
+        {!isParentalBlock && (
+          <>
+            <TouchableOpacity
+              style={{ backgroundColor: colors.blue, borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12, marginBottom: 12 }}
+              onPress={() => { setSubscriptionBlock(null); setActiveSport(null); setPage(1); }}
+            >
+              <Text style={{ color: '#fff', fontWeight: '600', fontSize: 15 }}>{t('home.latest_news', locale)}</Text>
+            </TouchableOpacity>
+            <TouchableOpacity
+              style={{ borderRadius: 12, paddingHorizontal: 24, paddingVertical: 12 }}
+              onPress={() => navigation.navigate('Upgrade')}
+            >
+              <Text style={{ color: colors.blue, fontWeight: '600', fontSize: 15 }}>{t('subscription.upgrade', locale)}</Text>
+            </TouchableOpacity>
+          </>
+        )}
+      </View>
+    );
+  }
 
   // Schedule lock screen — friendly bedtime message
   if (scheduleLock?.locked) {

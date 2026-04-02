@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, StyleSheet, ScrollView } from 'react-native';
-import type { NewsItem, TeamStats } from '@sportykids/shared';
+import type { NewsItem, TeamStats, LiveMatchData } from '@sportykids/shared';
 import { TEAMS, t } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
-import { fetchNews, fetchTeamStats, updateUser } from '../lib/api';
+import { fetchNews, fetchTeamStats, updateUser, getLiveMatch } from '../lib/api';
 import { useUser } from '../lib/user-context';
 import { NewsCard } from '../components/NewsCard';
 import { SkeletonPlaceholder } from '../components/SkeletonPlaceholder';
@@ -13,6 +13,7 @@ export function FavoriteTeamScreen() {
   const s = createStyles(colors);
   const [news, setNews] = useState<NewsItem[]>([]);
   const [teamStats, setTeamStats] = useState<TeamStats | null>(null);
+  const [liveMatch, setLiveMatch] = useState<LiveMatchData | null>(null);
   const [loading, setLoading] = useState(true);
   const [changing, setChanging] = useState(false);
 
@@ -23,12 +24,14 @@ export function FavoriteTeamScreen() {
     }
     setLoading(true);
     try {
-      const [newsResult, stats] = await Promise.all([
+      const [newsResult, stats, live] = await Promise.all([
         fetchNews({ team: user.favoriteTeam, limit: 30 }),
         fetchTeamStats(user.favoriteTeam),
+        getLiveMatch(user.favoriteTeam),
       ]);
       setNews(newsResult.news);
       setTeamStats(stats);
+      setLiveMatch(live);
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error(err);
@@ -96,6 +99,27 @@ export function FavoriteTeamScreen() {
           <Text style={s.change}>{t('buttons.change_team', locale)}</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Live Match Banner */}
+      {liveMatch && (liveMatch.status === 'live' || liveMatch.status === 'half_time') && (
+        <View style={s.liveBanner}>
+          <View style={s.liveHeader}>
+            <View style={s.liveDot} />
+            <Text style={s.liveLabel}>
+              {t(`live_scores.${liveMatch.status === 'half_time' ? 'half_time' : 'live'}`, locale)}
+            </Text>
+            {liveMatch.league ? <Text style={s.liveLeague}>{liveMatch.league}</Text> : null}
+          </View>
+          <View style={s.liveScore}>
+            <Text style={s.liveTeamName} numberOfLines={1}>{liveMatch.homeTeam}</Text>
+            <Text style={s.liveScoreText}>{liveMatch.homeScore} - {liveMatch.awayScore}</Text>
+            <Text style={s.liveTeamName} numberOfLines={1}>{liveMatch.awayTeam}</Text>
+          </View>
+          {liveMatch.progress ? (
+            <Text style={s.liveProgress}>{liveMatch.progress}{'\u2032'}</Text>
+          ) : null}
+        </View>
+      )}
 
       {/* Team Stats Section */}
       {loading ? (
@@ -232,6 +256,20 @@ function createStyles(colors: ThemeColors) {
   nextMatchMeta: { fontSize: 12, color: colors.muted, marginTop: 2 },
 
   newsHeader: { fontSize: 18, fontWeight: '600', color: colors.text, paddingHorizontal: 16, marginTop: 20, marginBottom: 8 },
+
+  // Live match banner
+  liveBanner: {
+    marginHorizontal: 16, marginBottom: 10, backgroundColor: colors.surface,
+    borderRadius: 16, padding: 14, borderWidth: 1, borderColor: '#EF4444' + '30',
+  },
+  liveHeader: { flexDirection: 'row', alignItems: 'center', gap: 6, marginBottom: 8 },
+  liveDot: { width: 8, height: 8, borderRadius: 4, backgroundColor: '#EF4444' },
+  liveLabel: { fontSize: 11, fontWeight: '800', color: '#DC2626', textTransform: 'uppercase' },
+  liveLeague: { fontSize: 11, color: colors.muted, marginLeft: 'auto' },
+  liveScore: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 },
+  liveTeamName: { flex: 1, fontSize: 14, fontWeight: '600', color: colors.text, textAlign: 'center' },
+  liveScoreText: { fontSize: 24, fontWeight: '800', color: '#DC2626' },
+  liveProgress: { textAlign: 'center', fontSize: 11, color: colors.muted, marginTop: 4 },
 
   empty: { alignItems: 'center', paddingVertical: 60 },
   emptyText: { fontSize: 16, color: colors.muted, marginTop: 8 },

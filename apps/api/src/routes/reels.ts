@@ -3,6 +3,7 @@ import { z } from 'zod';
 import Parser from 'rss-parser';
 import { prisma } from '../config/database';
 import { parentalGuard } from '../middleware/parental-guard';
+import { subscriptionGuard } from '../middleware/subscription-guard';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { isPublicUrl } from '../utils/url-validator';
 import { withCache, CACHE_TTL } from '../services/cache';
@@ -21,7 +22,7 @@ const filtersSchema = z.object({
 });
 
 // GET /api/reels — Reels feed with filters (only approved content)
-router.get('/', parentalGuard, async (req: Request, res: Response) => {
+router.get('/', parentalGuard, subscriptionGuard('reels'), async (req: Request, res: Response) => {
   const parsed = filtersSchema.safeParse(req.query);
   if (!parsed.success) {
     throw new ValidationError('Invalid parameters', parsed.error.flatten());
@@ -174,7 +175,7 @@ router.post('/sync', requireAuth, requireRole('parent'), async (_req: Request, r
 });
 
 // GET /api/reels/:id — Reel detail
-router.get('/:id', parentalGuard, async (req: Request, res: Response) => {
+router.get('/:id', parentalGuard, subscriptionGuard('reels'), async (req: Request, res: Response) => {
   const reel = await prisma.reel.findUnique({ where: { id: req.params.id as string } });
   if (!reel) {
     throw new NotFoundError('Reel not found');

@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { AGE_RANGES, t, sportToEmoji, getSportLabel } from '@sportykids/shared';
-import type { NewsItem, AgeRange } from '@sportykids/shared';
+import { t, sportToEmoji, getSportLabel } from '@sportykids/shared';
+import type { NewsItem } from '@sportykids/shared';
 import { fetchNews, fetchTrending, fetchReadingHistory } from '@/lib/api';
 import { getFavorites } from '@/lib/favorites';
 import { useUser } from '@/lib/user-context';
@@ -27,7 +27,6 @@ export function HomeFeedClient() {
 
   const [news, setNews] = useState<NewsItem[]>([]);
   const [activeSport, setActiveSport] = useState<string | null>(null);
-  const [activeAge, setActiveAge] = useState<AgeRange | null>(null);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -86,10 +85,9 @@ export function HomeFeedClient() {
     const q = queryOverride !== undefined ? queryOverride : searchQuery;
 
     try {
-      const ageRange = activeAge ? AGE_RANGES[activeAge] : null;
       const result = await fetchNews({
         sport: activeSport ?? undefined,
-        age: ageRange ? ageRange.min : (user ? user.age : undefined),
+        age: user ? user.age : undefined,
         userId: user?.id,
         q: q || undefined,
         locale,
@@ -97,7 +95,12 @@ export function HomeFeedClient() {
         limit: 20,
       });
 
-      setNews((prev) => accumulate ? [...prev, ...result.news] : result.news);
+      setNews((prev) => {
+        if (!accumulate) return result.news;
+        const existingIds = new Set(prev.map((n) => n.id));
+        const unique = result.news.filter((n: NewsItem) => !existingIds.has(n.id));
+        return [...prev, ...unique];
+      });
       setTotalPages(result.totalPages);
     } catch (err: unknown) {
       const e = err as Record<string, unknown>;
@@ -109,7 +112,7 @@ export function HomeFeedClient() {
     } finally {
       setLoading(false);
     }
-  }, [activeSport, activeAge, user, locale, searchQuery]);
+  }, [activeSport, user, locale, searchQuery]);
 
   useEffect(() => {
     if (!userLoading && user) {
@@ -232,9 +235,7 @@ export function HomeFeedClient() {
 
       <FiltersBar
         activeSport={activeSport}
-        activeAge={activeAge}
         onSportChange={setActiveSport}
-        onAgeChange={setActiveAge}
         locale={locale}
       />
 
@@ -271,7 +272,7 @@ export function HomeFeedClient() {
       )}
 
       {/* Headlines mode */}
-      {feedMode === 'headlines' && (
+      {feedMode === 'headlines' && !parentalBlock && (
         <div className="flex flex-col gap-2">
           {news.map((item) => (
             <HeadlineRow key={item.id} news={item} locale={locale} isTrending={trendingIds.has(item.id)} />
@@ -280,7 +281,7 @@ export function HomeFeedClient() {
       )}
 
       {/* Cards mode */}
-      {feedMode === 'cards' && (
+      {feedMode === 'cards' && !parentalBlock && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {news.map((item) => (
             <NewsCard key={item.id} news={item} locale={locale} isTrending={trendingIds.has(item.id)} />
@@ -289,7 +290,7 @@ export function HomeFeedClient() {
       )}
 
       {/* Explain mode — cards with explain button always visible */}
-      {feedMode === 'explain' && (
+      {feedMode === 'explain' && !parentalBlock && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {news.map((item) => (
             <NewsCard key={item.id} news={item} locale={locale} showExplainButton isTrending={trendingIds.has(item.id)} />

@@ -56,10 +56,34 @@ describe('LimitReached', () => {
     expect(screen.getByText('limit.go_home')).toBeTruthy();
   });
 
+  it('renders subscription_limit_reached type with upgrade button', () => {
+    render(<LimitReached type="subscription_limit_reached" />);
+    expect(screen.getByText('subscription.limit_reached_cta')).toBeTruthy();
+    expect(screen.getByText('subscription.upgrade')).toBeTruthy();
+  });
+
+  it('renders subscription_sport_restricted type with upgrade button', () => {
+    render(<LimitReached type="subscription_sport_restricted" />);
+    expect(screen.getByText('subscription.limit_reached_cta')).toBeTruthy();
+    expect(screen.getByText('subscription.upgrade')).toBeTruthy();
+  });
+
+  it('subscription types show upgrade button instead of go home', () => {
+    const { container } = render(<LimitReached type="subscription_limit_reached" />);
+    // Should not have a "go home" button for subscription types
+    expect(container.textContent).not.toContain('limit.go_home');
+    expect(container.textContent).toContain('subscription.upgrade');
+  });
+
   describe('accessibility', () => {
     it('go home button has aria-label', () => {
       render(<LimitReached />);
       expect(screen.getByLabelText('Go back to home')).toBeInTheDocument();
+    });
+
+    it('upgrade button has aria-label for subscription types', () => {
+      render(<LimitReached type="subscription_limit_reached" />);
+      expect(screen.getByLabelText('subscription.upgrade')).toBeInTheDocument();
     });
   });
 });

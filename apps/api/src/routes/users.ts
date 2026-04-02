@@ -1,10 +1,12 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import { SUPPORTED_LOCALES, SUPPORTED_COUNTRIES } from '@sportykids/shared';
+import type { LiveScorePreferences } from '@sportykids/shared';
 import { prisma } from '../config/database';
 import { formatUser } from '../utils/format-user';
 import { trackEvent } from '../services/monitoring';
 import { verifyParentalSession } from '../services/parental-session';
+import { requireAuth } from '../middleware/auth';
 import { ValidationError, NotFoundError, AuthorizationError } from '../errors';
 
 const router = Router();
@@ -170,6 +172,14 @@ const notificationSubscribeSchema = z.object({
     sports: z.boolean().default(true),
     dailyQuiz: z.boolean().default(true),
     teamUpdates: z.boolean().default(true),
+    liveScores: z.object({
+      enabled: z.boolean(),
+      goals: z.boolean(),
+      matchStart: z.boolean(),
+      matchEnd: z.boolean(),
+      halfTime: z.boolean(),
+      redCards: z.boolean(),
+    }).optional(),
   }).optional(),
   pushToken: z.string().optional(),
   platform: z.enum(['expo', 'web']).optional(),
@@ -217,6 +227,65 @@ router.post('/:id/notifications/subscribe', async (req: Request, res: Response) 
     pushEnabled: updated.pushEnabled,
     pushPreferences: updated.pushPreferences ?? null,
   });
+});
+
+// PUT /api/users/:id/notifications/live-scores — Update live score preferences
+const liveScorePreferencesSchema = z.object({
+  enabled: z.boolean().optional(),
+  goals: z.boolean().optional(),
+  matchStart: z.boolean().optional(),
+  matchEnd: z.boolean().optional(),
+  halfTime: z.boolean().optional(),
+  redCards: z.boolean().optional(),
+}).strict();
+
+router.put('/:id/notifications/live-scores', requireAuth, async (req: Request, res: Response) => {
+  const userId = req.params.id;
+
+  if (req.auth?.userId !== userId) {
+    throw new ValidationError('Cannot update preferences for another user');
+  }
+
+  const parsed = liveScorePreferencesSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ValidationError('Invalid live score preferences', parsed.error.flatten());
+  }
+
+  const prefs = parsed.data;
+
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { pushPreferences: true },
+  });
+
+  if (!user) throw new NotFoundError('User not found');
+
+  const currentPrefs = (user.pushPreferences ?? {}) as Record<string, unknown>;
+  const currentLiveScores = (currentPrefs.liveScores ?? {
+    enabled: false,
+    goals: true,
+    matchStart: true,
+    matchEnd: true,
+    halfTime: true,
+    redCards: true,
+  }) as LiveScorePreferences;
+
+  const updatedLiveScores: LiveScorePreferences = {
+    ...currentLiveScores,
+    ...prefs,
+  };
+
+  await prisma.user.update({
+    where: { id: userId },
+    data: {
+      pushPreferences: {
+        ...currentPrefs,
+        liveScores: updatedLiveScores,
+      },
+    },
+  });
+
+  res.json({ liveScores: updatedLiveScores });
 });
 
 // GET /api/users/:id/notifications — Get push notification settings

@@ -12,6 +12,7 @@ type GameState = 'start' | 'playing' | 'result';
 
 export function QuizScreen() {
   const { user, locale, refreshUser, colors } = useUser();
+  const [blocked, setBlocked] = useState(false);
   const s = createStyles(colors);
   const [gameState, setGameState] = useState<GameState>('start');
   const [questions, setQuestions] = useState<QuizQuestion[]>([]);
@@ -29,6 +30,12 @@ export function QuizScreen() {
         .then((d) => setTotalPoints(d.totalPoints))
         // eslint-disable-next-line no-console
         .catch((err) => __DEV__ && console.error(err));
+      // Pre-check if quiz is blocked by parental controls
+      fetchQuestions(1, undefined, undefined, user.id)
+        .catch((err) => {
+          const e = err as Error & { formatBlocked?: boolean };
+          if (e.formatBlocked) setBlocked(true);
+        });
     }
   }, [user]);
 
@@ -43,7 +50,7 @@ export function QuizScreen() {
         else if (user.age <= 11) ageRange = '9-11';
         else ageRange = '12-14';
       }
-      const data = await fetchQuestions(5, undefined, ageRange);
+      const data = await fetchQuestions(5, undefined, ageRange, user.id);
       setQuestions(data.questions);
       setIndex(0);
       setRoundPoints(0);
@@ -51,7 +58,10 @@ export function QuizScreen() {
       setFeedback(null);
       setGameState('playing');
     } catch (err) {
-      __DEV__ && console.error(err); // eslint-disable-line no-console
+      const e = err as Error & { formatBlocked?: boolean };
+      if (e.formatBlocked) {
+        setBlocked(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -85,6 +95,20 @@ export function QuizScreen() {
   if (!user) return null;
 
   const question = questions[index];
+
+  if (blocked) {
+    return (
+      <View style={[s.container, { justifyContent: 'center', alignItems: 'center', padding: 32 }]}>
+        <Text style={{ fontSize: 64, marginBottom: 16 }}>{'\u{1F6AB}'}</Text>
+        <Text style={{ fontFamily: 'Poppins-Bold', fontSize: 20, color: colors.text, textAlign: 'center', marginBottom: 8 }}>
+          {t('parental.blocked_content', locale)}
+        </Text>
+        <Text style={{ fontSize: 14, color: colors.muted, textAlign: 'center' }}>
+          {t('parental.blocked_by_parent', locale)}
+        </Text>
+      </View>
+    );
+  }
 
   return (
     <ScrollView

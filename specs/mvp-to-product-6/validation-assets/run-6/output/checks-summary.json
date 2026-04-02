@@ -1,0 +1,168 @@
+{
+  "run": 6,
+  "date": "2026-04-02",
+  "summary": {
+    "total": 22,
+    "pass": 21,
+    "fail": 1,
+    "skip": 0
+  },
+  "checks": [
+    {
+      "id": "regression-api",
+      "description": "API test suite (npx vitest run)",
+      "result": "FAIL",
+      "evidence": "48/49 files passed, 554/555 tests passed. 1 failure in src/middleware/error-handler.test.ts — test 'P2025 (record not found) maps to 404 NOT_FOUND' fails with TypeError: Cannot read properties of undefined (reading 'code') at line 130. Pre-existing issue, not related to Phase 6 changes."
+    },
+    {
+      "id": "regression-web",
+      "description": "Web test suite (npm run test:web)",
+      "result": "PASS",
+      "evidence": "17/17 files, 120/120 tests passed"
+    },
+    {
+      "id": "regression-mobile",
+      "description": "Mobile test suite (npm run test:mobile)",
+      "result": "PASS",
+      "evidence": "19/19 files, 161/161 tests passed"
+    },
+    {
+      "id": "regression-lint",
+      "description": "ESLint (npx eslint . --max-warnings 0)",
+      "result": "PASS",
+      "evidence": "No warnings or errors"
+    },
+    {
+      "id": 28,
+      "description": "invite-code.ts uses crypto.randomInt instead of Math.random",
+      "result": "PASS",
+      "evidence": "Line 1: import { randomInt } from 'node:crypto'; Line 21: code += ALPHABET[randomInt(ALPHABET.length)]"
+    },
+    {
+      "id": 29,
+      "description": "subscription-guard.ts prefers JWT userId (req.auth) over query/header",
+      "result": "PASS",
+      "evidence": "Line 33-34: comment 'Prefer authenticated JWT userId over query/header to prevent IDOR', code: const userId = req.auth?.userId || (req.query.userId as string) || (req.headers['x-user-id'] as string)"
+    },
+    {
+      "id": 30,
+      "description": "GET /subscription/status/:userId has ownership check",
+      "result": "PASS",
+      "evidence": "Lines 16-29: requireAuth middleware + ownership check comparing authUserId !== userId, then verifying parentUserId relationship, throwing AuthorizationError on mismatch"
+    },
+    {
+      "id": 31,
+      "description": "organizations activity endpoint uses groupBy for aggregation",
+      "result": "PASS",
+      "evidence": "Lines 370-377: prisma.activityLog.groupBy({ by: ['type'], ... _count: { _all: true } }); Lines 389-396: prisma.activityLog.groupBy({ by: ['userId'], ... }) for active member count"
+    },
+    {
+      "id": 32,
+      "description": "getSubscriptionStatus() avoids redundant DB query via TierUserData parameter",
+      "result": "PASS",
+      "evidence": "Lines 137-142: resolveEffectiveTier called with pre-fetched userData object { subscriptionTier, subscriptionExpiry, parentUserId, organizationId }. resolveEffectiveTier (line 25) uses userData directly when provided instead of querying DB"
+    },
+    {
+      "id": 33,
+      "description": "live-scores.ts job uses batched processing",
+      "result": "PASS",
+      "evidence": "Lines 257-267: BATCH_SIZE = 5, processes entries in batches with Promise.all(batch.map(processLivescoreEntry))"
+    },
+    {
+      "id": 34,
+      "description": "OrgMemberList.tsx uses t() for all strings, i18n keys exist in both locales",
+      "result": "PASS",
+      "evidence": "All user-visible strings use t(). Keys verified in en.json and es.json: org.today (line 957), org.yesterday (958), org.days_ago (959), org.sort_name (960), org.sort_last_active (961), org.sort_streak (962), org.member_never_active (949)"
+    },
+    {
+      "id": 35,
+      "description": "OrgActivityChart.tsx aria-label uses i18n via t()",
+      "result": "PASS",
+      "evidence": "Line 41: aria-label={t('org.chart_bar_label', locale, { date: dateLabel, count: String(total) })}. Key exists in en.json:963 and es.json:963"
+    },
+    {
+      "id": 36,
+      "description": "organizations/page.tsx catch blocks call setError, error banner with role='alert'",
+      "result": "PASS",
+      "evidence": "Lines 53-54, 80-81, 91-92, 101-102: all catch blocks call setError(t('kid_errors.generic_message', locale)). Lines 138-153: error banner div with role='alert'"
+    },
+    {
+      "id": 37,
+      "description": "Upgrade.tsx (mobile) uses WEB_BASE with fallback",
+      "result": "PASS",
+      "evidence": "Line 5: import { WEB_BASE } from '../config'; Line 7: const FALLBACK_WEB_BASE = 'https://sportykids.app'; Lines 168,176: WEB_BASE || FALLBACK_WEB_BASE"
+    },
+    {
+      "id": 38,
+      "description": "live.ts validates min teamName length >= 3",
+      "result": "PASS",
+      "evidence": "Lines 19-21: if (teamName.length < 3) throw new ValidationError('Team name must be at least 3 characters')"
+    },
+    {
+      "id": 39,
+      "description": "organizations.ts update endpoint only changes slug when name changes",
+      "result": "PASS",
+      "evidence": "Lines 152-163: fetches currentOrg.name, only regenerates slug if parsed.data.name !== currentOrg.name"
+    },
+    {
+      "id": 40,
+      "description": "OrgSettings.tsx imports COLORS from shared package",
+      "result": "PASS",
+      "evidence": "Line 4: import { t, COLORS } from '@sportykids/shared'; Lines 19-20: uses COLORS.blue and COLORS.green as defaults"
+    },
+    {
+      "id": "prd1-webhook-timing-safe",
+      "description": "Webhook validates Bearer secret with timingSafeEqual",
+      "result": "PASS",
+      "evidence": "subscription.ts lines 3,61-64: import { timingSafeEqual } from 'node:crypto'; length check + timingSafeEqual(Buffer.from(authHeader), Buffer.from(expected))"
+    },
+    {
+      "id": "prd1-family-plan-take3",
+      "description": "Family plan uses take:FAMILY_PLAN_MAX_CHILDREN (=3) with orderBy createdAt",
+      "result": "PASS",
+      "evidence": "subscription.ts line 67-69: orderBy: { createdAt: 'asc' }, take: FAMILY_PLAN_MAX_CHILDREN. constants/index.ts line 76: FAMILY_PLAN_MAX_CHILDREN = 3"
+    },
+    {
+      "id": "prd2-live-scores-tests",
+      "description": "live-scores.test.ts — 24+ tests",
+      "result": "PASS",
+      "evidence": "24 tests passed"
+    },
+    {
+      "id": "prd2-schedule-check-tests",
+      "description": "schedule-check.test.ts — 7+ tests",
+      "result": "PASS",
+      "evidence": "7 tests passed"
+    },
+    {
+      "id": "prd2-push-sender-live-tests",
+      "description": "push-sender-live.test.ts — 5+ tests",
+      "result": "PASS",
+      "evidence": "5 tests passed"
+    },
+    {
+      "id": "prd3-invite-code-tests",
+      "description": "invite-code.test.ts — 15+ tests",
+      "result": "PASS",
+      "evidence": "20 tests passed"
+    },
+    {
+      "id": "prd3-require-org-admin-tests",
+      "description": "require-org-admin.test.ts — 6+ tests",
+      "result": "PASS",
+      "evidence": "6 tests passed"
+    },
+    {
+      "id": "prd3-organizations-tests",
+      "description": "organizations.test.ts — 12+ tests",
+      "result": "PASS",
+      "evidence": "15 tests passed"
+    },
+    {
+      "id": "prd3-subscription-org-tests",
+      "description": "subscription.test.ts — org tier tests present",
+      "result": "PASS",
+      "evidence": "23 tests passed"
+    }
+  ]
+}

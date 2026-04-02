@@ -1,9 +1,43 @@
 // Shared types between API, web and mobile
 
+export interface LiveScorePreferences {
+  enabled: boolean;
+  goals: boolean;
+  matchStart: boolean;
+  matchEnd: boolean;
+  halfTime: boolean;
+  redCards: boolean;
+}
+
 export interface PushPreferences {
   sports: boolean;
   dailyQuiz: boolean;
   teamUpdates: boolean;
+  liveScores?: LiveScorePreferences;
+}
+
+export type LiveMatchStatus = 'not_started' | 'live' | 'half_time' | 'finished';
+
+export type MatchEventType = 'goal' | 'match_start' | 'match_end' | 'red_card' | 'half_time';
+
+export interface MatchEvent {
+  type: MatchEventType;
+  team: string;
+  detail?: string;
+  homeScore: number;
+  awayScore: number;
+}
+
+export interface LiveMatchData {
+  homeTeam: string;
+  awayTeam: string;
+  homeScore: number;
+  awayScore: number;
+  progress: string;
+  status: LiveMatchStatus;
+  league: string;
+  sport: string;
+  matchDate: string;
 }
 
 export interface User {
@@ -27,6 +61,10 @@ export interface User {
   consentGiven?: boolean;
   consentDate?: string | null;
   consentBy?: string | null;
+  subscriptionTier?: SubscriptionTier;
+  subscriptionExpiry?: string | null;
+  organizationId?: string | null;
+  organizationRole?: OrganizationRole | null;
   createdAt: Date;
 }
 
@@ -296,6 +334,29 @@ export interface DailyMission {
   claimedAt?: string;
 }
 
+// Subscription types
+
+export type SubscriptionTier = 'free' | 'premium';
+
+export interface SubscriptionStatus {
+  tier: SubscriptionTier;
+  expiry: string | null;
+  limits: {
+    newsPerDay: number | null;       // null = unlimited
+    reelsPerDay: number | null;
+    quizPerDay: number | null;
+    sportsAllowed: string[] | null;  // null = all
+  };
+  usage: {
+    newsToday: number;
+    reelsToday: number;
+    quizToday: number;
+  };
+  canUpgrade: boolean;
+  familyPlan: boolean;
+  childCount: number;
+}
+
 export interface CheckInResponse {
   currentStreak: number;
   longestStreak: number;
@@ -303,4 +364,65 @@ export interface CheckInResponse {
   dailyStickerAwarded: { id: string; name: string; rarity: string } | null;
   pointsAwarded: number;
   newAchievements: Array<{ key: string; nameKey: string; icon: string }>;
+}
+
+// Organization types (B2B)
+
+export type OrganizationRole = 'member' | 'admin';
+
+export interface Organization {
+  id: string;
+  name: string;
+  slug: string;
+  sport: string;
+  logoUrl?: string | null;
+  customColors?: { primary: string; secondary: string } | null;
+  inviteCode: string;
+  maxMembers: number;
+  active: boolean;
+  createdBy: string;
+  memberCount?: number;
+  createdAt?: string;
+}
+
+export interface OrganizationMember {
+  id: string;
+  name: string;
+  age: number;
+  totalPoints: number;
+  currentStreak: number;
+  lastActiveDate: string | null;
+  joinedAt: string;
+}
+
+export interface OrganizationActivity {
+  period: string;
+  summary: {
+    totalMembers: number;
+    activeMembers: number;
+    totalNewsRead: number;
+    totalReelsWatched: number;
+    totalQuizAnswered: number;
+    averageStreak: number;
+    averagePoints: number;
+  };
+  daily: Array<{
+    date: string;
+    activeMembers: number;
+    newsRead: number;
+    reelsWatched: number;
+    quizAnswered: number;
+  }>;
+  topMembers: Array<{
+    name: string;
+    points: number;
+    streak: number;
+  }>;
+}
+
+export interface JoinOrganizationResponse {
+  organizationId: string;
+  organizationName: string;
+  sport: string;
+  message: string;
 }
