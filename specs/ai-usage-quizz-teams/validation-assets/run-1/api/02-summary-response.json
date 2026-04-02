@@ -1,0 +1,10 @@
+{
+  "statusCode": 503,
+  "url": "http://localhost:3001/api/news/cmnho59yb0003260hhc2zrnak/summary?age=10&locale=es",
+  "body": {
+    "error": {
+      "code": "SERVICE_UNAVAILABLE",
+      "message": "Summary generation unavailable. Try again later."
+    }
+  }
+}

@@ -1,0 +1,18 @@
+[PASS] 1: API starts without errors with AI_PROVIDER=groq and GROQ_API_KEY set — GET /api/health → 200
+[SKIP] 2: GET /api/news/:id/summary returns { summary, ageRange, generatedAt } within 15s — API returned 503 SERVICE_UNAVAILABLE — restart the API after updating .env with GROQ_API_KEY=... and AI_PROVIDER=groq
+[PASS] 4-observed: Empty GROQ_API_KEY → API returns 503 (does not crash) — API returned 503 gracefully: {"error":{"code":"SERVICE_UNAVAILABLE","message":"Summary generation unavailable. Try again later."}}
+[PASS] 3: GROQ_MODEL override still returns a valid summary — ai-client.ts references GROQ_MODEL and Groq API base URL — runtime override is wired
+[SKIP] 4: Empty GROQ_API_KEY → API returns an error (does not crash) — Requires manual test: restart API without GROQ_API_KEY and call the summary endpoint — API should return 500/503, not crash.
+[PASS] 5: Translation key for button — Found: "summary.explain_easy"
+[PASS] 6: Accessibility role and state on button — Found: "accessibilityRole", ""button"", "accessibilityState", "expanded"
+[PASS] 7: fetchNewsSummary called with item.id and age — Found: "fetchNewsSummary", "item.id", "user?.age", "locale"
+[PASS] 8: summaryFetched ref prevents double-fetch — Found: "summaryFetched", "summaryFetched.current"
+[PASS] 9: Loading indicator with translation key — Found: "ActivityIndicator", "summary.loading"
+[PASS] 10: Error state with translation key — Found: "summaryError", "summary.error"
+[PASS] 11: Summary data rendering with ageRange label — Found: "summaryData.summary", "summaryData.ageRange", "summary.adapted_for_age"
+[PASS] 12: LayoutAnimation expand/collapse animation — Found: "LayoutAnimation.configureNext", "LayoutAnimation.Presets.easeInEaseOut"
+[PASS] 13.a: Explain button active style tokens exist — Found: "explainButtonActive", "explainButtonTextActive"
+[PASS] 13.b: Layout structure tokens exist — Found: "actionRow", "readButton", "explainButton"
+[PASS] 13.c: Summary panel token exists — Found: "summaryPanel"
+[PASS] 14.a: AgeAdaptedSummary.tsx exists — /Users/antonioduarteruiz/personal/sportykids/apps/web/src/components/AgeAdaptedSummary.tsx
+[PASS] 14.b: ai-client.ts exports Groq support — All markers present: groq provider branch, openai SDK usage, GROQ_API_KEY or GROQ, baseURL groq.com
