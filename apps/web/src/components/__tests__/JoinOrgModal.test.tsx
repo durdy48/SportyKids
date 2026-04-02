@@ -81,7 +81,7 @@ describe('JoinOrgModal', () => {
 
   it('shows error when join fails with 404', async () => {
     const error = new Error('Not found');
-    (error as Record<string, unknown>).status = 404;
+    (error as unknown as Record<string, unknown>).status = 404;
     mockJoinOrganization.mockRejectedValue(error);
 
     render(

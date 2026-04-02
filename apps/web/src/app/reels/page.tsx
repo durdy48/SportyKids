@@ -34,8 +34,7 @@ export default function ReelsPage() {
     setParentalBlock(null);
     try {
       const result = await fetchReels({ sport: activeSport ?? undefined, page: pg, limit: 12, userId: user?.id });
-      const allReels = accumulate ? [...reels, ...result.reels] : result.reels;
-      setReels(allReels);
+      setReels((prev) => accumulate ? [...prev, ...result.reels] : result.reels);
       setTotalPages(result.totalPages);
       setHitFreeLimit(false);
     } catch (err: unknown) {
@@ -53,7 +52,7 @@ export default function ReelsPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeSport, user?.id, reels]);
+  }, [activeSport, user?.id]);
 
   useEffect(() => {
     if (user) {

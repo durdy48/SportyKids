@@ -1,7 +1,7 @@
 'use client';
 
 import { t } from '@sportykids/shared';
-import type { OrganizationMember } from '@sportykids/shared';
+import type { OrganizationMember, Locale } from '@sportykids/shared';
 
 interface Props {
   members: OrganizationMember[];
@@ -11,7 +11,7 @@ interface Props {
   onPageChange: (page: number) => void;
   onSortChange: (sort: string) => void;
   onRemove: (userId: string) => void;
-  locale: string;
+  locale: Locale;
   colors: Record<string, string>;
 }
 

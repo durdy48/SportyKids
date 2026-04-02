@@ -2,14 +2,14 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { t, COLORS } from '@sportykids/shared';
-import type { Organization } from '@sportykids/shared';
+import type { Organization, Locale } from '@sportykids/shared';
 
 interface Props {
   org: Organization;
   onSave: (data: Partial<{ name: string; logoUrl: string | null; customColors: { primary: string; secondary: string } | null; maxMembers: number; active: boolean }>) => void;
   onRegenerateCode: () => void;
   onClose: () => void;
-  locale: string;
+  locale: Locale;
   colors: Record<string, string>;
 }
 

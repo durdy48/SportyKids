@@ -737,7 +737,7 @@ export async function joinOrganization(inviteCode: string): Promise<JoinOrganiza
   if (!res.ok) {
     const data = await res.json().catch(() => ({}));
     const err = new Error(data.error?.message || `Error ${res.status}`);
-    (err as Record<string, unknown>).status = res.status;
+    (err as unknown as Record<string, unknown>).status = res.status;
     throw err;
   }
   return res.json();

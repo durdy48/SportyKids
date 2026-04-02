@@ -2,12 +2,13 @@
 
 import { useEffect, useRef, useState } from 'react';
 import { t } from '@sportykids/shared';
+import type { Locale } from '@sportykids/shared';
 import { joinOrganization } from '../lib/api';
 
 interface Props {
   onClose: () => void;
   onJoined: () => void;
-  locale: string;
+  locale: Locale;
   colors: Record<string, string>;
 }
 
