@@ -5,7 +5,7 @@ import {
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { NewsItem, Reel } from '@sportykids/shared';
+import type { NewsItem, Reel, LiveScorePreferences } from '@sportykids/shared';
 import { COLORS, SPORTS, t, sportToEmoji, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
 import * as Haptics from 'expo-haptics';
@@ -13,6 +13,7 @@ import {
   getParentalProfile, verifyPin, setupParentalPin,
   updateParentalProfile, fetchActivity, fetchFeedPreview,
   getDigestPreferences, updateDigestPreferences,
+  getLiveScorePreferences, subscribeNotifications,
 } from '../lib/api';
 import { API_BASE, WEB_BASE } from '../config';
 import { getAccessToken } from '../lib/auth';
@@ -77,6 +78,12 @@ export function ParentalControlScreen() {
   const [lockedUntil, setLockedUntil] = useState<string | null>(null);
   const [countdown, setCountdown] = useState(0);
   const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  // Live score preferences state
+  const [liveScorePrefs, setLiveScorePrefs] = useState<LiveScorePreferences>({
+    enabled: false, goals: true, matchStart: true, matchEnd: true, halfTime: true, redCards: true,
+  });
+  const [liveScoreLoaded, setLiveScoreLoaded] = useState(false);
 
   // PIN change state
   const [currentPinInput, setCurrentPinInput] = useState('');
@@ -286,6 +293,31 @@ export function ParentalControlScreen() {
     }
   }, [user, activeTab, digestLoaded]);
 
+  // Load live score preferences when content tab is active
+  useEffect(() => {
+    if (user && activeTab === 'content' && !liveScoreLoaded) {
+      getLiveScorePreferences(user.id)
+        .then((prefs) => { setLiveScorePrefs(prefs); setLiveScoreLoaded(true); })
+        .catch(() => setLiveScoreLoaded(true));
+    }
+  }, [user, activeTab, liveScoreLoaded]);
+
+  const toggleLiveScorePref = async (key: keyof LiveScorePreferences) => {
+    if (!user) return;
+    const updated = { ...liveScorePrefs, [key]: !liveScorePrefs[key] };
+    setLiveScorePrefs(updated);
+    try {
+      // Use the subscribe endpoint which works for anonymous users too
+      const currentPrefs = (user.pushPreferences ?? { sports: true, dailyQuiz: true, teamUpdates: true }) as Record<string, unknown>;
+      await subscribeNotifications(user.id, {
+        enabled: user.pushEnabled ?? false,
+        preferences: { ...currentPrefs, liveScores: updated } as never,
+      });
+    } catch {
+      setLiveScorePrefs(liveScorePrefs);
+    }
+  };
+
   if (!user || screenState === 'loading') return <ActivityIndicator style={{ flex: 1 }} color={colors.blue} />;
 
   // PIN entry screens
@@ -465,6 +497,44 @@ export function ParentalControlScreen() {
               })}
             </View>
           </View>
+
+          {/* Live Score Notifications */}
+          {user.favoriteTeam ? (
+            <View style={s.card}>
+              <Text style={s.cardTitle}>{t('live_notifications.title', locale)}</Text>
+              <Text style={[s.cardSubtitle, { color: colors.muted, marginBottom: 12 }]}>
+                {t('live_notifications.description', locale)}
+              </Text>
+              {([
+                { key: 'enabled' as const, label: t('live_notifications.enable', locale) },
+                { key: 'goals' as const, label: t('live_notifications.goals', locale) },
+                { key: 'matchStart' as const, label: t('live_notifications.match_start', locale) },
+                { key: 'halfTime' as const, label: t('live_notifications.half_time', locale) },
+                { key: 'matchEnd' as const, label: t('live_notifications.match_end', locale) },
+                { key: 'redCards' as const, label: t('live_notifications.red_cards', locale) },
+              ]).map(({ key, label }) => {
+                const isSubPref = key !== 'enabled';
+                const disabled = isSubPref && !liveScorePrefs.enabled;
+                return (
+                  <TouchableOpacity
+                    key={key}
+                    style={[s.formatRow, liveScorePrefs[key] && !disabled ? s.formatActive : s.formatInactive, disabled && { opacity: 0.4 }]}
+                    onPress={() => !disabled && toggleLiveScorePref(key)}
+                    disabled={disabled}
+                    accessible={true}
+                    accessibilityLabel={`${label}: ${liveScorePrefs[key] ? t('parental.enabled', locale) : t('parental.blocked', locale)}`}
+                    accessibilityRole="switch"
+                    accessibilityState={{ checked: liveScorePrefs[key] }}
+                  >
+                    <Text style={[s.formatText, isSubPref && { paddingLeft: 12 }]}>{label}</Text>
+                    <Text style={[s.formatBadge, liveScorePrefs[key] && !disabled ? s.badgeOn : s.badgeOff]}>
+                      {liveScorePrefs[key] ? t('parental.enabled', locale) : t('parental.blocked', locale)}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </View>
+          ) : null}
 
           {/* Feed Preview button */}
           <TouchableOpacity

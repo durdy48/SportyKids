@@ -37,8 +37,13 @@ gantt
     PRD3 Parental Trust + Missions    :done, td3, after td2, 1d
     PRD4 OAuth + UX Polish            :done, td4, after td3, 1d
 
+    section Phase 6
+    6.1 Subscription Monetization   :done, p61, after td4, 1d
+    6.2 Real-Time Match Notifications :done, p62, after p61, 1d
+    6.3 B2B Channel Clubs            :done, p63, after p62, 1d
+
     section Phase 5
-    Beta Testing + Store Launch     :active, f5, after td4, 28d
+    Beta Testing + Store Launch     :active, f5, after p63, 28d
 ```
 
 ## Phase 5 Differentiators -- Milestones

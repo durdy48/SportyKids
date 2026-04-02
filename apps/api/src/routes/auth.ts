@@ -594,4 +594,89 @@ router.post('/apple/token', async (req: Request, res: Response) => {
   });
 });
 
+// ---------------------------------------------------------------------------
+// POST /api/auth/join-organization — Join organization with invite code
+// ---------------------------------------------------------------------------
+
+const JoinOrganizationSchema = z.object({
+  inviteCode: z
+    .string()
+    .length(6)
+    .regex(/^[A-Z0-9]{6}$/),
+});
+
+router.post('/join-organization', requireAuth, async (req: Request, res: Response) => {
+  const parsed = JoinOrganizationSchema.safeParse(req.body);
+  if (!parsed.success) {
+    throw new ValidationError('Invalid invite code format', parsed.error.flatten());
+  }
+
+  const userId = req.auth!.userId;
+  const { inviteCode } = parsed.data;
+
+  // Check if user already belongs to an org
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: { organizationId: true, favoriteSports: true },
+  });
+
+  if (!user) {
+    throw new NotFoundError('User not found');
+  }
+
+  if (user.organizationId) {
+    throw new ConflictError('You already belong to an organization');
+  }
+
+  // Find org by invite code
+  const org = await prisma.organization.findUnique({
+    where: { inviteCode },
+  });
+
+  if (!org) {
+    throw new NotFoundError('No organization found with this invite code');
+  }
+
+  if (!org.active) {
+    throw new AuthorizationError('This organization is no longer active');
+  }
+
+  // Atomic capacity check + join inside transaction
+  await prisma.$transaction(async (tx) => {
+    // Re-check capacity inside transaction
+    const memberCount = await tx.user.count({ where: { organizationId: org.id } });
+    if (memberCount >= org.maxMembers) {
+      throw new ConflictError('Organization is at capacity');
+    }
+
+    // Check user still has no org
+    const freshUser = await tx.user.findUniqueOrThrow({ where: { id: userId } });
+    if (freshUser.organizationId) {
+      throw new ConflictError('Already belongs to an organization');
+    }
+
+    const updateData: Record<string, unknown> = {
+      organizationId: org.id,
+      organizationRole: 'member',
+    };
+
+    // Auto-set favorite sport from org if user has no favorites
+    if (!user.favoriteSports || user.favoriteSports.length === 0) {
+      updateData.favoriteSports = [org.sport];
+    }
+
+    await tx.user.update({
+      where: { id: userId },
+      data: updateData,
+    });
+  });
+
+  res.json({
+    organizationId: org.id,
+    organizationName: org.name,
+    sport: org.sport,
+    message: 'Successfully joined the organization',
+  });
+});
+
 export default router;

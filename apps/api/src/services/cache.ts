@@ -180,6 +180,7 @@ export const CACHE_TTL = {
   SOURCES: 10 * 60 * 1000,       // 10 minutes
   TRENDING: 5 * 60 * 1000,       // 5 minutes
   READING_HISTORY: 2 * 60 * 1000, // 2 minutes
+  LIVE_MATCH: 60 * 1000,          // 1 minute
 } as const;
 
 // Cache key builders

@@ -620,7 +620,7 @@ describe('sendLiveScoreToUsers')
   it('skips users with specific event type disabled')
   it('skips users outside allowed schedule hours')
   it('skips users without favoriteTeam')
-  it('handles users with no pushPreferences (uses defaults)')
+  it('handles users with no pushPreferences (uses defaults)')Sí ar
 
 describe('isWithinAllowedHours')
   it('returns true when current time is within range')

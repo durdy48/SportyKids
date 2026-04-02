@@ -39,3 +39,16 @@ export function getSportsDbTeamId(teamName: string): { sportsDbId: string; sport
   }
   return null;
 }
+
+// Build reverse lookup map: sportsDbId -> teamName
+const REVERSE_MAP: Record<string, string> = {};
+for (const [name, info] of Object.entries(TEAM_IDS)) {
+  REVERSE_MAP[info.sportsDbId] = name;
+}
+
+/**
+ * Get the SportyKids team name for a given TheSportsDB team ID.
+ */
+export function getTeamNameBySportsDbId(id: string): string | null {
+  return REVERSE_MAP[id] ?? null;
+}

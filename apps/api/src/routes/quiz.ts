@@ -5,6 +5,7 @@ import { generateDailyQuiz } from '../jobs/generate-daily-quiz';
 import { awardSticker, evaluateAchievements } from '../services/gamification';
 import { checkMissionProgress } from '../services/mission-generator';
 import { parentalGuard } from '../middleware/parental-guard';
+import { subscriptionGuard } from '../middleware/subscription-guard';
 import { verifyParentalSession } from '../services/parental-session';
 import { trackEvent } from '../services/monitoring';
 import { ValidationError, NotFoundError, AuthenticationError } from '../errors';
@@ -31,7 +32,7 @@ const questionsSchema = z.object({
   age: z.enum(['6-8', '9-11', '12-14']).optional(),
 });
 
-router.get('/questions', parentalGuard, async (req: Request, res: Response) => {
+router.get('/questions', parentalGuard, subscriptionGuard('quiz'), async (req: Request, res: Response) => {
   const parsed = questionsSchema.safeParse(req.query);
   if (!parsed.success) {
     throw new ValidationError('Invalid parameters', parsed.error.flatten());
@@ -107,7 +108,7 @@ const answerSchema = z.object({
   answer: z.number().int().min(0).max(3),
 });
 
-router.post('/answer', parentalGuard, async (req: Request, res: Response) => {
+router.post('/answer', parentalGuard, subscriptionGuard('quiz'), async (req: Request, res: Response) => {
   const parsed = answerSchema.safeParse(req.body);
   if (!parsed.success) {
     throw new ValidationError('Invalid data', parsed.error.flatten());

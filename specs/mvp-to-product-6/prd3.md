@@ -1014,3 +1014,5 @@ No data loss: existing users are unaffected (both new fields are nullable).
 3. **Should we support multiple admins per organization?** Useful for larger clubs. Deferred to post-MVP — for now, one admin per org.
 4. **Should there be an org-specific feed?** E.g., the club's own news or announcements. High value but requires a CMS-like feature. Deferred.
 5. **Stripe integration timeline?** Manual invoicing works for <20 orgs. Plan Stripe integration when reaching 10+ active orgs.
+
+Al

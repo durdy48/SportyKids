@@ -87,6 +87,16 @@ export const KID_FRIENDLY_ERRORS: Record<string, KidFriendlyError> = {
     messageKey: 'kid_errors.crash_message',
     emoji: '\u{1F3DF}\uFE0F', // stadium
   },
+  subscription_limit_reached: {
+    titleKey: 'kid_errors.subscription_limit_title',
+    messageKey: 'kid_errors.subscription_limit_message',
+    emoji: '\u{1F512}', // lock
+  },
+  subscription_sport_restricted: {
+    titleKey: 'kid_errors.subscription_sport_title',
+    messageKey: 'kid_errors.subscription_sport_message',
+    emoji: '\u{26BD}', // soccer ball
+  },
   generic: {
     titleKey: 'kid_errors.generic_title',
     messageKey: 'kid_errors.generic_message',
@@ -108,6 +118,12 @@ export const ERROR_CODES = {
   SCHEDULE_LOCKED: 'SCHEDULE_LOCKED',
   TIME_LIMIT_EXCEEDED: 'TIME_LIMIT_EXCEEDED',
   FORMAT_RESTRICTED: 'FORMAT_RESTRICTED',
+  SUBSCRIPTION_LIMIT_REACHED: 'SUBSCRIPTION_LIMIT_REACHED',
+  SUBSCRIPTION_SPORT_RESTRICTED: 'SUBSCRIPTION_SPORT_RESTRICTED',
+  ORG_ALREADY_MEMBER: 'ORG_ALREADY_MEMBER',
+  ORG_NOT_FOUND: 'ORG_NOT_FOUND',
+  ORG_INACTIVE: 'ORG_INACTIVE',
+  ORG_AT_CAPACITY: 'ORG_AT_CAPACITY',
 } as const;
 
 export type ErrorCode = (typeof ERROR_CODES)[keyof typeof ERROR_CODES];
@@ -132,6 +148,8 @@ export function getErrorType(statusOrMessage: number | string): keyof typeof KID
   if (msg.includes('not found') || msg === '404' || msg.startsWith('404 ') || msg.startsWith('404:')) return 'not_found';
   if (msg.includes('schedule_locked') || msg.includes('schedule locked')) return 'schedule_locked';
   if (msg.includes('format_blocked') || msg.includes('format restricted')) return 'format_blocked';
+  if (msg.includes('subscription_limit_reached')) return 'subscription_limit_reached';
+  if (msg.includes('subscription_sport_restricted')) return 'subscription_sport_restricted';
   if (msg.includes('limit_reached') || msg.includes('time_limit') || msg.includes('time limit')) return 'limit_reached';
   if (msg.includes('rate') || msg === '429' || msg.startsWith('429 ') || msg.startsWith('429:') || msg.includes('too many') || msg.includes('too fast')) return 'rate_limited';
   if (msg.includes('unauthorized') || msg === '401' || msg.startsWith('401 ') || msg.startsWith('401:')) return 'unauthorized';

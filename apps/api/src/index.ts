@@ -17,6 +17,9 @@ import reportRoutes from './routes/reports';
 import missionRoutes from './routes/missions';
 import authRouter from './routes/auth';
 import adminRouter from './routes/admin';
+import subscriptionRouter from './routes/subscription';
+import liveRouter from './routes/live';
+import organizationsRouter from './routes/organizations';
 import { errorHandler } from './middleware/error-handler';
 import { requestIdMiddleware } from './middleware/request-id';
 import { authMiddleware } from './middleware/auth';
@@ -28,6 +31,7 @@ import { startStreakReminderJob } from './jobs/streak-reminder';
 import { startMissionReminderJob } from './jobs/mission-reminder';
 import { startTeamStatsSyncJob } from './jobs/sync-team-stats';
 import { startVideoSyncJob, runManualVideoSync } from './jobs/sync-videos';
+import { startLiveScoresJob } from './jobs/live-scores';
 import { logger } from './services/logger';
 
 const app = express();
@@ -49,6 +53,7 @@ app.get('/api/health', (_req, res) => {
 // consuming quota from both. This is intentional as defense-in-depth.
 app.use('/api/auth/login', authLimiter);
 app.use('/api/auth/register', authLimiter);
+app.use('/api/auth/join-organization', authLimiter);
 app.use('/api/parents/verify-pin', pinLimiter);
 app.use('/api/news/sync', syncLimiter);
 app.use('/api/reels/sync', syncLimiter);
@@ -66,10 +71,13 @@ app.use('/api/reels', reelsRouter);
 app.use('/api/quiz', quizRouter);
 app.use('/api/parents', parentsRouter);
 app.use('/api/gamification', gamificationRouter);
+app.use('/api/teams', liveRouter);
 app.use('/api/teams', teamsRouter);
 app.use('/api/reports', reportRoutes);
 app.use('/api/missions', missionRoutes);
 app.use('/api/admin', adminRouter);
+app.use('/api/subscription', subscriptionRouter);
+app.use('/api/organizations', organizationsRouter);
 
 // Global error handler
 app.use(errorHandler);
@@ -102,4 +110,7 @@ app.listen(PORT, () => {
   // Initial video sync on startup + schedule periodic sync
   runManualVideoSync().catch((err) => logger.error({ err }, 'Initial video sync failed'));
   startVideoSyncJob();
+
+  // Schedule live score polling (every 5 minutes)
+  startLiveScoresJob();
 });

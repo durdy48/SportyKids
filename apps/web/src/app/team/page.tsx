@@ -2,9 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import type { NewsItem, Reel, TeamStats } from '@sportykids/shared';
+import type { NewsItem, Reel, TeamStats, LiveMatchData } from '@sportykids/shared';
 import { TEAMS, t } from '@sportykids/shared';
-import { fetchNews, fetchReels, fetchTeamStats, updateUser } from '@/lib/api';
+import { fetchNews, fetchReels, fetchTeamStats, updateUser, getLiveMatch } from '@/lib/api';
 import { useUser } from '@/lib/user-context';
 import { NewsCard } from '@/components/NewsCard';
 import { TeamStatsCard } from '@/components/TeamStatsCard';
@@ -20,6 +20,7 @@ export default function TeamPage() {
   const [news, setNews] = useState<NewsItem[]>([]);
   const [reels, setReels] = useState<Reel[]>([]);
   const [teamStats, setTeamStats] = useState<TeamStats | null>(null);
+  const [liveMatch, setLiveMatch] = useState<LiveMatchData | null>(null);
   const [loading, setLoading] = useState(true);
   const [changingTeam, setChangingTeam] = useState(false);
   const [parentalBlock, setParentalBlock] = useState<{ reason: string; allowedHoursStart?: number; allowedHoursEnd?: number } | null>(null);
@@ -36,12 +37,14 @@ export default function TeamPage() {
     setParentalBlock(null);
     try {
       const sport = user.favoriteSports?.[0];
-      const [newsResult, reelsResult, statsResult] = await Promise.all([
+      const [newsResult, reelsResult, statsResult, liveResult] = await Promise.all([
         fetchNews({ team: user.favoriteTeam, limit: 30, userId: user.id }),
         fetchReels({ sport, limit: 20, userId: user.id }),
         fetchTeamStats(user.favoriteTeam),
+        getLiveMatch(user.favoriteTeam),
       ]);
       setNews(newsResult.news);
+      setLiveMatch(liveResult);
       const norm = (s: string) => s.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
       const teamNorm = user.favoriteTeam ? norm(user.favoriteTeam) : '';
       const teamReels = reelsResult.reels.filter(
@@ -147,6 +150,33 @@ export default function TeamPage() {
             <TeamPageSkeleton />
           ) : (
             <div className="space-y-6">
+              {/* Live match banner */}
+              {liveMatch && (liveMatch.status === 'live' || liveMatch.status === 'half_time') && (
+                <div className="bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-2xl p-4 animate-pulse-slow">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="w-2.5 h-2.5 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-xs font-bold text-red-600 dark:text-red-400 uppercase">
+                      {t(`live_scores.${liveMatch.status === 'half_time' ? 'half_time' : 'live'}`, locale)}
+                    </span>
+                    {liveMatch.league && (
+                      <span className="text-xs text-[var(--color-muted)] ml-auto">{liveMatch.league}</span>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-center gap-4 text-lg font-bold text-[var(--color-text)]">
+                    <span className="text-right flex-1">{liveMatch.homeTeam}</span>
+                    <span className="text-2xl font-extrabold text-red-600 dark:text-red-400">
+                      {liveMatch.homeScore} - {liveMatch.awayScore}
+                    </span>
+                    <span className="text-left flex-1">{liveMatch.awayTeam}</span>
+                  </div>
+                  {liveMatch.progress && (
+                    <p className="text-center text-xs text-[var(--color-muted)] mt-1">
+                      {liveMatch.progress}{'\u2032'}
+                    </p>
+                  )}
+                </div>
+              )}
+
               {/* Team stats card */}
               {teamStats && (
                 <TeamStatsCard stats={teamStats} locale={locale} />

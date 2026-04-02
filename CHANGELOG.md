@@ -6,6 +6,64 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added — Phase 6: Post-Launch Growth
+
+#### 6.1 Subscription Monetization
+- Free/premium two-tier subscription model with server-side limit enforcement (`subscriptionGuard` middleware)
+- Free tier: 5 news/day, 5 reels/day, 3 quiz/day, 1 sport; Premium: unlimited
+- `resolveEffectiveTier()` checks org membership → individual subscription → parent family plan
+- RevenueCat webhook processing (`POST /api/subscription/webhook`) with timing-safe secret validation
+- Family plan: parent premium propagates to up to 3 children (oldest by creation date)
+- `GET /api/subscription/status/:userId` with ownership/parent IDOR check
+- Mobile Upgrade screen (role-aware: parent/child/anonymous/premium views)
+- Mobile `LimitReachedModal` with per-type messages (news, reels, quiz, sport)
+- Web `/upgrade` page with feature comparison and app store links (env-configurable)
+- Web `LimitReached` component with subscription limit types and upgrade CTA
+- Subscription guard caps query `limit` to remaining daily allowance for free users
+- 35+ i18n keys (`subscription.*`) in ES and EN
+
+#### 6.2 Real-Time Match Notifications
+- `LiveMatch` model for tracking live match state with event deduplication via `notifiedEvents` JSON
+- Live scores cron job (every 5 min) polling TheSportsDB v2 for Soccer and Basketball
+- Event detection: goals, match start/end, half time, red cards via state diffing
+- Targeted push notifications by `favoriteTeam` with per-locale payload building
+- Per-event opt-in preferences (`LiveScorePreferences`) stored in `pushPreferences.liveScores`
+- Parental schedule lock respected for live notifications (batch profile fetch)
+- `GET /api/teams/:teamName/live` endpoint (cached 60s, min 3-char validation)
+- `PUT /api/users/:id/notifications/live-scores` with Zod strict schema
+- Live match banner on web team page and mobile FavoriteTeam screen (auto-refresh 60s)
+- Web NotificationSettings extended with live score per-event toggles
+- Schedule check extracted to reusable `schedule-check.ts` utility
+- 25+ i18n keys (`push.live_*`, `live_scores.*`, `live_notifications.*`) in ES and EN
+
+#### 6.3 B2B Channel: Clubs & Academies
+- `Organization` model with invite codes (6-char, crypto-secure, excludes ambiguous chars)
+- Org creation restricted to parents, atomic via `prisma.$transaction()`
+- Join organization flow with atomic capacity check via `prisma.$transaction()`
+- `requireOrgAdmin` middleware for org-scoped admin authorization
+- 8 organization REST endpoints (CRUD, join, members, activity, leave, regenerate-code)
+- Activity aggregation via `prisma.activityLog.groupBy` (no unbounded memory load)
+- Org membership grants premium access (checked first in `resolveEffectiveTier`)
+- Slug generation with diacritic handling and collision avoidance; stable on name updates
+- Web organization admin dashboard (activity summary, CSS bar chart, member list, settings)
+- Web `JoinOrgModal` and `OrgSettings` with Escape key + auto-focus accessibility
+- Mobile `JoinOrganization` screen with 6-char code input, auto-advance, haptic feedback
+- 35+ i18n keys (`org.*`, `a11y.org_*`) in ES and EN
+
+#### Bug fixes and improvements
+- Removed age filter from news FiltersBar (unused, added UI noise)
+- `buttons.load_more` i18n key made generic ("Cargar más" / "Load more")
+- Reels page shows `LimitReached` paywall when free tier limit hit
+- HomeFeed hides news cards when parental/subscription block is active
+- ParentalPanel shows error banner when save fails (instead of silent swallow)
+- `invite-code.ts` uses `crypto.randomInt()` for secure code generation
+- `subscription-guard.ts` prefers JWT userId over query/header (IDOR prevention)
+- `subscription/status` endpoint validates caller is owner or parent
+- `live-scores.ts` uses `String.replaceAll()` for notification templates
+- Web modals (`OrgSettings`, `JoinOrgModal`) support Escape key dismissal
+- `OrgSettings` imports `COLORS` from shared instead of hardcoded hex values
+- `quizQuestionsPerSession` renamed to `quizPerDay` for consistency
+
 ### Added
 - Asset generation script (`generate-assets.mjs`) — produces 5 PNG assets (icon, adaptive-icon, splash-icon, favicon, feature-graphic) via sharp SVG overlay with self-validation
 - Dynamic `API_BASE` resolution — fallback chain: env var → EAS channel → debugger host → localhost; exported `resolveApiBase()` for testability

@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { t } from '@sportykids/shared';
-import type { Locale, PushPreferences } from '@sportykids/shared';
-import { subscribeNotifications, getNotifications } from '@/lib/api';
+import type { Locale, PushPreferences, LiveScorePreferences } from '@sportykids/shared';
+import { subscribeNotifications, getNotifications, updateLiveScorePreferences } from '@/lib/api';
 
 interface NotificationSettingsProps {
   userId: string;
   locale: Locale;
+  hasFavoriteTeam?: boolean;
 }
 
 const DEFAULT_PREFERENCES: PushPreferences = {
@@ -16,9 +17,19 @@ const DEFAULT_PREFERENCES: PushPreferences = {
   teamUpdates: true,
 };
 
-export function NotificationSettings({ userId, locale }: NotificationSettingsProps) {
+const DEFAULT_LIVE_PREFS: LiveScorePreferences = {
+  enabled: false,
+  goals: true,
+  matchStart: true,
+  matchEnd: true,
+  halfTime: true,
+  redCards: true,
+};
+
+export function NotificationSettings({ userId, locale, hasFavoriteTeam }: NotificationSettingsProps) {
   const [enabled, setEnabled] = useState(false);
   const [preferences, setPreferences] = useState<PushPreferences>(DEFAULT_PREFERENCES);
+  const [livePrefs, setLivePrefs] = useState<LiveScorePreferences>(DEFAULT_LIVE_PREFS);
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
 
@@ -27,6 +38,9 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
       .then((data) => {
         setEnabled(data.enabled);
         setPreferences(data.preferences);
+        if (data.preferences.liveScores) {
+          setLivePrefs(data.preferences.liveScores);
+        }
       })
       .catch(() => {
         // Endpoint may not exist yet — use defaults
@@ -47,6 +61,20 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
     }
   };
 
+  const saveLivePrefs = async (newLivePrefs: LiveScorePreferences) => {
+    setSaving(true);
+    setSaved(false);
+    try {
+      await updateLiveScorePreferences(userId, newLivePrefs);
+      setSaved(true);
+      setTimeout(() => setSaved(false), 2000);
+    } catch {
+      // Silently fail
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleToggleEnabled = () => {
     const newEnabled = !enabled;
     setEnabled(newEnabled);
@@ -57,6 +85,12 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
     const newPrefs = { ...preferences, [key]: !preferences[key] };
     setPreferences(newPrefs);
     save(enabled, newPrefs);
+  };
+
+  const handleToggleLivePref = (key: keyof LiveScorePreferences) => {
+    const newLivePrefs = { ...livePrefs, [key]: !livePrefs[key] };
+    setLivePrefs(newLivePrefs);
+    saveLivePrefs(newLivePrefs);
   };
 
   return (
@@ -128,6 +162,57 @@ export function NotificationSettings({ userId, locale }: NotificationSettingsPro
           />
           <span className="text-sm text-[var(--color-text)]">{t('notifications.team_updates', locale)}</span>
         </label>
+
+        {/* Live Score Notifications — only visible if user has a favorite team */}
+        {hasFavoriteTeam && (
+          <div className="mt-4 pt-4 border-t border-[var(--color-border)] space-y-3">
+            <h4 className="text-sm font-semibold text-[var(--color-text)]">
+              {t('live_notifications.title', locale)}
+            </h4>
+            <p className="text-xs text-[var(--color-muted)]">
+              {t('live_notifications.description', locale)}
+            </p>
+
+            {/* Live scores master toggle */}
+            <div className="flex items-center justify-between">
+              <span className="text-sm text-[var(--color-text)]">
+                {t('live_notifications.enable', locale)}
+              </span>
+              <button
+                onClick={() => handleToggleLivePref('enabled')}
+                role="switch"
+                aria-checked={livePrefs.enabled}
+                className={`relative w-10 h-6 rounded-full transition-colors ${
+                  livePrefs.enabled ? 'bg-[var(--color-green)]' : 'bg-[var(--color-border)]'
+                }`}
+                aria-label={t('live_notifications.enable', locale)}
+              >
+                <span
+                  className={`absolute top-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                    livePrefs.enabled ? 'translate-x-4.5' : 'translate-x-0.5'
+                  }`}
+                />
+              </button>
+            </div>
+
+            {/* Per-event checkboxes */}
+            <div className={`space-y-2 transition-opacity ${livePrefs.enabled ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+              {(['goals', 'matchStart', 'halfTime', 'matchEnd', 'redCards'] as const).map((key) => (
+                <label key={key} className="flex items-center gap-3 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={livePrefs[key]}
+                    onChange={() => handleToggleLivePref(key)}
+                    className="w-4 h-4 rounded border-[var(--color-border)] text-[var(--color-green)] focus:ring-[var(--color-green)]"
+                  />
+                  <span className="text-sm text-[var(--color-text)]">
+                    {t(`live_notifications.${key === 'matchStart' ? 'match_start' : key === 'matchEnd' ? 'match_end' : key === 'halfTime' ? 'half_time' : key === 'redCards' ? 'red_cards' : key}`, locale)}
+                  </span>
+                </label>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
 
       {/* Status messages */}

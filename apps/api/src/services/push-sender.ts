@@ -1,6 +1,9 @@
 import { Expo, type ExpoPushMessage, type ExpoPushTicket } from 'expo-server-sdk';
 import { prisma } from '../config/database';
 import { logger } from './logger';
+import { isWithinAllowedHours } from './schedule-check';
+import { EVENT_TO_PREFERENCE, buildNotificationPayload } from './live-scores';
+import type { MatchEventType, MatchEvent, LiveScorePreferences } from '@sportykids/shared';
 
 const expo = new Expo();
 
@@ -96,6 +99,125 @@ export async function sendPushToUsers(
     );
   } catch (error) {
     logger.error({ err: error }, 'Error sending push to users');
+  }
+}
+
+/**
+ * Send live score push notifications to users whose favoriteTeam matches.
+ * Filters by liveScores preference, specific event type, and parental schedule lock.
+ * Builds notification payloads per user locale for proper i18n.
+ * Returns count of users notified.
+ */
+export async function sendLiveScoreToUsers(
+  teamName: string,
+  eventType: MatchEventType,
+  eventOrPayload: MatchEvent | PushPayload,
+  homeTeam?: string,
+  awayTeam?: string,
+): Promise<number> {
+  try {
+    // Find users with matching team, push enabled
+    const users = await prisma.user.findMany({
+      where: {
+        favoriteTeam: { equals: teamName, mode: 'insensitive' },
+        pushEnabled: true,
+      },
+      select: { id: true, pushPreferences: true, locale: true },
+    });
+
+    if (users.length === 0) return 0;
+
+    const preferenceKey = EVENT_TO_PREFERENCE[eventType];
+
+    // Pre-filter by liveScores preferences
+    const prefFiltered = users.filter((user) => {
+      const prefs = user.pushPreferences as Record<string, unknown> | null;
+      if (!prefs?.liveScores) return false;
+      const livePrefs = prefs.liveScores as LiveScorePreferences;
+      if (!livePrefs.enabled) return false;
+      if (!livePrefs[preferenceKey as keyof LiveScorePreferences]) return false;
+      return true;
+    });
+
+    if (prefFiltered.length === 0) return 0;
+
+    // Batch-fetch all parental profiles to avoid N+1 queries
+    const profiles = await prisma.parentalProfile.findMany({
+      where: { userId: { in: prefFiltered.map((u) => u.id) } },
+      select: { userId: true, allowedHoursStart: true, allowedHoursEnd: true, timezone: true },
+    });
+    const profileMap = new Map(profiles.map((p) => [p.userId, p]));
+
+    // Filter by parental schedule lock
+    const eligible: string[] = [];
+    for (const user of prefFiltered) {
+      const profile = profileMap.get(user.id);
+      if (profile) {
+        const allowed = isWithinAllowedHours(
+          profile.allowedHoursStart,
+          profile.allowedHoursEnd,
+          profile.timezone,
+        );
+        if (!allowed) continue;
+      }
+
+      eligible.push(user.id);
+    }
+
+    if (eligible.length === 0) return 0;
+
+    // Determine if caller passed event data (for per-locale payloads) or a pre-built payload
+    const isEventData = homeTeam !== undefined && awayTeam !== undefined && 'type' in eventOrPayload;
+
+    // Extract team names after type narrowing for safe usage below
+    const resolvedHomeTeam = homeTeam as string;
+    const resolvedAwayTeam = awayTeam as string;
+
+    // Build locale→userIds map from eligible users
+    const eligibleSet = new Set(eligible);
+    const localeGroups = new Map<string, string[]>();
+    for (const user of prefFiltered) {
+      if (!eligibleSet.has(user.id)) continue;
+      const loc = user.locale || 'es';
+      const group = localeGroups.get(loc);
+      if (group) {
+        group.push(user.id);
+      } else {
+        localeGroups.set(loc, [user.id]);
+      }
+    }
+
+    let totalNotified = 0;
+
+    for (const [locale, userIds] of localeGroups) {
+      const tokens = await prisma.pushToken.findMany({
+        where: { userId: { in: userIds }, active: true },
+        select: { token: true },
+      });
+
+      if (tokens.length === 0) continue;
+
+      const payload = isEventData
+        ? buildNotificationPayload(eventOrPayload as MatchEvent, resolvedHomeTeam, resolvedAwayTeam, locale)
+        : eventOrPayload as PushPayload;
+
+      await sendToTokens(
+        tokens.map((t) => t.token),
+        payload,
+      );
+
+      totalNotified += userIds.length;
+    }
+
+    logger.info(
+      { teamName, eventType, usersNotified: totalNotified, locales: [...localeGroups.keys()] },
+      'Live score notifications sent',
+    );
+
+    return totalNotified;
+  } catch (error) {
+    logger.error({ err: error, teamName, eventType }, 'Error sending live score notifications');
+    return 0;
   }
 }
 

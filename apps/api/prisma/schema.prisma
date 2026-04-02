@@ -107,7 +107,17 @@ model User {
   consentDate              DateTime?
   consentBy                String?
 
+  // Subscription
+  subscriptionTier         String            @default("free")  // 'free' | 'premium'
+  subscriptionExpiry       DateTime?
+
+  // Organization (B2B)
+  organizationId           String?
+  organization             Organization?     @relation(fields: [organizationId], references: [id], onDelete: SetNull)
+  organizationRole         String?           // 'member' | 'admin'
+
   @@index([authProvider, socialId])
+  @@index([organizationId])
 }
 
 model Reel {
@@ -186,6 +196,9 @@ model ParentalProfile {
   timezone            String   @default("Europe/Madrid")
   failedAttempts      Int      @default(0)
   lockedUntil         DateTime?
+
+  // RevenueCat
+  revenuecatCustomerId String?  @unique
 }
 
 model ContentReport {
@@ -347,4 +360,49 @@ model ParentalSession {
 
   @@index([token])
   @@index([expiresAt])
+}
+
+model LiveMatch {
+  id              String   @id @default(cuid())
+  externalEventId String   @unique
+  homeTeam        String
+  awayTeam        String
+  homeScore       Int      @default(0)
+  awayScore       Int      @default(0)
+  progress        String   @default("NS")
+  status          String   @default("not_started") // not_started, live, half_time, finished
+  league          String   @default("")
+  matchDate       DateTime
+  sport           String
+  homeGoalDetails String   @default("")
+  awayGoalDetails String   @default("")
+  homeRedCards    String   @default("")
+  awayRedCards    String   @default("")
+  lastPolledAt    DateTime @default(now())
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  notifiedEvents  Json     @default("[]")
+
+  @@index([status])
+  @@index([homeTeam])
+  @@index([awayTeam])
+}
+
+model Organization {
+  id            String   @id @default(cuid())
+  name          String
+  slug          String   @unique
+  sport         String
+  logoUrl       String?
+  customColors  Json?
+  inviteCode    String   @unique
+  maxMembers    Int      @default(100)
+  active        Boolean  @default(true)
+  createdBy     String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  members       User[]
+
+  @@index([inviteCode])
+  @@index([slug])
 }

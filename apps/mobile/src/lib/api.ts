@@ -3,6 +3,8 @@ import type {
   Reel,
   QuizQuestion,
   User,
+  LiveMatchData,
+  LiveScorePreferences,
   ParentalProfile,
   RssSource,
   RssSourceCatalogResponse,
@@ -13,6 +15,10 @@ import type {
   CheckInResponse,
   TeamStats,
   PushPreferences,
+  Organization,
+  OrganizationMember,
+  OrganizationActivity,
+  JoinOrganizationResponse,
 } from '@sportykids/shared';
 
 import { API_BASE } from '../config';
@@ -45,6 +51,66 @@ async function authFetch(url: string, init?: RequestInit): Promise<Response> {
   }
 
   return res;
+}
+
+// ---------------------------------------------------------------------------
+// 403 error parser (shared by all content endpoints)
+// ---------------------------------------------------------------------------
+
+interface Blocked403 extends Error {
+  scheduleLocked?: boolean;
+  allowedHoursStart?: number;
+  allowedHoursEnd?: number;
+  subscriptionError?: boolean;
+  limitType?: string;
+  limit?: number;
+  used?: number;
+  tier?: string;
+  allowedSports?: string[];
+  formatBlocked?: boolean;
+}
+
+async function parse403(res: Response): Promise<Blocked403 | null> {
+  try {
+    const body = await res.json();
+    const details = body?.error?.details ?? body?.error ?? {};
+    const errorType = details.error ?? '';
+
+    if (errorType === 'schedule_locked') {
+      const err = new Error('schedule_locked') as Blocked403;
+      err.scheduleLocked = true;
+      err.allowedHoursStart = details.allowedHoursStart ?? 0;
+      err.allowedHoursEnd = details.allowedHoursEnd ?? 24;
+      return err;
+    }
+
+    if (errorType === 'subscription_limit_reached' || errorType === 'subscription_sport_restricted') {
+      const err = new Error(errorType) as Blocked403;
+      err.subscriptionError = true;
+      err.limitType = details.limitType;
+      err.limit = details.limit;
+      err.used = details.used;
+      err.tier = details.tier;
+      err.allowedSports = details.allowedSports;
+      return err;
+    }
+
+    if (errorType === 'format_blocked' || errorType === 'limit_reached') {
+      const err = new Error(errorType) as Blocked403;
+      err.formatBlocked = true;
+      return err;
+    }
+
+    if (errorType === 'sport_blocked') {
+      const err = new Error(errorType) as Blocked403;
+      err.subscriptionError = true;
+      err.limitType = 'sport';
+      return err;
+    }
+  } catch {
+    // Body not parseable — fall through
+  }
+  return null;
 }
 
 // ---------------------------------------------------------------------------
@@ -84,22 +150,9 @@ export async function fetchNews(filters: NewsFilters = {}): Promise<NewsResponse
 
   const res = await authFetch(`${API_BASE}/news?${params.toString()}`);
   if (!res.ok) {
-    // Parse schedule lock from parental guard 403
     if (res.status === 403) {
-      try {
-        const body = await res.json();
-        const details = body?.error?.details ?? body?.error ?? {};
-        if (details.error === 'schedule_locked' || body?.error?.code === 'AUTHORIZATION_ERROR') {
-          const err = new Error('schedule_locked') as Error & { scheduleLocked: boolean; allowedHoursStart: number; allowedHoursEnd: number; timezone: string };
-          err.scheduleLocked = true;
-          err.allowedHoursStart = details.allowedHoursStart ?? 0;
-          err.allowedHoursEnd = details.allowedHoursEnd ?? 24;
-          err.timezone = details.timezone ?? 'Europe/Madrid';
-          throw err;
-        }
-      } catch (e) {
-        if (e instanceof Error && (e as unknown as { scheduleLocked?: boolean }).scheduleLocked) throw e;
-      }
+      const parsed = await parse403(res);
+      if (parsed) throw parsed;
     }
     throw new Error(`Error ${res.status}: ${res.statusText}`);
   }
@@ -233,14 +286,21 @@ export interface ReelsResponse {
 }
 
 export async function fetchReels(
-  filters: { sport?: string; page?: number; limit?: number } = {},
+  filters: { sport?: string; page?: number; limit?: number; userId?: string } = {},
 ): Promise<ReelsResponse> {
   const params = new URLSearchParams();
   if (filters.sport) params.set('sport', filters.sport);
   if (filters.page) params.set('page', String(filters.page));
   if (filters.limit) params.set('limit', String(filters.limit));
+  if (filters.userId) params.set('userId', filters.userId);
   const res = await authFetch(`${API_BASE}/reels?${params.toString()}`);
-  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    if (res.status === 403) {
+      const parsed = await parse403(res);
+      if (parsed) throw parsed;
+    }
+    throw new Error(`Error ${res.status}: ${res.statusText}`);
+  }
   return res.json();
 }
 
@@ -252,12 +312,20 @@ export async function fetchQuestions(
   count: number = 5,
   sport?: string,
   age?: string,
+  userId?: string,
 ): Promise<{ questions: QuizQuestion[] }> {
   const params = new URLSearchParams({ count: String(count) });
   if (sport) params.set('sport', sport);
   if (age) params.set('age', age);
+  if (userId) params.set('userId', userId);
   const res = await authFetch(`${API_BASE}/quiz/questions?${params.toString()}`);
-  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    if (res.status === 403) {
+      const parsed = await parse403(res);
+      if (parsed) throw parsed;
+    }
+    throw new Error(`Error ${res.status}: ${res.statusText}`);
+  }
   return res.json();
 }
 
@@ -625,4 +693,107 @@ export async function getNotifications(
   const res = await authFetch(`${API_BASE}/users/${userId}/notifications`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Live scores
+// ---------------------------------------------------------------------------
+
+export async function getLiveMatch(teamName: string): Promise<LiveMatchData | null> {
+  try {
+    const res = await authFetch(`${API_BASE}/teams/${encodeURIComponent(teamName)}/live`);
+    if (!res.ok) return null;
+    return res.json();
+  } catch {
+    return null;
+  }
+}
+
+const DEFAULT_LIVE_SCORE_PREFS: LiveScorePreferences = {
+  enabled: false,
+  goals: true,
+  matchStart: true,
+  matchEnd: true,
+  halfTime: true,
+  redCards: true,
+};
+
+export async function getLiveScorePreferences(
+  userId: string,
+): Promise<LiveScorePreferences> {
+  try {
+    const data = await getNotifications(userId);
+    const prefs = data.preferences as Record<string, unknown> | null;
+    return (prefs?.liveScores as LiveScorePreferences) ?? DEFAULT_LIVE_SCORE_PREFS;
+  } catch {
+    return DEFAULT_LIVE_SCORE_PREFS;
+  }
+}
+
+export async function updateLiveScorePreferences(
+  userId: string,
+  prefs: Partial<LiveScorePreferences>,
+): Promise<{ liveScores: LiveScorePreferences }> {
+  const res = await authFetch(`${API_BASE}/users/${userId}/notifications/live-scores`, {
+    method: 'PUT',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(prefs),
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+// ---------------------------------------------------------------------------
+// Organizations (B2B)
+// ---------------------------------------------------------------------------
+
+export async function joinOrganization(inviteCode: string): Promise<JoinOrganizationResponse> {
+  const res = await authFetch(`${API_BASE}/auth/join-organization`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ inviteCode: inviteCode.toUpperCase() }),
+  });
+  if (!res.ok) {
+    const data = await res.json().catch(() => ({}));
+    const err = new Error(data.error?.message || `Error ${res.status}`);
+    (err as Record<string, unknown>).status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+export async function getOrganization(orgId: string): Promise<Organization> {
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}`);
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+export async function getOrgMembers(
+  orgId: string,
+  params?: { page?: number; limit?: number; sort?: string },
+): Promise<{ members: OrganizationMember[]; total: number; page: number; limit: number }> {
+  const qs = new URLSearchParams();
+  if (params?.page) qs.set('page', String(params.page));
+  if (params?.limit) qs.set('limit', String(params.limit));
+  if (params?.sort) qs.set('sort', params.sort);
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}/members?${qs}`);
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+export async function getOrgActivity(
+  orgId: string,
+  period?: '7d' | '30d' | 'all',
+): Promise<OrganizationActivity> {
+  const qs = period ? `?period=${period}` : '';
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}/activity${qs}`);
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  return res.json();
+}
+
+export async function leaveOrganization(orgId: string): Promise<void> {
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}/leave`, {
+    method: 'POST',
+  });
+  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
 }

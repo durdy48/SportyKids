@@ -61,6 +61,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
   const [profile, setProfile] = useState(initialProfile);
   const [activeTab, setActiveTab] = useState<Tab>('profile');
   const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   // Activity state
   const [activity, setActivity] = useState<{
@@ -203,6 +204,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
   const saveProfile = async (data: Partial<ParentalProfile>) => {
     if (!user) return;
     setSaving(true);
+    setSaveError(null);
     try {
       const updated = await updateParentalProfile(user.id, data);
       setProfile(updated);
@@ -210,6 +212,7 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error(err);
+      setSaveError(t('kid_errors.generic_message', locale));
     } finally {
       setSaving(false);
     }
@@ -334,6 +337,11 @@ export function ParentalPanel({ profile: initialProfile }: ParentalPanelProps) {
         </div>
         {saving && (
           <span className="text-xs text-[var(--color-muted)]">{t('buttons.saving', locale)}</span>
+        )}
+        {saveError && (
+          <div role="alert" className="text-xs text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-900/20 px-3 py-1.5 rounded-lg cursor-pointer" onClick={() => setSaveError(null)}>
+            {saveError}
+          </div>
         )}
       </div>
 

@@ -18,6 +18,8 @@ import { RssCatalogScreen } from '../screens/RssCatalog';
 import { LoginScreen } from '../screens/Login';
 import { RegisterScreen } from '../screens/Register';
 import { AgeGateScreen } from '../screens/AgeGate';
+import { UpgradeScreen } from '../screens/Upgrade';
+import { JoinOrganizationScreen } from '../screens/JoinOrganization';
 import { ScheduleLockGuard } from '../components/ScheduleLockGuard';
 
 // Wrap content screens with schedule lock guard (Parents tab stays accessible)
@@ -157,6 +159,24 @@ export function AppNavigator() {
                 title: t('sources.catalog_title', locale),
               }}
             />
+            <Stack.Screen
+              name="Upgrade"
+              component={UpgradeScreen}
+              options={{
+                headerShown: true,
+                title: t('subscription.upgrade', locale),
+              }}
+            />
+            <Stack.Screen
+              name="JoinOrganization"
+              component={JoinOrganizationScreen}
+              options={{
+                headerShown: true,
+                title: t('org.join_title', locale),
+              }}
+            />
+            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: true, title: 'Login' }} />
+            <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: true, title: 'Register' }} />
           </>
         ) : needsAgeGate ? (
           <>
