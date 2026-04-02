@@ -1,6 +1,6 @@
 /**
  * Multi-provider AI client with rate limiting and retries.
- * Supports Ollama (default), OpenRouter, and Anthropic.
+ * Supports Ollama (default), OpenRouter, Anthropic, and Groq.
  */
 
 import { logger } from './logger';
@@ -9,7 +9,7 @@ import { logger } from './logger';
 // Types
 // ---------------------------------------------------------------------------
 
-export type AIProvider = 'ollama' | 'openrouter' | 'anthropic';
+export type AIProvider = 'ollama' | 'openrouter' | 'anthropic' | 'groq';
 export type ModelPurpose = 'moderation' | 'generation';
 
 export interface AIMessage {
@@ -101,12 +101,14 @@ function getModelName(purpose: ModelPurpose): string {
     if (cfg.provider === 'ollama') return process.env.OLLAMA_MODEL_MODERATION || 'llama3.2';
     if (cfg.provider === 'openrouter') return process.env.OPENROUTER_MODEL_MODERATION || 'meta-llama/llama-3.1-8b-instruct:free';
     if (cfg.provider === 'anthropic') return process.env.AI_MODEL_MODERATION || 'claude-sonnet-4-20250514';
+    if (cfg.provider === 'groq') return process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
   }
 
   // generation
   if (cfg.provider === 'ollama') return process.env.OLLAMA_MODEL_GENERATION || 'llama3.2';
   if (cfg.provider === 'openrouter') return process.env.OPENROUTER_MODEL_GENERATION || 'meta-llama/llama-3.1-8b-instruct:free';
   if (cfg.provider === 'anthropic') return process.env.AI_MODEL_GENERATION || 'claude-sonnet-4-20250514';
+  if (cfg.provider === 'groq') return process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
 
   return 'llama3.2';
 }
@@ -135,6 +137,8 @@ async function isProviderAvailable(): Promise<boolean> {
       providerAvailable = !!process.env.OPENROUTER_API_KEY;
     } else if (cfg.provider === 'anthropic') {
       providerAvailable = !!process.env.ANTHROPIC_API_KEY;
+    } else if (cfg.provider === 'groq') {
+      providerAvailable = !!process.env.GROQ_API_KEY;
     } else {
       providerAvailable = false;
     }
@@ -320,6 +324,19 @@ class AIClient {
           );
         }
         return sendViaAnthropic(apiKey, model, messages);
+      }
+
+      case 'groq': {
+        const apiKey = process.env.GROQ_API_KEY;
+        if (!apiKey) {
+          throw new AIServiceError(
+            'GROQ_API_KEY is required when AI_PROVIDER=groq',
+            'groq',
+            { retryable: false },
+          );
+        }
+        const baseUrl = process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1';
+        return sendViaOpenAICompat(baseUrl, apiKey, model, messages, 'groq');
       }
 
       default:

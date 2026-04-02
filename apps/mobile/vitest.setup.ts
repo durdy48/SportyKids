@@ -53,9 +53,14 @@ vi.mock('react-native', () => {
       })),
       timing: vi.fn(() => ({ start: vi.fn() })),
       spring: vi.fn(() => ({ start: vi.fn() })),
+      sequence: vi.fn(() => ({ start: vi.fn() })),
       View: 'Animated.View',
       Text: 'Animated.Text',
       createAnimatedComponent: vi.fn((c: unknown) => c),
+    },
+    LayoutAnimation: {
+      configureNext: vi.fn(),
+      Presets: { easeInEaseOut: {}, linear: {}, spring: {} },
     },
     useColorScheme: vi.fn(() => 'light'),
   };
