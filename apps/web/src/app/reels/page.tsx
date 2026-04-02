@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { SPORTS, sportToEmoji, t, getSportLabel, FREE_TIER_LIMITS } from '@sportykids/shared';
+import { SPORTS, sportToEmoji, t, getSportLabel } from '@sportykids/shared';
 import type { Reel } from '@sportykids/shared';
 import { fetchReels } from '@/lib/api';
 import { useUser } from '@/lib/user-context';
@@ -53,7 +53,7 @@ export default function ReelsPage() {
     } finally {
       setLoading(false);
     }
-  }, [activeSport, user?.id]);
+  }, [activeSport, user?.id, reels]);
 
   useEffect(() => {
     if (user) {
