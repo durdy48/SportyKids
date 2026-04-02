@@ -1,6 +1,7 @@
 'use client';
 
 import { t } from '@sportykids/shared';
+import type { Locale } from '@sportykids/shared';
 
 interface SummaryData {
   totalMembers: number;
@@ -14,7 +15,7 @@ interface SummaryData {
 
 interface Props {
   summary: SummaryData;
-  locale: string;
+  locale: Locale;
   colors: Record<string, string>;
 }
 

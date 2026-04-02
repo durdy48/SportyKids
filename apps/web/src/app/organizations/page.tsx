@@ -19,8 +19,14 @@ import { OrgSettings } from '../../components/OrgSettings';
 
 type Period = '7d' | '30d' | 'all';
 
+const THEME_COLORS: Record<'light' | 'dark', Record<string, string>> = {
+  light: { text: '#1E293B', muted: '#6B7280', surface: '#FFFFFF', border: '#E5E7EB', background: '#F8FAFC', blue: '#2563EB' },
+  dark:  { text: '#F1F5F9', muted: '#94A3B8', surface: '#1E293B', border: '#334155', background: '#0F172A', blue: '#2563EB' },
+};
+
 export default function OrganizationDashboard() {
-  const { user, locale, colors } = useUser();
+  const { user, locale, resolvedTheme } = useUser();
+  const colors = THEME_COLORS[resolvedTheme];
   const [org, setOrg] = useState<Organization | null>(null);
   const [members, setMembers] = useState<OrganizationMember[]>([]);
   const [memberTotal, setMemberTotal] = useState(0);

@@ -1,6 +1,7 @@
 'use client';
 
 import { t } from '@sportykids/shared';
+import type { Locale } from '@sportykids/shared';
 
 interface DailyData {
   date: string;
@@ -12,7 +13,7 @@ interface DailyData {
 
 interface Props {
   daily: DailyData[];
-  locale: string;
+  locale: Locale;
   colors: Record<string, string>;
 }
 
