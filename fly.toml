@@ -31,4 +31,4 @@ primary_region = "cdg"  # Paris — closest available region to Spain (mad is de
   timeout = "5s"
 
 [deploy]
-  release_command = "npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma"
+  release_command = "npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma && npx tsx apps/api/prisma/seed.ts"
