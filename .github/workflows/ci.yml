@@ -24,7 +24,7 @@ jobs:
       - name: Generate Prisma client
         run: cd apps/api && npx prisma generate
       - name: Build shared package
-        run: npm run typecheck -w packages/shared
+        run: npm run build -w packages/shared
       - name: Lint
         run: npm run lint -- --max-warnings 0
       # TODO: Fix ~50 pre-existing type errors in API before enabling
