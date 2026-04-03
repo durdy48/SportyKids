@@ -126,6 +126,8 @@ jobs:
       - run: npm ci
       - name: Generate Prisma client
         run: cd apps/api && npx prisma generate
+      - name: Build shared package
+        run: npm run build -w packages/shared
       - name: Build
         run: npm run build -w apps/web
 
@@ -146,8 +148,8 @@ jobs:
       - name: Install Playwright browsers
         run: npx playwright install chromium --with-deps
         working-directory: apps/web
-      - name: Build shared
-        run: npm run typecheck -w packages/shared
+      - name: Build shared package
+        run: npm run build -w packages/shared
       - name: Run E2E tests
         run: npx playwright test
         working-directory: apps/web
