@@ -54,7 +54,7 @@ jobs:
             packages/shared/node_modules
           key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
       - name: Build shared package
-        run: cd packages/shared && npx tsc
+        run: cd packages/shared && npm run typecheck
       - name: Lint
         run: npx eslint . --max-warnings 0
       # TODO: Fix ~50 pre-existing type errors in API before enabling
@@ -207,7 +207,7 @@ jobs:
       - name: Install Playwright browsers
         run: cd apps/web && npx playwright install chromium --with-deps
       - name: Build shared
-        run: cd packages/shared && npx tsc
+        run: cd packages/shared && npm run typecheck
       - name: Run E2E tests
         run: cd apps/web && npx playwright test
       - name: Upload Playwright report
