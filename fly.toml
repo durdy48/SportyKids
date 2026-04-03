@@ -1,5 +1,5 @@
 app = "sportykids-api"
-primary_region = "mad"  # Madrid — closest to target audience (Spain)
+primary_region = "cdg"  # Paris — closest available region to Spain (mad is deprecated)
 
 [build]
   dockerfile = "apps/api/Dockerfile"
