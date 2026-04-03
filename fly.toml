@@ -9,7 +9,7 @@ primary_region = "cdg"  # Paris — closest available region to Spain (mad is de
   PORT = "8080"
   LOG_LEVEL = "info"
   CACHE_PROVIDER = "memory"
-  MODERATION_FAIL_OPEN = "false"
+  MODERATION_FAIL_OPEN = "true"
 
 [http_service]
   internal_port = 8080
@@ -31,4 +31,4 @@ primary_region = "cdg"  # Paris — closest available region to Spain (mad is de
   timeout = "5s"
 
 [deploy]
-  release_command = "npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma && npx tsx apps/api/prisma/seed.ts"
+  release_command = "npx prisma migrate deploy --schema=apps/api/prisma/schema.prisma"
