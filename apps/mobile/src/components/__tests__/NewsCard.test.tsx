@@ -30,6 +30,16 @@ vi.mock('../../lib/user-context', () => ({
   }),
 }));
 
+// NOTE: These tests use source-inspection (NewsCard.toString()) rather than
+// rendering the component at runtime. This is a pragmatic workaround because
+// vitest in this project does not have a full React Native renderer configured.
+// A React Native renderer (e.g. @testing-library/react-native) would be needed
+// to write proper behavioral tests (pressing buttons, asserting rendered output).
+// The source-inspection approach verifies that the required identifiers and keys
+// are present in the component source, which is sufficient as a smoke test but
+// will NOT catch regressions where code is unreachable (dead branches) or where
+// state transitions are incorrect. If a React Native test renderer is added in
+// future, these tests should be replaced with behavioral tests per PRD §7.2.
 describe('NewsCard — Explain it Easy', () => {
   beforeEach(() => {
     vi.clearAllMocks();

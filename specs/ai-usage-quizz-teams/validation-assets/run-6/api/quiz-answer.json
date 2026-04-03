@@ -1,0 +1,18 @@
+{
+  "request": {
+    "userId": "test-validation-run6-user",
+    "questionId": "cmnac0xmi005s2646h1u7y9bu",
+    "answer": 0
+  },
+  "response": {
+    "status": 404,
+    "body": {
+      "error": {
+        "code": "NOT_FOUND",
+        "message": "Record not found",
+        "stack": "PrismaClientKnownRequestError: \nInvalid `prisma.user.update()` invocation:\n\n\nAn operation failed because it depends on one or more records that were required but not found. No record was found for an update.\n    at ei.handleRequestError (/Users/antonioduarteruiz/personal/sportykids/node_modules/@prisma/client/src/runtime/RequestHandler.ts:228:13)\n    at ei.handleAndLogRequestError (/Users/antonioduarteruiz/personal/sportykids/node_modules/@prisma/client/src/runtime/RequestHandler.ts:174:12)\n    at ei.request (/Users/antonioduarteruiz/personal/sportykids/node_modules/@prisma/client/src/runtime/RequestHandler.ts:143:12)\n    at async a (/Users/antonioduarteruiz/personal/sportykids/node_modules/@prisma/client/src/runtime/getPrismaClient.ts:833:24)\n    at async <anonymous> (/Users/antonioduarteruiz/personal/sportykids/apps/api/src/routes/quiz.ts:173:5)",
+        "requestId": "bfbebf0b-0742-4256-8a9c-26ec8716501e"
+      }
+    }
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "request": {
+    "url": "http://localhost:3001/api/news/cmnhq9ryc0012260jr6daowke/summary?age=10&locale=es",
+    "method": "GET"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "summary": "El entrenador de Tottenham, Roberto De Zerbi, se disculpó con los aficionados del equipo porque dijo algo malo sobre el jugador Mason Greenwood cuando era entrenador de Marseille. Algunos aficionados se sintieron ofendidos por sus palabras. De Zerbi quiere que todos se sientan bien y quiere que los aficionados de Tottenham lo apoyen. (El entrenador es la persona que dirige al equipo en un partido.)",
+      "ageRange": "9-11",
+      "generatedAt": "2026-04-02T17:13:32.040Z"
+    }
+  }
+}

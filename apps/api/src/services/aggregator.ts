@@ -2,9 +2,6 @@ import Parser from 'rss-parser';
 import { prisma } from '../config/database';
 import { classifyNews } from './classifier';
 import { moderateContent, shouldFailOpen } from './content-moderator';
-import { generateSummary } from './summarizer';
-import type { AgeRange } from './summarizer';
-import type { Locale } from '@sportykids/shared';
 import { logger } from './logger';
 
 const parser = new Parser({
@@ -72,58 +69,6 @@ function extractImage(item: Parser.Item): string {
   if (imgMatch?.[1]) return imgMatch[1];
 
   return '';
-}
-
-// ---------------------------------------------------------------------------
-// Background summary generation
-// ---------------------------------------------------------------------------
-
-const LOCALES: Locale[] = ['es', 'en'];
-const AGE_RANGES: AgeRange[] = ['6-8', '9-11', '12-14'];
-
-async function generateSummariesForNewsItem(
-  newsItemId: string,
-  title: string,
-  content: string,
-  sport: string,
-): Promise<void> {
-  try {
-    for (const locale of LOCALES) {
-      for (const ageRange of AGE_RANGES) {
-        try {
-          // Check if summary already exists
-          const existing = await prisma.newsSummary.findUnique({
-            where: {
-              newsItemId_ageRange_locale: { newsItemId, ageRange, locale },
-            },
-          });
-
-          if (existing) continue;
-
-          const summaryText = await generateSummary(title, content, ageRange, sport, locale);
-
-          if (!summaryText) continue;
-
-          await prisma.newsSummary.upsert({
-            where: {
-              newsItemId_ageRange_locale: { newsItemId, ageRange, locale },
-            },
-            update: { summary: summaryText },
-            create: {
-              newsItemId,
-              ageRange,
-              locale,
-              summary: summaryText,
-            },
-          });
-        } catch (err) {
-          logger.warn({ newsItemId, ageRange, locale, err: err instanceof Error ? err.message : err }, 'Failed to generate summary for newsItem');
-        }
-      }
-    }
-  } catch (err) {
-    logger.warn({ newsItemId, err: err instanceof Error ? err.message : err }, 'Failed to generate summaries for newsItem');
-  }
 }
 
 // ---------------------------------------------------------------------------
@@ -223,11 +168,6 @@ export async function syncSource(
             moderatedAt,
           },
         });
-
-        // After successful create (not update), fire-and-forget summary generation
-        if (!existing) {
-          void generateSummariesForNewsItem(upserted.id, item.title, summary, sport);
-        }
 
         result.itemsCreated++;
       } catch (err) {

@@ -3,9 +3,9 @@ import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { SPORTS, TEAMS, AGE_RANGES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale } from '@sportykids/shared';
+import { SPORTS, AGE_RANGES, SPORT_ENTITIES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale, getSourceIdsForEntities } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
-import type { AgeRange, RssSource } from '@sportykids/shared';
+import type { AgeRange, RssSource, SportEntity } from '@sportykids/shared';
 import { createUser, fetchSourceCatalog, setupParentalPin } from '../lib/api';
 import { useUser } from '../lib/user-context';
 import { WEB_BASE } from '../config';
@@ -54,8 +54,8 @@ export function OnboardingScreen() {
   // Step 2 - Sports
   const [sports, setSports] = useState<string[]>([]);
 
-  // Step 3 - Team
-  const [team, setTeam] = useState('');
+  // Step 3 - Entities
+  const [selectedEntities, setSelectedEntities] = useState<SportEntity[]>([]);
 
   // Step 4 - Sources
   const [sources, setSources] = useState<RssSource[]>([]);
@@ -82,8 +82,14 @@ export function OnboardingScreen() {
       const matching = sources
         .filter((s) => s.active && sports.includes(s.sport))
         .map((s) => s.id);
-      setSelectedFeeds(matching);
+      const entityIds = getSourceIdsForEntities(sources, selectedEntities);
+      const merged = Array.from(new Set([...matching, ...entityIds]));
+      setSelectedFeeds(merged);
     }
+  // `selectedEntities` is intentionally omitted from deps: the effect is guarded by
+  // `selectedFeeds.length === 0`, so it runs exactly once on step 4 entry. At that
+  // point, `selectedEntities` already reflects the user's current selections from step 3.
+  // If navigation ever becomes non-linear, this guard would need revisiting.
   }, [step, sources, sports]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Group sources by country, filtered by selected sports and search query
@@ -122,6 +128,18 @@ export function OnboardingScreen() {
 
   const toggleSport = (sport: string) =>
     setSports((prev) => prev.includes(sport) ? prev.filter((x) => x !== sport) : [...prev, sport]);
+
+  const visibleEntities = useMemo(
+    () => sports.flatMap((sport) => SPORT_ENTITIES[sport] ?? []),
+    [sports]
+  );
+
+  const toggleEntity = (entity: SportEntity) => {
+    setSelectedEntities((prev) => {
+      const exists = prev.some((e) => e.feedQuery === entity.feedQuery);
+      return exists ? prev.filter((e) => e.feedQuery !== entity.feedQuery) : [...prev, entity];
+    });
+  };
 
   const toggleFeed = (id: string) =>
     setSelectedFeeds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
@@ -169,7 +187,7 @@ export function OnboardingScreen() {
         name: name.trim(),
         age: AGE_RANGES[ageRange].min,
         favoriteSports: sports,
-        favoriteTeam: team || undefined,
+        favoriteTeam: selectedEntities[0]?.name ?? undefined,
         selectedFeeds,
         locale,
         country: inferredCountry,
@@ -301,24 +319,37 @@ export function OnboardingScreen() {
 
         {step === 3 && (
           <View style={s.stepContainer}>
-            <Text style={s.emoji}>⚽</Text>
+            <Text style={s.emoji}>⭐</Text>
             <Text style={s.title}>{t('onboarding.step3_title', locale)}</Text>
             <Text style={s.subtitle}>{t('onboarding.step3_subtitle', locale)}</Text>
+            {visibleEntities.length === 0 ? (
+              <Text style={s.subtitle}>{t('onboarding.step3_no_entities', locale)}</Text>
+            ) : (
             <View style={s.grid}>
-              {TEAMS.map((t_) => (
-                <TouchableOpacity
-                  key={t_}
-                  style={[s.chip, team === t_ && s.chipActive]}
-                  onPress={() => setTeam(team === t_ ? '' : t_)}
-                  accessible={true}
-                  accessibilityLabel={t('a11y.onboarding.select_team', locale, { team: t_ })}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: team === t_ }}
-                >
-                  <Text style={[s.chipText, team === t_ && s.chipTextActive]}>{t_}</Text>
-                </TouchableOpacity>
-              ))}
+              {visibleEntities.map((entity) => {
+                const isSelected = selectedEntities.some(
+                  (e) => e.feedQuery === entity.feedQuery
+                );
+                return (
+                  <TouchableOpacity
+                    key={entity.feedQuery}
+                    style={[s.chip, isSelected && s.chipActive]}
+                    onPress={() => toggleEntity(entity)}
+                    accessible={true}
+                    accessibilityLabel={t('a11y.onboarding.select_entity', locale, {
+                      entity: entity.name,
+                    })}
+                    accessibilityRole="button"
+                    accessibilityState={{ selected: isSelected }}
+                  >
+                    <Text style={[s.chipText, isSelected && s.chipTextActive]}>
+                      {entity.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
             </View>
+            )}
           </View>
         )}
 

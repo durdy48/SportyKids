@@ -54,7 +54,7 @@ export function NewsCard({ item, isTrending = false }: NewsCardProps) {
       setSummaryLoading(true);
       setSummaryError(false);
       try {
-        const age = user?.age ?? 10;
+        const age = user?.age ?? 10; // default to 9-11 age range when age is unavailable (matches web's userAge derivation)
         const data = await fetchNewsSummary(item.id, age, locale);
         if (data.summary) {
           setSummaryData({ summary: data.summary, ageRange: data.ageRange });
@@ -161,6 +161,7 @@ export function NewsCard({ item, isTrending = false }: NewsCardProps) {
             accessibilityRole="button"
             accessibilityState={{ expanded: showSummary }}
             accessibilityLabel={t('summary.explain_easy', locale)}
+            accessibilityHint={t('a11y.news_card.explain_hint', locale)}
           >
             <Text style={[styles.explainButtonText, showSummary && styles.explainButtonTextActive]}>
               {'\u2728'} {t('summary.explain_easy', locale)}

@@ -21,7 +21,8 @@
     "test:api": "npm run test --workspace=apps/api",
     "test:web": "npm run test --workspace=apps/web",
     "test:mobile": "npm run test --workspace=apps/mobile",
-    "test:all": "npm run test --workspace=apps/api && npm run test --workspace=apps/web && npm run test --workspace=apps/mobile"
+    "test:shared": "npm run test --workspace=packages/shared",
+    "test:all": "npm run test --workspace=packages/shared && npm run test --workspace=apps/api && npm run test --workspace=apps/web && npm run test --workspace=apps/mobile"
   },
   "engines": {
     "node": ">=20"

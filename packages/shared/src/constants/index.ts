@@ -83,3 +83,88 @@ export const RARITY_COLORS: Record<string, string> = {
   epic: '#9333EA',
   legendary: '#F59E0B',
 };
+
+export type EntityType =
+  | 'team'
+  | 'athlete'
+  | 'driver'
+  | 'cyclist'
+  | 'swimmer'
+  | 'padel_player';
+
+export interface SportEntity {
+  name: string;
+  type: EntityType;
+  feedQuery: string;
+}
+
+export const SPORT_ENTITIES: Record<string, SportEntity[]> = {
+  football: [
+    { name: 'Real Madrid',          type: 'team',    feedQuery: 'Google News: Real Madrid' },
+    { name: 'FC Barcelona',         type: 'team',    feedQuery: 'Google News: FC Barcelona' },
+    { name: 'Atlético de Madrid',   type: 'team',    feedQuery: 'Google News: Atletico de Madrid' },
+    { name: 'Athletic Club',        type: 'team',    feedQuery: 'Google News: Athletic Club' },
+    { name: 'Real Sociedad',        type: 'team',    feedQuery: 'Google News: Real Sociedad' },
+    { name: 'Real Betis',           type: 'team',    feedQuery: 'Google News: Real Betis' },
+    { name: 'Sevilla FC',           type: 'team',    feedQuery: 'Google News: Sevilla FC' },
+    { name: 'Valencia CF',          type: 'team',    feedQuery: 'Google News: Valencia CF' },
+    { name: 'Villarreal',           type: 'team',    feedQuery: 'Google News: Villarreal' },
+    { name: 'Manchester City',      type: 'team',    feedQuery: 'Google News: Manchester City' },
+    { name: 'Liverpool',            type: 'team',    feedQuery: 'Google News: Liverpool FC' },
+    { name: 'Bayern Munich',        type: 'team',    feedQuery: 'Google News: Bayern Munich' },
+    { name: 'PSG',                  type: 'team',    feedQuery: 'Google News: PSG' },
+    { name: 'Juventus',             type: 'team',    feedQuery: 'Google News: Juventus' },
+    { name: 'Inter Milan',          type: 'team',    feedQuery: 'Google News: Inter Milan' },
+    { name: 'Spain National Team',  type: 'team',    feedQuery: 'Google News: Seleccion Espanola' },
+  ],
+  basketball: [
+    { name: 'Los Angeles Lakers',     type: 'team', feedQuery: 'Google News: LA Lakers' },
+    { name: 'Golden State Warriors',  type: 'team', feedQuery: 'Google News: Golden State Warriors' },
+    { name: 'Boston Celtics',         type: 'team', feedQuery: 'Google News: Boston Celtics' },
+    { name: 'Miami Heat',             type: 'team', feedQuery: 'Google News: Miami Heat' },
+    { name: 'Real Madrid Basket',     type: 'team', feedQuery: 'Google News: Real Madrid Basket' },
+    { name: 'FC Barcelona Basket',    type: 'team', feedQuery: 'Google News: Barcelona Basket' },
+    { name: 'Unicaja',                type: 'team', feedQuery: 'Google News: Unicaja' },
+    { name: 'Baskonia',               type: 'team', feedQuery: 'Google News: Baskonia' },
+  ],
+  tennis: [
+    { name: 'Carlos Alcaraz',   type: 'athlete', feedQuery: 'Google News: Carlos Alcaraz' },
+    { name: 'Rafa Nadal',       type: 'athlete', feedQuery: 'Google News: Rafael Nadal' },
+    { name: 'Novak Djokovic',   type: 'athlete', feedQuery: 'Google News: Novak Djokovic' },
+    { name: 'Jannik Sinner',    type: 'athlete', feedQuery: 'Google News: Jannik Sinner' },
+    { name: 'Iga Swiatek',      type: 'athlete', feedQuery: 'Google News: Iga Swiatek' },
+    { name: 'Aryna Sabalenka',  type: 'athlete', feedQuery: 'Google News: Aryna Sabalenka' },
+  ],
+  formula1: [
+    { name: 'Max Verstappen',   type: 'driver', feedQuery: 'Google News: Max Verstappen' },
+    { name: 'Lewis Hamilton',   type: 'driver', feedQuery: 'Google News: Lewis Hamilton' },
+    { name: 'Charles Leclerc', type: 'driver', feedQuery: 'Google News: Charles Leclerc' },
+    { name: 'Carlos Sainz',     type: 'driver', feedQuery: 'Google News: Carlos Sainz F1' },
+    { name: 'Fernando Alonso',  type: 'driver', feedQuery: 'Google News: Fernando Alonso' },
+    { name: 'Lando Norris',     type: 'driver', feedQuery: 'Google News: Lando Norris' },
+    { name: 'Red Bull Racing',  type: 'team',   feedQuery: 'Google News: Red Bull Racing' },
+    { name: 'Ferrari',          type: 'team',   feedQuery: 'Google News: Ferrari F1' },
+    { name: 'Mercedes',         type: 'team',   feedQuery: 'Google News: Mercedes F1' },
+    { name: 'McLaren',          type: 'team',   feedQuery: 'Google News: McLaren F1' },
+  ],
+  cycling: [
+    { name: 'Tadej Pogacar',      type: 'cyclist', feedQuery: 'Google News: Tadej Pogacar' },
+    { name: 'Jonas Vingegaard',   type: 'cyclist', feedQuery: 'Google News: Jonas Vingegaard' },
+    { name: 'Remco Evenepoel',    type: 'cyclist', feedQuery: 'Google News: Remco Evenepoel' },
+    { name: 'Primoz Roglic',      type: 'cyclist', feedQuery: 'Google News: Primoz Roglic' },
+  ],
+  swimming: [
+    { name: 'Caeleb Dressel',  type: 'swimmer', feedQuery: 'Google News: Caeleb Dressel' },
+    { name: 'Léon Marchand',   type: 'swimmer', feedQuery: 'Google News: Leon Marchand' },
+    { name: 'Katie Ledecky',   type: 'swimmer', feedQuery: 'Google News: Katie Ledecky' },
+  ],
+  athletics: [
+    { name: 'Mondo Duplantis',    type: 'athlete', feedQuery: 'Google News: Mondo Duplantis' },
+    { name: 'Noah Lyles',         type: 'athlete', feedQuery: 'Google News: Noah Lyles' },
+    { name: 'Sydney McLaughlin',  type: 'athlete', feedQuery: 'Google News: Sydney McLaughlin' },
+  ],
+  padel: [
+    { name: 'Alejandro Galán', type: 'padel_player', feedQuery: 'Google News: Alejandro Galan' },
+    { name: 'Arturo Coello',   type: 'padel_player', feedQuery: 'Google News: Arturo Coello' },
+  ],
+};

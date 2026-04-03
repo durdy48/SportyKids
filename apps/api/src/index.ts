@@ -32,6 +32,7 @@ import { startMissionReminderJob } from './jobs/mission-reminder';
 import { startTeamStatsSyncJob } from './jobs/sync-team-stats';
 import { startVideoSyncJob, runManualVideoSync } from './jobs/sync-videos';
 import { startLiveScoresJob } from './jobs/live-scores';
+import { startTimelessQuizJob } from './jobs/generate-timeless-quiz';
 import { logger } from './services/logger';
 
 const app = express();
@@ -86,8 +87,12 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   logger.info({ port: PORT }, `SportyKids API running at http://localhost:${PORT}`);
 
-  // Initial sync on startup
-  runManualSync().catch((err) => logger.error({ err }, 'Initial sync failed'));
+  // Initial sync on startup — delayed in dev to avoid saturating the AI rate
+  // limiter with bulk moderation before user-facing requests can go through.
+  const syncDelay = process.env.NODE_ENV === 'production' ? 0 : 30_000;
+  setTimeout(() => {
+    runManualSync().catch((err) => logger.error({ err }, 'Initial sync failed'));
+  }, syncDelay);
 
   // Schedule periodic sync
   startSyncJob();
@@ -107,10 +112,15 @@ app.listen(PORT, () => {
   // Schedule daily team stats sync from TheSportsDB
   startTeamStatsSyncJob();
 
-  // Initial video sync on startup + schedule periodic sync
-  runManualVideoSync().catch((err) => logger.error({ err }, 'Initial video sync failed'));
+  // Initial video sync on startup + schedule periodic sync — same delay as news sync
+  setTimeout(() => {
+    runManualVideoSync().catch((err) => logger.error({ err }, 'Initial video sync failed'));
+  }, syncDelay);
   startVideoSyncJob();
 
   // Schedule live score polling (every 5 minutes)
   startLiveScoresJob();
+
+  // Schedule weekly timeless quiz generation (Monday 05:00 UTC)
+  startTimelessQuizJob();
 });

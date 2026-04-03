@@ -1,8 +1,11 @@
 import cron from 'node-cron';
 import { prisma } from '../config/database';
 import { isProviderAvailable } from '../services/ai-client';
-import { generateQuizFromNews } from '../services/quiz-generator';
+import { generateQuizFromNews, generateTimelessQuestion } from '../services/quiz-generator';
+import { isTopicDuplicate } from '../services/quiz-dedup';
 import { logger } from '../services/logger';
+import { SPORTS } from '@sportykids/shared';
+import type { Locale } from '@sportykids/shared';
 
 // ---------------------------------------------------------------------------
 // Types
@@ -14,6 +17,8 @@ interface DailyQuizResult {
 }
 
 const AGE_RANGES = ['6-8', '9-11', '12-14'] as const;
+
+const MINIMUM_QUESTIONS_PER_SPORT_AGE = 3;
 
 // ---------------------------------------------------------------------------
 // Round-robin sport selection
@@ -79,8 +84,8 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
     return result;
   }
 
-  // Get recent approved news from the last 48 hours
-  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
+  // Get recent approved news from the last 30 days (widened from 48h)
+  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
 
   const recentNews = await prisma.newsItem.findMany({
     where: {
@@ -144,6 +149,16 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
         );
 
         if (quiz) {
+          // Topic dedup check: skip if this topic was already covered in the last 30 days
+          const normalizedTopic = quiz.topic ? quiz.topic.toLowerCase().trim().slice(0, 80) : undefined;
+          if (normalizedTopic) {
+            const duplicate = await isTopicDuplicate(normalizedTopic);
+            if (duplicate) {
+              logger.info({ topic: normalizedTopic }, 'Skipping question: topic already covered in last 30 days');
+              continue;
+            }
+          }
+
           const now = new Date();
           const expiresAt = new Date(now.getTime() + 48 * 60 * 60 * 1000);
 
@@ -158,12 +173,14 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
               generatedAt: now,
               ageRange,
               expiresAt,
+              isTimeless: false,
+              topic: normalizedTopic ?? null,
             },
           });
 
           result.generated++;
           logger.info(
-            { title: article.title, ageRange },
+            { title: article.title, ageRange, topic: normalizedTopic },
             'Generated quiz question',
           );
         } else {
@@ -181,6 +198,11 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
       await new Promise((resolve) => setTimeout(resolve, 1000));
     }
   }
+
+  // ---------------------------------------------------------------------------
+  // Per-sport gap fill pass: ensure every sport x ageRange has >= 3 questions
+  // ---------------------------------------------------------------------------
+  await runGapFillPass(result);
 
   logger.info(
     { generated: result.generated, errors: result.errors },
@@ -206,11 +228,12 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
         }
 
         for (const [locale, userIds] of byLocale) {
+          const safeLocale = (locale === 'en' ? 'en' : 'es') as Locale;
           await sendPushToUsers(
             userIds,
             {
-              title: t('push.quiz_ready_title', locale),
-              body: t('push.quiz_ready_body', locale),
+              title: t('push.quiz_ready_title', safeLocale),
+              body: t('push.quiz_ready_body', safeLocale),
               data: { screen: 'Quiz' },
             },
             'dailyQuiz',
@@ -223,6 +246,67 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
   }
 
   return result;
+}
+
+// ---------------------------------------------------------------------------
+// Gap fill: generate timeless questions for underfilled sport/ageRange slots
+// ---------------------------------------------------------------------------
+
+export async function runGapFillPass(result: DailyQuizResult): Promise<void> {
+  const now = new Date();
+
+  for (const sport of SPORTS) {
+    for (const ageRange of AGE_RANGES) {
+      const count = await prisma.quizQuestion.count({
+        where: {
+          sport,
+          ageRange,
+          OR: [
+            { expiresAt: { gt: now } },
+            { isTimeless: true },
+          ],
+        },
+      });
+
+      if (count < MINIMUM_QUESTIONS_PER_SPORT_AGE) {
+        logger.info({ sport, ageRange, count }, 'Gap fill: generating timeless question');
+        try {
+          const question = await generateTimelessQuestion(sport, ageRange, 'es');
+          if (question) {
+            const normalizedTopic = question.topic; // already normalised in generateTimelessQuestion
+            const duplicate = await isTopicDuplicate(normalizedTopic);
+            if (!duplicate) {
+              await prisma.quizQuestion.create({
+                data: {
+                  question: question.question,
+                  options: question.options,
+                  correctAnswer: question.correctAnswer,
+                  sport,
+                  points: question.points ?? 10,
+                  generatedAt: new Date(),
+                  ageRange,
+                  expiresAt: null,
+                  isTimeless: true,
+                  topic: normalizedTopic,
+                },
+              });
+              result.generated++;
+            } else {
+              logger.info({ topic: normalizedTopic, sport, ageRange }, 'Gap fill: topic duplicate, skipping');
+            }
+          } else {
+            logger.warn({ sport, ageRange }, 'Gap fill: generateTimelessQuestion returned null');
+          }
+        } catch (err) {
+          result.errors++;
+          logger.error({ err, sport, ageRange }, 'Gap fill: error generating timeless question');
+        }
+
+        // Brief delay to avoid overwhelming AI provider
+        await new Promise((resolve) => setTimeout(resolve, 500));
+      }
+    }
+  }
 }
 
 // ---------------------------------------------------------------------------

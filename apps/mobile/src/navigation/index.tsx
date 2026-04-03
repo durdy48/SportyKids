@@ -147,7 +147,10 @@ export function AppNavigator() {
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator
+        key={user ? (needsAgeGate ? 'age-gate' : 'authenticated') : 'unauthenticated'}
+        screenOptions={{ headerShown: false }}
+      >
         {user && !needsAgeGate ? (
           <>
             <Stack.Screen name="Main" component={MainTabs} />

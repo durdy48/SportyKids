@@ -18,8 +18,10 @@ vi.mock('../services/ai-client', () => ({
 
 // Mock quiz-generator
 const mockGenerateQuizFromNews = vi.fn();
+const mockGenerateTimelessQuestion = vi.fn();
 vi.mock('../services/quiz-generator', () => ({
   generateQuizFromNews: (...args: unknown[]) => mockGenerateQuizFromNews(...args),
+  generateTimelessQuestion: (...args: unknown[]) => mockGenerateTimelessQuestion(...args),
 }));
 
 // Mock push-sender
@@ -32,19 +34,24 @@ vi.mock('../services/push-sender', () => ({
 const mockT = vi.fn((key: string, locale: string) => `${key}[${locale}]`);
 vi.mock('@sportykids/shared', () => ({
   t: (...args: unknown[]) => mockT(...(args as [string, string])),
+  SPORTS: ['football', 'basketball', 'tennis', 'swimming', 'athletics', 'cycling', 'formula1', 'padel'],
 }));
 
 // Mock prisma
 const mockFindManyNews = vi.fn();
 const mockFindManyQuiz = vi.fn();
+const mockFindFirstQuiz = vi.fn();
 const mockCreateQuiz = vi.fn();
+const mockCountQuiz = vi.fn();
 const mockFindManyUser = vi.fn();
 vi.mock('../config/database', () => ({
   prisma: {
     newsItem: { findMany: (...args: unknown[]) => mockFindManyNews(...args) },
     quizQuestion: {
       findMany: (...args: unknown[]) => mockFindManyQuiz(...args),
+      findFirst: (...args: unknown[]) => mockFindFirstQuiz(...args),
       create: (...args: unknown[]) => mockCreateQuiz(...args),
+      count: (...args: unknown[]) => mockCountQuiz(...args),
     },
     user: { findMany: (...args: unknown[]) => mockFindManyUser(...args) },
   },
@@ -60,6 +67,12 @@ describe('generate-daily-quiz', () => {
       fn();
       return 0 as unknown as NodeJS.Timeout;
     });
+    // Default: no topic duplicates
+    mockFindFirstQuiz.mockResolvedValue(null);
+    // Default: count >= MINIMUM (gap fill won't trigger)
+    mockCountQuiz.mockResolvedValue(5);
+    // Default: generateTimelessQuestion returns null
+    mockGenerateTimelessQuestion.mockResolvedValue(null);
   });
 
   it('should skip when AI provider is not available', async () => {

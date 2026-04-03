@@ -1,72 +1,40 @@
 #!/usr/bin/env bash
-# ---------------------------------------------------------------------------
-# SportyKids — Groq AI Provider + Explicar Fácil
-# Validation runner — Run 1
+# Validation script runner — Run 6
+# Feature: prd3.md Quiz Variety + /t-review #3 fixes (Appendix D checks 51-56)
+#          + regression checks 1-50
 #
-# Usage (from any directory):
+# Usage:
 #   bash specs/ai-usage-quizz-teams/validation/run.sh
 #
-# Or from repo root:
-#   ./specs/ai-usage-quizz-teams/validation/run.sh
-# ---------------------------------------------------------------------------
+# Options:
+#   API_RUNNING=1  bash ...run.sh   — skip API start attempt (API already running on :3001)
+#
+# Prerequisites:
+#   - Node >= 20 installed
+#   - npm workspaces installed (npm install at repo root)
+#   - PostgreSQL running (docker compose -f apps/api/docker-compose.yml up -d postgres)
+#   - apps/api/.env configured (DATABASE_URL, optional GROQ_API_KEY)
+#
+# Evidence is written to:
+#   specs/ai-usage-quizz-teams/validation-assets/run-6/
+#
+# Report is written to:
+#   specs/ai-usage-quizz-teams/validation-assets/validation-report-run-6.md
 
 set -euo pipefail
 
-# Resolve repo root (directory containing this script's grandparent: specs/../)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "${SCRIPT_DIR}/../../.." && pwd)"
 
-echo "=================================================="
-echo " SportyKids — Groq + Explicar Fácil Validation"
-echo " Run 1"
-echo "=================================================="
-echo "Repo root : ${REPO_ROOT}"
-echo "Script    : ${SCRIPT_DIR}/validate.mjs"
+echo ""
+echo "=== SportyKids — Validation Run 6 (post /t-review #3: Appendix D) ==="
+echo "    Repo root : ${REPO_ROOT}"
+echo "    Script    : ${SCRIPT_DIR}/validate.mjs"
 echo ""
 
-# --- Check node is available ---
-if ! command -v node &>/dev/null; then
-  echo "[ERROR] node is not available in PATH. Install Node.js >= 20 and try again."
-  exit 1
-fi
+# Ensure evidence directories exist
+mkdir -p "${REPO_ROOT}/specs/ai-usage-quizz-teams/validation-assets/run-6/api"
+mkdir -p "${REPO_ROOT}/specs/ai-usage-quizz-teams/validation-assets/run-6/output"
 
-NODE_VERSION=$(node --version)
-echo "Node      : ${NODE_VERSION}"
-echo ""
-
-# --- Ensure output directories exist (idempotent) ---
-API_DIR="${REPO_ROOT}/specs/ai-usage-quizz-teams/validation-assets/run-1/api"
-OUTPUT_DIR="${REPO_ROOT}/specs/ai-usage-quizz-teams/validation-assets/run-1/output"
-
-mkdir -p "${API_DIR}"
-mkdir -p "${OUTPUT_DIR}"
-
-echo "Directories:"
-echo "  API payloads : ${API_DIR}"
-echo "  Output       : ${OUTPUT_DIR}"
-echo ""
-
-# --- Run the validation script from repo root ---
-cd "${REPO_ROOT}"
-
-echo "Running validation..."
-echo "--------------------------------------------------"
-
-node specs/ai-usage-quizz-teams/validation/validate.mjs
-EXIT_CODE=$?
-
-echo "--------------------------------------------------"
-echo ""
-
-if [ ${EXIT_CODE} -eq 0 ]; then
-  echo "Result: ALL NON-SKIPPED CHECKS PASSED"
-else
-  echo "Result: ONE OR MORE CHECKS FAILED (exit code ${EXIT_CODE})"
-fi
-
-echo ""
-echo "Report : ${REPO_ROOT}/specs/ai-usage-quizz-teams/validation-assets/validation-report-run-1.md"
-echo "Summary: ${OUTPUT_DIR}/summary.txt"
-echo ""
-
-exit ${EXIT_CODE}
+# Run the validation script
+node "${SCRIPT_DIR}/validate.mjs"

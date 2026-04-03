@@ -6,6 +6,20 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added
+- Groq AI provider integration with free tier support (14,400 req/day)
+- Gemini AI provider support for content generation
+- Circuit breakers per AI purpose (moderation vs generation) with provider fallback
+- "Explicar Fácil" (Explain it Easy) button on mobile NewsCard with age-adapted summary panel
+- Dynamic sport-specific entity selection during onboarding (shows relevant clubs/athletes/teams per sport)
+- SPORT_ENTITIES catalog with 300+ teams, athletes, and personalities across 8 sports
+
+### Changed
+- Quiz generation now uses round-robin sport selection for daily variety
+- Summary generation moved from background pre-generation to on-demand only
+- AI client error handling improved with non-retryable error detection and better retry logging
+- Age-adapted summaries component refined for improved readability
+
 ### Added — Phase 6: Post-Launch Growth
 
 #### 6.1 Subscription Monetization
