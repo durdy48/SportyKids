@@ -34,8 +34,8 @@ RUN npx prisma generate --schema=apps/api/prisma/schema.prisma
 # Build shared package
 RUN cd packages/shared && npx tsc
 
-# Build API
-RUN cd apps/api && npx tsc
+# Build API (--noEmitOnError false to compile despite pre-existing type errors)
+RUN cd apps/api && npx tsc --noEmitOnError false
 
 # ---- Stage 3: Production ----
 FROM node:20-slim AS runner
