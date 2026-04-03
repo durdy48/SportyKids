@@ -101,22 +101,5 @@ router.get(
   },
 );
 
-// GET /api/admin/db-check — temporary diagnostic
-router.get('/db-check', async (_req: Request, res: Response) => {
-  const [raw, rawPublic, searchPath, schemas] = await Promise.all([
-    prisma.$queryRaw<{ count: bigint }[]>`SELECT COUNT(*) as count FROM "RssSource"`,
-    prisma.$queryRaw<{ count: bigint }[]>`SELECT COUNT(*) as count FROM public."RssSource"`,
-    prisma.$queryRaw<{ search_path: string }[]>`SHOW search_path`,
-    prisma.$queryRaw<{ schemaname: string; tablename: string }[]>`SELECT schemaname, tablename FROM pg_tables WHERE tablename = 'RssSource'`,
-  ]);
-  const sources = await prisma.rssSource.findMany({ take: 3, select: { name: true, url: true } });
-  res.json({
-    rawCount: Number(raw[0].count),
-    publicCount: Number(rawPublic[0].count),
-    searchPath: searchPath[0].search_path,
-    tableSchemas: schemas,
-    prismaFinds: sources.length,
-  });
-});
 
 export default router;
