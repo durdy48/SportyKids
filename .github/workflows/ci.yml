@@ -11,8 +11,8 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  setup:
-    name: Setup
+  lint:
+    name: Lint & Typecheck
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -23,72 +23,31 @@ jobs:
       - run: npm ci
       - name: Generate Prisma client
         run: cd apps/api && npx prisma generate
-      - name: Cache node_modules with Prisma client
-        uses: actions/cache/save@v4
-        with:
-          path: |
-            node_modules
-            apps/api/node_modules
-            apps/web/node_modules
-            apps/mobile/node_modules
-            packages/shared/node_modules
-          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
-
-  lint:
-    name: Lint & Typecheck
-    runs-on: ubuntu-latest
-    needs: [setup]
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            apps/api/node_modules
-            apps/web/node_modules
-            apps/mobile/node_modules
-            packages/shared/node_modules
-          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
-      - name: Expose root bin to PATH
-        run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
       - name: Build shared package
-        run: cd packages/shared && npm run typecheck
+        run: npm run typecheck -w packages/shared
       - name: Lint
         run: npm run lint -- --max-warnings 0
       # TODO: Fix ~50 pre-existing type errors in API before enabling
       # - name: Typecheck API
-      #   run: cd apps/api && npm run typecheck
+      #   run: npm run typecheck -w apps/api
       - name: Typecheck Web
         run: npm run typecheck -w apps/web
       # TODO: Fix pre-existing type errors in mobile before enabling
       # - name: Typecheck Mobile
-      #   run: cd apps/mobile && npx tsc --noEmit
+      #   run: npm run typecheck -w apps/mobile
 
   test:
     name: API Tests
     runs-on: ubuntu-latest
-    needs: [setup]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            apps/api/node_modules
-            apps/web/node_modules
-            apps/mobile/node_modules
-            packages/shared/node_modules
-          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
-      - name: Expose root bin to PATH
-        run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
+          cache: npm
+      - run: npm ci
+      - name: Generate Prisma client
+        run: cd apps/api && npx prisma generate
       - name: Run API tests
         run: npm test -w apps/api
       - name: Upload coverage
@@ -102,24 +61,13 @@ jobs:
   test-web:
     name: Web Tests
     runs-on: ubuntu-latest
-    needs: [setup]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            apps/api/node_modules
-            apps/web/node_modules
-            apps/mobile/node_modules
-            packages/shared/node_modules
-          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
-      - name: Expose root bin to PATH
-        run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
+          cache: npm
+      - run: npm ci
       - name: Run Web tests
         run: npm test -w apps/web
       - name: Upload coverage
@@ -133,24 +81,13 @@ jobs:
   test-mobile:
     name: Mobile Tests
     runs-on: ubuntu-latest
-    needs: [setup]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            apps/api/node_modules
-            apps/web/node_modules
-            apps/mobile/node_modules
-            packages/shared/node_modules
-          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
-      - name: Expose root bin to PATH
-        run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
+          cache: npm
+      - run: npm ci
       - name: Run Mobile tests
         run: npm test -w apps/mobile
       - name: Upload coverage
@@ -179,45 +116,35 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            apps/api/node_modules
-            apps/web/node_modules
-            apps/mobile/node_modules
-            packages/shared/node_modules
-          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+          cache: npm
+      - run: npm ci
+      - name: Generate Prisma client
+        run: cd apps/api && npx prisma generate
       - name: Build
-        run: cd apps/web && npm run build
+        run: npm run build -w apps/web
 
   e2e:
     name: E2E Tests
     runs-on: ubuntu-latest
-    needs: [setup]
+    needs: [lint, test, test-web, test-mobile]
     if: github.ref == 'refs/heads/main' || startsWith(github.ref, 'refs/heads/release/')
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - name: Restore dependencies
-        uses: actions/cache/restore@v4
-        with:
-          path: |
-            node_modules
-            apps/api/node_modules
-            apps/web/node_modules
-            apps/mobile/node_modules
-            packages/shared/node_modules
-          key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+          cache: npm
+      - run: npm ci
+      - name: Generate Prisma client
+        run: cd apps/api && npx prisma generate
       - name: Install Playwright browsers
-        run: cd apps/web && npx playwright install chromium --with-deps
+        run: npx playwright install chromium --with-deps
+        working-directory: apps/web
       - name: Build shared
-        run: cd packages/shared && npm run typecheck
+        run: npm run typecheck -w packages/shared
       - name: Run E2E tests
-        run: cd apps/web && npx playwright test
+        run: npx playwright test
+        working-directory: apps/web
       - name: Upload Playwright report
         if: always()
         uses: actions/upload-artifact@v4
