@@ -1,0 +1,40 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/packages/shared
+
+ ✓ src/__tests__/entities.test.ts > getSourceIdsForEntities > returns empty array when selectedEntities is empty 1ms
+ ✓ src/__tests__/entities.test.ts > getSourceIdsForEntities > returns empty array when no catalog source name matches 0ms
+ ✓ src/__tests__/entities.test.ts > getSourceIdsForEntities > returns correct IDs for exact name matches (case-insensitive) 0ms
+ ✓ src/__tests__/entities.test.ts > getSourceIdsForEntities > does NOT return Real Madrid Basket when entity feedQuery is exactly Real Madrid 0ms
+ ✓ src/__tests__/entities.test.ts > getSourceIdsForEntities > handles multiple entities and deduplicates 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > extracts ID from watch URL 1ms
+ ✓ src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > extracts ID from short URL 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > extracts ID from embed URL 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > extracts ID from shorts URL 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > extracts ID with extra query params 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > returns null for empty string 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > returns null for non-YouTube URL 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > extractYouTubeVideoId > returns null for malformed URL 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > builds URL with child-safe params from video ID 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > includes disablekb=1 to disable keyboard controls 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > includes fs=0 on web platform 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > excludes fs=0 on mobile platform 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > accepts a full YouTube URL instead of just ID 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > applies overrides 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > overrides default params 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > returns original URL if video ID cannot be extracted 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > buildYouTubeEmbedUrl > defaults to web platform 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > getYouTubePlayerVars > returns base child-safe player vars 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > getYouTubePlayerVars > applies overrides 0ms
+ ✓ src/utils/__tests__/youtube.test.ts > getYouTubePlayerVars > allows overriding base params 0ms
+ ✓ src/__tests__/constants.test.ts > SPORT_ENTITIES > has an entry for every sport in SPORTS 1ms
+ ✓ src/__tests__/constants.test.ts > SPORT_ENTITIES > every entity has non-empty name, type, and feedQuery 2ms
+ ✓ src/__tests__/constants.test.ts > SPORT_ENTITIES > no two entities within the same sport share the same feedQuery 0ms
+ ✓ src/__tests__/constants.test.ts > SPORT_ENTITIES > feedQuery values have no leading or trailing whitespace 0ms
+
+ Test Files  3 passed (3)
+      Tests  29 passed (29)
+   Start at  19:29:54
+   Duration  152ms (transform 78ms, setup 0ms, import 123ms, tests 9ms, environment 0ms)
+

@@ -1,0 +1,14 @@
+{
+  "request": {
+    "url": "http://localhost:3001/api/news/cmnhr1oww002l26kgc5wyfip6/summary?age=10&locale=es",
+    "method": "GET"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "summary": "Los Wizards se disculparon por una broma de abril que parecía que un fanático había lanzado un tiro desde la mitad de la cancha y había ganado $10,000. Pero resultó que la escena entera fue una broma. Los organizadores de la broma habían contratado a un actor para que fingiera ser un fanático y se quedara con el premio. Los Wizards dijeron que la broma fue un error y que no querían engañar a nadie. (una broma es una forma de hacer reír a alguien, un actor es alguien que hace de un personaje en una película o en un espectáculo, un fanático es alguien que ama mucho un equipo o un deporte).",
+      "ageRange": "9-11",
+      "generatedAt": "2026-04-02T17:29:30.809Z"
+    }
+  }
+}

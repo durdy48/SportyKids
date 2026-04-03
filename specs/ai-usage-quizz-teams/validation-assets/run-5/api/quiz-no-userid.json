@@ -1,0 +1,112 @@
+{
+  "request": {
+    "url": "http://localhost:3001/api/quiz/questions?age=9-11&count=5"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "questions": [
+        {
+          "id": "cmnac0xmc005l2646i1744q09",
+          "question": "¿Cuánto mide una cancha de baloncesto?",
+          "options": [
+            "20 metros",
+            "24 metros",
+            "28 metros",
+            "30 metros"
+          ],
+          "correctAnswer": 2,
+          "sport": "basketball",
+          "points": 15,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xma005j2646bybymhzm",
+          "question": "¿Qué equipo ha ganado más Champions League?",
+          "options": [
+            "Barcelona",
+            "Real Madrid",
+            "AC Milan",
+            "Bayern Munich"
+          ],
+          "correctAnswer": 1,
+          "sport": "football",
+          "points": 15,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xmc005m2646n45e63c0",
+          "question": "¿Cuántos puntos vale un triple en baloncesto?",
+          "options": [
+            "1",
+            "2",
+            "3",
+            "4"
+          ],
+          "correctAnswer": 2,
+          "sport": "basketball",
+          "points": 10,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xmg005p2646ep0yu8t3",
+          "question": "¿Cuántas vueltas tiene aproximadamente una carrera de F1?",
+          "options": [
+            "30-40",
+            "40-50",
+            "50-70",
+            "70-80"
+          ],
+          "correctAnswer": 2,
+          "sport": "formula1",
+          "points": 15,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xmm005w264610t360qu",
+          "question": "¿Qué deporte se juega con pala y pelota en una pista cerrada?",
+          "options": [
+            "Tenis",
+            "Squash",
+            "Pádel",
+            "Bádminton"
+          ],
+          "correctAnswer": 2,
+          "sport": "padel",
+          "points": 10,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        }
+      ]
+    }
+  }
+}

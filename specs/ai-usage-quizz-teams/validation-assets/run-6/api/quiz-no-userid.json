@@ -1,0 +1,112 @@
+{
+  "request": {
+    "url": "http://localhost:3001/api/quiz/questions?age=9-11&count=5"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "questions": [
+        {
+          "id": "cmnac0xmc005l2646i1744q09",
+          "question": "¿Cuánto mide una cancha de baloncesto?",
+          "options": [
+            "20 metros",
+            "24 metros",
+            "28 metros",
+            "30 metros"
+          ],
+          "correctAnswer": 2,
+          "sport": "basketball",
+          "points": 15,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xmm005w264610t360qu",
+          "question": "¿Qué deporte se juega con pala y pelota en una pista cerrada?",
+          "options": [
+            "Tenis",
+            "Squash",
+            "Pádel",
+            "Bádminton"
+          ],
+          "correctAnswer": 2,
+          "sport": "padel",
+          "points": 10,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xmk005u2646b4g02m8f",
+          "question": "¿Qué equipo juega en el Santiago Bernabéu?",
+          "options": [
+            "Atlético de Madrid",
+            "Barcelona",
+            "Real Madrid",
+            "Sevilla FC"
+          ],
+          "correctAnswer": 2,
+          "sport": "football",
+          "points": 10,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xme005n2646hmjrjsm4",
+          "question": "¿En qué superficie se juega Roland Garros?",
+          "options": [
+            "Hierba",
+            "Tierra batida",
+            "Pista dura",
+            "Hormigón"
+          ],
+          "correctAnswer": 1,
+          "sport": "tennis",
+          "points": 10,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xmf005o2646omwdnhw8",
+          "question": "¿Cuántos sets hay que ganar en un Grand Slam masculino?",
+          "options": [
+            "2",
+            "3",
+            "4",
+            "5"
+          ],
+          "correctAnswer": 1,
+          "sport": "tennis",
+          "points": 15,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        }
+      ]
+    }
+  }
+}

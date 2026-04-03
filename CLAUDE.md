@@ -48,7 +48,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **Nota**: Prisma v7 no es compatible con este proyecto (rompe la config de datasource url). Usar Prisma ^6.
 
-**Nota AI**: El AI client usa `openai` SDK como cliente universal para Ollama y OpenRouter (APIs compatibles). Anthropic se importa dinámicamente solo si `AI_PROVIDER=anthropic`. Por defecto `AI_PROVIDER=ollama` (gratis, local).
+**Nota AI**: El AI client usa `openai` SDK como cliente universal para Ollama, OpenRouter y Groq (APIs compatibles con OpenAI). Anthropic se importa dinámicamente solo si `AI_PROVIDER=anthropic`. Groq se importa via openai SDK con `baseURL=https://api.groq.com/openai/v1`. Por defecto `AI_PROVIDER=ollama` (gratis, local). Groq recomendado para producción (gratis: 14,400 req/día, modelo `llama-3.1-8b-instant`).
 
 ## Comandos de desarrollo
 
@@ -365,6 +365,7 @@ En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 | 6.1 | ✅ Completada | Subscription Monetization with RevenueCat (free/premium tiers, server-side limits, webhook, paywall screen, family plan) |
 | 6.2 | ✅ Completada | Real-Time Match Notifications (LiveMatch model, TheSportsDB livescore polling, event detection, targeted push, live banner UI, notification prefs) |
 | 6.3 | ✅ Completada | B2B Channel: Clubs & Academies (Organization model, invite codes, org admin dashboard, member management, subscription integration, JoinOrganization screen) |
+| 6.4 | ✅ Completada | Groq AI Provider + Explicar Fácil mobile (Groq support in ai-client, "Explain it Easy" button in mobile NewsCard with age-adapted summaries) |
 | 5 | 🔄 En progreso | Beta Testing & Store Launch — staging env, store metadata, beta guide, review notes |
 
 ## Fuentes RSS
@@ -441,7 +442,7 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 | Variable | Requerida | Descripción |
 |----------|-----------|-------------|
 | `DATABASE_URL` | Sí | PostgreSQL: `postgresql://sportykids:sportykids@localhost:5432/sportykids` |
-| `AI_PROVIDER` | No | `ollama` (default), `openrouter`, `anthropic` |
+| `AI_PROVIDER` | No | `ollama` (default), `openrouter`, `anthropic`, `groq` |
 | `SENTRY_DSN` | No | Sentry error tracking (API). Sin valor = deshabilitado |
 | `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry para web |
 | `POSTHOG_API_KEY` | No | PostHog analytics. Sin valor = deshabilitado |
@@ -471,6 +472,9 @@ Después de cada cambio, arreglo o implementación nueva, asegurate de mantener 
 | `REVENUECAT_WEBHOOK_SECRET` | Sí (prod) | Shared secret for RevenueCat webhook authentication |
 | `REVENUECAT_API_KEY_APPLE` | No (mobile) | RevenueCat Apple API key (embedded in mobile app) |
 | `REVENUECAT_API_KEY_GOOGLE` | No (mobile) | RevenueCat Google API key (embedded in mobile app) |
+| `GROQ_API_KEY` | No | API key for Groq provider (`AI_PROVIDER=groq`). Free tier: 14,400 req/day. Get from console.groq.com |
+| `GROQ_MODEL` | No | Groq model override (default: `llama-3.1-8b-instant`). E.g. `llama-3.3-70b-versatile` |
+| `GROQ_BASE_URL` | No | Groq API base URL override (default: `https://api.groq.com/openai/v1`) |
 
 ## Infraestructura
 

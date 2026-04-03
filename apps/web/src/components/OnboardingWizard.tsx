@@ -2,8 +2,8 @@
 
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
-import { SPORTS, TEAMS, AGE_RANGES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale } from '@sportykids/shared';
-import type { AgeRange, RssSource } from '@sportykids/shared';
+import { SPORTS, AGE_RANGES, SPORT_ENTITIES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale, getSourceIdsForEntities } from '@sportykids/shared';
+import type { AgeRange, RssSource, SportEntity } from '@sportykids/shared';
 import { createUser, fetchSourceCatalog, addCustomSource, setupParentalPin, fetchAuthProviders } from '@/lib/api';
 import { getGoogleLoginUrl, getAppleLoginUrl } from '@/lib/auth';
 import Link from 'next/link';
@@ -37,7 +37,7 @@ export function OnboardingWizard() {
   const [name, setName] = useState('');
   const [ageRange, setAgeRange] = useState<AgeRange | null>(null);
   const [sports, setSports] = useState<string[]>([]);
-  const [team, setTeam] = useState<string>('');
+  const [selectedEntities, setSelectedEntities] = useState<SportEntity[]>([]);
   const [catalogSources, setCatalogSources] = useState<RssSource[]>([]);
   const [selectedFeeds, setSelectedFeeds] = useState<string[]>([]);
   const [catalogLoading, setCatalogLoading] = useState(false);
@@ -79,7 +79,9 @@ export function OnboardingWizard() {
           const relevantIds = data.sources
             .filter((s) => sports.includes(s.sport))
             .map((s) => s.id);
-          setSelectedFeeds(relevantIds);
+          const entityIds = getSourceIdsForEntities(data.sources, selectedEntities);
+          const merged = Array.from(new Set([...relevantIds, ...entityIds]));
+          setSelectedFeeds(merged);
         })
         // eslint-disable-next-line no-console
         .catch(console.error)
@@ -125,6 +127,17 @@ export function OnboardingWizard() {
 
   const toggleSport = (s: string) => {
     setSports((prev) => prev.includes(s) ? prev.filter((x) => x !== s) : [...prev, s]);
+  };
+
+  const visibleEntities = useMemo(() => {
+    return sports.flatMap((sport) => SPORT_ENTITIES[sport] ?? []);
+  }, [sports]);
+
+  const toggleEntity = (entity: SportEntity) => {
+    setSelectedEntities((prev) => {
+      const exists = prev.some((e) => e.feedQuery === entity.feedQuery);
+      return exists ? prev.filter((e) => e.feedQuery !== entity.feedQuery) : [...prev, entity];
+    });
   };
 
   const toggleFeed = (id: string) => {
@@ -225,7 +238,7 @@ export function OnboardingWizard() {
         name: name.trim(),
         age,
         favoriteSports: sports,
-        favoriteTeam: team || undefined,
+        favoriteTeam: selectedEntities[0]?.name ?? undefined,
         selectedFeeds,
         locale,
         country: inferredCountry,
@@ -399,33 +412,46 @@ export function OnboardingWizard() {
           </div>
         )}
 
-        {/* Step 3: Favorite team */}
+        {/* Step 3: Who do you follow? */}
         {step === 3 && (
           <div className="space-y-6">
             <div className="text-center">
-              <span className="text-4xl">⚽</span>
+              <span className="text-4xl">⭐</span>
               <h2 className="font-[family-name:var(--font-poppins)] text-2xl font-bold text-[var(--color-text)] mt-3">
                 {t('onboarding.step3_title', locale)}
               </h2>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">{t('onboarding.step3_subtitle', locale)}</p>
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                {t('onboarding.step3_subtitle', locale)}
+              </p>
             </div>
-            <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto">
-              {TEAMS.map((tm) => (
-                <button
-                  key={tm}
-                  onClick={() => setTeam(team === tm ? '' : tm)}
-                  aria-pressed={team === tm}
-                  aria-label={`Team: ${tm}`}
-                  className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-colors text-left ${
-                    team === tm
-                      ? 'bg-[var(--color-blue)] text-white'
-                      : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
-                  }`}
-                >
-                  {tm}
-                </button>
-              ))}
-            </div>
+            {visibleEntities.length === 0 ? (
+              <p className="text-center text-sm text-gray-400">
+                {t('onboarding.step3_no_entities', locale)}
+              </p>
+            ) : (
+              <div className="grid grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-1">
+                {visibleEntities.map((entity) => {
+                  const isSelected = selectedEntities.some(
+                    (e) => e.feedQuery === entity.feedQuery
+                  );
+                  return (
+                    <button
+                      key={entity.feedQuery}
+                      onClick={() => toggleEntity(entity)}
+                      aria-pressed={isSelected}
+                      aria-label={t('a11y.onboarding.select_entity', locale, { entity: entity.name })}
+                      className={`py-2.5 px-3 rounded-xl text-sm font-medium transition-colors text-left ${
+                        isSelected
+                          ? 'bg-[var(--color-blue)] text-white'
+                          : 'bg-gray-100 dark:bg-gray-700 text-gray-600 dark:text-gray-300 hover:bg-gray-200 dark:hover:bg-gray-600'
+                      }`}
+                    >
+                      {entity.name}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
           </div>
         )}
 

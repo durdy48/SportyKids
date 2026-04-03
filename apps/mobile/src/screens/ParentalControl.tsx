@@ -208,7 +208,7 @@ export function ParentalControlScreen() {
     setSaving(true);
     try {
       const updated = await updateParentalProfile(user.id, {
-        maxDailyTimeMinutes: minutes > 0 ? minutes : undefined,
+        maxDailyTimeMinutes: minutes,
       });
       setProfile(updated as unknown as ParentalProfileData);
       setParentalProfile(updated);

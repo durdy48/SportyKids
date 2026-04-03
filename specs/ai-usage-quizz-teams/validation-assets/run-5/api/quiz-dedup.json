@@ -1,0 +1,112 @@
+{
+  "request": {
+    "url": "http://localhost:3001/api/quiz/questions?age=9-11&count=5"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "questions": [
+        {
+          "id": "cmnac0xmh005r2646cqcubw41",
+          "question": "¿Cuánto mide una piscina olímpica?",
+          "options": [
+            "25m",
+            "33m",
+            "50m",
+            "100m"
+          ],
+          "correctAnswer": 2,
+          "sport": "swimming",
+          "points": 10,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xmi005s2646h1u7y9bu",
+          "question": "¿Cuántas etapas tiene aproximadamente el Tour de Francia?",
+          "options": [
+            "15",
+            "18",
+            "21",
+            "25"
+          ],
+          "correctAnswer": 2,
+          "sport": "cycling",
+          "points": 15,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xma005j2646bybymhzm",
+          "question": "¿Qué equipo ha ganado más Champions League?",
+          "options": [
+            "Barcelona",
+            "Real Madrid",
+            "AC Milan",
+            "Bayern Munich"
+          ],
+          "correctAnswer": 1,
+          "sport": "football",
+          "points": 15,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xmk005u2646b4g02m8f",
+          "question": "¿Qué equipo juega en el Santiago Bernabéu?",
+          "options": [
+            "Atlético de Madrid",
+            "Barcelona",
+            "Real Madrid",
+            "Sevilla FC"
+          ],
+          "correctAnswer": 2,
+          "sport": "football",
+          "points": 10,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        },
+        {
+          "id": "cmnac0xmg005p2646ep0yu8t3",
+          "question": "¿Cuántas vueltas tiene aproximadamente una carrera de F1?",
+          "options": [
+            "30-40",
+            "40-50",
+            "50-70",
+            "70-80"
+          ],
+          "correctAnswer": 2,
+          "sport": "formula1",
+          "points": 15,
+          "relatedNewsId": null,
+          "generatedAt": null,
+          "ageRange": null,
+          "expiresAt": null,
+          "isTimeless": false,
+          "topic": null,
+          "isDaily": false
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,24 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/api
+
+ ✓ src/routes/__tests__/quiz.test.ts > GET /api/quiz/questions > per-user deduplication > excludes questions answered within 60 days when userId is provided 64ms
+ ✓ src/routes/__tests__/quiz.test.ts > GET /api/quiz/questions > per-user deduplication > includes questions whose history entry is > 60 days old 2ms
+ ✓ src/routes/__tests__/quiz.test.ts > GET /api/quiz/questions > per-user deduplication > does not apply dedup when userId is not provided 1ms
+ ✓ src/routes/__tests__/quiz.test.ts > GET /api/quiz/questions > 70/30 timeless mix > targets ~30% timeless from pool B 1ms
+ ✓ src/routes/__tests__/quiz.test.ts > GET /api/quiz/questions > sport balance > caps football questions at floor(5/4)+1=2 in a 5-question set (pool A only) 1ms
+ ✓ src/routes/__tests__/quiz.test.ts > GET /api/quiz/questions > sport balance > caps football across combined pool A + pool B (cross-pool scenario) 1ms
+ ✓ src/routes/__tests__/quiz.test.ts > GET /api/quiz/questions > seed fallback > returns seed questions when daily and timeless pools are empty 1ms
+ ✓ src/routes/__tests__/quiz.test.ts > GET /api/quiz/questions > returns questions without age filter (backward compat) 1ms
+ ✓ src/routes/__tests__/quiz.test.ts > POST /api/quiz/answer > creates UserQuizHistory row after correct answer 61ms
+ ✓ src/routes/__tests__/quiz.test.ts > POST /api/quiz/answer > creates UserQuizHistory row on wrong answer too 53ms
+ ✓ src/routes/__tests__/quiz.test.ts > POST /api/quiz/answer > is idempotent: calling twice for same user/question upsertes, not creates 54ms
+ ✓ src/routes/__tests__/quiz.test.ts > POST /api/quiz/answer > returns 400 when question not found 2ms
+ ✓ src/routes/__tests__/quiz.test.ts > POST /api/quiz/answer > returns 400 when answer schema is invalid 1ms
+
+ Test Files  1 passed (1)
+      Tests  13 passed (13)
+   Start at  20:38:06
+   Duration  491ms (transform 39ms, setup 0ms, import 159ms, tests 246ms, environment 0ms)
+

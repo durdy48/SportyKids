@@ -1,0 +1,15 @@
+{
+  "request": {
+    "url": "http://localhost:3001/api/news/cmnho59yb0003260hhc2zrnak/summary?age=10&locale=es",
+    "method": "GET"
+  },
+  "response": {
+    "status": 503,
+    "body": {
+      "error": {
+        "code": "SERVICE_UNAVAILABLE",
+        "message": "Summary generation unavailable. Try again later."
+      }
+    }
+  }
+}

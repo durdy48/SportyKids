@@ -1,0 +1,22 @@
+npm warn Unknown user config "always-auth". This will stop working in the next major version of npm.
+npm warn Unknown user config "email". This will stop working in the next major version of npm.
+
+ RUN  v4.1.2 /Users/antonioduarteruiz/personal/sportykids/apps/api
+
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > module exports > getAIClient is a function 23ms
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > isProviderAvailable — Groq > returns true when AI_PROVIDER=groq and GROQ_API_KEY is set 0ms
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > isProviderAvailable — Groq > returns false when AI_PROVIDER=groq and GROQ_API_KEY is absent 0ms
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > isProviderAvailable — other providers > returns true when AI_PROVIDER=openrouter and OPENROUTER_API_KEY is set 0ms
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > isProviderAvailable — other providers > returns true when AI_PROVIDER=anthropic and ANTHROPIC_API_KEY is set 0ms
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > dispatch — groq throws AIServiceError without API key > throws AIServiceError (provider not available) when GROQ_API_KEY is absent at load time 0ms
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > dispatch — groq throws AIServiceError without API key > throws AIServiceError (GROQ_API_KEY required) when dispatch runs with empty key 0ms
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > Groq — model name resolution > defaults to llama-3.1-8b-instant for groq when GROQ_MODEL is not set 1ms
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > Groq — model name resolution > uses GROQ_MODEL override when set 1ms
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > Groq base URL > sends requests to https://api.groq.com/openai/v1 by default 1ms
+ ✓ src/services/__tests__/ai-client.test.ts > ai-client > Groq base URL > uses GROQ_BASE_URL override when set 1ms
+
+ Test Files  1 passed (1)
+      Tests  11 passed (11)
+   Start at  20:07:55
+   Duration  227ms (transform 33ms, setup 0ms, import 41ms, tests 30ms, environment 0ms)
+

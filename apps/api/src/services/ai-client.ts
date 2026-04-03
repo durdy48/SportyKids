@@ -1,6 +1,9 @@
 /**
- * Multi-provider AI client with rate limiting and retries.
- * Supports Ollama (default), OpenRouter, and Anthropic.
+ * Multi-provider AI client with rate limiting, retries, and automatic provider
+ * fallback. Supports Ollama (default), OpenRouter, Anthropic, and Groq.
+ *
+ * Fallback chain: set AI_FALLBACK_PROVIDERS=ollama,openrouter (comma-separated)
+ * to automatically switch when the primary provider is rate-limited.
  */
 
 import { logger } from './logger';
@@ -9,7 +12,7 @@ import { logger } from './logger';
 // Types
 // ---------------------------------------------------------------------------
 
-export type AIProvider = 'ollama' | 'openrouter' | 'anthropic';
+export type AIProvider = 'ollama' | 'openrouter' | 'anthropic' | 'groq' | 'gemini';
 export type ModelPurpose = 'moderation' | 'generation';
 
 export interface AIMessage {
@@ -82,8 +85,86 @@ class SlidingWindowRateLimiter {
 }
 
 // ---------------------------------------------------------------------------
+// Circuit breaker — per-provider + per-purpose rate-limit trip with auto-reset
+//
+// Moderation and generation use independent circuits so that a rate-limit
+// burst from the background moderation job never blocks user-facing generation
+// (e.g. "Explain it Easy").
+// ---------------------------------------------------------------------------
+
+class ProviderCircuitBreaker {
+  // Key format: "provider" (provider-wide) or "provider:purpose" (purpose-scoped)
+  private readonly openUntil = new Map<string, number>();
+
+  private key(provider: AIProvider, purpose?: ModelPurpose): string {
+    return purpose ? `${provider}:${purpose}` : provider;
+  }
+
+  /** Returns true if the provider is currently circuit-broken for the given purpose. */
+  isOpen(provider: AIProvider, purpose?: ModelPurpose): boolean {
+    const k = this.key(provider, purpose);
+    const until = this.openUntil.get(k);
+    if (!until) return false;
+    if (Date.now() >= until) {
+      this.openUntil.delete(k);
+      return false;
+    }
+    return true;
+  }
+
+  /** Mark a provider as unavailable for the given duration (ms), scoped to a purpose. */
+  trip(provider: AIProvider, durationMs: number, purpose?: ModelPurpose): void {
+    this.openUntil.set(this.key(provider, purpose), Date.now() + durationMs);
+    logger.warn(
+      { provider, purpose: purpose ?? 'all', retryAfterMs: durationMs },
+      'AI provider rate-limited — circuit opened, switching to fallback',
+    );
+  }
+
+  /** For testing: manually reset a provider's circuit (optionally scoped to purpose). */
+  reset(provider: AIProvider, purpose?: ModelPurpose): void {
+    this.openUntil.delete(this.key(provider, purpose));
+  }
+}
+
+// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
+
+/**
+ * Parse the retry-after duration from a Groq/OpenAI rate limit error message.
+ * Groq includes "Please try again in X.XXs" — we extract X and convert to ms.
+ * Returns null if the message doesn't contain a parseable duration.
+ */
+export function parseRetryAfterMs(err: unknown): number | null {
+  const msg = err instanceof Error ? err.message : String(err);
+  const match = msg.match(/try again in ([\d.]+)s/i);
+  if (!match) return null;
+  const seconds = parseFloat(match[1]!);
+  if (isNaN(seconds) || seconds <= 0) return null;
+  // Add 5 s buffer; cap at 24 h to avoid indefinite locks.
+  return Math.min(Math.ceil(seconds * 1000) + 5_000, 24 * 60 * 60 * 1000);
+}
+
+/**
+ * Returns true if the error is a 429 rate-limit / quota-exceeded response.
+ * Works with raw OpenAI SDK errors (which have a `.status` field) and with
+ * our AIServiceError wrapper.
+ */
+export function isRateLimitError(err: unknown): boolean {
+  if (err instanceof AIServiceError && err.statusCode === 429) return true;
+  // OpenAI SDK errors expose .status
+  const status = (err as { status?: unknown })?.status;
+  if (status === 429) return true;
+  const msg = (err instanceof Error ? err.message : String(err)).toLowerCase();
+  return msg.includes('rate limit') || msg.includes('too many requests') || msg.includes('tokens per day') || msg.includes('tokens per minute');
+}
+
+/** Returns true for errors that will never succeed on retry (bad API key, forbidden). */
+export function isNonRetryableError(err: unknown): boolean {
+  const status = (err as { status?: unknown })?.status;
+  return status === 401 || status === 403;
+}
 
 function getConfig(): AIClientConfig {
   return {
@@ -94,21 +175,39 @@ function getConfig(): AIClientConfig {
   };
 }
 
-function getModelName(purpose: ModelPurpose): string {
-  const cfg = getConfig();
+/**
+ * Returns the ordered fallback provider list from AI_FALLBACK_PROVIDERS.
+ * Example: AI_FALLBACK_PROVIDERS=ollama,openrouter → ['ollama', 'openrouter']
+ */
+export function getFallbackProviders(): AIProvider[] {
+  const raw = process.env.AI_FALLBACK_PROVIDERS || '';
+  return raw
+    .split(',')
+    .map((p) => p.trim() as AIProvider)
+    .filter((p): p is AIProvider =>
+      ['ollama', 'openrouter', 'anthropic', 'groq', 'gemini'].includes(p),
+    );
+}
 
+function getModelNameForProvider(purpose: ModelPurpose, provider: AIProvider): string {
   if (purpose === 'moderation') {
-    if (cfg.provider === 'ollama') return process.env.OLLAMA_MODEL_MODERATION || 'llama3.2';
-    if (cfg.provider === 'openrouter') return process.env.OPENROUTER_MODEL_MODERATION || 'meta-llama/llama-3.1-8b-instruct:free';
-    if (cfg.provider === 'anthropic') return process.env.AI_MODEL_MODERATION || 'claude-sonnet-4-20250514';
+    if (provider === 'ollama') return process.env.OLLAMA_MODEL_MODERATION || 'llama3.2';
+    if (provider === 'openrouter') return process.env.OPENROUTER_MODEL_MODERATION || 'openrouter/free';
+    if (provider === 'anthropic') return process.env.AI_MODEL_MODERATION || 'claude-sonnet-4-20250514';
+    if (provider === 'groq') return process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+    if (provider === 'gemini') return process.env.GEMINI_MODEL || 'gemini-1.5-flash';
   }
-
   // generation
-  if (cfg.provider === 'ollama') return process.env.OLLAMA_MODEL_GENERATION || 'llama3.2';
-  if (cfg.provider === 'openrouter') return process.env.OPENROUTER_MODEL_GENERATION || 'meta-llama/llama-3.1-8b-instruct:free';
-  if (cfg.provider === 'anthropic') return process.env.AI_MODEL_GENERATION || 'claude-sonnet-4-20250514';
-
+  if (provider === 'ollama') return process.env.OLLAMA_MODEL_GENERATION || 'llama3.2';
+  if (provider === 'openrouter') return process.env.OPENROUTER_MODEL_GENERATION || 'openrouter/free';
+  if (provider === 'anthropic') return process.env.AI_MODEL_GENERATION || 'claude-sonnet-4-20250514';
+  if (provider === 'groq') return process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
+  if (provider === 'gemini') return process.env.GEMINI_MODEL || 'gemini-1.5-flash';
   return 'llama3.2';
+}
+
+function getModelName(purpose: ModelPurpose): string {
+  return getModelNameForProvider(purpose, getConfig().provider);
 }
 
 // ---------------------------------------------------------------------------
@@ -135,6 +234,10 @@ async function isProviderAvailable(): Promise<boolean> {
       providerAvailable = !!process.env.OPENROUTER_API_KEY;
     } else if (cfg.provider === 'anthropic') {
       providerAvailable = !!process.env.ANTHROPIC_API_KEY;
+    } else if (cfg.provider === 'groq') {
+      providerAvailable = !!process.env.GROQ_API_KEY;
+    } else if (cfg.provider === 'gemini') {
+      providerAvailable = !!process.env.GEMINI_API_KEY;
     } else {
       providerAvailable = false;
     }
@@ -159,6 +262,7 @@ async function sendViaOpenAICompat(
   model: string,
   messages: AIMessage[],
   provider: AIProvider,
+  maxTokens: number,
 ): Promise<AIResponse> {
   // Dynamic import to avoid top-level dependency issues
   const { default: OpenAI } = await import('openai');
@@ -166,12 +270,15 @@ async function sendViaOpenAICompat(
   const client = new OpenAI({
     baseURL: baseUrl,
     apiKey: apiKey || 'ollama', // Ollama doesn't need a real key
+    timeout: 20_000, // 20s hard cap — prevents hanging when provider is slow
+    maxRetries: 0,   // Retries handled by AIClient.sendMessage, not the SDK
   });
 
   const response = await client.chat.completions.create({
     model,
     messages,
     temperature: 0.1,
+    max_tokens: maxTokens,
   });
 
   const choice = response.choices?.[0];
@@ -231,25 +338,47 @@ async function sendViaAnthropic(
 // AIClient singleton
 // ---------------------------------------------------------------------------
 
+// Token budget per purpose — keeps responses fast and within Groq's TPM limits.
+const MAX_TOKENS: Record<ModelPurpose, number> = {
+  moderation: 200,  // JSON safety verdict: {"safe":true,"reason":"..."} ≈ 50 tokens
+  generation: 400,  // Age-adapted summary (80-180 words) ≈ 250-350 tokens
+};
+
 class AIClient {
-  private rateLimiter: SlidingWindowRateLimiter;
+  // Separate rate limiters per purpose so background moderation jobs
+  // never block user-facing generation calls (both share the provider's RPM cap
+  // but compete independently — generation is always immediately available).
+  private moderationLimiter: SlidingWindowRateLimiter;
+  private generationLimiter: SlidingWindowRateLimiter;
+  private circuitBreaker: ProviderCircuitBreaker;
 
   constructor() {
     const cfg = getConfig();
-    this.rateLimiter = new SlidingWindowRateLimiter(cfg.rateLimitRpm);
+    this.moderationLimiter = new SlidingWindowRateLimiter(cfg.rateLimitRpm);
+    this.generationLimiter = new SlidingWindowRateLimiter(cfg.rateLimitRpm);
+    this.circuitBreaker = new ProviderCircuitBreaker();
   }
 
   /**
    * Send a message to the configured AI provider.
-   * Includes rate limiting and retries with exponential backoff.
+   * Includes rate limiting, retries with exponential backoff, and automatic
+   * provider fallback when the primary is rate-limited (429).
+   *
+   * Provider chain: [AI_PROVIDER, ...AI_FALLBACK_PROVIDERS]
+   * Circuit breaker: on 429, the provider is marked unavailable for the
+   * retry-after duration parsed from the error message, then auto-resets.
    */
   async sendMessage(messages: AIMessage[], purpose: ModelPurpose = 'moderation'): Promise<AIResponse> {
     const cfg = getConfig();
-    const model = getModelName(purpose);
+    const rateLimiter = purpose === 'generation' ? this.generationLimiter : this.moderationLimiter;
 
-    // Fast fail if provider is known to be unavailable
-    const available = await isProviderAvailable();
-    if (!available) {
+    // Build the provider chain: primary first, then configured fallbacks.
+    const fallbacks = getFallbackProviders();
+    const providerChain: AIProvider[] = [cfg.provider, ...fallbacks.filter((p) => p !== cfg.provider)];
+
+    // Fast fail if primary provider is known to be unconfigured and no fallbacks exist.
+    const primaryAvailable = await isProviderAvailable();
+    if (!primaryAvailable && fallbacks.length === 0) {
       throw new AIServiceError(
         `AI provider "${cfg.provider}" is not available`,
         cfg.provider,
@@ -259,28 +388,57 @@ class AIClient {
 
     let lastError: unknown;
 
-    for (let attempt = 0; attempt <= cfg.maxRetries; attempt++) {
-      try {
-        await this.rateLimiter.waitForSlot();
-        return await this.dispatch(cfg.provider, model, messages);
-      } catch (err) {
-        lastError = err;
+    for (const provider of providerChain) {
+      // Skip providers that are currently circuit-broken for this purpose.
+      if (this.circuitBreaker.isOpen(provider, purpose)) {
+        logger.debug({ provider, purpose }, 'AI provider circuit open, skipping');
+        continue;
+      }
 
-        const isRetryable =
-          err instanceof AIServiceError ? err.retryable : true;
+      for (let attempt = 0; attempt <= cfg.maxRetries; attempt++) {
+        try {
+          await rateLimiter.waitForSlot();
+          const model = getModelNameForProvider(purpose, provider);
+          return await this.dispatch(provider, model, messages, purpose);
+        } catch (err) {
+          lastError = err;
 
-        if (!isRetryable || attempt === cfg.maxRetries) break;
+          if (isRateLimitError(err)) {
+            // Trip the circuit breaker scoped to this purpose so that other
+            // purposes (e.g. generation) can still use the provider.
+            const retryAfterMs = parseRetryAfterMs(err) ?? 60_000;
+            this.circuitBreaker.trip(provider, retryAfterMs, purpose);
+            break; // Stop retrying this provider; outer loop tries next one.
+          }
 
-        const delay = cfg.retryDelayMs * Math.pow(2, attempt);
-        logger.warn({ provider: cfg.provider, attempt: attempt + 1, retryDelayMs: delay }, 'AI attempt failed, retrying');
-        await new Promise((resolve) => setTimeout(resolve, delay));
+          if (isNonRetryableError(err)) {
+            // Auth/forbidden errors won't resolve with retries — fail fast.
+            logger.error(
+              { provider, status: (err as { status?: unknown })?.status, err: err instanceof Error ? err.message : String(err) },
+              'AI provider auth/forbidden error — check API key configuration',
+            );
+            break;
+          }
+
+          const isRetryable =
+            err instanceof AIServiceError ? err.retryable : true;
+
+          if (!isRetryable || attempt === cfg.maxRetries) break;
+
+          const delay = cfg.retryDelayMs * Math.pow(2, attempt);
+          logger.warn(
+            { provider, attempt: attempt + 1, retryDelayMs: delay, err: err instanceof Error ? err.message : String(err) },
+            'AI attempt failed, retrying',
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
       }
     }
 
     throw lastError instanceof AIServiceError
       ? lastError
       : new AIServiceError(
-          `AI request failed after ${cfg.maxRetries + 1} attempts`,
+          `AI request failed after exhausting all providers`,
           cfg.provider,
           { cause: lastError, retryable: false },
         );
@@ -290,11 +448,13 @@ class AIClient {
     provider: AIProvider,
     model: string,
     messages: AIMessage[],
+    purpose: ModelPurpose,
   ): Promise<AIResponse> {
+    const maxTokens = MAX_TOKENS[purpose];
     switch (provider) {
       case 'ollama': {
         const baseUrl = process.env.OLLAMA_BASE_URL || 'http://localhost:11434/v1';
-        return sendViaOpenAICompat(baseUrl, undefined, model, messages, 'ollama');
+        return sendViaOpenAICompat(baseUrl, undefined, model, messages, 'ollama', maxTokens);
       }
 
       case 'openrouter': {
@@ -307,7 +467,7 @@ class AIClient {
           );
         }
         const baseUrl = process.env.OPENROUTER_BASE_URL || 'https://openrouter.ai/api/v1';
-        return sendViaOpenAICompat(baseUrl, apiKey, model, messages, 'openrouter');
+        return sendViaOpenAICompat(baseUrl, apiKey, model, messages, 'openrouter', maxTokens);
       }
 
       case 'anthropic': {
@@ -320,6 +480,33 @@ class AIClient {
           );
         }
         return sendViaAnthropic(apiKey, model, messages);
+      }
+
+      case 'groq': {
+        const apiKey = process.env.GROQ_API_KEY;
+        if (!apiKey) {
+          throw new AIServiceError(
+            'GROQ_API_KEY is required when AI_PROVIDER=groq',
+            'groq',
+            { retryable: false },
+          );
+        }
+        const baseUrl = process.env.GROQ_BASE_URL || 'https://api.groq.com/openai/v1';
+        return sendViaOpenAICompat(baseUrl, apiKey, model, messages, 'groq', maxTokens);
+      }
+
+      case 'gemini': {
+        const apiKey = process.env.GEMINI_API_KEY;
+        if (!apiKey) {
+          throw new AIServiceError(
+            'GEMINI_API_KEY is required when AI_PROVIDER=gemini or used as fallback',
+            'gemini',
+            { retryable: false },
+          );
+        }
+        // Gemini OpenAI-compatible endpoint: https://ai.google.dev/gemini-api/docs/openai
+        const baseUrl = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai';
+        return sendViaOpenAICompat(baseUrl, apiKey, model, messages, 'gemini', maxTokens);
       }
 
       default:
@@ -340,5 +527,5 @@ export function getAIClient(): AIClient {
   return instance;
 }
 
-export { isProviderAvailable };
+export { isProviderAvailable, getModelName };
 export default AIClient;

@@ -19,12 +19,14 @@ export function AgeAdaptedSummary({ newsId, locale, userAge, isOpen }: AgeAdapte
   } | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
-  const hasFetched = useRef(false);
+  const fetchKey = useRef<string | null>(null);
 
   useEffect(() => {
-    if (!isOpen || hasFetched.current) return;
+    const key = `${newsId}:${locale}`;
+    if (!isOpen || fetchKey.current === key) return;
 
-    hasFetched.current = true;
+    fetchKey.current = key;
+    setSummaryData(null);
     setLoading(true);
     setError(false);
 
@@ -49,12 +51,13 @@ export function AgeAdaptedSummary({ newsId, locale, userAge, isOpen }: AgeAdapte
       }}
     >
       <div
-        className="mt-3"
+        className="mt-3 overflow-y-auto"
         style={{
           background: 'var(--color-background)',
           borderLeft: '3px solid var(--color-blue)',
           borderRadius: '8px',
           padding: '12px 16px',
+          maxHeight: '460px',
         }}
       >
         {loading && (
