@@ -101,4 +101,12 @@ router.get(
   },
 );
 
+// GET /api/admin/db-check — temporary diagnostic: raw SQL count of RssSource
+router.get('/db-check', async (_req: Request, res: Response) => {
+  const result = await prisma.$queryRaw<{ count: bigint }[]>`SELECT COUNT(*) as count FROM "RssSource"`;
+  const count = Number(result[0].count);
+  const sources = await prisma.rssSource.findMany({ take: 3, select: { name: true, url: true } });
+  res.json({ rawCount: count, prismaFinds: sources.length, sample: sources });
+});
+
 export default router;
