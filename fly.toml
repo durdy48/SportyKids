@@ -8,7 +8,7 @@ primary_region = "cdg"  # Paris — closest available region to Spain (mad is de
   NODE_ENV = "production"
   PORT = "8080"
   LOG_LEVEL = "info"
-  CACHE_PROVIDER = "redis"  # Requires REDIS_URL set via `fly secrets set`
+  CACHE_PROVIDER = "memory"
   MODERATION_FAIL_OPEN = "false"
 
 [http_service]
