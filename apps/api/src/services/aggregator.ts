@@ -144,7 +144,7 @@ export async function syncSource(
       }
 
       try {
-        const upserted = await prisma.newsItem.upsert({
+        await prisma.newsItem.upsert({
           where: { rssGuid },
           update: {
             safetyStatus,
