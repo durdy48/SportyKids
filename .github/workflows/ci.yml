@@ -86,7 +86,7 @@ jobs:
             packages/shared/node_modules
           key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
       - name: Run API tests
-        run: cd apps/api && npm test
+        run: npm test -w apps/api
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -115,7 +115,7 @@ jobs:
             packages/shared/node_modules
           key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
       - name: Run Web tests
-        run: cd apps/web && npm test
+        run: npm test -w apps/web
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
@@ -144,7 +144,7 @@ jobs:
             packages/shared/node_modules
           key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
       - name: Run Mobile tests
-        run: cd apps/mobile && npm test
+        run: npm test -w apps/mobile
       - name: Upload coverage
         if: always()
         uses: actions/upload-artifact@v4
