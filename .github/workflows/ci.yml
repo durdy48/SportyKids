@@ -53,15 +53,17 @@ jobs:
             apps/mobile/node_modules
             packages/shared/node_modules
           key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Expose root bin to PATH
+        run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
       - name: Build shared package
         run: cd packages/shared && npm run typecheck
       - name: Lint
-        run: npx eslint . --max-warnings 0
+        run: npm run lint -- --max-warnings 0
       # TODO: Fix ~50 pre-existing type errors in API before enabling
       # - name: Typecheck API
-      #   run: cd apps/api && npx tsc --noEmit
+      #   run: cd apps/api && npm run typecheck
       - name: Typecheck Web
-        run: cd apps/web && npx tsc --noEmit
+        run: npm run typecheck -w apps/web
       # TODO: Fix pre-existing type errors in mobile before enabling
       # - name: Typecheck Mobile
       #   run: cd apps/mobile && npx tsc --noEmit
@@ -85,6 +87,8 @@ jobs:
             apps/mobile/node_modules
             packages/shared/node_modules
           key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Expose root bin to PATH
+        run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
       - name: Run API tests
         run: npm test -w apps/api
       - name: Upload coverage
@@ -114,6 +118,8 @@ jobs:
             apps/mobile/node_modules
             packages/shared/node_modules
           key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Expose root bin to PATH
+        run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
       - name: Run Web tests
         run: npm test -w apps/web
       - name: Upload coverage
@@ -143,6 +149,8 @@ jobs:
             apps/mobile/node_modules
             packages/shared/node_modules
           key: deps-${{ runner.os }}-${{ hashFiles('package-lock.json') }}-prisma-${{ hashFiles('apps/api/prisma/schema.prisma') }}
+      - name: Expose root bin to PATH
+        run: echo "$GITHUB_WORKSPACE/node_modules/.bin" >> $GITHUB_PATH
       - name: Run Mobile tests
         run: npm test -w apps/mobile
       - name: Upload coverage
