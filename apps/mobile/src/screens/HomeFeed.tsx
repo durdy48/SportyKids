@@ -1,9 +1,9 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { View, FlatList, ActivityIndicator, Text, StyleSheet, TouchableOpacity, Alert, TextInput, Linking, ScrollView as HScrollView } from 'react-native';
+import { View, FlatList, Text, StyleSheet, TouchableOpacity, TextInput, Linking, ScrollView as HScrollView } from 'react-native';
 import type { NewsItem } from '@sportykids/shared';
 import { COLORS, t, sportToEmoji, getSportLabel } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
-import { fetchNews, fetchNewsSummary, fetchTrending, fetchReadingHistory } from '../lib/api';
+import { fetchNews, fetchTrending, fetchReadingHistory } from '../lib/api';
 import { BrandedRefreshControl } from '../components/BrandedRefreshControl';
 import { NewsCard } from '../components/NewsCard';
 import { NewsCardSkeleton } from '../components/NewsCardSkeleton';
@@ -21,8 +21,6 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
   const [totalPages, setTotalPages] = useState(1);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
-  const [expandedSummaries, setExpandedSummaries] = useState<Record<string, string>>({});
-  const [loadingSummary, setLoadingSummary] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [searchInput, setSearchInput] = useState('');
   const searchTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -105,59 +103,8 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
     loadNews(next, true);
   };
 
-  const handleExplainEasy = async (item: NewsItem) => {
-    if (expandedSummaries[item.id]) {
-      // Toggle off
-      setExpandedSummaries((prev) => {
-        const copy = { ...prev };
-        delete copy[item.id];
-        return copy;
-      });
-      return;
-    }
-
-    setLoadingSummary(item.id);
-    try {
-      const result = await fetchNewsSummary(item.id, user?.age ?? 10, locale);
-      setExpandedSummaries((prev) => ({ ...prev, [item.id]: result.summary }));
-    } catch {
-      Alert.alert(
-        t('summary.error', locale),
-        t('summary.error', locale),
-      );
-    } finally {
-      setLoadingSummary(null);
-    }
-  };
-
   const renderItem = ({ item }: { item: NewsItem }) => (
-    <View>
-      <NewsCard item={item} isTrending={trendingIds.has(item.id)} />
-      <View style={styles.explainRow}>
-        <TouchableOpacity
-          style={styles.explainButton}
-          onPress={() => handleExplainEasy(item)}
-          disabled={loadingSummary === item.id}
-          accessible={true}
-          accessibilityLabel={t('summary.explain_easy', locale)}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: !!expandedSummaries[item.id] }}
-        >
-          {loadingSummary === item.id ? (
-            <ActivityIndicator size="small" color={COLORS.blue} />
-          ) : (
-            <Text style={styles.explainText}>
-              {expandedSummaries[item.id] ? '▲' : '▼'} {t('summary.explain_easy', locale)}
-            </Text>
-          )}
-        </TouchableOpacity>
-      </View>
-      {expandedSummaries[item.id] ? (
-        <View style={styles.summaryBox}>
-          <Text style={styles.summaryText}>{expandedSummaries[item.id]}</Text>
-        </View>
-      ) : null}
-    </View>
+    <NewsCard item={item} isTrending={trendingIds.has(item.id)} />
   );
 
   // Content blocked — parental restriction or subscription limit
@@ -412,37 +359,6 @@ function createStyles(colors: ThemeColors) {
     emptyText: {
       fontSize: 16,
       color: colors.muted,
-    },
-    explainRow: {
-      paddingHorizontal: 16,
-      marginTop: -4,
-      marginBottom: 8,
-    },
-    explainButton: {
-      alignSelf: 'flex-start',
-      backgroundColor: colors.blue + '15',
-      paddingHorizontal: 14,
-      paddingVertical: 8,
-      borderRadius: 12,
-    },
-    explainText: {
-      fontSize: 13,
-      fontWeight: '600',
-      color: colors.blue,
-    },
-    summaryBox: {
-      marginHorizontal: 16,
-      marginBottom: 12,
-      padding: 14,
-      backgroundColor: colors.blue + '15',
-      borderRadius: 12,
-      borderWidth: 1,
-      borderColor: colors.blue + '30',
-    },
-    summaryText: {
-      fontSize: 14,
-      color: colors.text,
-      lineHeight: 20,
     },
     recentlyReadSection: {
       marginBottom: 12,
