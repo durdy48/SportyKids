@@ -12,6 +12,43 @@ const parser = new Parser({
 });
 
 // ---------------------------------------------------------------------------
+// Moderation semaphore — max 5 concurrent AI calls to stay under rate limits
+// ---------------------------------------------------------------------------
+
+const MODERATION_CONCURRENCY = 5;
+const SOURCE_BATCH_SIZE = 10;
+
+class Semaphore {
+  private count: number;
+  private readonly queue: Array<() => void> = [];
+
+  constructor(max: number) {
+    this.count = max;
+  }
+
+  async acquire(): Promise<() => void> {
+    if (this.count > 0) {
+      this.count--;
+      return () => this.release();
+    }
+    return new Promise((resolve) => {
+      this.queue.push(() => {
+        this.count--;
+        resolve(() => this.release());
+      });
+    });
+  }
+
+  private release(): void {
+    this.count++;
+    const next = this.queue.shift();
+    if (next) next();
+  }
+}
+
+const moderationSemaphore = new Semaphore(MODERATION_CONCURRENCY);
+
+// ---------------------------------------------------------------------------
 // Types
 // ---------------------------------------------------------------------------
 
@@ -112,13 +149,14 @@ export async function syncSource(
       const publishedAt = item.isoDate ? new Date(item.isoDate) : new Date();
       const classification = classifyNews(item.title, summary);
 
-      // Run content moderation
+      // Run content moderation (throttled via semaphore)
       let safetyStatus = 'pending';
       let safetyReason: string | null = null;
       let moderatedAt: Date | null = null;
 
       try {
-        const modResult = await moderateContent(item.title, summary);
+        const release = await moderationSemaphore.acquire();
+        const modResult = await moderateContent(item.title, summary).finally(release);
         safetyStatus = modResult.status;
         safetyReason = modResult.reason ?? null;
         moderatedAt = modResult.status !== 'pending' ? new Date() : null;
@@ -214,14 +252,25 @@ export async function syncAllSources(): Promise<SyncAllResult> {
     return allResult;
   }
 
-  for (const source of sources) {
-    const result = await syncSource(source.id, source.name, source.url, source.sport);
-    allResult.totalProcessed += result.itemsProcessed;
-    allResult.totalCreated += result.itemsCreated;
-    allResult.totalApproved += result.moderationApproved;
-    allResult.totalRejected += result.moderationRejected;
-    allResult.totalErrors += result.moderationErrors;
-    allResult.sources.push(result);
+  // Process sources in parallel batches — IO-bound fetching benefits from
+  // concurrency while the moderation semaphore keeps AI calls rate-limited.
+  for (let i = 0; i < sources.length; i += SOURCE_BATCH_SIZE) {
+    const batch = sources.slice(i, i + SOURCE_BATCH_SIZE);
+    const batchResults = await Promise.allSettled(
+      batch.map((source) => syncSource(source.id, source.name, source.url, source.sport)),
+    );
+
+    for (const settled of batchResults) {
+      if (settled.status === 'fulfilled') {
+        const result = settled.value;
+        allResult.totalProcessed += result.itemsProcessed;
+        allResult.totalCreated += result.itemsCreated;
+        allResult.totalApproved += result.moderationApproved;
+        allResult.totalRejected += result.moderationRejected;
+        allResult.totalErrors += result.moderationErrors;
+        allResult.sources.push(result);
+      }
+    }
   }
 
   logger.info({ created: allResult.totalCreated, sources: sources.length, approved: allResult.totalApproved, rejected: allResult.totalRejected, errors: allResult.totalErrors }, 'Feed synchronization complete');
