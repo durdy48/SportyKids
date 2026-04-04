@@ -150,11 +150,9 @@ export function AppNavigator() {
 
   return (
     <NavigationContainer ref={navigationRef}>
-      <Stack.Navigator
-        key={user ? (needsAgeGate ? 'age-gate' : 'authenticated') : 'unauthenticated'}
-        screenOptions={{ headerShown: false }}
-      >
+      <Stack.Navigator screenOptions={{ headerShown: false }}>
         {user && !needsAgeGate ? (
+          // Authenticated stack — Main is always the first screen
           <>
             <Stack.Screen name="Main" component={MainTabs} />
             <Stack.Screen
@@ -185,12 +183,13 @@ export function AppNavigator() {
             <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: true, title: 'Register' }} />
           </>
         ) : needsAgeGate ? (
+          // Has user but needs age gate — show AgeGate first, then Onboarding
           <>
             <Stack.Screen name="AgeGate" component={AgeGateScreen} />
             <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-            <Stack.Screen name="Main" component={MainTabs} />
           </>
         ) : (
+          // No user — unauthenticated flow
           <>
             <Stack.Screen name="Login" component={LoginScreen} />
             <Stack.Screen name="Register" component={RegisterScreen} />
