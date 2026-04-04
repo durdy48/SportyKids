@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { View, FlatList, Text, StyleSheet, TouchableOpacity, TextInput, Linking, ScrollView as HScrollView } from 'react-native';
 import type { NewsItem } from '@sportykids/shared';
-import { COLORS, t, sportToEmoji, getSportLabel } from '@sportykids/shared';
+import { t, sportToEmoji, getSportLabel } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
 import { fetchNews, fetchTrending, fetchReadingHistory } from '../lib/api';
 import { BrandedRefreshControl } from '../components/BrandedRefreshControl';
