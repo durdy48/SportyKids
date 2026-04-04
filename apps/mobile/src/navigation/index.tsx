@@ -179,7 +179,6 @@ export function AppNavigator() {
                 title: t('org.join_title', locale),
               }}
             />
-            <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: true, title: 'Login' }} />
             <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: true, title: 'Register' }} />
           </>
         ) : needsAgeGate ? (
