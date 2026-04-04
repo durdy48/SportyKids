@@ -16,7 +16,7 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_BASE": "https://sportykids-api-staging.fly.dev/api"
+        "EXPO_PUBLIC_API_BASE": "https://sportykids-api.fly.dev/api"
       },
       "ios": {
         "simulator": false
