@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet,
-  ActivityIndicator, Alert, Modal, Image, Linking,
+  ActivityIndicator, Alert, Modal, Image, Linking, KeyboardAvoidingView, Platform,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -334,7 +334,10 @@ export function ParentalControlScreen() {
       return `${m}:${sec.toString().padStart(2, '0')}`;
     };
     return (
-      <View style={s.container}>
+      <KeyboardAvoidingView
+        style={s.container}
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+      >
         <View style={s.center}>
           <Text style={{ fontSize: 56 }}>🔒</Text>
           <Text style={s.title}>{heading}</Text>
@@ -376,7 +379,7 @@ export function ParentalControlScreen() {
             </Text>
           </TouchableOpacity>
         </View>
-      </View>
+      </KeyboardAvoidingView>
     );
   }
 

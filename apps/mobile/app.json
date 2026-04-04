@@ -32,10 +32,25 @@
       "favicon": "./src/assets/favicon.png"
     },
     "plugins": [
-      ["@sentry/react-native/expo", {
-        "organization": "sportykids",
-        "project": "mobile"
-      }]
-    ]
+      [
+        "@sentry/react-native/expo",
+        {
+          "organization": "sportykids",
+          "project": "mobile"
+        }
+      ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "f30f710c-ff00-4baf-bbf3-77bb41c1626f"
+      }
+    },
+    "owner": "sportykids-app",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/f30f710c-ff00-4baf-bbf3-77bb41c1626f"
+    }
   }
 }

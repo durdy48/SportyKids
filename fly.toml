@@ -10,6 +10,7 @@ primary_region = "cdg"  # Paris — closest available region to Spain (mad is de
   LOG_LEVEL = "info"
   CACHE_PROVIDER = "memory"
   MODERATION_FAIL_OPEN = "true"
+  AI_RATE_LIMIT_RPM = "14"
 
 [http_service]
   internal_port = 8080

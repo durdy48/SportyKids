@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView,
+  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { SPORTS, AGE_RANGES, SPORT_ENTITIES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale, getSourceIdsForEntities } from '@sportykids/shared';
@@ -214,6 +214,10 @@ export function OnboardingScreen() {
     } catch (err) {
       // eslint-disable-next-line no-console
       console.error('Error creating user:', err);
+      Alert.alert(
+        t('errors.generic_title', locale),
+        `${t('errors.network_message', locale)}\n\n${err instanceof Error ? err.message : String(err)}`,
+      );
     } finally {
       setSubmitting(false);
     }
