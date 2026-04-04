@@ -18,7 +18,7 @@ interface DailyQuizResult {
 
 const AGE_RANGES = ['6-8', '9-11', '12-14'] as const;
 
-const MINIMUM_QUESTIONS_PER_SPORT_AGE = 3;
+const MINIMUM_QUESTIONS_PER_SPORT_AGE = 5;
 
 // ---------------------------------------------------------------------------
 // Round-robin sport selection
@@ -120,8 +120,8 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
     AGE_RANGES.some((age) => !existingCombos.has(`${n.id}:${age}`)),
   );
 
-  // Select up to 15 articles, round-robin by sport
-  const selected = selectRoundRobin(articlesWithMissingQuizzes, 15);
+  // Select up to 40 articles, round-robin by sport (40 × 3 age ranges = 120 questions max)
+  const selected = selectRoundRobin(articlesWithMissingQuizzes, 40);
 
   logger.info(
     { totalArticles: recentNews.length, needGeneration: articlesWithMissingQuizzes.length, selected: selected.length },
