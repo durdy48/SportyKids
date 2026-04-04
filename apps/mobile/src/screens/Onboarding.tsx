@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert,
+  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert, ActivityIndicator,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import { SPORTS, AGE_RANGES, SPORT_ENTITIES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale, getSourceIdsForEntities } from '@sportykids/shared';
@@ -59,6 +59,8 @@ export function OnboardingScreen() {
 
   // Step 4 - Sources
   const [sources, setSources] = useState<RssSource[]>([]);
+  const [sourcesLoading, setSourcesLoading] = useState(true);
+  const [sourcesError, setSourcesError] = useState(false);
   const [selectedFeeds, setSelectedFeeds] = useState<string[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
 
@@ -69,11 +71,25 @@ export function OnboardingScreen() {
   const [allowedFormats, setAllowedFormats] = useState<string[]>(['news', 'reels', 'quiz']);
   const [maxDailyTime, setMaxDailyTime] = useState(0); // 0 = no limit
 
-  useEffect(() => {
+  const loadSources = () => {
+    setSourcesLoading(true);
+    setSourcesError(false);
     fetchSourceCatalog()
-      .then((catalog) => setSources(catalog.sources))
-      // eslint-disable-next-line no-console
-      .catch(console.error);
+      .then((catalog) => {
+        setSources(catalog.sources);
+        setSourcesLoading(false);
+      })
+      .catch((err) => {
+        // eslint-disable-next-line no-console
+        console.error('[Onboarding] fetchSourceCatalog failed:', err);
+        setSourcesLoading(false);
+        setSourcesError(true);
+      });
+  };
+
+  useEffect(() => {
+    loadSources();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-pre-select sources matching selected sports when entering step 4
@@ -389,45 +405,61 @@ export function OnboardingScreen() {
             />
 
             {/* Grouped source list */}
-            {groupedSources.map((section) => (
-              <View key={section.country} style={s.countrySection}>
-                <Text style={s.countrySectionTitle}>{section.title}</Text>
-                {section.data.map((source) => {
-                  const selected = selectedFeeds.includes(source.id);
-                  return (
-                    <TouchableOpacity
-                      key={source.id}
-                      style={[s.sourceChip, selected && s.sourceActive]}
-                      onPress={() => toggleFeed(source.id)}
-                      accessible={true}
-                      accessibilityLabel={t('a11y.onboarding.toggle_source', locale, { source: source.name, state: selected ? t('a11y.catalog.source_enabled', locale) : t('a11y.catalog.source_disabled', locale) })}
-                      accessibilityRole="button"
-                      accessibilityState={{ selected }}
-                    >
-                      <View style={s.sourceRow}>
-                        <View style={s.sourceInfo}>
-                          <Text style={[s.sourceNameText, selected && s.sourceNameSelected]}>
-                            {source.name}
-                          </Text>
-                          {source.description ? (
-                            <Text style={s.sourceDesc} numberOfLines={1}>
-                              {source.description}
-                            </Text>
-                          ) : null}
-                        </View>
-                        <View style={[s.sourceSportBadge, { backgroundColor: selected ? colors.yellow : colors.border }]}>
-                          <Text style={s.sourceSportText}>
-                            {sportToEmoji(source.sport)}
-                          </Text>
-                        </View>
-                      </View>
-                    </TouchableOpacity>
-                  );
-                })}
+            {sourcesLoading ? (
+              <ActivityIndicator size="large" color={colors.blue} style={{ marginTop: 32 }} />
+            ) : sourcesError ? (
+              <View style={s.errorContainer}>
+                <Text style={s.errorText}>{t('errors.network_message', locale)}</Text>
+                <TouchableOpacity style={s.retryButton} onPress={loadSources} accessibilityRole="button">
+                  <Text style={s.retryButtonText}>{t('buttons.retry', locale)}</Text>
+                </TouchableOpacity>
               </View>
-            ))}
-            {groupedSources.length === 0 && searchQuery.length > 0 && (
-              <Text style={s.noResults}>{t('search.no_results', locale, { query: searchQuery })}</Text>
+            ) : (
+              <>
+                {groupedSources.map((section) => (
+                  <View key={section.country} style={s.countrySection}>
+                    <Text style={s.countrySectionTitle}>{section.title}</Text>
+                    {section.data.map((source) => {
+                      const selected = selectedFeeds.includes(source.id);
+                      return (
+                        <TouchableOpacity
+                          key={source.id}
+                          style={[s.sourceChip, selected && s.sourceActive]}
+                          onPress={() => toggleFeed(source.id)}
+                          accessible={true}
+                          accessibilityLabel={t('a11y.onboarding.toggle_source', locale, { source: source.name, state: selected ? t('a11y.catalog.source_enabled', locale) : t('a11y.catalog.source_disabled', locale) })}
+                          accessibilityRole="button"
+                          accessibilityState={{ selected }}
+                        >
+                          <View style={s.sourceRow}>
+                            <View style={s.sourceInfo}>
+                              <Text style={[s.sourceNameText, selected && s.sourceNameSelected]}>
+                                {source.name}
+                              </Text>
+                              {source.description ? (
+                                <Text style={s.sourceDesc} numberOfLines={1}>
+                                  {source.description}
+                                </Text>
+                              ) : null}
+                            </View>
+                            <View style={[s.sourceSportBadge, { backgroundColor: selected ? colors.yellow : colors.border }]}>
+                              <Text style={s.sourceSportText}>
+                                {sportToEmoji(source.sport)}
+                              </Text>
+                            </View>
+                          </View>
+                        </TouchableOpacity>
+                      );
+                    })}
+                  </View>
+                ))}
+                {groupedSources.length === 0 && searchQuery.length > 0 && (
+                  <Text style={s.noResults}>{t('search.no_results', locale, { query: searchQuery })}</Text>
+                )}
+                {groupedSources.length === 0 && searchQuery.length === 0 && sources.length > 0 && (
+                  <Text style={s.noResults}>{t('sources.no_sources_for_sports', locale)}</Text>
+                )}
+              </>
             )}
           </View>
         )}
@@ -610,6 +642,10 @@ function createStyles(colors: ThemeColors) {
   sourceSportBadge: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
   sourceSportText: { fontSize: 14 },
   noResults: { fontSize: 14, color: colors.muted, textAlign: 'center', marginTop: 20 },
+  errorContainer: { alignItems: 'center', marginTop: 32, paddingHorizontal: 16 },
+  errorText: { fontSize: 14, color: colors.muted, textAlign: 'center', marginBottom: 16 },
+  retryButton: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.blue },
+  retryButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   pinInput: {
     fontSize: 32, fontWeight: '700', textAlign: 'center', letterSpacing: 16,
     width: 200, paddingVertical: 14, borderBottomWidth: 3, borderBottomColor: colors.border,

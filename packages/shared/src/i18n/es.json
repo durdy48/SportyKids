@@ -212,7 +212,8 @@
     "confirm": "Confirmar",
     "loading": "Cargando...",
     "verifying": "Verificando...",
-    "saving": "Guardando..."
+    "saving": "Guardando...",
+    "retry": "Reintentar"
   },
   "errors": {
     "loading_news": "Error cargando noticias",
@@ -251,7 +252,8 @@
     "custom_error_invalid": "No se pudo leer el feed RSS de esta URL",
     "custom_error_duplicate": "Esta URL ya existe en el catálogo",
     "custom_delete_confirm": "¿Eliminar esta fuente personalizada?",
-    "custom_badge": "Personalizada"
+    "custom_badge": "Personalizada",
+    "no_sources_for_sports": "No hay fuentes disponibles para los deportes seleccionados"
   },
   "sync": {
     "approved": "aprobadas",
