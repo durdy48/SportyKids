@@ -60,3 +60,6 @@ function resolveWebBase(): string {
 }
 
 export const WEB_BASE = resolveWebBase();
+
+// Google Sign In — iOS OAuth Client ID (created in Google Cloud Console, type: iOS)
+export const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '';

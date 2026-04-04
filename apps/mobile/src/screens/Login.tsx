@@ -12,11 +12,14 @@ import {
   ScrollView,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
+import * as Google from 'expo-auth-session/providers/google';
 import { t } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
 import { useUser } from '../lib/user-context';
-import { login, fetchAuthProviders } from '../lib/auth';
-import { WEB_BASE } from '../config';
+import { login, fetchAuthProviders, loginWithSocialToken } from '../lib/auth';
+import { WEB_BASE, GOOGLE_IOS_CLIENT_ID } from '../config';
+
+WebBrowser.maybeCompleteAuthSession();
 
 export function LoginScreen({ navigation }: { navigation: { navigate: (screen: string) => void } }) {
   const { setUser, locale, colors } = useUser();
@@ -24,11 +27,30 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
+  const [googleLoading, setGoogleLoading] = useState(false);
   const [providers, setProviders] = useState<{ google: boolean; apple: boolean }>({ google: false, apple: false });
+
+  const [, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
+    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    scopes: ['openid', 'profile', 'email'],
+  });
 
   useEffect(() => {
     fetchAuthProviders().then(setProviders).catch(() => {});
   }, []);
+
+  useEffect(() => {
+    if (googleResponse?.type === 'success') {
+      const idToken = googleResponse.authentication?.idToken;
+      if (idToken) {
+        setGoogleLoading(true);
+        loginWithSocialToken('google', idToken)
+          .then((result) => setUser(result.user))
+          .catch(() => Alert.alert(t('auth.social_error', locale)))
+          .finally(() => setGoogleLoading(false));
+      }
+    }
+  }, [googleResponse, locale, setUser]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) return;
@@ -111,21 +133,21 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
                 <View style={styles.separatorLine} />
               </View>
 
-              {/* TODO: Social OAuth requires expo-auth-session for proper mobile deep linking.
-                 Linking.openURL cannot return tokens back to the app. These buttons show
-                 an informational alert until deep linking is configured. */}
-              {providers.google && (
+              {providers.google && GOOGLE_IOS_CLIENT_ID && (
                 <TouchableOpacity
-                  style={styles.socialButton}
-                  onPress={() => Alert.alert(
-                    t('auth.google_signin', locale),
-                    'OAuth login requires app configuration. Use email login for now.',
-                  )}
+                  style={[styles.socialButton, (googleLoading) && styles.buttonDisabled]}
+                  onPress={() => promptGoogleAsync()}
+                  disabled={googleLoading}
                   accessible={true}
                   accessibilityLabel={t('a11y.auth.google_signin', locale)}
                   accessibilityRole="button"
+                  accessibilityState={{ disabled: googleLoading }}
                 >
-                  <Text style={styles.socialButtonText}>{t('auth.google_signin', locale)}</Text>
+                  {googleLoading ? (
+                    <ActivityIndicator color={colors.text} />
+                  ) : (
+                    <Text style={styles.socialButtonText}>{t('auth.google_signin', locale)}</Text>
+                  )}
                 </TouchableOpacity>
               )}
 
@@ -134,7 +156,7 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
                   style={[styles.socialButton, styles.appleButton]}
                   onPress={() => Alert.alert(
                     t('auth.apple_signin', locale),
-                    'OAuth login requires app configuration. Use email login for now.',
+                    'Apple Sign In not configured yet.',
                   )}
                   accessible={true}
                   accessibilityLabel={t('a11y.auth.apple_signin', locale)}
