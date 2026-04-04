@@ -21,7 +21,7 @@ function LoginForm() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [providers, setProviders] = useState({ google: false, apple: false });
+  const [providers, setProviders] = useState({ google: true, apple: false });
 
   // Show OAuth error from callback redirect
   useEffect(() => {
@@ -29,12 +29,13 @@ function LoginForm() {
     if (oauthError) setError(t('auth.social_error', locale));
   }, [searchParams, locale]);
 
-  // Fetch available OAuth providers
+  // Fetch available OAuth providers — default optimistically to google:true,
+  // hide only if the API explicitly responds with google:false
   useEffect(() => {
     fetch(`${API_BASE}/auth/providers`)
       .then((r) => r.json())
       .then((d) => setProviders(d))
-      .catch(() => {});
+      .catch(() => {}); // keep optimistic default on error
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {

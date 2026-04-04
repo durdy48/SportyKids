@@ -20,7 +20,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const [providers, setProviders] = useState({ google: false, apple: false });
+  const [providers, setProviders] = useState({ google: true, apple: false });
 
   useEffect(() => {
     fetch(`${API_BASE}/auth/providers`)
