@@ -1,15 +1,33 @@
 import { describe, it, expect, vi } from 'vitest';
 
-vi.mock('../../config', () => ({ API_BASE: 'http://localhost:3001/api' }));
+vi.mock('../../config', () => ({
+  API_BASE: 'http://localhost:3001/api',
+  WEB_BASE: 'http://localhost:3000',
+  GOOGLE_IOS_CLIENT_ID: '',
+  GOOGLE_WEB_CLIENT_ID: '',
+}));
 vi.mock('../../lib/auth', () => ({
   login: vi.fn().mockResolvedValue({ accessToken: 'at', refreshToken: 'rt', user: { id: 'u1' } }),
+  fetchAuthProviders: vi.fn().mockResolvedValue({ google: false, apple: false }),
+  loginWithSocialToken: vi.fn(),
 }));
 vi.mock('../../lib/user-context', () => ({
   useUser: () => ({
     user: null,
     locale: 'es',
     setUser: vi.fn(),
+    colors: {
+      background: '#fff', surface: '#fff', text: '#000', muted: '#999',
+      border: '#eee', blue: '#2563EB', green: '#22C55E', yellow: '#FACC15',
+    },
   }),
+}));
+vi.mock('expo-auth-session/providers/google', () => ({
+  useAuthRequest: vi.fn(() => [null, null, vi.fn()]),
+}));
+vi.mock('expo-web-browser', () => ({
+  maybeCompleteAuthSession: vi.fn(),
+  openBrowserAsync: vi.fn(),
 }));
 
 describe('LoginScreen', () => {
