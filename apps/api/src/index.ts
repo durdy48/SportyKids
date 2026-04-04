@@ -6,6 +6,7 @@ initSentry();
 
 import express from 'express';
 import cors from 'cors';
+import { prisma, waitForDatabase } from './config/database';
 import newsRouter from './routes/news';
 import usersRouter from './routes/users';
 import reelsRouter from './routes/reels';
@@ -50,8 +51,13 @@ app.use(express.json());
 app.use(authMiddleware);
 
 // Health check (before rate limiters so monitoring is never throttled)
-app.get('/api/health', (_req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
+app.get('/api/health', async (_req, res) => {
+  try {
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ status: 'ok', db: 'connected', timestamp: new Date().toISOString() });
+  } catch {
+    res.status(503).json({ status: 'error', db: 'unavailable', timestamp: new Date().toISOString() });
+  }
 });
 
 // Rate limiters — specific tiers before default (defense-in-depth).
@@ -88,17 +94,22 @@ app.use('/api/organizations', organizationsRouter);
 // Global error handler
 app.use(errorHandler);
 
-// Start server
-app.listen(PORT, () => {
-  logger.info({ port: PORT }, `SportyKids API running at http://localhost:${PORT}`);
+// Start server — wait for DB to be reachable before accepting traffic.
+// This handles Neon cold starts (free tier auto-suspends after inactivity).
+async function start() {
+  logger.info('Waiting for database...');
+  await waitForDatabase();
+  logger.info('Database ready');
 
-  // ---------------------------------------------------------------------------
-  // Cron jobs — run on every started machine. With min_machines_running = 1
-  // in fly.toml, Fly.io always keeps exactly one machine running, so crons
-  // execute reliably. During rolling deploys there may be a brief two-machine
-  // overlap, but all jobs are idempotent (upserts / dedup by rssGuid).
-  // ---------------------------------------------------------------------------
-  {
+  app.listen(PORT, () => {
+    logger.info({ port: PORT }, `SportyKids API running at http://localhost:${PORT}`);
+
+    // -------------------------------------------------------------------------
+    // Cron jobs — run on every started machine. With min_machines_running = 1
+    // in fly.toml, Fly.io always keeps exactly one machine running, so crons
+    // execute reliably. During rolling deploys there may be a brief two-machine
+    // overlap, but all jobs are idempotent (upserts / dedup by rssGuid).
+    // -------------------------------------------------------------------------
     logger.info('Starting cron jobs');
 
     // Initial sync on startup — delayed in dev to avoid saturating the AI rate
@@ -137,5 +148,10 @@ app.listen(PORT, () => {
 
     // Schedule weekly timeless quiz generation (Monday 05:00 UTC)
     startTimelessQuizJob();
-  }
+  });
+}
+
+start().catch((err) => {
+  logger.error({ err }, 'Failed to start server — database unreachable');
+  process.exit(1);
 });
