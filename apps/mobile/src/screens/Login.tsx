@@ -28,7 +28,7 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
-  const [providers, setProviders] = useState<{ google: boolean; apple: boolean }>({ google: false, apple: false });
+  const [providers, setProviders] = useState<{ google: boolean; apple: boolean }>({ google: true, apple: false });
 
   const [, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
     iosClientId: GOOGLE_IOS_CLIENT_ID || undefined,
@@ -126,7 +126,7 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
             <Text style={styles.secondaryButtonText}>{t('auth.register', locale)}</Text>
           </TouchableOpacity>
 
-          {(GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID || providers.google || providers.apple) && (
+          {(providers.google || providers.apple) && (
             <>
               <View style={styles.separator}>
                 <View style={styles.separatorLine} />
@@ -134,7 +134,7 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
                 <View style={styles.separatorLine} />
               </View>
 
-              {(GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID) && (
+              {providers.google && (
                 <TouchableOpacity
                   style={[styles.socialButton, (googleLoading) && styles.buttonDisabled]}
                   onPress={() => promptGoogleAsync()}
