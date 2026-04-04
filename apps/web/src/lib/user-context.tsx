@@ -180,14 +180,23 @@ export function UserProvider({ children }: { children: ReactNode }) {
   }, [loadParentalProfile]);
 
   // Redirect logic:
-  // - No user → send to /onboarding (first-time visitor); /login, /register, /onboarding are exempt
+  // - No user + had a previous session (token in storage) → send to /login (returning user)
+  // - No user + no previous session → send to /onboarding (first-time visitor)
+  // - /login, /register, /onboarding are exempt from redirect
   // - User exists but ageGateCompleted === false → send to /age-gate
   // - Authenticated user on /login or /register → send to /
   useEffect(() => {
     if (loading) return;
     const exempt = [...AGE_GATE_EXEMPT_PATHS, '/onboarding'];
     if (!user) {
-      if (!exempt.includes(pathname)) router.replace('/onboarding');
+      if (!exempt.includes(pathname)) {
+        const hadSession =
+          typeof window !== 'undefined' &&
+          (localStorage.getItem('sportykids_access_token') ||
+            localStorage.getItem('sportykids_refresh_token') ||
+            localStorage.getItem(STORAGE_KEY));
+        router.replace(hadSession ? '/login' : '/onboarding');
+      }
       return;
     }
     if (user.ageGateCompleted === false && !AGE_GATE_EXEMPT_PATHS.includes(pathname)) {
@@ -245,6 +254,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
     setUserState(null);
     setParentalProfileState(null);
     localStorage.removeItem(STORAGE_KEY);
+    router.replace('/login');
   };
 
   return (
