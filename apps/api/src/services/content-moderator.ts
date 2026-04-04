@@ -106,11 +106,11 @@ export async function moderateContent(
     const errorMsg = err instanceof Error ? err.message : String(err);
 
     if (shouldFailOpen()) {
-      logger.warn({ err: errorMsg }, 'AI moderation failed, approving by default (fail-open)');
+      logger.debug({ err: errorMsg }, 'AI moderation failed, approving by default (fail-open)');
       return { status: 'approved', reason: 'auto-approved: AI unavailable' };
     }
 
-    logger.warn({ err: errorMsg }, 'AI moderation failed, content stays pending (fail-closed)');
+    logger.debug({ err: errorMsg }, 'AI moderation failed, content stays pending (fail-closed)');
     return { status: 'pending', reason: 'moderation-unavailable' };
   }
 }
