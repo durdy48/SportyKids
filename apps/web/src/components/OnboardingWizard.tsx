@@ -219,7 +219,7 @@ export function OnboardingWizard() {
     if (step === 1) return name.trim().length >= 2 && ageRange !== null;
     if (step === 2) return sports.length > 0;
     if (step === 3) return true; // Team is optional
-    if (step === 4) return selectedFeeds.length >= 1;
+    if (step === 4) return !catalogLoading && (selectedFeeds.length >= 1 || catalogSources.length === 0);
     if (step === 5) return pin.length === 4 && pin === pinConfirm;
     return false;
   };
