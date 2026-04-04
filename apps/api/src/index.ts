@@ -92,40 +92,56 @@ app.use(errorHandler);
 app.listen(PORT, () => {
   logger.info({ port: PORT }, `SportyKids API running at http://localhost:${PORT}`);
 
-  // Initial sync on startup — delayed in dev to avoid saturating the AI rate
-  // limiter with bulk moderation before user-facing requests can go through.
-  const syncDelay = process.env.NODE_ENV === 'production' ? 0 : 30_000;
-  setTimeout(() => {
-    runManualSync().catch((err) => logger.error({ err }, 'Initial sync failed'));
-  }, syncDelay);
+  // ---------------------------------------------------------------------------
+  // Cron jobs — only run on the primary machine to avoid duplicate execution
+  // when scaled horizontally. Set PRIMARY_MACHINE_ID to the Fly machine ID
+  // that should run crons (e.g. fly machine list --app sportykids-api).
+  // If unset, the first machine to start runs crons (single-machine default).
+  // ---------------------------------------------------------------------------
+  const machineId = process.env.FLY_MACHINE_ID ?? 'local';
+  const primaryId = process.env.PRIMARY_MACHINE_ID ?? machineId;
+  const isPrimary = machineId === primaryId;
 
-  // Schedule periodic sync
-  startSyncJob();
+  if (isPrimary) {
+    logger.info({ machineId }, 'Primary machine — starting cron jobs');
 
-  // Schedule weekly digest job
-  startWeeklyDigestJob();
+    // Initial sync on startup — delayed in dev to avoid saturating the AI rate
+    // limiter with bulk moderation before user-facing requests can go through.
+    const syncDelay = process.env.NODE_ENV === 'production' ? 0 : 30_000;
+    setTimeout(() => {
+      runManualSync().catch((err) => logger.error({ err }, 'Initial sync failed'));
+    }, syncDelay);
 
-  // Schedule daily missions generation
-  startDailyMissionsJob();
+    // Schedule periodic sync
+    startSyncJob();
 
-  // Schedule streak reminder notifications
-  startStreakReminderJob();
+    // Schedule weekly digest job
+    startWeeklyDigestJob();
 
-  // Schedule daily mission reminders (18:00 UTC)
-  startMissionReminderJob();
+    // Schedule daily missions generation
+    startDailyMissionsJob();
 
-  // Schedule daily team stats sync from TheSportsDB
-  startTeamStatsSyncJob();
+    // Schedule streak reminder notifications
+    startStreakReminderJob();
 
-  // Initial video sync on startup + schedule periodic sync — same delay as news sync
-  setTimeout(() => {
-    runManualVideoSync().catch((err) => logger.error({ err }, 'Initial video sync failed'));
-  }, syncDelay);
-  startVideoSyncJob();
+    // Schedule daily mission reminders (18:00 UTC)
+    startMissionReminderJob();
 
-  // Schedule live score polling (every 5 minutes)
-  startLiveScoresJob();
+    // Schedule daily team stats sync from TheSportsDB
+    startTeamStatsSyncJob();
 
-  // Schedule weekly timeless quiz generation (Monday 05:00 UTC)
-  startTimelessQuizJob();
+    // Initial video sync on startup + schedule periodic sync — same delay as news sync
+    setTimeout(() => {
+      runManualVideoSync().catch((err) => logger.error({ err }, 'Initial video sync failed'));
+    }, syncDelay);
+    startVideoSyncJob();
+
+    // Schedule live score polling (every 5 minutes)
+    startLiveScoresJob();
+
+    // Schedule weekly timeless quiz generation (Monday 05:00 UTC)
+    startTimelessQuizJob();
+  } else {
+    logger.info({ machineId, primaryId }, 'Worker machine — skipping cron jobs (HTTP only)');
+  }
 });
