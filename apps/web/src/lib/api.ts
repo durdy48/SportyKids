@@ -1,6 +1,29 @@
 import type { NewsItem, Reel, QuizQuestion, User, ParentalProfile, RssSource, RssSourceCatalogResponse, Sticker, UserSticker, Achievement, UserAchievement, CheckInResponse, TeamStats, PushPreferences, LiveMatchData, LiveScorePreferences, Organization, OrganizationMember, OrganizationActivity, JoinOrganizationResponse } from '@sportykids/shared';
+import { getAccessToken, refreshToken as refreshAccessToken } from './auth';
 
 const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+
+/**
+ * Fetch wrapper that attaches the JWT Bearer token and auto-refreshes on 401.
+ * Use for any request that requires authentication.
+ */
+async function authFetch(url: string, init: RequestInit = {}): Promise<Response> {
+  const token = getAccessToken();
+  const headers = new Headers(init.headers as Record<string, string>);
+  if (token) headers.set('Authorization', `Bearer ${token}`);
+
+  let res = await fetch(url, { ...init, headers });
+
+  if (res.status === 401 && token) {
+    const newToken = await refreshAccessToken();
+    if (newToken) {
+      headers.set('Authorization', `Bearer ${newToken}`);
+      res = await fetch(url, { ...init, headers });
+    }
+  }
+
+  return res;
+}
 
 /**
  * Parse a 403 response from the parental guard into a rich error.
@@ -553,21 +576,9 @@ export async function claimMission(userId: string) {
 }
 
 export async function deleteUserData(userId: string, sessionToken?: string) {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  };
-  const token = getAccessToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  if (sessionToken) {
-    headers['X-Parental-Session'] = sessionToken;
-  }
-  const res = await fetch(`${API_BASE}/users/${userId}/data`, {
-    method: 'DELETE',
-    headers,
-  });
+  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+  if (sessionToken) headers['X-Parental-Session'] = sessionToken;
+  const res = await authFetch(`${API_BASE}/users/${userId}/data`, { method: 'DELETE', headers });
   if (!res.ok) throw new Error('Failed to delete user data');
   return res.json();
 }
@@ -587,15 +598,9 @@ export async function updateLiveScorePreferences(
   userId: string,
   prefs: Partial<LiveScorePreferences>,
 ): Promise<{ liveScores: LiveScorePreferences }> {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = getAccessToken();
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`;
-  }
-  const res = await fetch(`${API_BASE}/users/${userId}/notifications/live-scores`, {
+  const res = await authFetch(`${API_BASE}/users/${userId}/notifications/live-scores`, {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(prefs),
   });
   if (!res.ok) throw new Error(`Error ${res.status}`);
@@ -613,13 +618,9 @@ export async function createOrganization(data: {
   customColors?: { primary: string; secondary: string };
   maxMembers?: number;
 }): Promise<Organization> {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = getAccessToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}/organizations`, {
+  const res = await authFetch(`${API_BASE}/organizations`, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
   if (!res.ok) {
@@ -630,11 +631,7 @@ export async function createOrganization(data: {
 }
 
 export async function getOrganization(orgId: string): Promise<Organization> {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = {};
-  const token = getAccessToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}/organizations/${orgId}`, { headers });
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
 }
@@ -643,13 +640,9 @@ export async function updateOrganization(
   orgId: string,
   data: Partial<{ name: string; logoUrl: string | null; customColors: { primary: string; secondary: string } | null; maxMembers: number; active: boolean }>,
 ): Promise<Organization> {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = getAccessToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}/organizations/${orgId}`, {
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}`, {
     method: 'PUT',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
@@ -657,14 +650,7 @@ export async function updateOrganization(
 }
 
 export async function regenerateOrgCode(orgId: string): Promise<{ inviteCode: string }> {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = {};
-  const token = getAccessToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}/organizations/${orgId}/regenerate-code`, {
-    method: 'POST',
-    headers,
-  });
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}/regenerate-code`, { method: 'POST' });
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
 }
@@ -673,40 +659,22 @@ export async function getOrgMembers(
   orgId: string,
   params?: { page?: number; limit?: number; sort?: string },
 ): Promise<{ members: OrganizationMember[]; total: number; page: number; limit: number }> {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = {};
-  const token = getAccessToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
   const qs = new URLSearchParams();
   if (params?.page) qs.set('page', String(params.page));
   if (params?.limit) qs.set('limit', String(params.limit));
   if (params?.sort) qs.set('sort', params.sort);
-  const res = await fetch(`${API_BASE}/organizations/${orgId}/members?${qs}`, { headers });
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}/members?${qs}`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
 export async function removeOrgMember(orgId: string, userId: string): Promise<void> {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = {};
-  const token = getAccessToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}/organizations/${orgId}/members/${userId}`, {
-    method: 'DELETE',
-    headers,
-  });
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}/members/${userId}`, { method: 'DELETE' });
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
 }
 
 export async function leaveOrganization(orgId: string): Promise<void> {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = {};
-  const token = getAccessToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}/organizations/${orgId}/leave`, {
-    method: 'POST',
-    headers,
-  });
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}/leave`, { method: 'POST' });
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
 }
 
@@ -714,24 +682,16 @@ export async function getOrgActivity(
   orgId: string,
   period?: '7d' | '30d' | 'all',
 ): Promise<OrganizationActivity> {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = {};
-  const token = getAccessToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
   const qs = period ? `?period=${period}` : '';
-  const res = await fetch(`${API_BASE}/organizations/${orgId}/activity${qs}`, { headers });
+  const res = await authFetch(`${API_BASE}/organizations/${orgId}/activity${qs}`);
   if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
   return res.json();
 }
 
 export async function joinOrganization(inviteCode: string): Promise<JoinOrganizationResponse> {
-  const { getAccessToken } = await import('./auth');
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  const token = getAccessToken();
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  const res = await fetch(`${API_BASE}/auth/join-organization`, {
+  const res = await authFetch(`${API_BASE}/auth/join-organization`, {
     method: 'POST',
-    headers,
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ inviteCode: inviteCode.toUpperCase() }),
   });
   if (!res.ok) {

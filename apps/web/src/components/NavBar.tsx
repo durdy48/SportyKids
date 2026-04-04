@@ -8,9 +8,11 @@ import type { Locale } from '@sportykids/shared';
 import { useUser } from '@/lib/user-context';
 import { updateUser } from '@/lib/api';
 
+const isAnonymous = (authProvider?: string) => !authProvider || authProvider === 'anonymous';
+
 export function NavBar() {
   const pathname = usePathname();
-  const { user, parentalProfile, locale, resolvedTheme, setTheme, theme, setLocale, setUser } = useUser();
+  const { user, parentalProfile, locale, resolvedTheme, setTheme, theme, setLocale, setUser, logout } = useUser();
   const [showLangMenu, setShowLangMenu] = useState(false);
   const [savedMsg, setSavedMsg] = useState(false);
 
@@ -145,9 +147,41 @@ export function NavBar() {
             >
               🔒
             </Link>
-            <span className="bg-[var(--color-green)]/10 text-[var(--color-green)] px-2.5 py-1 rounded-full font-medium text-xs">
-              {user.name}
-            </span>
+            {isAnonymous(user.authProvider) ? (
+              /* Anonymous user — prompt to create account */
+              <div className="flex items-center gap-2">
+                <span className="text-[var(--color-muted)] text-xs hidden sm:block">{user.name}</span>
+                <Link
+                  href="/register"
+                  className="px-3 py-1.5 rounded-lg text-xs font-semibold bg-[var(--color-blue)] text-white hover:bg-blue-700 transition-colors"
+                  aria-label={t('auth.create_account_cta', locale)}
+                >
+                  {t('auth.create_account_cta', locale)}
+                </Link>
+                <Link
+                  href="/login"
+                  className="px-3 py-1.5 rounded-lg text-xs font-medium text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-background)] transition-colors"
+                >
+                  {t('auth.login', locale)}
+                </Link>
+              </div>
+            ) : (
+              /* Authenticated user — show name + logout */
+              <div className="flex items-center gap-2">
+                <span className="bg-[var(--color-green)]/10 text-[var(--color-green)] px-2.5 py-1 rounded-full font-medium text-xs">
+                  {user.name}
+                </span>
+                <button
+                  type="button"
+                  onClick={logout}
+                  className="px-2.5 py-1.5 rounded-lg text-xs text-[var(--color-muted)] hover:text-[var(--color-text)] hover:bg-[var(--color-background)] transition-colors"
+                  aria-label={t('auth.logout', locale)}
+                  title={t('auth.logout', locale)}
+                >
+                  ↩
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>

@@ -59,7 +59,7 @@ function applyThemeClass(resolved: 'light' | 'dark') {
   }
 }
 
-const AGE_GATE_EXEMPT_PATHS = ['/age-gate', '/privacy', '/terms'];
+const AGE_GATE_EXEMPT_PATHS = ['/age-gate', '/privacy', '/terms', '/login', '/register'];
 
 export function UserProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
@@ -113,63 +113,89 @@ export function UserProvider({ children }: { children: ReactNode }) {
       setLocaleState(savedLocale);
     }
 
+    const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+    const accessToken = localStorage.getItem('sportykids_access_token');
     const id = localStorage.getItem(STORAGE_KEY);
-    if (!id) {
-      setLoading(false);
-      return;
-    }
 
-    getUser(id)
-      .then(async (u) => {
-        setUserState(u);
-        // Sync locale from server if available
-        if (u.locale && (u.locale === 'es' || u.locale === 'en')) {
-          setLocaleState(u.locale as Locale);
-          localStorage.setItem(LOCALE_KEY, u.locale);
-        }
-        await loadParentalProfile(u.id);
-        // Daily check-in: only once per calendar day
-        const today = new Date().toISOString().slice(0, 10);
-        const lastCheckIn = localStorage.getItem(CHECKIN_DATE_KEY);
-        if (lastCheckIn !== today) {
-          try {
-            const checkInResult = await checkIn(u.id);
-            localStorage.setItem(CHECKIN_DATE_KEY, today);
+    const applyUser = async (u: User) => {
+      setUserState(u);
+      if (u.id) localStorage.setItem(STORAGE_KEY, u.id);
+      if (u.locale && (u.locale === 'es' || u.locale === 'en')) {
+        setLocaleState(u.locale as Locale);
+        localStorage.setItem(LOCALE_KEY, u.locale);
+      }
+      await loadParentalProfile(u.id);
+      const today = new Date().toISOString().slice(0, 10);
+      const lastCheckIn = localStorage.getItem(CHECKIN_DATE_KEY);
+      if (lastCheckIn !== today) {
+        try {
+          const checkInResult = await checkIn(u.id);
+          localStorage.setItem(CHECKIN_DATE_KEY, today);
+          if (checkInResult.dailyStickerAwarded) celebrateSticker();
+          if (checkInResult.newAchievements.length > 0) celebrateAchievement();
+          if ([7, 14, 30].includes(checkInResult.currentStreak)) celebrateStreak(checkInResult.currentStreak);
+        } catch { /* non-critical */ }
+      }
+    };
 
-            // Trigger celebration animations based on check-in rewards
-            if (checkInResult.dailyStickerAwarded) {
-              celebrateSticker();
-            }
-            if (checkInResult.newAchievements.length > 0) {
-              celebrateAchievement();
-            }
-            const streakMilestones = [7, 14, 30];
-            if (streakMilestones.includes(checkInResult.currentStreak)) {
-              celebrateStreak(checkInResult.currentStreak);
-            }
-          } catch {
-            // Check-in endpoint may not be available yet — ignore
+    const tryFetchMe = async (token: string): Promise<User | null> => {
+      const res = await fetch(`${apiUrl}/auth/me`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) return res.json();
+      return null;
+    };
+
+    if (accessToken) {
+      // JWT auth flow — load user via /auth/me, refresh if needed
+      (async () => {
+        try {
+          let u = await tryFetchMe(accessToken);
+          if (!u) {
+            const { refreshToken } = await import('./auth');
+            const newToken = await refreshToken();
+            if (newToken) u = await tryFetchMe(newToken);
           }
+          if (u) {
+            await applyUser(u);
+          } else {
+            // Both tokens expired — clear everything
+            localStorage.removeItem('sportykids_access_token');
+            localStorage.removeItem('sportykids_refresh_token');
+            localStorage.removeItem(STORAGE_KEY);
+          }
+        } catch {
+          localStorage.removeItem(STORAGE_KEY);
+        } finally {
+          setLoading(false);
         }
-      })
-      .catch(() => localStorage.removeItem(STORAGE_KEY))
-      .finally(() => setLoading(false));
+      })();
+    } else if (id) {
+      // Anonymous user flow — load by stored ID (no JWT needed)
+      getUser(id)
+        .then(async (u) => { await applyUser(u); })
+        .catch(() => localStorage.removeItem(STORAGE_KEY))
+        .finally(() => setLoading(false));
+    } else {
+      setLoading(false);
+    }
   }, [loadParentalProfile]);
 
   // Redirect logic:
-  // - No user at all → send to /onboarding (first-time visitor)
+  // - No user → send to /onboarding (first-time visitor); /login, /register, /onboarding are exempt
   // - User exists but ageGateCompleted === false → send to /age-gate
+  // - Authenticated user on /login or /register → send to /
   useEffect(() => {
     if (loading) return;
     const exempt = [...AGE_GATE_EXEMPT_PATHS, '/onboarding'];
     if (!user) {
-      if (!exempt.includes(pathname)) {
-        router.replace('/onboarding');
-      }
+      if (!exempt.includes(pathname)) router.replace('/onboarding');
       return;
     }
     if (user.ageGateCompleted === false && !AGE_GATE_EXEMPT_PATHS.includes(pathname)) {
       router.replace('/age-gate');
+      return;
+    }
+    if (pathname === '/login' || pathname === '/register') {
+      router.replace('/');
     }
   }, [loading, user, pathname, router]);
 
@@ -214,6 +240,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
   };
 
   const logout = () => {
+    // Revoke refresh token on server (best-effort, fire-and-forget)
+    import('./auth').then(({ logout: revokeTokens }) => revokeTokens()).catch(() => {});
     setUserState(null);
     setParentalProfileState(null);
     localStorage.removeItem(STORAGE_KEY);

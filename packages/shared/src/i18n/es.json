@@ -1,5 +1,7 @@
 {
-  "app": { "name": "SportyKids" },
+  "app": {
+    "name": "SportyKids"
+  },
   "meta": {
     "title": "SportyKids - Noticias deportivas para niños",
     "description": "Noticias deportivas personalizadas, vídeos cortos y quizzes interactivos para niños."
@@ -116,14 +118,14 @@
     "step4_title": "¿De dónde quieres leer noticias?",
     "step4_subtitle": "Si no eliges ninguno, verás todas las fuentes",
     "creating_profile": "Creando perfil...",
-    "step5_title": "Configuraci\u00f3n parental",
+    "step5_title": "Configuración parental",
     "step5_subtitle": "Configura un PIN para gestionar la experiencia de tu hijo",
-    "pin_create": "Crea un PIN de 4 d\u00edgitos",
+    "pin_create": "Crea un PIN de 4 dígitos",
     "pin_confirm": "Confirma tu PIN",
     "pin_mismatch": "Los PINs no coinciden",
     "formats_label": "Formatos de contenido permitidos",
-    "time_limit_label": "L\u00edmite de tiempo diario",
-    "no_limit": "Sin l\u00edmite"
+    "time_limit_label": "Límite de tiempo diario",
+    "no_limit": "Sin límite"
   },
   "parental": {
     "control": "Control Parental",
@@ -152,8 +154,8 @@
     "tab_digest": "Resumen",
     "daily_usage": "Uso diario (minutos)",
     "average_daily": "Media diaria",
-    "limit_alerts": "Alertas de l\u00edmite",
-    "most_viewed": "M\u00e1s visto",
+    "limit_alerts": "Alertas de límite",
+    "most_viewed": "Más visto",
     "this_week": "Esta semana",
     "prev_week": "Semana anterior",
     "next_week": "Semana siguiente",
@@ -165,8 +167,8 @@
     "pin_incorrect": "PIN incorrecto. Te quedan {remaining} intentos.",
     "pin_locked_short": "Bloqueado: {remaining}",
     "pin_lockout_warning": "Cuidado: el PIN se bloqueará tras otro intento fallido.",
-    "session_active": "Sesi\u00f3n activa",
-    "session_expired": "Sesi\u00f3n expirada, introduce el PIN de nuevo",
+    "session_active": "Sesión activa",
+    "session_expired": "Sesión expirada, introduce el PIN de nuevo",
     "day_mon": "L",
     "day_tue": "M",
     "day_wed": "X",
@@ -187,10 +189,10 @@
     "no_specific_limit": "Sin límite específico"
   },
   "limit": {
-    "reached_title": "\u00a1Hasta ma\u00f1ana!",
-    "reached_message": "Has alcanzado tu l\u00edmite de tiempo. \u00a1Vuelve ma\u00f1ana para m\u00e1s deportes!",
-    "format_blocked": "Esta secci\u00f3n no est\u00e1 disponible. \u00a1Pregunta a tus padres!",
-    "sport_blocked": "Este deporte no est\u00e1 en tu lista. \u00a1Pregunta a tus padres para a\u00f1adirlo!",
+    "reached_title": "¡Hasta mañana!",
+    "reached_message": "Has alcanzado tu límite de tiempo. ¡Vuelve mañana para más deportes!",
+    "format_blocked": "Esta sección no está disponible. ¡Pregunta a tus padres!",
+    "sport_blocked": "Este deporte no está en tu lista. ¡Pregunta a tus padres para añadirlo!",
     "go_home": "Ir al inicio",
     "news_reached_message": "Has usado tu tiempo de noticias por hoy. Prueba reels o quiz!",
     "reels_reached_message": "Has usado tu tiempo de reels por hoy. Prueba noticias o quiz!",
@@ -378,7 +380,7 @@
   },
   "report": {
     "flag": "Reportar",
-    "why": "\u00bfPor qu\u00e9 reportas esto?",
+    "why": "¿Por qué reportas esto?",
     "inappropriate": "Inapropiado",
     "scary": "Da miedo",
     "confusing": "Confuso",
@@ -509,7 +511,14 @@
     "social_error": "No se pudo iniciar sesión. Inténtalo de nuevo.",
     "account_linked": "Cuenta vinculada correctamente",
     "social_email_conflict": "Ya existe una cuenta con ese email. Inicia sesión con tu método anterior.",
-    "or_continue_with": "o continúa con"
+    "or_continue_with": "o continúa con",
+    "no_account": "¿No tienes cuenta?",
+    "have_account": "¿Ya tienes cuenta?",
+    "signing_in": "Iniciando sesión...",
+    "creating_account": "Creando cuenta...",
+    "welcome_back": "¡Bienvenido de vuelta\\!",
+    "join_sporty": "Únete a SportyKids",
+    "create_account_cta": "Crear cuenta gratuita"
   },
   "history": {
     "title": "Leídos recientemente",
