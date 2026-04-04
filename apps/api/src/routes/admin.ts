@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from 'express';
 import { requireAuth, requireRole } from '../middleware/auth';
 import { prisma } from '../config/database';
 import { logger } from '../services/logger';
+import { generateDailyQuiz } from '../jobs/generate-daily-quiz';
 
 const router = Router();
 
@@ -101,5 +102,22 @@ router.get(
   },
 );
 
+
+/**
+ * POST /api/admin/quiz/generate
+ *
+ * Triggers quiz generation immediately (same logic as the daily cron).
+ * Requires admin role.
+ */
+router.post(
+  '/quiz/generate',
+  requireAuth,
+  requireRole('admin'),
+  async (_req: Request, res: Response) => {
+    logger.info('Manual quiz generation triggered via admin endpoint');
+    const result = await generateDailyQuiz();
+    res.json({ ok: true, generated: result.generated, errors: result.errors });
+  },
+);
 
 export default router;
