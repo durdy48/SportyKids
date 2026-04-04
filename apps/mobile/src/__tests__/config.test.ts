@@ -56,7 +56,7 @@ describe('resolveApiBase', () => {
   it('uses preview URL when EAS channel is preview', async () => {
     mockExpoConfig = { extra: { eas: { channel: 'preview' } } };
     const resolveApiBase = await getResolveApiBase();
-    expect(resolveApiBase()).toBe('https://sportykids-api-preview.fly.dev/api');
+    expect(resolveApiBase()).toBe('https://sportykids-api.fly.dev/api');
   });
 
   it('falls back to updates.channel when extra.eas.channel is missing', async () => {
@@ -93,7 +93,7 @@ describe('resolveApiBase', () => {
       hostUri: '192.168.1.100:8081',
     };
     const resolveApiBase = await getResolveApiBase();
-    expect(resolveApiBase()).toBe('https://sportykids-api-preview.fly.dev/api');
+    expect(resolveApiBase()).toBe('https://sportykids-api.fly.dev/api');
   });
 
   it('exports API_BASE as a string constant', async () => {
