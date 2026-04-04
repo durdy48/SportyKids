@@ -16,7 +16,9 @@
       "distribution": "internal",
       "channel": "preview",
       "env": {
-        "EXPO_PUBLIC_API_BASE": "https://sportykids-api.fly.dev/api"
+        "EXPO_PUBLIC_API_BASE": "https://sportykids-api.fly.dev/api",
+        "EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID": "540387931897-i35qfvhho9ghp0vrvkc5toqa0der7q1q.apps.googleusercontent.com",
+        "EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID": "540387931897-8784rhr0mo9vdpn9f894saemcrh3osfg.apps.googleusercontent.com"
       },
       "ios": {
         "simulator": false
