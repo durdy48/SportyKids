@@ -16,8 +16,8 @@ primary_region = "cdg"  # Paris — closest available region to Spain (mad is de
 #   app    — HTTP server only, can be autostopped when idle
 #   worker — Cron jobs only, never autostopped (no HTTP service attached)
 [processes]
-  app    = "node dist/index.js"
-  worker = "node dist/index.js"
+  app    = "node apps/api/dist/index.js"
+  worker = "node apps/api/dist/index.js"
 
 [http_service]
   processes = ["app"]
