@@ -93,17 +93,17 @@ app.listen(PORT, () => {
   logger.info({ port: PORT }, `SportyKids API running at http://localhost:${PORT}`);
 
   // ---------------------------------------------------------------------------
-  // Cron jobs — only run on the primary machine to avoid duplicate execution
-  // when scaled horizontally. Set PRIMARY_MACHINE_ID to the Fly machine ID
-  // that should run crons (e.g. fly machine list --app sportykids-api).
-  // If unset, the first machine to start runs crons (single-machine default).
+  // Cron jobs — only run on the "worker" process group to avoid duplicate
+  // execution when scaled horizontally. Fly.io sets FLY_PROCESS_GROUP to the
+  // process name defined in fly.toml [processes]. The worker group has no
+  // http_service attached, so Fly never autostops it based on traffic.
+  // In local dev (no FLY_PROCESS_GROUP set) crons always run.
   // ---------------------------------------------------------------------------
-  const machineId = process.env.FLY_MACHINE_ID ?? 'local';
-  const primaryId = process.env.PRIMARY_MACHINE_ID ?? machineId;
-  const isPrimary = machineId === primaryId;
+  const processGroup = process.env.FLY_PROCESS_GROUP ?? 'local';
+  const isPrimary = processGroup === 'worker' || processGroup === 'local';
 
   if (isPrimary) {
-    logger.info({ machineId }, 'Primary machine — starting cron jobs');
+    logger.info({ processGroup }, 'Worker process — starting cron jobs');
 
     // Initial sync on startup — delayed in dev to avoid saturating the AI rate
     // limiter with bulk moderation before user-facing requests can go through.
@@ -142,6 +142,6 @@ app.listen(PORT, () => {
     // Schedule weekly timeless quiz generation (Monday 05:00 UTC)
     startTimelessQuizJob();
   } else {
-    logger.info({ machineId, primaryId }, 'Worker machine — skipping cron jobs (HTTP only)');
+    logger.info({ processGroup }, 'App process — skipping cron jobs (HTTP only)');
   }
 });
