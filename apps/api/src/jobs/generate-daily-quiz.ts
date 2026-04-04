@@ -188,10 +188,18 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
         }
       } catch (err) {
         result.errors++;
+        const errMsg = err instanceof Error ? err.message : String(err);
         logger.error(
-          { err: err instanceof Error ? err : new Error(String(err)), articleId: article.id, ageRange },
+          { err: err instanceof Error ? err : new Error(errMsg), articleId: article.id, ageRange },
           'Error generating quiz for article',
         );
+
+        // If all providers are exhausted, wait for rate limit windows to reset
+        // before continuing — avoids rapid-fire failures burning the error budget.
+        if (errMsg.includes('exhausting all providers')) {
+          logger.info('All AI providers rate-limited — waiting 65s for reset');
+          await new Promise((resolve) => setTimeout(resolve, 65_000));
+        }
       }
 
       // 1-second delay between LLM calls
