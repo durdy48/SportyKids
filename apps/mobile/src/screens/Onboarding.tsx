@@ -237,8 +237,8 @@ export function OnboardingScreen() {
       // eslint-disable-next-line no-console
       console.error('[Onboarding] Error creating user:', err);
       Alert.alert(
-        t('errors.generic_title', locale),
-        `${t('errors.network_message', locale)}\n\n${err instanceof Error ? err.message : String(err)}`,
+        t('kid_errors.generic_title', locale),
+        `${t('kid_errors.network_message', locale)}\n\n${err instanceof Error ? err.message : String(err)}`,
       );
     } finally {
       setSubmitting(false);
@@ -408,7 +408,7 @@ export function OnboardingScreen() {
               <ActivityIndicator size="large" color={colors.blue} style={{ marginTop: 32 }} />
             ) : sourcesError ? (
               <View style={s.errorContainer}>
-                <Text style={s.errorText}>{t('errors.network_message', locale)}</Text>
+                <Text style={s.errorText}>{t('kid_errors.network_message', locale)}</Text>
                 <TouchableOpacity style={s.retryButton} onPress={loadSources} accessibilityRole="button">
                   <Text style={s.retryButtonText}>{t('buttons.retry', locale)}</Text>
                 </TouchableOpacity>
