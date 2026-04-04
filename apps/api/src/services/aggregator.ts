@@ -15,8 +15,8 @@ const parser = new Parser({
 // Moderation semaphore — max 5 concurrent AI calls to stay under rate limits
 // ---------------------------------------------------------------------------
 
-const MODERATION_CONCURRENCY = 5;
-const SOURCE_BATCH_SIZE = 10;
+const MODERATION_CONCURRENCY = 3;
+const SOURCE_BATCH_SIZE = 3;
 
 class Semaphore {
   private count: number;
