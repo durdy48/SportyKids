@@ -12,14 +12,11 @@ import {
   ScrollView,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import * as Google from 'expo-auth-session/providers/google';
 import { t } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
 import { useUser } from '../lib/user-context';
-import { login, fetchAuthProviders, loginWithSocialToken } from '../lib/auth';
-import { WEB_BASE, GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '../config';
-
-WebBrowser.maybeCompleteAuthSession();
+import { login, fetchAuthProviders } from '../lib/auth';
+import { WEB_BASE } from '../config';
 
 export function LoginScreen({ navigation }: { navigation: { navigate: (screen: string) => void } }) {
   const { setUser, locale, colors } = useUser();
@@ -27,31 +24,11 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [googleLoading, setGoogleLoading] = useState(false);
-  const [providers, setProviders] = useState<{ google: boolean; apple: boolean }>({ google: true, apple: false });
-
-  const [, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
-    iosClientId: GOOGLE_IOS_CLIENT_ID || undefined,
-    webClientId: GOOGLE_WEB_CLIENT_ID || undefined,
-    scopes: ['openid', 'profile', 'email'],
-  });
+  const [providers, setProviders] = useState<{ google: boolean; apple: boolean }>({ google: false, apple: false });
 
   useEffect(() => {
     fetchAuthProviders().then(setProviders).catch(() => {});
   }, []);
-
-  useEffect(() => {
-    if (googleResponse?.type === 'success') {
-      const idToken = googleResponse.authentication?.idToken;
-      if (idToken) {
-        setGoogleLoading(true);
-        loginWithSocialToken('google', idToken)
-          .then((result) => setUser(result.user))
-          .catch(() => Alert.alert(t('auth.social_error', locale)))
-          .finally(() => setGoogleLoading(false));
-      }
-    }
-  }, [googleResponse, locale, setUser]);
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) return;
@@ -136,19 +113,13 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
 
               {providers.google && (
                 <TouchableOpacity
-                  style={[styles.socialButton, (googleLoading) && styles.buttonDisabled]}
-                  onPress={() => promptGoogleAsync()}
-                  disabled={googleLoading}
+                  style={styles.socialButton}
+                  onPress={() => Alert.alert(t('auth.google_signin', locale), 'Próximamente disponible en la app nativa.')}
                   accessible={true}
                   accessibilityLabel={t('a11y.auth.google_signin', locale)}
                   accessibilityRole="button"
-                  accessibilityState={{ disabled: googleLoading }}
                 >
-                  {googleLoading ? (
-                    <ActivityIndicator color={colors.text} />
-                  ) : (
-                    <Text style={styles.socialButtonText}>{t('auth.google_signin', locale)}</Text>
-                  )}
+                  <Text style={styles.socialButtonText}>{t('auth.google_signin', locale)}</Text>
                 </TouchableOpacity>
               )}
 
