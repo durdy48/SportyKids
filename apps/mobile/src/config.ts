@@ -2,7 +2,7 @@ import Constants from 'expo-constants';
 
 const ENV_MAP: Record<string, string> = {
   production: 'https://sportykids-api.fly.dev/api',
-  preview: 'https://sportykids-api-preview.fly.dev/api',
+  preview: 'https://sportykids-api.fly.dev/api',
 };
 
 export function resolveApiBase(): string {

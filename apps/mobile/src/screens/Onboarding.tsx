@@ -183,7 +183,7 @@ export function OnboardingScreen() {
     setSubmitting(true);
     try {
       const inferredCountry = inferCountryFromLocale(locale);
-      const newUser = await createUser({
+      const payload = {
         name: name.trim(),
         age: AGE_RANGES[ageRange].min,
         favoriteSports: sports,
@@ -193,7 +193,12 @@ export function OnboardingScreen() {
         country: inferredCountry,
         ageGateCompleted: true,
         consentGiven: true,
-      });
+      };
+      // eslint-disable-next-line no-console
+      console.log('[Onboarding] Creating user with payload:', JSON.stringify(payload));
+      const newUser = await createUser(payload);
+      // eslint-disable-next-line no-console
+      console.log('[Onboarding] User created:', newUser.id, 'ageGateCompleted:', newUser.ageGateCompleted);
 
       // Set up parental PIN if provided
       if (parentalPin.length === 4) {
@@ -210,10 +215,12 @@ export function OnboardingScreen() {
         }
       }
 
+      // eslint-disable-next-line no-console
+      console.log('[Onboarding] Calling setUser, ageGateCompleted =', newUser.ageGateCompleted);
       setUser(newUser);
     } catch (err) {
       // eslint-disable-next-line no-console
-      console.error('Error creating user:', err);
+      console.error('[Onboarding] Error creating user:', err);
       Alert.alert(
         t('errors.generic_title', locale),
         `${t('errors.network_message', locale)}\n\n${err instanceof Error ? err.message : String(err)}`,

@@ -145,6 +145,9 @@ export function AppNavigator() {
 
   const needsAgeGate = user && user.ageGateCompleted === false;
 
+  // eslint-disable-next-line no-console
+  __DEV__ && console.log('[Nav] user:', user?.id ?? 'null', 'ageGateCompleted:', user?.ageGateCompleted, 'needsAgeGate:', needsAgeGate);
+
   return (
     <NavigationContainer ref={navigationRef}>
       <Stack.Navigator

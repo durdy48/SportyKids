@@ -254,7 +254,11 @@ export async function createUser(data: CreateUserData): Promise<User> {
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(data),
   });
-  if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+  if (!res.ok) {
+    const body = await res.json().catch(() => ({})) as Record<string, unknown>;
+    const detail = (body?.error as Record<string, unknown>)?.message ?? body?.message ?? res.statusText;
+    throw new Error(`Error ${res.status}: ${detail}`);
+  }
   return res.json();
 }
 
