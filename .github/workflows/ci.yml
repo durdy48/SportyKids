@@ -196,7 +196,8 @@ jobs:
       - name: Build shared package
         run: npm run build -w packages/shared
       - name: Publish EAS Update
-        run: npx eas-cli@latest update --branch preview --message "${{ github.event.head_commit.message }}" --non-interactive
+        run: npx eas-cli@latest update --branch preview --message "$EAS_UPDATE_MSG" --non-interactive
         working-directory: apps/mobile
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          EAS_UPDATE_MSG: ${{ github.event.head_commit.message }}
