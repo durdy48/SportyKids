@@ -23,3 +23,26 @@ export async function waitForDatabase(maxAttempts = 8, delayMs = 3000): Promise<
     }
   }
 }
+
+/**
+ * Starts a keep-alive ping every 4 minutes to prevent Neon from suspending
+ * the database during active periods. Neon free tier suspends after 5 min
+ * of inactivity — this keeps the connection warm without hammering the DB.
+ */
+export function startDatabaseKeepAlive(): void {
+  const INTERVAL_MS = 4 * 60 * 1000; // 4 minutes
+
+  setInterval(async () => {
+    try {
+      await prisma.$queryRaw`SELECT 1`;
+    } catch {
+      // DB went to sleep mid-session — reconnect silently
+      try {
+        await prisma.$disconnect();
+        await prisma.$connect();
+      } catch {
+        // Will recover on next real request
+      }
+    }
+  }, INTERVAL_MS);
+}

@@ -6,7 +6,7 @@ initSentry();
 
 import express from 'express';
 import cors from 'cors';
-import { prisma, waitForDatabase } from './config/database';
+import { prisma, waitForDatabase, startDatabaseKeepAlive } from './config/database';
 import newsRouter from './routes/news';
 import usersRouter from './routes/users';
 import reelsRouter from './routes/reels';
@@ -100,6 +100,7 @@ async function start() {
   logger.info('Waiting for database...');
   await waitForDatabase();
   logger.info('Database ready');
+  startDatabaseKeepAlive();
 
   app.listen(PORT, () => {
     logger.info({ port: PORT }, `SportyKids API running at http://localhost:${PORT}`);
