@@ -126,7 +126,7 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
             <Text style={styles.secondaryButtonText}>{t('auth.register', locale)}</Text>
           </TouchableOpacity>
 
-          {(providers.google || providers.apple) && (
+          {(GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID || providers.google || providers.apple) && (
             <>
               <View style={styles.separator}>
                 <View style={styles.separatorLine} />
@@ -134,7 +134,7 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
                 <View style={styles.separatorLine} />
               </View>
 
-              {providers.google && (GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID) && (
+              {(GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID) && (
                 <TouchableOpacity
                   style={[styles.socialButton, (googleLoading) && styles.buttonDisabled]}
                   onPress={() => promptGoogleAsync()}
