@@ -54,7 +54,9 @@
       }
     },
     "owner": "sportykids-app",
-    "runtimeVersion": "1.0.0",
+    "runtimeVersion": {
+      "policy": "sdkVersion"
+    },
     "updates": {
       "url": "https://u.expo.dev/f30f710c-ff00-4baf-bbf3-77bb41c1626f"
     }
