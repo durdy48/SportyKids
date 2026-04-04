@@ -89,7 +89,6 @@ export function OnboardingScreen() {
 
   useEffect(() => {
     loadSources();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // Auto-pre-select sources matching selected sports when entering step 4
