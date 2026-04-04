@@ -20,6 +20,7 @@ export const TEAM_IDS: Record<string, { sportsDbId: string; sport: string }> = {
   'Juventus': { sportsDbId: '134218', sport: 'football' },
   'Inter Milan': { sportsDbId: '134198', sport: 'football' },
   'AC Milan': { sportsDbId: '134197', sport: 'football' },
+  'Sevilla FC': { sportsDbId: '133709', sport: 'football' },
 
   // Basketball
   'Los Angeles Lakers': { sportsDbId: '134867', sport: 'basketball' },

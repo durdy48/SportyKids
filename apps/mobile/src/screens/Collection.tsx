@@ -1,5 +1,6 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useFocusEffect } from '@react-navigation/native';
+import * as Notifications from 'expo-notifications';
 import {
   View,
   Text,
@@ -92,6 +93,38 @@ export function CollectionScreen() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [userLoading])
   );
+
+  // Reload sticker data when a sticker notification arrives while screen is already focused
+  const isFocusedRef = useRef(false);
+  useFocusEffect(
+    useCallback(() => {
+      isFocusedRef.current = true;
+      return () => { isFocusedRef.current = false; };
+    }, [])
+  );
+
+  useEffect(() => {
+    if (!user) return;
+    const sub = Notifications.addNotificationReceivedListener((notification) => {
+      const data = notification.request.content.data as Record<string, string> | undefined;
+      if (data?.screen === 'Collection' && isFocusedRef.current) {
+        Promise.all([
+          getUserStickers(user.id),
+          getAchievements(),
+          getUserAchievements(user.id),
+        ]).then(([userStickersRes, achievementsRes, userAchievementsRes]) => {
+          setUserStickers(userStickersRes.stickers);
+          setCollected(userStickersRes.collected);
+          setTotalStickers(userStickersRes.total);
+          setAllAchievements(achievementsRes.achievements);
+          setUserAchievements(userAchievementsRes.achievements);
+          setTotalAchievements(userAchievementsRes.total);
+          setUnlockedCount(userAchievementsRes.unlocked);
+        }).catch(() => {});
+      }
+    });
+    return () => sub.remove();
+  }, [user]);
 
   const ownedStickerIds = useMemo(
     () => new Set(userStickers.map((us) => us.stickerId)),

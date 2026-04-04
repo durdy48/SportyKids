@@ -583,6 +583,20 @@ const initialTeamStats: TeamStatsSeed[] = [
     nextMatch: { opponent: 'Fiorentina', date: '2026-03-29', competition: 'Serie A' },
   },
   {
+    teamName: 'Sevilla FC',
+    sport: 'football',
+    leaguePosition: 6,
+    recentResults: [
+      { opponent: 'Real Madrid', score: '0-3', result: 'L', date: '2026-03-01' },
+      { opponent: 'Valencia CF', score: '2-1', result: 'W', date: '2026-03-08' },
+      { opponent: 'Osasuna', score: '1-1', result: 'D', date: '2026-03-15' },
+      { opponent: 'Real Betis', score: '2-0', result: 'W', date: '2026-02-22' },
+      { opponent: 'Atletico Madrid', score: '1-2', result: 'L', date: '2026-02-15' },
+    ],
+    topScorer: 'Isaac Romero (10 goals)',
+    nextMatch: { opponent: 'Barcelona', date: '2026-03-29', competition: 'La Liga' },
+  },
+  {
     teamName: 'Los Angeles Lakers',
     sport: 'basketball',
     leaguePosition: 5,
