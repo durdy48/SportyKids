@@ -17,7 +17,7 @@ import { t } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
 import { useUser } from '../lib/user-context';
 import { login, fetchAuthProviders, loginWithSocialToken } from '../lib/auth';
-import { WEB_BASE, GOOGLE_IOS_CLIENT_ID } from '../config';
+import { WEB_BASE, GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '../config';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -31,7 +31,8 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
   const [providers, setProviders] = useState<{ google: boolean; apple: boolean }>({ google: false, apple: false });
 
   const [, googleResponse, promptGoogleAsync] = Google.useAuthRequest({
-    iosClientId: GOOGLE_IOS_CLIENT_ID,
+    iosClientId: GOOGLE_IOS_CLIENT_ID || undefined,
+    webClientId: GOOGLE_WEB_CLIENT_ID || undefined,
     scopes: ['openid', 'profile', 'email'],
   });
 
@@ -133,7 +134,7 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
                 <View style={styles.separatorLine} />
               </View>
 
-              {providers.google && GOOGLE_IOS_CLIENT_ID && (
+              {providers.google && (GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID) && (
                 <TouchableOpacity
                   style={[styles.socialButton, (googleLoading) && styles.buttonDisabled]}
                   onPress={() => promptGoogleAsync()}

@@ -63,3 +63,7 @@ export const WEB_BASE = resolveWebBase();
 
 // Google Sign In — iOS OAuth Client ID (created in Google Cloud Console, type: iOS)
 export const GOOGLE_IOS_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_IOS_CLIENT_ID ?? '';
+
+// Google Sign In — Web Client ID for Expo Go proxy (created in Google Cloud Console, type: Web)
+// Authorized redirect URI must include: https://auth.expo.io/@sportykids-app/sportykids
+export const GOOGLE_WEB_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_WEB_CLIENT_ID ?? '';
