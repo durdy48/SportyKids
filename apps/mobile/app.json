@@ -18,7 +18,14 @@
       "bundleIdentifier": "com.sportykids.app",
       "buildNumber": "1",
       "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+        "ITSAppUsesNonExemptEncryption": false,
+        "CFBundleURLTypes": [
+          {
+            "CFBundleURLSchemes": [
+              "com.googleusercontent.apps.540387931897-i35qfvhho9ghp0vrvkc5toqa0der7q1q"
+            ]
+          }
+        ]
       }
     },
     "android": {
