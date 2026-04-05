@@ -1,0 +1,130 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/jobs"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "jobs": [
+        {
+          "name": "sync-feeds",
+          "expectedFrequencyMinutes": 30,
+          "lastRun": {
+            "id": "cmnm8w81c002x2689upftgyfw",
+            "startedAt": "2026-04-05T21:00:00.048Z",
+            "finishedAt": "2026-04-05T21:01:32.530Z",
+            "status": "success",
+            "triggeredBy": "cron",
+            "output": {
+              "errors": 0,
+              "processed": 14718
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        },
+        {
+          "name": "sync-videos",
+          "expectedFrequencyMinutes": 360,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "sync-team-stats",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "generate-daily-quiz",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": {
+            "id": "cmnm7qvi20020266bspuhu6a8",
+            "startedAt": "2026-04-05T20:27:50.907Z",
+            "finishedAt": "2026-04-05T20:32:10.833Z",
+            "status": "success",
+            "triggeredBy": "manual",
+            "output": {
+              "errors": 93,
+              "generated": 7
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        },
+        {
+          "name": "generate-timeless-quiz",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "generate-daily-missions",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "streak-reminder",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "mission-reminder",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "send-weekly-digests",
+          "expectedFrequencyMinutes": 10080,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "live-scores",
+          "expectedFrequencyMinutes": 5,
+          "lastRun": {
+            "id": "cmnm92nhh000f26aouvntiwnx",
+            "startedAt": "2026-04-05T21:05:00.005Z",
+            "finishedAt": "2026-04-05T21:05:05.153Z",
+            "status": "success",
+            "triggeredBy": "cron",
+            "output": {
+              "events": 0,
+              "notified": 0,
+              "processed": 0
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        },
+        {
+          "name": "compute-analytics",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": {
+            "id": "cmnm7rvfs0025266bistcjq98",
+            "startedAt": "2026-04-05T20:28:37.481Z",
+            "finishedAt": "2026-04-05T20:28:37.522Z",
+            "status": "success",
+            "triggeredBy": "manual",
+            "output": {
+              "processed": 11
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        }
+      ]
+    }
+  }
+}

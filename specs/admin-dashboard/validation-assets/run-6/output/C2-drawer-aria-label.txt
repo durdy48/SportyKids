@@ -1,0 +1,12 @@
+hasConditionalAriaLabel: true
+hasBadFallback (aria-label=""): false
+hasAriaHidden={!isOpen}: true
+ARIA attribute lines:
+  L105: aria-hidden="true"
+  L112: aria-label={jobName ? `${jobName} execution history` : undefined}
+  L114: aria-hidden={!isOpen}
+  L123: aria-label="Close history drawer"
+  L205: aria-label="Trigger job confirmation"
+  L332: <div className="bg-gray-800 rounded-xl overflow-hidden" aria-live="polite" aria-label="Jobs status table">
+  L350: aria-label={`View history for ${job.name}`}
+  L380: aria-label={`Trigger ${job.name}`}

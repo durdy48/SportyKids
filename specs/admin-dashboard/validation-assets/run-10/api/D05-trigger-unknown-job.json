@@ -1,0 +1,12 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/api/admin/jobs/unknown-job/trigger"
+  },
+  "response": {
+    "status": 404,
+    "body": {
+      "error": "Unknown job: unknown-job"
+    }
+  }
+}

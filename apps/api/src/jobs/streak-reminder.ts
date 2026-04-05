@@ -49,6 +49,31 @@ export async function sendStreakReminders(): Promise<{ sent: number }> {
 // Cron job: daily at 20:00 UTC
 // ---------------------------------------------------------------------------
 
+export async function runStreakReminder(triggeredBy: 'cron' | 'manual' = 'cron', triggeredId?: string, existingRunId?: string): Promise<void> {
+  const run = existingRunId
+    ? { id: existingRunId }
+    : await prisma.jobRun.create({
+        data: { jobName: 'streak-reminder', status: 'running', triggeredBy, triggeredId },
+      });
+  try {
+    const result = await sendStreakReminders();
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: {
+        status: 'success',
+        finishedAt: new Date(),
+        output: { sent: result.sent },
+      },
+    });
+  } catch (e) {
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: { status: 'error', finishedAt: new Date(), output: { error: String(e) } },
+    });
+    throw e;
+  }
+}
+
 let activeJob: ReturnType<typeof cron.schedule> | null = null;
 
 export function startStreakReminderJob(): void {
@@ -59,7 +84,7 @@ export function startStreakReminderJob(): void {
 
   activeJob = cron.schedule('0 20 * * *', async () => {
     logger.info('Running streak reminders...');
-    await sendStreakReminders();
+    await runStreakReminder('cron');
   });
 
   logger.info('Streak reminder job scheduled: daily at 20:00 UTC.');

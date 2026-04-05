@@ -1,0 +1,71 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/jobs/sync-feeds/history?limit=5"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "jobName": "sync-feeds",
+      "history": [
+        {
+          "id": "cmnm8nju30039267pmquo1j5j",
+          "startedAt": "2026-04-05T20:53:15.436Z",
+          "finishedAt": null,
+          "durationMs": null,
+          "status": "running",
+          "triggeredBy": "manual",
+          "output": null
+        },
+        {
+          "id": "cmnm8lsph0015267peokmgmpj",
+          "startedAt": "2026-04-05T20:51:53.621Z",
+          "finishedAt": "2026-04-05T20:53:09.329Z",
+          "durationMs": 75708,
+          "status": "success",
+          "triggeredBy": "manual",
+          "output": {
+            "errors": 0,
+            "processed": 15017
+          }
+        },
+        {
+          "id": "cmnm7ba2r005b26x4mn5npylc",
+          "startedAt": "2026-04-05T20:15:43.299Z",
+          "finishedAt": "2026-04-05T20:16:20.075Z",
+          "durationMs": 36776,
+          "status": "success",
+          "triggeredBy": "manual",
+          "output": {
+            "errors": 0,
+            "processed": 15021
+          }
+        },
+        {
+          "id": "cmnm79asp002y26x4zkwnsa1q",
+          "startedAt": "2026-04-05T20:14:10.921Z",
+          "finishedAt": "2026-04-05T20:15:10.517Z",
+          "durationMs": 59596,
+          "status": "success",
+          "triggeredBy": "manual",
+          "output": {
+            "errors": 0,
+            "processed": 15021
+          }
+        },
+        {
+          "id": "cmnm6r28t000y26wyihsgziez",
+          "startedAt": "2026-04-05T20:00:00.030Z",
+          "finishedAt": "2026-04-05T20:01:18.384Z",
+          "durationMs": 78354,
+          "status": "success",
+          "triggeredBy": "cron",
+          "output": {
+            "errors": 0,
+            "processed": 15014
+          }
+        }
+      ]
+    }
+  }
+}

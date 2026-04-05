@@ -1,0 +1,6 @@
+hasSyncLimiterImport: true
+hasSyncLimiterInRoute: true
+
+syncLimiter occurrences:
+  L5: import { syncLimiter } from '../middleware/rate-limiter';
+  L776: syncLimiter,

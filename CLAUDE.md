@@ -14,7 +14,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 **SportyKids** — app de noticias deportivas personalizada para niños (6-14 años) con control parental, feeds RSS configurables, vídeos cortos (Reels) y quizzes interactivos.
 
-**Estado**: MVP Fases 0-4 completadas. Fase 5 (Beta Testing & Store Launch) en progreso — staging, metadata, beta guide, review notes listos.
+**Estado**: MVP Fases 0-6.4 completadas. Admin Dashboard en progreso (prd6 pendiente). Fase 5 (Beta Testing & Store Launch) en progreso.
 
 ## Stack tecnológico
 
@@ -22,33 +22,20 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 |------|-----------|---------|
 | Monorepo | npm workspaces | — |
 | API | Express 5 + TypeScript | Node >= 20 |
-| ORM | Prisma 6 | PostgreSQL 16 |
+| ORM | Prisma **6** (v7 incompatible) | PostgreSQL 16 |
 | Webapp | Next.js 16 (App Router) | Tailwind CSS 4 |
 | App móvil | React Native 0.81 + Expo SDK 54 | React Navigation 7 |
 | Validación | Zod 4 | — |
-| RSS | rss-parser 3 | — |
 | Cron | node-cron 4 | — |
-| AI Client | openai SDK (multi-provider) | Ollama/OpenRouter/Anthropic |
-| PDF | jspdf | Digest PDF generation |
-| Email | nodemailer | Digest email delivery |
-| Caching | CacheProvider (InMemory/Redis) | ioredis 5 (optional) |
-| Monitoring | Sentry (opt-in) | Error tracking |
-| Analytics | PostHog (opt-in) | Privacy-first analytics |
-| Video | expo-video (mobile) | Native MP4 player |
-| Rate Limiting | express-rate-limit 7 | IP-based tiered rate limiting |
-| Splash Screen | expo-splash-screen (mobile) | App launch splash |
-| Secure Storage | expo-secure-store (mobile) | JWT token encryption |
-| Haptics | expo-haptics (mobile) | Tactile feedback |
-| Logging | Pino 9 | Structured JSON logging |
+| AI Client | openai SDK universal (Groq default, OpenRouter, Anthropic, Ollama) | — |
+| Caching | CacheProvider InMemory/Redis | ioredis 5 (optional) |
+| Logging | Pino 9 | Structured JSON |
 | Linting | ESLint 9 + Prettier | Flat config |
-| Asset Gen | sharp (devDep, mobile) | Placeholder icon/splash generation |
-| Deploy | Fly.io + Docker | Production API hosting (Madrid) |
-| OAuth | Passport.js + google-auth-library | Google & Apple Sign In |
+| Deploy | Fly.io + Docker | Madrid |
+| OAuth | Passport.js + google-auth-library | Google & Apple |
 | Shared | @sportykids/shared | Tipos, constantes, utils, i18n |
 
-**Nota**: Prisma v7 no es compatible con este proyecto (rompe la config de datasource url). Usar Prisma ^6.
-
-**Nota AI**: El AI client usa `openai` SDK como cliente universal para Ollama, OpenRouter y Groq (APIs compatibles con OpenAI). Anthropic se importa dinámicamente solo si `AI_PROVIDER=anthropic`. Groq se importa via openai SDK con `baseURL=https://api.groq.com/openai/v1`. Por defecto `AI_PROVIDER=ollama` (gratis, local). Groq recomendado para producción (gratis: 14,400 req/día, modelo `llama-3.1-8b-instant`).
+**Nota AI**: Por defecto `AI_PROVIDER=groq` (gratis: 14,400 req/día, modelo `llama-3.1-8b-instant`). Groq usa openai SDK con `baseURL=https://api.groq.com/openai/v1`. Anthropic se importa dinámicamente solo si `AI_PROVIDER=anthropic`.
 
 ## Comandos de desarrollo
 
@@ -75,478 +62,321 @@ npx tsx prisma/seed.ts
 ```
 sportykids/
 ├── packages/shared/src/
-│   ├── types/           # User, NewsItem, Reel, QuizQuestion, ParentalProfile, AgeRange,
-│   │                    # SafetyStatus, SafetyResult, RssSource, RssSourceCatalogResponse,
-│   │                    # VideoSource, VideoPlatform, VideoSourceCatalogResponse,
-│   │                    # AuthProvider ('anonymous'|'email'|'google'|'apple')
-│   │                    # LiveScorePreferences, MatchEvent, LiveMatchData, LiveMatchStatus, MatchEventType
-│   │                    # Organization, OrganizationMember, OrganizationActivity, OrganizationRole, JoinOrganizationResponse
+│   ├── types/           # User, NewsItem, Reel, QuizQuestion, ParentalProfile, Organization, LiveMatchData, etc.
 │   ├── constants/       # SPORTS, TEAMS, AGE_RANGES, COLORS, KID_FRIENDLY_ERRORS, ERROR_CODES
-│   ├── utils/           # sportToColor, sportToEmoji, formatDate, truncateText, youtube.ts (child-safe embed)
+│   ├── utils/           # sportToColor, sportToEmoji, formatDate, truncateText, youtube.ts
 │   └── i18n/            # es.json, en.json, t(), getSportLabel(), getAgeRangeLabel()
 ├── apps/api/
 │   ├── prisma/          # schema.prisma, migrations/, seed.ts
 │   ├── Dockerfile       # Multi-stage production Docker image
-│   ├── .dockerignore    # Docker build exclusions
 │   └── src/
-│       ├── routes/      # news.ts, reels.ts, quiz.ts, users.ts, parents.ts, reports.ts, missions.ts, auth.ts, admin.ts, subscription.ts, live.ts, organizations.ts
-│       ├── services/    # aggregator.ts (RSS), video-aggregator.ts (YouTube video RSS),
-│       │                # classifier.ts (team detection),
-│       │                # ai-client.ts (multi-provider), content-moderator.ts,
-│       │                # summarizer.ts (age-adapted summaries),
-│       │                # gamification.ts (streaks, stickers, achievements),
-│       │                # feed-ranker.ts (behavioral + static feed ranking),
-│       │                # team-stats.ts (team stats), team-stats-sync.ts (TheSportsDB live sync),
-│       │                # team-ids.ts (TheSportsDB team ID mapping),
-│       │                # cache.ts (CacheProvider interface + InMemoryCache + createCache factory + withCache middleware),
-│       │                # redis-cache.ts (RedisCache provider, ioredis optional),
-│       │                # digest-generator.ts (weekly digest PDF/email),
-│       │                # mission-generator.ts (daily missions),
-│       │                # auth-service.ts (JWT + password hashing),
-│       │                # passport.ts (Passport.js OAuth strategies),
-│       │                # push-sender.ts (Expo push notifications),
-│       │                # monitoring.ts (Sentry + PostHog init),
-│       │                # logger.ts (Pino structured logging),
-│       │                # parental-session.ts (DB-backed parental sessions),
-│       │                # subscription.ts (tier resolution, usage counting, webhook processing)
-│       │                # live-scores.ts (event detection, notification payload builder)
-│       │                # schedule-check.ts (timezone-aware allowed hours check, extracted from parental-guard)
-│       │                # invite-code.ts (invite code generation, validation, slug generation)
-│       ├── jobs/        # sync-feeds.ts (cron cada 30min), sync-videos.ts (cron cada 6h),
-│       │                # generate-daily-quiz.ts (cron 06:00 UTC),
-│       │                # generate-daily-missions.ts (cron 05:00 UTC), send-weekly-digests.ts (cron 08:00 UTC diario),
-│       │                # streak-reminder.ts (cron 20:00 UTC), sync-team-stats.ts (cron 04:00 UTC),
-│       │                # mission-reminder.ts (cron 18:00 UTC — push for >50% progress missions)
-│       │                # live-scores.ts (cron cada 5min — poll TheSportsDB livescores, detect events, send push)
-│       ├── errors/       # index.ts (AppError, ValidationError, AuthenticationError, AuthorizationError, NotFoundError, ConflictError, RateLimitError)
-│       ├── middleware/   # error-handler.ts (typed: AppError/Prisma/Zod mapping, Sentry 5xx only), auth.ts (JWT non-blocking + requireAuth + requireRole), parental-guard.ts (M5 + schedule lock), subscription-guard.ts (free tier limits on news/reels/quiz), rate-limiter.ts (5 tiers: auth/pin/content/sync/default), request-id.ts (X-Request-Id correlation), require-org-admin.ts (org admin authorization)
+│       ├── routes/      # news.ts, reels.ts, quiz.ts, users.ts, parents.ts, reports.ts,
+│       │                # missions.ts, auth.ts, admin.ts, subscription.ts, live.ts, organizations.ts
+│       ├── services/    # aggregator.ts, video-aggregator.ts, classifier.ts, ai-client.ts,
+│       │                # content-moderator.ts, summarizer.ts, gamification.ts, feed-ranker.ts,
+│       │                # team-stats.ts, team-stats-sync.ts, team-ids.ts, cache.ts, redis-cache.ts,
+│       │                # digest-generator.ts, mission-generator.ts, auth-service.ts, passport.ts,
+│       │                # push-sender.ts, monitoring.ts, logger.ts, parental-session.ts,
+│       │                # subscription.ts, live-scores.ts, schedule-check.ts, invite-code.ts,
+│       │                # job-runner.ts, admin-stats.ts
+│       ├── jobs/        # sync-feeds.ts (30min), sync-videos.ts (6h), generate-daily-quiz.ts (06:00 UTC),
+│       │                # generate-daily-missions.ts (05:00 UTC), send-weekly-digests.ts (08:00 UTC),
+│       │                # streak-reminder.ts (20:00 UTC), sync-team-stats.ts (04:00 UTC),
+│       │                # mission-reminder.ts (18:00 UTC), live-scores.ts (5min),
+│       │                # compute-analytics.ts (02:00 UTC)
+│       ├── errors/       # AppError, ValidationError, AuthenticationError, NotFoundError, etc.
+│       ├── middleware/   # error-handler.ts, auth.ts (JWT + requireAuth + requireRole),
+│       │                # parental-guard.ts, subscription-guard.ts, rate-limiter.ts (5 tiers),
+│       │                # request-id.ts, require-org-admin.ts
 │       └── config/      # database.ts (PrismaClient singleton)
 ├── apps/web/src/
-│   ├── app/             # / (home, 3 feed modes), /onboarding (5 steps), /reels (TikTok vertical),
-│   │                    # /quiz, /team (stats hub), /parents (5 tabs), /collection,
-│   │                    # auth/callback/ (OAuth callback landing),
-│   │                    # /age-gate (age verification gate), /privacy (Privacy Policy),
-│   │                    # /terms (Terms of Service), /upgrade (subscription paywall, app store links),
-│   │                    # /organizations (org admin dashboard)
-│   ├── components/      # NewsCard, FiltersBar, SearchBar, NavBar, OnboardingWizard, ReelCard,
-│   │                    # QuizGame, PinInput, ParentalPanel, AgeAdaptedSummary,
-│   │                    # StickerCard, StreakCounter, AchievementBadge, RewardToast,
-│   │                    # FeedModeToggle, HeadlineRow, TeamStatsCard, TeamReelsStrip,
-│   │                    # ReelPlayer, VerticalFeed, NotificationSettings, LimitReached,
-│   │                    # ReportButton, ContentReportList, FeedPreviewModal, MissionCard,
-│   │                    # ErrorState, OfflineBanner, ParentalTour, VideoPlayer, AgeGate,
-│   │                    # OrgActivitySummary, OrgActivityChart, OrgMemberList, OrgSettings, JoinOrgModal
-│   ├── lib/             # api.ts (cliente API), user-context.tsx (UserProvider + useUser), celebrations.ts (confetti animations), favorites.ts (client-side bookmarks), offline-cache.ts, analytics.ts
-│   └── styles/          # globals.css (Tailwind + CSS vars)
-├── apps/mobile/
-│   ├── App.tsx           # Entry point (registerRootComponent)
-│   ├── metro.config.js   # Monorepo-aware Metro config (disableHierarchicalLookup)
-│   ├── app.json          # Expo config (icon, splash, adaptiveIcon, favicon)
-│   ├── eas.json          # EAS Build/Submit config with channels
-│   ├── .env.example      # Mobile env var template
-│   ├── scripts/          # generate-assets.mjs (sharp-based placeholder assets)
-│   ├── store-metadata/   # en.json, es.json (ASO metadata)
-│   └── src/
-│       ├── App.tsx        # Root component (SafeAreaProvider + UserProvider + Navigation)
-│       ├── screens/       # HomeFeed, Reels, Quiz, FavoriteTeam, Onboarding, ParentalControl, Collection, Login, Register, RssCatalog, AgeGate, Upgrade, JoinOrganization
-│       ├── components/    # NewsCard, FiltersBar, StreakCounter, BrandedRefreshControl,
-│       │                  # ErrorState, ErrorBoundary, OfflineBanner, VideoPlayer, ParentalTour,
-│       │                  # LimitReachedModal
-│       ├── navigation/    # Bottom tabs (6): News, Reels, Quiz, Collection, My Team, Parents + Stack (RssCatalog)
-│       └── lib/           # api.ts, user-context.tsx, favorites.ts, auth.ts, push-notifications.ts, haptics.ts, offline-cache.ts, theme.ts (dark mode colors), secure-storage.ts (expo-secure-store abstraction)
-├── fly.toml              # Fly.io deployment config (API → sportykids-api, region: mad)
-├── eslint.config.js      # ESLint 9 flat config (monorepo root)
-├── .prettierrc           # Prettier config
-└── docs/
-    ├── es/              # 10 documentos en español
-    └── en/              # 10 documentos en inglés
+│   ├── app/             # / (home), /onboarding, /reels, /quiz, /team, /parents, /collection,
+│   │                    # /age-gate, /privacy, /terms, /upgrade, /organizations,
+│   │                    # (admin)/admin/* (moderation, reports, overview, analytics, jobs)
+│   ├── components/      # NewsCard, FiltersBar, NavBar, OnboardingWizard, ReelCard, QuizGame,
+│   │                    # PinInput, ParentalPanel, StickerCard, StreakCounter, AchievementBadge,
+│   │                    # MissionCard, VideoPlayer, OrgActivitySummary, OrgMemberList,
+│   │                    # admin/AdminSidebar, AdminTable, AdminBadge, AdminMetricCard
+│   └── lib/             # api.ts, user-context.tsx, celebrations.ts, favorites.ts, analytics.ts
+├── apps/mobile/src/
+│   ├── screens/         # HomeFeed, Reels, Quiz, FavoriteTeam, Onboarding, ParentalControl,
+│   │                    # Collection, Login, Register, RssCatalog, AgeGate, Upgrade, JoinOrganization
+│   ├── components/      # NewsCard, FiltersBar, StreakCounter, ErrorBoundary, VideoPlayer, LimitReachedModal
+│   ├── navigation/      # Bottom tabs (6): News, Reels, Quiz, Collection, My Team, Parents
+│   └── lib/             # api.ts, user-context.tsx, auth.ts, secure-storage.ts, push-notifications.ts
+└── docs/                # es/ + en/ (10 documentos cada uno)
 ```
 
 ## API REST — endpoints
 
+> Todas las rutas en **inglés**. Verificar siempre contra `apps/api/src/routes/`.
+> Abreviaciones: `(admin)` = requireAuth + requireRole('admin'), `(auth)` = requireAuth, `(orgAdmin)` = requireAuth + org admin check.
+
 | Método | Ruta | Descripción |
 |--------|------|-------------|
 | GET | `/api/health` | Health check |
-| GET | `/api/news?sport=&team=&age=&page=&limit=&q=&locale=&userId=` | Noticias con filtros, busqueda, behavioral ranking (cached 5min) |
+| GET | `/api/news` | Noticias (`?sport=&team=&age=&page=&limit=&q=&locale=&userId=`, cached 5min) |
 | GET | `/api/news/:id` | Detalle noticia |
-| GET | `/api/news/:id/summary?age=&locale=` | Resumen adaptado por edad (M2) |
+| GET | `/api/news/:id/summary?age=&locale=` | Resumen adaptado por edad |
 | GET | `/api/news/trending` | IDs de noticias en tendencia (>5 vistas en 24h) |
-| GET | `/api/news/sources/list` | Fuentes RSS activas |
-| GET | `/api/news/sources/catalog` | Catálogo completo de fuentes RSS con metadata |
+| GET | `/api/news/sources/list` | Fuentes RSS activas (devuelve `sources`) |
+| GET | `/api/news/sources/catalog` | Catálogo RSS completo con metadata |
 | POST | `/api/news/sources/custom` | Añadir fuente RSS personalizada |
 | DELETE | `/api/news/sources/custom/:id` | Eliminar fuente personalizada |
-| POST | `/api/news/sync` | Sincronización manual (incluye stats de moderación) |
-| GET | `/api/reels?sport=&age=&page=&limit=` | Feed de reels (solo approved, ordenado por publishedAt desc) |
+| POST | `/api/news/sync` | Sincronización manual RSS |
+| GET | `/api/news/history?userId=&page=&limit=` | Historial de lectura paginado |
+| GET | `/api/news/:id/related?limit=3` | Artículos relacionados |
+| GET | `/api/reels` | Feed de reels (`?sport=&age=&page=&limit=`, solo approved) |
 | GET | `/api/reels/:id` | Detalle reel |
-| GET | `/api/reels/sources/list` | Fuentes de video activas |
-| GET | `/api/reels/sources/catalog` | Catálogo completo de fuentes de video con stats por deporte |
+| GET | `/api/reels/sources/list` | Fuentes de video activas (devuelve `sources`) |
+| GET | `/api/reels/sources/catalog` | Catálogo de video completo |
 | POST | `/api/reels/sources/custom` | Añadir fuente de video personalizada |
 | DELETE | `/api/reels/sources/custom/:id` | Eliminar fuente de video personalizada |
-| POST | `/api/reels/sync` | Sincronización manual de videos (requireAuth) |
-| GET | `/api/teams/:teamName/stats` | Estadísticas de equipo (cached 1h, live via TheSportsDB) |
-| POST | `/api/users/:id/notifications/subscribe` | Suscribir preferencias de notificación (M6 MVP) |
-| GET | `/api/users/:id/notifications` | Obtener preferencias de notificación |
-| GET | `/api/quiz/questions?count=&sport=&age=` | Preguntas (daily first, seed fallback). `age`: '6-8','9-11','12-14' |
-| POST | `/api/quiz/generate` | Genera quiz diario desde noticias recientes (M3) |
+| POST | `/api/reels/sync` | Sincronización manual de videos `(auth)` |
+| GET | `/api/quiz/questions?count=&sport=&age=` | Preguntas (daily first, seed fallback) |
+| POST | `/api/quiz/generate` | Genera quiz diario desde noticias |
 | POST | `/api/quiz/answer` | Enviar respuesta `{userId, questionId, answer}` |
 | GET | `/api/quiz/score/:userId` | Puntuación total |
-| GET | `/api/gamification/stickers` | Catálogo de stickers (M4) |
-| GET | `/api/gamification/stickers/:userId` | Stickers coleccionados del usuario |
+| GET | `/api/gamification/stickers` | Catálogo de stickers |
+| GET | `/api/gamification/stickers/:userId` | Stickers del usuario |
 | GET | `/api/gamification/achievements` | Definiciones de logros |
-| GET | `/api/gamification/achievements/:userId` | Logros desbloqueados del usuario |
-| GET | `/api/gamification/streaks/:userId` | Info de racha del usuario |
+| GET | `/api/gamification/achievements/:userId` | Logros del usuario |
+| GET | `/api/gamification/streaks/:userId` | Racha del usuario |
 | POST | `/api/gamification/check-in` | Check-in diario (racha + sticker + logros) |
-| POST | `/api/users` | Crear usuario (onboarding). Acepta opcional `ageGateCompleted`, `consentGiven` |
-| GET | `/api/users/:id` | Obtener usuario (incluye campos de consentimiento) |
-| PUT | `/api/users/:id` | Actualizar preferencias y campos de consentimiento |
-| DELETE | `/api/users/:id/data` | Eliminar todos los datos del usuario (requireAuth + parental session para menores). GDPR Art. 17 |
+| POST | `/api/users` | Crear usuario (onboarding) |
+| GET | `/api/users/:id` | Obtener usuario |
+| PUT | `/api/users/:id` | Actualizar preferencias |
+| DELETE | `/api/users/:id/data` | Eliminar datos GDPR Art. 17 `(auth)` |
+| PUT | `/api/users/:id/notifications/live-scores` | Prefs notificaciones en vivo `(auth)` |
+| POST | `/api/users/:id/notifications/subscribe` | Suscribir push notifications |
+| GET | `/api/users/:id/notifications` | Obtener prefs de notificación |
 | POST | `/api/parents/setup` | Crear PIN parental |
 | POST | `/api/parents/verify-pin` | Verificar PIN |
-| GET | `/api/parents/profile/:userId` | Perfil parental |
-| PUT | `/api/parents/profile/:userId` | Actualizar restricciones |
-| GET | `/api/parents/activity/:userId` | Resumen actividad semanal |
+| GET/PUT | `/api/parents/profile/:userId` | Perfil parental |
+| GET | `/api/parents/activity/:userId` | Actividad semanal |
 | POST | `/api/parents/activity/log` | Registrar actividad |
-| GET | `/api/parents/preview/:userId` | Preview del feed del hijo con restricciones aplicadas |
-| PUT | `/api/parents/digest/:userId` | Configurar preferencias de digest semanal |
-| GET | `/api/parents/digest/:userId` | Obtener preferencias de digest |
-| GET | `/api/parents/digest/:userId/preview` | Vista previa del digest (JSON) |
+| GET | `/api/parents/preview/:userId` | Preview del feed con restricciones |
+| GET/PUT | `/api/parents/digest/:userId` | Prefs del digest semanal |
+| GET | `/api/parents/digest/:userId/preview` | Vista previa del digest |
 | GET | `/api/parents/digest/:userId/download` | Descargar digest como PDF |
-| POST | `/api/parents/digest/:userId/test` | Enviar email de prueba del digest (1 cada 5 min) |
-| GET | `/api/missions/today/:userId` | Mision diaria del usuario |
-| POST | `/api/missions/claim` | Reclamar recompensa de mision completada |
-| POST | `/api/auth/register` | Registrar con email+password (devuelve JWT) |
-| POST | `/api/auth/login` | Login con email+password (devuelve JWT) |
-| POST | `/api/auth/refresh` | Renovar access token con refresh token |
+| POST | `/api/parents/digest/:userId/test` | Email de prueba (1 cada 5 min) |
+| GET | `/api/missions/today/:userId` | Misión diaria |
+| POST | `/api/missions/claim` | Reclamar recompensa de misión |
+| POST | `/api/auth/register` | Registro email+password |
+| POST | `/api/auth/login` | Login email+password |
+| POST | `/api/auth/refresh` | Renovar access token |
 | POST | `/api/auth/logout` | Revocar refresh token |
-| GET | `/api/auth/me` | Usuario actual desde JWT (requireAuth) |
-| POST | `/api/auth/upgrade` | Convertir usuario anónimo a cuenta email |
-| POST | `/api/auth/link-child` | Parent vincula perfil de hijo anónimo |
-| GET | `/api/auth/google` | Redirect to Google OAuth consent screen |
-| GET | `/api/auth/google/callback` | Google OAuth callback, issues JWT pair |
-| POST | `/api/auth/google/token` | Mobile: verify Google ID token, issue JWT pair |
-| GET | `/api/auth/apple` | Redirect to Apple authorization |
-| POST | `/api/auth/apple/callback` | Apple Sign In callback (POST), issues JWT pair |
-| POST | `/api/auth/apple/token` | Mobile: verify Apple identity token, issue JWT pair |
-| GET | `/api/auth/providers` | Returns which OAuth providers are configured |
+| GET | `/api/auth/me` | Usuario actual `(auth)` |
+| POST | `/api/auth/upgrade` | Convertir anónimo a cuenta email |
+| POST | `/api/auth/link-child` | Parent vincula perfil de hijo |
+| GET | `/api/auth/google` | Redirect Google OAuth |
+| GET | `/api/auth/google/callback` | Google OAuth callback |
+| POST | `/api/auth/google/token` | Mobile: verificar Google ID token |
+| GET | `/api/auth/apple` | Redirect Apple Sign In |
+| POST | `/api/auth/apple/callback` | Apple Sign In callback |
+| POST | `/api/auth/apple/token` | Mobile: verificar Apple identity token |
+| GET | `/api/auth/providers` | Providers OAuth configurados |
+| POST | `/api/auth/join-organization` | Unirse a org con código `(auth)` |
 | POST | `/api/reports` | Enviar reporte de contenido |
-| GET | `/api/reports/parent/:userId` | Reportes del hijo (para revision parental) |
-| PUT | `/api/reports/:reportId` | Actualizar estado del reporte |
-| GET | `/api/news/history?userId=&page=&limit=` | Historial de lectura del usuario (paginado) |
-| GET | `/api/news/:id/related?limit=3` | Artículos relacionados por equipo/deporte |
-| POST | `/api/teams/sync` | Sincronización manual de stats desde TheSportsDB |
-| GET | `/api/admin/moderation/pending` | Contenido pendiente de moderación (requireAuth + requireRole('admin')) |
-| GET | `/api/subscription/status/:userId` | Estado de suscripción (tier, límites, uso diario). requireAuth |
-| POST | `/api/subscription/webhook` | RevenueCat webhook (Bearer secret, no JWT). Procesa INITIAL_PURCHASE/RENEWAL/CANCELLATION/EXPIRATION/BILLING_ISSUE |
-| GET | `/api/teams/:teamName/live` | Estado de partido en vivo para un equipo (cached 60s). Devuelve LiveMatchData o 404 |
-| PUT | `/api/users/:id/notifications/live-scores` | Actualizar preferencias de notificaciones en vivo (requireAuth) |
-| POST | `/api/organizations` | Crear organización (requireAuth + parent). Genera invite code y slug |
-| GET | `/api/organizations/:id` | Detalles de organización (requireAuth + orgAdmin) |
-| PUT | `/api/organizations/:id` | Actualizar ajustes de organización (requireAuth + orgAdmin) |
-| POST | `/api/organizations/:id/regenerate-code` | Regenerar código de invitación (requireAuth + orgAdmin) |
-| GET | `/api/organizations/:id/members` | Lista paginada de miembros con stats (requireAuth + orgAdmin) |
-| DELETE | `/api/organizations/:id/members/:userId` | Eliminar miembro de organización (requireAuth + orgAdmin) |
-| POST | `/api/organizations/:id/leave` | Salir de organización (requireAuth + miembro) |
-| POST | `/api/auth/join-organization` | Unirse a organización con código de invitación (requireAuth) |
-| GET | `/api/organizations/:id/activity` | Actividad agregada de la organización (requireAuth + orgAdmin) |
-
-**NOTA**: Todas las rutas API están en **inglés**. Verificar siempre contra `apps/api/src/routes/` antes de consumir desde frontends.
+| GET | `/api/reports/parent/:userId` | Reportes del hijo |
+| PUT | `/api/reports/:reportId` | Actualizar estado de reporte |
+| GET | `/api/teams/:teamName/stats` | Stats de equipo (cached 1h) |
+| GET | `/api/teams/:teamName/live` | Partido en vivo (cached 60s) |
+| POST | `/api/teams/sync` | Sync manual de stats TheSportsDB |
+| GET | `/api/admin/moderation/pending` | Contenido pendiente `(admin)` |
+| PATCH | `/api/admin/content/:type/:id/approve` | Aprobar contenido `(admin)` |
+| PATCH | `/api/admin/content/:type/:id/reject` | Rechazar contenido `(admin)` |
+| POST | `/api/admin/content/batch` | Batch approve/reject (max 100) `(admin)` |
+| GET | `/api/admin/reports` | ContentReports con filtros `(admin)` |
+| PATCH | `/api/admin/reports/:id` | Actualizar estado de reporte `(admin)` |
+| GET | `/api/admin/overview` | KPIs, alertas, suscripciones (cached 5min) `(admin)` |
+| GET | `/api/admin/analytics/activity-chart` | Actividad diaria 30 días `(admin)` |
+| GET | `/api/admin/analytics/snapshot?from&to&metrics` | Snapshots analíticos `(admin)` |
+| GET | `/api/admin/analytics/top-content?from&to&limit` | Top contenido por vistas `(admin)` |
+| GET | `/api/admin/jobs` | Estado de los 11 cron jobs `(admin)` |
+| POST | `/api/admin/jobs/:name/trigger` | Trigger manual de un job (202 Async) `(admin)` |
+| GET | `/api/admin/jobs/:name/history` | Historial ejecuciones (max 50) `(admin)` |
+| GET | `/api/subscription/status/:userId` | Estado suscripción `(auth)` |
+| POST | `/api/subscription/webhook` | RevenueCat webhook (Bearer secret) |
+| POST | `/api/organizations` | Crear organización `(auth)` |
+| GET | `/api/organizations/:id` | Detalles `(orgAdmin)` |
+| PUT | `/api/organizations/:id` | Actualizar ajustes `(orgAdmin)` |
+| POST | `/api/organizations/:id/regenerate-code` | Regenerar invite code `(orgAdmin)` |
+| GET | `/api/organizations/:id/members` | Miembros paginados `(orgAdmin)` |
+| DELETE | `/api/organizations/:id/members/:userId` | Eliminar miembro `(orgAdmin)` |
+| POST | `/api/organizations/:id/leave` | Salir de organización `(auth)` |
+| GET | `/api/organizations/:id/activity` | Actividad agregada `(orgAdmin)` |
 
 ## Modelos de datos (Prisma)
 
-- **NewsItem** — noticias agregadas de RSS (`rssGuid` único para dedup). Campos M1: `safetyStatus` (pending/approved/rejected), `safetyReason`, `moderatedAt`
-- **User** — perfil del niño (`favoriteSports` y `selectedFeeds` son arrays nativos PostgreSQL `String[]`). Campos M4: `currentStreak`, `longestStreak`, `lastActiveDate`, `currentQuizCorrectStreak`, `quizPerfectCount`. Campos auth: `email` (unique), `passwordHash`, `authProvider` (anonymous/email/google/apple), `socialId` (String?, provider's external user ID), `role` (child/parent), `parentUserId`, `lastLoginAt`. Campo `locale` (default 'es'). Campo `country` (default 'ES', supported: ES/GB/US/FR/IT/DE). `pushPreferences` es `Json?` nativo. Campos legal/consent: `ageGateCompleted` (Boolean, default false), `consentGiven` (Boolean, default false), `consentDate` (DateTime?), `consentBy` (String? — who gave consent). Campos subscription: `subscriptionTier` (String, default 'free', values: 'free'|'premium'), `subscriptionExpiry` (DateTime?). Campos B2B: `organizationId` (String?), `organizationRole` (String?, 'member'|'admin'). Índice en `organizationId`.
-- **Sticker** — cromos digitales coleccionables (M4). Rarezas: common, rare, epic, legendary
-- **UserSticker** — relación usuario-sticker (M4). Unique: `[userId, stickerId]`
-- **Achievement** — definiciones de logros (M4). 20 predefinidos. Unique: `key`
-- **UserAchievement** — logros desbloqueados por usuario (M4). Unique: `[userId, achievementId]`
-- **Reel** — vídeos cortos (seed con YouTube embeds). Campos M6: `videoType`, `aspectRatio`, `previewGifUrl`. Campos video-aggregator: `rssGuid` (unique), `videoSourceId`, `safetyStatus` (default approved), `safetyReason`, `moderatedAt`, `publishedAt`
-- **VideoSource** — fuentes de video (YouTube channels/playlists). Campos: `name`, `platform` (youtube_channel/youtube_playlist), `feedUrl` (unique), `channelId`, `playlistId`, `sport`, `active`, `isCustom`, `addedBy`, `lastSyncedAt`
-- **TeamStats** — estadísticas de equipos (M6). Seed con 15 equipos. Unique: `teamName`. `recentResults` (Json) y `nextMatch` (Json?) usan tipos nativos PostgreSQL.
-- **QuizQuestion** — preguntas trivia (`options` es array nativo `String[]`, `correctAnswer` es índice 0-3). Campos M3: `generatedAt`, `ageRange`, `expiresAt` (daily questions expire after 48h)
-- **NewsSummary** — resúmenes adaptados por edad (M2). Unique: `[newsItemId, ageRange, locale]`. Cascade delete con NewsItem.
-- **DailyMission** — misiones diarias del usuario. Campos: `userId`, `date`, `type`, `title`, `description`, `target`, `progress`, `completed`, `rewardType`, `rewardRarity`, `rewardPoints`, `claimed`. Unique: `[userId, date]`
-- **ParentalProfile** — control parental (1:1 con User, PIN hasheado bcrypt M5). Session tokens en DB via `ParentalSession` (5 min TTL). Campos granulares: `maxNewsMinutes`, `maxReelsMinutes`, `maxQuizMinutes` (limites por tipo de contenido). Campos digest: `digestEnabled`, `digestEmail`, `digestDay`, `lastDigestSentAt`. Campos schedule lock: `allowedHoursStart` (default 0), `allowedHoursEnd` (default 24), `timezone` (default 'Europe/Madrid'). Default = sin restricción; padres configuran horario si lo desean. Campos lockout: `failedAttempts` (default 0), `lockedUntil` (DateTime?) — 5 intentos fallidos bloquean el PIN por 15 minutos. Campo RevenueCat: `revenuecatCustomerId` (String?, unique) — maps to RevenueCat app_user_id
-- **ContentReport** — reportes de contenido enviados por ninos. Campos: `userId`, `contentType` (news/reel), `contentId`, `reason`, `details`, `status` (pending/reviewed/dismissed/actioned)
-- **ActivityLog** — tracking de actividad (tipos: `news_viewed`, `reels_viewed`, `quizzes_played`). Campos M5: `durationSeconds`, `contentId`, `sport`
-- **RssSource** — fuentes RSS configurables (activables/desactivables). Campos M1: `country`, `language`, `logoUrl`, `description`, `category`, `isCustom`, `addedBy`
-- **PushToken** — tokens de push notification por usuario. Campos: `userId`, `token` (unique), `platform` (expo/web), `active`. Cascade delete con User.
-- **RefreshToken** — tokens de refresco JWT. Campos: `userId`, `token` (unique), `expiresAt`. Cascade delete con User. Rotación: al usar un refresh token, se elimina el viejo y se crea uno nuevo.
-- **ParentalSession** — sesiones parentales persistidas en DB (reemplaza in-memory Map). Campos: `id`, `userId` (unique), `token` (unique), `expiresAt`, `createdAt`. Cascade delete con User. TTL de 5 minutos, limpieza automática de sesiones expiradas.
-- **Organization** — organizaciones B2B (clubs/academias). Campos: `name`, `slug` (unique), `sport`, `logoUrl`, `customColors` (Json?), `inviteCode` (6-char unique), `maxMembers` (default 100), `active` (default true), `createdBy`. Relación `members User[]`. Índices en `inviteCode`, `slug`.
-- **LiveMatch** — partidos en vivo rastreados. Campos: `externalEventId` (unique, TheSportsDB event ID), `homeTeam`, `awayTeam`, `homeScore`, `awayScore`, `progress`, `status` (not_started/live/half_time/finished), `league`, `matchDate`, `sport`, `homeGoalDetails`, `awayGoalDetails`, `homeRedCards`, `awayRedCards`, `lastPolledAt`, `notifiedEvents` (Json). Indices en `status`, `homeTeam`, `awayTeam`. Limpieza automática de finished >24h.
+> Arrays usan tipos nativos PostgreSQL `String[]`. JSON usa `Json`/`Json?`. No usar `JSON.parse`/`JSON.stringify`.
 
-**Nota PostgreSQL**: Los arrays (`favoriteSports`, `selectedFeeds`, `options`, `allowedSports`, `allowedFeeds`, `allowedFormats`) usan tipos nativos `String[]`. Los campos JSON (`recentResults`, `nextMatch`, `pushPreferences`) usan tipos nativos `Json`/`Json?`. No se usa `JSON.parse`/`JSON.stringify` para estos campos.
+- **NewsItem** — noticias RSS (`rssGuid` único). `safetyStatus`: pending/approved/rejected
+- **User** — perfil del niño. `favoriteSports`/`selectedFeeds`: `String[]`. `authProvider`: anonymous/email/google/apple. `role`: child/parent. `subscriptionTier`: free/premium. `organizationId`/`organizationRole`: B2B. `pushPreferences`: `Json?`. Campos consent: `ageGateCompleted`, `consentGiven`, `consentDate`, `consentBy`. `locale` (default 'es'), `country` (default 'ES').
+- **ParentalProfile** — PIN bcrypt, 1:1 con User. `allowedHoursStart/End` + `timezone`. `maxNewsMinutes`, `maxReelsMinutes`, `maxQuizMinutes`. `failedAttempts`/`lockedUntil` (lockout 5 intentos → 15min). `digestEnabled/Email/Day`. `revenuecatCustomerId`.
+- **ParentalSession** — sesiones DB-backed (TTL 5min). `userId` unique.
+- **Reel** — vídeos cortos. `rssGuid` unique. `safetyStatus` (default approved). `videoSourceId`.
+- **VideoSource** — canales/playlists YouTube. `feedUrl` unique. `platform`: youtube_channel/youtube_playlist.
+- **QuizQuestion** — `options`: `String[]`, `correctAnswer` es índice 0-3. `ageRange`, `expiresAt` (48h).
+- **NewsSummary** — resúmenes AI. Unique: `[newsItemId, ageRange, locale]`. Cascade delete.
+- **DailyMission** — Unique: `[userId, date]`. `rewardType`, `rewardRarity`, `rewardPoints`, `claimed`.
+- **Sticker** / **UserSticker** — colección de cromos. Rarezas: common/rare/epic/legendary.
+- **Achievement** / **UserAchievement** — 20 logros predefinidos. Unique: `key`.
+- **TeamStats** — estadísticas equipos. `recentResults`/`nextMatch`: `Json`.
+- **RssSource** — fuentes RSS configurables. `isCustom`, `addedBy`.
+- **PushToken** — tokens push por usuario. `token` unique.
+- **RefreshToken** — JWT refresh tokens. Rotación: delete viejo + create nuevo.
+- **ContentReport** — `status`: pending/reviewed/dismissed/actioned.
+- **ActivityLog** — tipos: `news_viewed`, `reels_viewed`, `quizzes_played`. `durationSeconds`, `contentId`, `sport`.
+- **Organization** — B2B clubs/academias. `slug` unique, `inviteCode` 6-char unique, `maxMembers` default 100.
+- **LiveMatch** — partidos en vivo. `externalEventId` unique. `status`: not_started/live/half_time/finished. Limpieza automática >24h.
+- **JobRun** — log de ejecuciones de los 11 cron jobs. `status`: running/success/error. `triggeredBy`: cron/manual. Composite index `[jobName, startedAt]`.
+- **AnalyticsSnapshot** — métricas diarias computadas. Unique `[date, metric]`. Valores: dau, mau, retention_d1/d7, sport_activity, subscription_breakdown, parental_activation_rate, consent_rate, quiz_engagement, missions_completed/claimed.
 
 ## Flujo de datos
 
-1. **Cron job** (`sync-feeds.ts`) cada 30min + al arrancar → consume RSS de 55 fuentes
-2. **Aggregator** (`aggregator.ts`) parsea RSS, limpia HTML, extrae imágenes
-3. **Content Moderator** (`content-moderator.ts`) clasifica contenido como safe/unsafe via AI (fail-open)
-4. **Classifier** (`classifier.ts`) detecta equipo por keywords en título (20+ equipos/deportistas)
-5. **Cron job** (`sync-videos.ts`) cada 6h + al arrancar → consume YouTube Atom feeds de 20+ canales
-6. **Video Aggregator** (`video-aggregator.ts`) parsea YouTube RSS, extrae videoId, genera embed/thumbnail URLs, modera y crea Reels
-7. **API Cache** (`cache.ts`) cachea respuestas en memoria con TTL configurable por endpoint
-8. **Feed Ranker** (`feed-ranker.ts`) aplica scoring behavioral (frequency-weighted sport, source affinity, exponential recency decay) + diversity injection + cache invalidation on activity
-9. **API** sirve contenido filtrado por sport, team, age → frontends consumen via fetch
-10. **Offline cache** (web: localStorage, mobile: AsyncStorage) cachea 20 artículos para lectura offline
-11. **User context** (web: localStorage, mobile: AsyncStorage) persiste ID del usuario
-12. **Live Scores** (`live-scores.ts` cron) cada 5min polling TheSportsDB livescores → detecta eventos (goles, inicio, final, tarjetas) → envía push a fans del equipo → respeta schedule lock parental
+1. `sync-feeds.ts` (30min) → RSS de 182 fuentes → Aggregator → Content Moderator (AI, fail-closed en prod) → Classifier (equipo)
+2. `sync-videos.ts` (6h) → YouTube Atom feeds → Video Aggregator → Reels
+3. `compute-analytics.ts` (02:00 UTC) → 11 métricas → AnalyticsSnapshot upsert
+4. API Cache (`cache.ts`) con TTL configurable por endpoint (InMemory o Redis)
+5. Feed Ranker — scoring behavioral (frecuencia deporte, recency decay, source affinity) + diversity injection
+6. API → frontends via fetch; offline cache (web: localStorage, mobile: AsyncStorage, 20 artículos)
+7. `live-scores.ts` (5min) → TheSportsDB livescores → detecta eventos → push a fans → respeta schedule lock
 
-## i18n — sistema de traducciones
+## i18n
 
 ```typescript
 import { t, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
-
-t('home.latest_news', 'es')     // "Últimas noticias"
-t('home.latest_news', 'en')     // "Latest news"
-t('team.no_recent_news', 'es', { team: 'Real Madrid' })  // con parámetros
-
-getSportLabel('football', 'es') // "Fútbol"
-getAgeRangeLabel('6-8', 'en')   // "6-8 years"
+t('home.latest_news', 'es')                              // "Últimas noticias"
+t('team.no_recent_news', 'es', { team: 'Real Madrid' }) // con parámetros
+getSportLabel('football', 'es')                          // "Fútbol"
 ```
 
-- Locale se almacena en `UserContext` (default `'es'`), accesible via `useUser().locale`
-- Ficheros: `packages/shared/src/i18n/es.json` y `en.json`
-- Namespaces de traducciones incluyen: `age_gate.*`, `legal.*`, `delete_account.*` (entre otros)
-- Para añadir un idioma: crear `XX.json`, importar en `i18n/index.ts`, añadir a tipo `Locale`
+- Locale en `UserContext` (default `'es'`). Ficheros: `packages/shared/src/i18n/{es,en}.json`
+- Para añadir idioma: crear `XX.json`, importar en `i18n/index.ts`, añadir a tipo `Locale`
 
 ## Tokens de diseño
 
 | Token | CSS var | Valor |
 |-------|---------|-------|
-| Blue (primario) | `--color-blue` | `#2563EB` |
-| Green (éxito) | `--color-green` | `#22C55E` |
-| Yellow (puntos) | `--color-yellow` | `#FACC15` |
-| Background | `--color-background` | `#F8FAFC` (light) / `#0F172A` (dark) |
-| Text | `--color-text` | `#1E293B` (light) / `#F1F5F9` (dark) |
-| Surface | `--color-surface` | `#FFFFFF` (light) / `#1E293B` (dark) |
-| Border | `--color-border` | `#E5E7EB` (light) / `#334155` (dark) |
-| Muted | `--color-muted` | `#6B7280` (light) / `#94A3B8` (dark) |
-| Tipografía títulos | `--font-poppins` | Poppins |
-| Tipografía cuerpo | `--font-inter` | Inter |
+| Blue | `--color-blue` | `#2563EB` |
+| Green | `--color-green` | `#22C55E` |
+| Yellow | `--color-yellow` | `#FACC15` |
+| Background | `--color-background` | `#F8FAFC` / `#0F172A` (dark) |
+| Text | `--color-text` | `#1E293B` / `#F1F5F9` (dark) |
+| Surface | `--color-surface` | `#FFFFFF` / `#1E293B` (dark) |
+| Border | `--color-border` | `#E5E7EB` / `#334155` (dark) |
+| Muted | `--color-muted` | `#6B7280` / `#94A3B8` (dark) |
+| Fuentes | `--font-poppins` / `--font-inter` | Títulos / Cuerpo |
 
 En React Native usar `COLORS` del shared: `COLORS.blue`, `COLORS.green`, etc.
 
-**Dark Mode**: La clase `.dark` en `<html>` activa los tokens oscuros. Tema gestionado por `UserContext` (`theme`: `system`/`light`/`dark`). Toggle en NavBar (cicla system -> dark -> light). Script inline en `layout.tsx` previene flash. Preferencia persiste en `localStorage` (`sportykids-theme`).
+**Dark Mode**: clase `.dark` en `<html>`. Gestionado por `UserContext` (`theme`: system/light/dark). Script inline en `layout.tsx` previene flash. Persiste en `localStorage` (`sportykids-theme`).
 
 ## Seguridad
 
-- App dirigida a **niños de 6-14 años**. Todo contenido debe ser apropiado.
-- Control parental con PIN de 4 dígitos (bcrypt). Session tokens en DB (`ParentalSession` model, 5 min TTL). **PIN lockout**: 5 intentos fallidos bloquean por 15 minutos (almacenado en DB, sobrevive reinicios).
-- ~~Sin autenticación real~~ → JWT access/refresh tokens + email/password auth + OAuth (Google & Apple via Passport.js)
-- Restricciones parentales enforced en backend (`parental-guard.ts`): format/sport/time/schedule checks
-- **Rate limiting**: `express-rate-limit` con tiers por endpoint — auth (5/min), PIN (10/min), content (60/min), sync (2/min), default (100/min). Configurable via env vars.
-- **Schedule lock (bedtime)**: Parents can set allowed hours (default 0-24, no restriction) with timezone support. Enforced server-side.
-- Fuentes de contenido exclusivamente de prensa deportiva verificada.
-- **M1: Moderación automática** — Todas las noticias pasan por un moderador AI que filtra contenido inapropiado (apuestas, violencia, contenido sexual, etc.). Solo las noticias `approved` se muestran a niños. Las rechazadas se guardan para auditoría parental. **Fail-closed en producción**: si el AI no responde, el contenido queda en `pending` (no se auto-aprueba). Override con `MODERATION_FAIL_OPEN=true`.
-- **Error Boundary** — La app móvil envuelve toda la UI en un `ErrorBoundary` que muestra una pantalla kid-friendly ante crashes y reporta a Sentry (si disponible).
-- **JWT en SecureStore** — Los tokens JWT en móvil se almacenan en `expo-secure-store` (keychain/keystore cifrado), con fallback automático a AsyncStorage y migración transparente. `authFetch()` wrapper adjunta `Authorization: Bearer` a todas las peticiones y auto-refresca tokens expirados.
-- **YouTube Embed Sandbox** — Los iframes de YouTube usan parámetros child-safe centralizados (`modestbranding`, `rel=0`, `iv_load_policy=3`) y atributo `sandbox` en web para restringir capacidades.
-- **Age gate al primer uso** — 3 caminos: adultos (acceso directo), adolescentes 13-17 (acceso con aviso), menores de 13 (requiere consentimiento parental).
-- **Consentimiento parental** obligatorio para menores de 13 (COPPA/GDPR-K): confirmación en pantalla + PIN parental obligatorio antes de usar la app.
-- **GDPR Art. 17 — derecho de supresion**: `DELETE /api/users/:id/data` elimina todos los datos del usuario en transaccion (hard delete).
-- **Analytics condicionado a consentimiento** — PostHog y Sentry solo se inicializan si `consentGiven` es true. Sin tracking hasta que el padre consiente.
-- **Politica de Privacidad y Terminos de Servicio** accesibles publicamente en `/privacy` y `/terms` (con i18n ES/EN).
-- **Error monitoring**: Sentry (opt-in via `SENTRY_DSN`) tracks unhandled errors. No PII sent.
-- **Analytics**: PostHog (opt-in via `POSTHOG_API_KEY`) with minimal anonymized events. Gated on user consent.
+- App para **niños 6-14 años**. Todo contenido debe ser apropiado.
+- **Auth**: JWT access/refresh tokens + email/password + OAuth (Google & Apple via Passport.js).
+- **Parental PIN**: bcrypt, 4 dígitos. Sesiones DB-backed (5min TTL). Lockout: 5 fallos → 15min.
+- **Parental guard** (`parental-guard.ts`): format/sport/time/schedule checks en backend.
+- **Rate limiting**: auth (5/min), PIN (10/min), content (60/min), sync (2/min), default (100/min).
+- **Moderación AI**: fail-closed en producción (pending si AI falla). Override: `MODERATION_FAIL_OPEN=true`.
+- **Age gate**: 3 caminos — adulto, adolescente 13-17, menor <13 (requiere consentimiento parental).
+- **GDPR Art. 17**: `DELETE /api/users/:id/data` — hard delete transaccional.
+- **PostHog/Sentry**: solo si `consentGiven=true`. JWT en `expo-secure-store` (mobile).
+- **YouTube embeds**: child-safe params centralizados en shared. `sandbox` attribute en web.
 
 ## Estado del MVP
 
 | Fase | Estado | Funcionalidades |
 |------|--------|----------------|
-| 0 | ✅ Completada | Wireframes, flujos, definición |
-| 1 | ✅ Completada | Home Feed, filtros, agregador RSS (163+ noticias reales) |
-| 2 | ✅ Completada | Onboarding (4 pasos), equipo favorito |
-| 3 | ✅ Completada | Reels (10 seed), Quiz (15 preguntas, sistema de puntos) |
-| 4 | ✅ Completada | Control parental (PIN, formatos, actividad semanal) |
-| 4.5 | ✅ Completada | Legal & Compliance (age gate, COPPA/GDPR-K consent, data deletion, privacy/terms pages) |
-| Store | ✅ Completada | Store Assets & Deployment (assets, dynamic API_BASE, Dockerfile, Fly.io, CI/CD deploy, EAS config, ASO metadata, splash screen) |
-| A11y | ✅ Completada | Accessibility & Production Quality (mobile a11y 27 files, web a11y 25 files, Sentry mobile, Playwright E2E 5 flows, i18n a11y namespace) |
-| 6.1 | ✅ Completada | Subscription Monetization with RevenueCat (free/premium tiers, server-side limits, webhook, paywall screen, family plan) |
-| 6.2 | ✅ Completada | Real-Time Match Notifications (LiveMatch model, TheSportsDB livescore polling, event detection, targeted push, live banner UI, notification prefs) |
-| 6.3 | ✅ Completada | B2B Channel: Clubs & Academies (Organization model, invite codes, org admin dashboard, member management, subscription integration, JoinOrganization screen) |
-| 6.4 | ✅ Completada | Groq AI Provider + Explicar Fácil mobile (Groq support in ai-client, "Explain it Easy" button in mobile NewsCard with age-adapted summaries) |
-| 5 | 🔄 En progreso | Beta Testing & Store Launch — staging env, store metadata, beta guide, review notes |
+| 0–4.5 | ✅ | Home Feed, Onboarding, Reels, Quiz, Control Parental, Legal/Compliance |
+| Store | ✅ | Dockerfile, Fly.io, CI/CD, EAS, ASO metadata, splash |
+| A11y | ✅ | a11y web+mobile, Sentry, Playwright E2E |
+| 6.1–6.4 | ✅ | RevenueCat, Live Scores, Orgs B2B, Groq AI |
+| Admin S1–S2 | ✅ | Infra admin, Moderación, Reportes |
+| Admin S3 | ✅ | Overview KPIs + Recharts |
+| Admin S4 | ✅ | Analytics Snapshots (AnalyticsSnapshot, compute-analytics job, /admin/analytics) |
+| Admin S5 | ✅ | Operations & Jobs (JobRun, 11 jobs, trigger manual) |
+| Admin S6 | 🔄 | Users & Organizations (prd6.md pendiente) |
+| 5 | 🔄 | Beta Testing & Store Launch |
 
 ## Fuentes RSS
 
-**182 fuentes predefinidas** en el catálogo (`prisma/seed.ts`), distribuidas en los 8 deportes y cobertura global (ES, GB, US, IT, DE, FR y más). Incluye 45 fuentes RSS directas, 10 fuentes Google News RSS para medios españoles sin RSS nativo (Estadio Deportivo, Mucho Deporte, El Desmarque, El Correo de Andalucía), y **127 fuentes team_news** vía Google News cubriendo equipos y atletas de La Liga, Premier League, Serie A, Bundesliga, Ligue 1, selecciones nacionales, NBA, EuroLeague/ACB, top tenistas, pilotos/escuderías F1, ciclistas, nadadores, atletas y jugadores de pádel. Además se pueden **añadir fuentes personalizadas** via `POST /api/news/fuentes/custom`.
+**182 fuentes predefinidas** en `prisma/seed.ts`: 45 RSS directas, 10 Google News ES (Estadio Deportivo, El Desmarque…), 127 team_news Google News (La Liga, Premier, Serie A, NBA, F1, etc.). Fuentes personalizadas via `POST /api/news/sources/custom`.
 
-Fuentes principales: AS, Marca, Mundo Deportivo, Sport, BBC Sport, ESPN, CyclingNews, SwimSwam, Autosport, Estadio Deportivo (Google News), El Desmarque (Google News), etc. Plus 127 team/athlete-specific Google News feeds.
-
-**Nota**: Marca tiene DNS issues intermitentes. Algunas fuentes internacionales pueden no devolver contenido consistentemente.
+**Nota**: Marca tiene DNS issues intermitentes.
 
 ## Documentación
 
-Después de cada cambio, arreglo o implementación nueva, revisa toda la documentación de la carpeta "docs" y actualiza de acuerdo a lo realizado para mantener todo con lo último.
+Después de cada cambio, revisar y actualizar la carpeta `docs/` para mantener la documentación al día.
 
-# Testing
+## Testing
 
-Después de cada cambio, arreglo o implementación nueva, asegurate de mantener los tests sin fallos y con buena cobertura.
-
-
-## Deuda técnica conocida
-
-- ~~Sin tests automatizados~~ → 76+ archivos de test, 679+ tests (Vitest) — API 434 tests (39 archivos), Web 109 tests (16 archivos), Mobile 136 tests (16 archivos). Plus 24 E2E tests (Playwright, 5 spec files).
-- ~~Sin linting~~ → ESLint 9 flat config + Prettier. `npx eslint . --max-warnings 0` en CI.
-- ~~Mobile no typechecked en CI~~ → Mobile typecheck en CI. Prisma generate cacheado con `actions/cache@v4`.
-- ~~Logging no estructurado (88 console.*)~~ → Pino structured logging con request ID correlation. `pino-pretty` en dev.
-- ~~Sesiones parentales volátiles (in-memory Map)~~ → `ParentalSession` model en Prisma. Sesiones persisten entre reinicios.
-- ~~Sin autenticación real (JWT/sesiones)~~ → JWT access/refresh tokens + email/password auth + OAuth (Google & Apple via Passport.js, conditional on env vars)
-- ~~PIN parental con SHA-256~~ → M5: migrado a bcrypt con migración transparente
-- ~~Restricciones parentales solo en frontend~~ → M5: middleware backend `parental-guard.ts` en news/reels/quiz + schedule lock
-- ~~Reels son placeholders~~ → Native video player (expo-video) para MP4, YouTube/Instagram/TikTok fallback. Video Aggregator importa reels automáticamente de 20+ canales YouTube
-- ~~Quiz con preguntas estáticas del seed~~ → M3 implementado: quiz dinámico con generación AI diaria (cron 06:00 UTC) + fallback a seed
-- ~~SQLite sin plan de migración~~ → Migrado a PostgreSQL 16. Native types (String[], Json) para arrays y objetos. Composite indexes en NewsItem, Reel y ActivityLog. Trending endpoint usa `groupBy` nativo.
-- ~~`API_BASE` hardcodeado en cada screen del mobile~~ → Centralizado en `apps/mobile/src/config.ts` con fallback chain: env var → EAS channel → debugger host → localhost
-- ~~Sin CI/CD~~ → GitHub Actions pipeline (lint, typecheck, test, build) + EAS Build config
-- ~~Sin error monitoring~~ → Sentry integration (opt-in) + PostHog analytics (opt-in). Mobile: `@sentry/react-native` with global `Sentry.wrap(App)`, PII-free `beforeSend`. API: `@sentry/node` dynamic import.
-- ~~InMemoryCache es single-process~~ → CacheProvider interface with InMemoryCache (default) and RedisCache (optional via `CACHE_PROVIDER=redis`)
-- ~~Rutas API inconsistentes: mezcla de español e inglés~~ → Todas las rutas migradas a inglés
-- ~~Error handler genérico (500 para todo)~~ → Typed error classes (AppError hierarchy), centralized handler maps AppError/Prisma/Zod to correct HTTP codes. Sentry only 5xx. ERROR_CODES in shared package. Kid-friendly error mapping extended (auth_required, too_fast, forbidden).
-- ~~Deprecated feed ranker functions (sportBoost, recencyBoost)~~ → Removed. Use `sportFrequencyBoost` and `recencyDecay` instead.
-- ~~React version mismatch (web 19.2.x, mobile 19.1.x)~~ → Aligned to React ~19.1.0 across web and mobile. Pinned to 19.1.x because react-native 0.81 bundles react-native-renderer 19.1.0 and requires exact match.
-- ~~skipLibCheck: true in web tsconfig~~ → Removed. Full type checking enabled. `.next/dev` excluded from include, vitest jest-dom types use `@testing-library/jest-dom/vitest`.
-- ~~Hardcoded 'es' locale in push notification jobs~~ → All 3 cron jobs (missions, quiz, sync-feeds) now use `user.locale` with 'es' fallback. Users grouped by locale for per-locale push batches.
-- ~~CI runs npm ci + prisma generate in every job~~ → Setup job runs once, caches node_modules with Prisma client. Downstream jobs (lint, test, build) restore from cache.
-- ~~OAuth routes return 501 stubs~~ → Passport.js OAuth (Google + Apple) with mobile token endpoints. Conditional on env vars.
-- ~~No kid-friendly error mapping for 401/429~~ → getErrorType maps all HTTP codes to KID_FRIENDLY_ERRORS keys. 4 new error types.
-- ~~No haptic feedback on mobile~~ → expo-haptics integrated in Quiz, Collection, Reels, NavBar, MissionCard
-- ~~BrandedRefreshControl not integrated~~ → Pull-to-refresh in HomeFeed, Reels, Collection, Quiz screens
-- ~~No schedule lock UI~~ → Schedule Lock section in ParentalPanel (web) and ParentalControl (mobile)
-- ~~Related articles endpoint not wired to UI~~ → "You Might Also Like" section in NewsCard (web + mobile)
-- ~~Reading history endpoint not wired to UI~~ → "Recently Read" section on HomeFeed (web + mobile)
-- ~~Locale not passed to news endpoint from frontends~~ → Both web and mobile pass locale param to fetchNews()
-- ~~No privacy policy or terms of service~~ → `/privacy` and `/terms` pages with i18n ES/EN
-- ~~No age gate or parental consent~~ → Age gate pre-onboarding with COPPA/GDPR-K consent flow (3 paths: adult, teen 13-17, child <13)
-- ~~No data deletion endpoint~~ → `DELETE /api/users/:id/data` with transactional hard delete (GDPR Art. 17)
-- ~~Analytics initialize without consent~~ → PostHog/Sentry gated on `consentGiven` field
-- ~~No app-level error boundary on mobile~~ → ErrorBoundary class component wrapping entire app, kid-friendly crash screen, Sentry reporting
-- ~~JWT tokens in AsyncStorage (unencrypted)~~ → expo-secure-store with auto-migration and AsyncStorage fallback. `authFetch()` wrapper in mobile API client sends Authorization header and auto-refreshes expired tokens.
-- ~~YouTube embed params scattered across web/mobile~~ → Centralized child-safe YouTube utils in shared package, iframe sandbox on web
-- ~~Content moderation fails open in production~~ → Fail-closed by default in production (content stays pending), override via MODERATION_FAIL_OPEN
-- ~~No app icon, splash screen, or store assets~~ → Generated via sharp script (`npm run generate-assets`). Placeholder "SK" branding.
-- ~~API_BASE hardcoded to local IP~~ → Dynamic fallback chain: env var → EAS channel → debugger host → localhost
-- ~~No Dockerfile or production server~~ → Multi-stage Dockerfile, Fly.io deployment (Madrid), non-root user
-- ~~No CD pipeline~~ → GitHub Actions deploys to Fly.io on push to main
-- ~~EAS submit credentials empty~~ → Structured with channels, autoIncrement, submit placeholders ready
-- ~~No ASO metadata~~ → `store-metadata/{en,es}.json` with name, description, keywords
-- ~~No splash screen integration~~ → expo-splash-screen with preventAutoHideAsync/hideAsync lifecycle
-- ~~Web components missing ARIA attributes~~ → Full a11y audit: 66+ aria-label/role/aria-selected/aria-checked/aria-pressed/aria-modal attributes across 25+ web components. Filters use role="tablist"/role="tab", toggles use role="switch", modals use role="dialog", alerts use role="alert", progress bars use role="progressbar".
-- ~~Solo 15 labels de accesibilidad en mobile~~ → Systematic audit of 27 files (15 components + 11 screens + navigation). ~100+ localized a11y keys via `t('a11y.*', locale)`. Every TouchableOpacity/Pressable has accessibilityLabel + accessibilityRole + accessibilityState where applicable. Emojis have textual alternatives.
-- ~~Sentry solo en API, no en mobile~~ → `@sentry/react-native` installed with global `Sentry.wrap(App)`. PII stripped via `beforeSend`. Always active (not consent-gated). Only works in production/preview EAS builds.
-- ~~Sin tests E2E~~ → Playwright configured for web with 5 critical flows (onboarding, parental PIN, feed+filters, quiz, schedule lock). 24 E2E tests. CI job runs on main/release branches only.
+Después de cada cambio, mantener los tests sin fallos y con buena cobertura. Tests actuales: 1121+ (Vitest) + 24 E2E (Playwright).
 
 ## Variables de entorno
 
-| Variable | Requerida | Descripción |
-|----------|-----------|-------------|
-| `DATABASE_URL` | Sí | PostgreSQL: `postgresql://sportykids:sportykids@localhost:5432/sportykids` |
-| `AI_PROVIDER` | No | `ollama` (default), `openrouter`, `anthropic`, `groq` |
-| `SENTRY_DSN` | No | Sentry error tracking (API). Sin valor = deshabilitado |
-| `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry para web |
-| `POSTHOG_API_KEY` | No | PostHog analytics. Sin valor = deshabilitado |
-| `POSTHOG_HOST` | No | PostHog host URL |
-| `JWT_SECRET` | Sí (prod) | Secret para JWT tokens |
-| `JWT_REFRESH_SECRET` | Sí (prod) | Secret para refresh tokens |
-| `RATE_LIMIT_AUTH` | No | Max auth req/min por IP (default: 5) |
-| `RATE_LIMIT_PIN` | No | Max PIN verification req/min por IP (default: 10) |
-| `RATE_LIMIT_CONTENT` | No | Max content req/min por IP (default: 60) |
-| `RATE_LIMIT_SYNC` | No | Max sync req/min por IP (default: 2) |
-| `RATE_LIMIT_DEFAULT` | No | Max req/min por IP para otros endpoints (default: 100) |
-| `CACHE_PROVIDER` | No | `memory` (default) or `redis` |
-| `REDIS_URL` | No | Redis connection URL (default: `redis://localhost:6379`) |
-| `LOG_LEVEL` | No | Pino log level: `fatal`, `error`, `warn`, `info` (default), `debug`, `trace` |
-| `GOOGLE_CLIENT_ID` | No | Google OAuth client ID. If absent, Google login hidden |
-| `GOOGLE_CLIENT_SECRET` | No | Google OAuth client secret |
-| `GOOGLE_CALLBACK_URL` | No | Full URL for Google callback |
-| `GOOGLE_SUCCESS_REDIRECT_URL` | No | Frontend URL for post-OAuth redirect |
-| `APPLE_CLIENT_ID` | No | Apple Services ID. If absent, Apple login hidden |
-| `APPLE_TEAM_ID` | No | Apple Developer Team ID |
-| `APPLE_KEY_ID` | No | Apple private key ID |
-| `APPLE_PRIVATE_KEY` | No | Apple .p8 private key contents |
-| `MODERATION_FAIL_OPEN` | No | `true` to auto-approve content when AI moderation fails (default: fail-closed in production) |
-| `EXPO_PUBLIC_API_BASE` | No | Override API base URL in mobile builds (auto-detected from EAS channel if absent) |
-| `EXPO_PUBLIC_SENTRY_DSN` | No | Sentry DSN for mobile crash reporting. If absent, Sentry disabled. Only active in production builds. |
-| `FLY_API_TOKEN` | No (CI) | Fly.io deploy token for CI/CD (GitHub secret) |
-| `REVENUECAT_WEBHOOK_SECRET` | Sí (prod) | Shared secret for RevenueCat webhook authentication |
-| `REVENUECAT_API_KEY_APPLE` | No (mobile) | RevenueCat Apple API key (embedded in mobile app) |
-| `REVENUECAT_API_KEY_GOOGLE` | No (mobile) | RevenueCat Google API key (embedded in mobile app) |
-| `GROQ_API_KEY` | No | API key for Groq provider (`AI_PROVIDER=groq`). Free tier: 14,400 req/day. Get from console.groq.com |
-| `GROQ_MODEL` | No | Groq model override (default: `llama-3.1-8b-instant`). E.g. `llama-3.3-70b-versatile` |
-| `GROQ_BASE_URL` | No | Groq API base URL override (default: `https://api.groq.com/openai/v1`) |
+| Variable | Req | Descripción |
+|----------|-----|-------------|
+| `DATABASE_URL` | Sí | `postgresql://sportykids:sportykids@localhost:5432/sportykids` |
+| `JWT_SECRET` / `JWT_REFRESH_SECRET` | Sí (prod) | Secrets para JWT |
+| `AI_PROVIDER` | No | `groq` (default), `openrouter`, `anthropic`, `ollama` |
+| `GROQ_API_KEY` | No | Free tier 14,400 req/día. console.groq.com |
+| `GROQ_MODEL` | No | Default: `llama-3.1-8b-instant` |
+| `GROQ_BASE_URL` | No | Default: `https://api.groq.com/openai/v1` |
+| `SENTRY_DSN` | No | Sentry API. Sin valor = deshabilitado |
+| `NEXT_PUBLIC_SENTRY_DSN` | No | Sentry web |
+| `EXPO_PUBLIC_SENTRY_DSN` | No | Sentry mobile (solo builds prod/preview) |
+| `POSTHOG_API_KEY` / `POSTHOG_HOST` | No | PostHog analytics |
+| `CACHE_PROVIDER` | No | `memory` (default) o `redis` |
+| `REDIS_URL` | No | Default: `redis://localhost:6379` |
+| `LOG_LEVEL` | No | `info` (default), fatal/error/warn/debug/trace |
+| `MODERATION_FAIL_OPEN` | No | `true` auto-aprueba si AI falla |
+| `RATE_LIMIT_AUTH/PIN/CONTENT/SYNC/DEFAULT` | No | Defaults: 5/10/60/2/100 req/min |
+| `GOOGLE_CLIENT_ID` / `GOOGLE_CLIENT_SECRET` | No | Google OAuth. Sin valor = login oculto |
+| `GOOGLE_CALLBACK_URL` / `GOOGLE_SUCCESS_REDIRECT_URL` | No | URLs para OAuth Google |
+| `APPLE_CLIENT_ID` / `APPLE_TEAM_ID` / `APPLE_KEY_ID` / `APPLE_PRIVATE_KEY` | No | Apple Sign In |
+| `EXPO_PUBLIC_API_BASE` | No | Override API base URL mobile |
+| `REVENUECAT_WEBHOOK_SECRET` | Sí (prod) | RevenueCat webhook auth |
+| `REVENUECAT_API_KEY_APPLE` / `REVENUECAT_API_KEY_GOOGLE` | No | RevenueCat mobile |
+| `FLY_API_TOKEN` | No (CI) | Deploy token GitHub secret |
 
 ## Infraestructura
 
-- **PostgreSQL local**: `docker compose -f apps/api/docker-compose.yml up -d postgres` (PostgreSQL 16)
-- **Redis local**: `docker compose -f apps/api/docker-compose.yml up -d redis` (Redis 7)
-- **Migración a PostgreSQL**: `bash apps/api/scripts/migrate-to-postgres.sh` (backup, health check, seed, rollback)
-- **PostgreSQL es el provider por defecto**. SQLite ya no es soportado.
-- **Production API**: Fly.io (`sportykids-api.fly.dev`), región Madrid. `fly.toml` en raíz del proyecto. Docker multi-stage build en `apps/api/Dockerfile`.
-- **CI/CD**: `.github/workflows/ci.yml` — lint, typecheck, test, build (API + web) + deploy to Fly.io on push to main
-- **Mobile builds**: `apps/mobile/eas.json` — EAS Build profiles (development, preview, production) con channels y `appVersionSource: "remote"`
-- **Asset generation**: `npm run generate-assets --workspace=apps/mobile` — genera placeholders (icon, splash, adaptive-icon, favicon, feature-graphic) via sharp
-- **ASO metadata**: `apps/mobile/store-metadata/{en,es}.json` — nombre, descripción, keywords para App Store y Google Play
-- **Staging API**: Fly.io (`sportykids-api-staging.fly.dev`), región Madrid. `fly.staging.toml` en raíz. Setup: `bash scripts/setup-staging.sh`. CACHE_PROVIDER=memory, min_machines_running=0 (cost saving).
-- **Store screenshots**: `node scripts/generate-screenshots.mjs` — captura 5 pantallas para iOS (1179x2556) y Android (1080x2400) via Playwright. Requiere `npm run dev:web`.
-- **Beta testing**: `specs/mvp-to-product-5/beta-guide.md` — protocolo de 3 semanas para 2 familias con cuestionarios.
-- **Store review notes**: `specs/mvp-to-product-5/review-notes.md` — notas preparadas para revisores de Apple y Google.
+- **PostgreSQL local**: `docker compose -f apps/api/docker-compose.yml up -d postgres`
+- **Redis local**: `docker compose -f apps/api/docker-compose.yml up -d redis`
+- **Production API**: Fly.io `sportykids-api.fly.dev`, región Madrid (`fly.toml`)
+- **Staging API**: `sportykids-api-staging.fly.dev` (`fly.staging.toml`). Setup: `bash scripts/setup-staging.sh`
+- **CI/CD**: `.github/workflows/ci.yml` — lint, typecheck, test, build + deploy to Fly.io on push to main
+- **Mobile builds**: `apps/mobile/eas.json` — profiles development/preview/production con channels
+- **Asset generation**: `npm run generate-assets --workspace=apps/mobile` (sharp)
+- **Store screenshots**: `node scripts/generate-screenshots.mjs` (Playwright, requiere `npm run dev:web`)
 
 ## Entorno de desarrollo — notas
 
-- npm global apunta a registro corporativo (`art.tupl.com`). El proyecto tiene `.npmrc` con `registry=https://registry.npmjs.org/`.
+- npm global apunta a registro corporativo. El proyecto tiene `.npmrc` con `registry=https://registry.npmjs.org/`.
 - Si hay errores EPERM en la caché npm, usar `--cache /private/tmp/claude-502/npm-cache`.
-- tsx puede fallar con EPERM en sandbox. Usar `dangerouslyDisableSandbox: true` o `TSX_IPC_DIR`.
-- Prisma migrate necesita `PRISMA_ENGINES_DIR=/private/tmp/claude-502/prisma-engines` en sandbox.
+- tsx puede fallar con EPERM en sandbox → usar `dangerouslyDisableSandbox: true` o `TSX_IPC_DIR`.
+- Prisma migrate en sandbox → `PRISMA_ENGINES_DIR=/private/tmp/claude-502/prisma-engines`.
 
 ## App móvil (Expo) — notas críticas
 
-- **Expo SDK 54** con React Native 0.81.5, React 19.2.x. react-native 0.81 peerDependency is `^19.1.0` (semver-compatible with 19.2.x). Expo SDK 54 accepts `*` for React.
-- **Node 24** es compatible con SDK 54 pero NO con SDK 52 (metro-cache falla con `ERR_PACKAGE_PATH_NOT_EXPORTED`).
-- **Monorepo + Metro**: npm hoists dependencias a la raíz. Metro resuelve desde root por defecto, lo que causa que use versiones incorrectas. `metro.config.js` con `disableHierarchicalLookup: true` es **obligatorio** (ver `apps/mobile/metro.config.js`).
-- **Entry point**: `package.json` → `"main": "App.tsx"` (raíz de mobile). `App.tsx` importa y registra via `registerRootComponent` desde `src/App.tsx`. NO usar `node_modules/expo/AppEntry.js` (no resuelve en monorepo).
-- **IP local para dispositivos físicos**: El móvil no resuelve `localhost`. Todos los `API_BASE` en `apps/mobile/src/` apuntan a `http://192.168.1.189:3001/api`. Actualizar si cambia la IP de red.
-- **Expo Go**: La versión de Expo Go del dispositivo debe coincidir con el SDK instalado. SDK 54 = Expo Go más reciente del App Store.
-- **AsyncStorage**: Usar `@react-native-async-storage/async-storage@2.2.0` (v3 no es compatible con SDK 54).
+- **Expo SDK 54** + React Native 0.81.5 + React 19.1.x (pinned — RN 0.81 requiere exact match 19.1.0).
+- **Node 24** compatible con SDK 54 (SDK 52 NO — metro-cache `ERR_PACKAGE_PATH_NOT_EXPORTED`).
+- **Metro monorepo**: `metro.config.js` con `disableHierarchicalLookup: true` es **obligatorio**.
+- **Entry point**: `package.json → "main": "App.tsx"` → `registerRootComponent` desde `src/App.tsx`. NO usar `expo/AppEntry.js`.
+- **IP local**: el móvil no resuelve `localhost`. `API_BASE` apunta a `http://192.168.1.189:3001/api`.
+- **AsyncStorage**: usar `@react-native-async-storage/async-storage@2.2.0` (v3 incompatible con SDK 54).
 
 ## Workflow y principios de trabajo
 
-### Principios clave
-- **Simplicidad primero**: Cada cambio lo más simple posible. Impacto mínimo en el código.
-- **Sin atajos**: Buscar causas raíz. Sin fixes temporales. Estándares de senior developer.
-- **Impacto mínimo**: Los cambios solo tocan lo necesario. Evitar introducir bugs colaterales.
-
-### Planificación
-- Entrar en plan mode para cualquier tarea no trivial (3+ pasos o decisiones de arquitectura).
-- Si algo sale mal, **parar y re-planificar** — no seguir empujando a ciegas.
-- Escribir specs detallados antes de implementar para reducir ambigüedad.
-
-### Subagentes
-- Usar subagentes para mantener limpio el contexto principal.
-- Offload de investigación, exploración y análisis paralelo a subagentes.
-- Una tarea por subagente para ejecución enfocada.
-
-### Verificación antes de cerrar
-- Nunca marcar una tarea completa sin probar que funciona.
-- Comparar comportamiento entre main y los cambios cuando sea relevante.
-- Criterio: "¿Un staff engineer aprobaría esto?"
-- Correr tests, revisar logs, demostrar que funciona.
-
-### Elegancia equilibrada
-- Para cambios no triviales: pausar y preguntar "¿hay una forma más elegante?"
-- Si un fix se siente hacky: reimplementar la solución elegante.
-- Saltarse esto para fixes simples y obvios — no sobre-ingeniería.
-
-### Bug fixing autónomo
-- Ante un bug report: resolverlo directamente. No pedir guía paso a paso.
-- Apuntar a logs, errores, tests fallidos — luego resolverlos.
-- Cero context switching requerido del usuario.
-
-### Gestión de tareas
-1. **Planificar**: Escribir plan con items checkeables.
-2. **Verificar plan**: Alinear antes de empezar implementación.
-3. **Trackear progreso**: Marcar items completos conforme se avanza.
-4. **Explicar cambios**: Resumen de alto nivel en cada paso.
+- **Simplicidad primero**: cambios mínimos e impacto mínimo. Sin fixes temporales. Buscar causas raíz.
+- **Plan antes de implementar**: entrar en plan mode para tareas no triviales (3+ pasos).
+- **Verificar antes de cerrar**: correr tests, revisar logs. Criterio: "¿Un staff engineer aprobaría esto?"
+- **Subagentes**: usar para investigación paralela y mantener limpio el contexto principal.
+- **Bug fixing autónomo**: resolver directamente. Cero context switching del usuario.
+- **Gestión de tareas**: Planificar → Verificar → Trackear → Explicar cambios.
 
 ## Instrucciones breves
 

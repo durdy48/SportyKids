@@ -1,0 +1,17 @@
+Static job imports found: 10
+Dynamic import() in triggerJob: false
+Missing job imports: none
+
+First 20 import lines:
+  L1: import { prisma } from '../config/database';
+  L2: import { logger } from './logger';
+  L3: import { runSyncFeeds } from '../jobs/sync-feeds';
+  L4: import { runSyncVideos } from '../jobs/sync-videos';
+  L5: import { runSyncTeamStats } from '../jobs/sync-team-stats';
+  L6: import { runGenerateDailyQuiz } from '../jobs/generate-daily-quiz';
+  L7: import { runGenerateTimelessQuiz } from '../jobs/generate-timeless-quiz';
+  L8: import { runGenerateDailyMissions } from '../jobs/generate-daily-missions';
+  L9: import { runStreakReminder } from '../jobs/streak-reminder';
+  L10: import { runMissionReminder } from '../jobs/mission-reminder';
+  L11: import { runSendWeeklyDigests } from '../jobs/send-weekly-digests';
+  L12: import { runLiveScores } from '../jobs/live-scores';

@@ -157,7 +157,7 @@ export function UserProvider({ children }: { children: ReactNode }) {
       }
       setLoading(false);
     };
-    init();
+    init().catch(() => setLoading(false));
   }, [loadParentalProfile]);
 
   const setUser = (u: User) => {

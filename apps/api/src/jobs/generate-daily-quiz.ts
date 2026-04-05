@@ -200,6 +200,12 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
           logger.info('All AI providers rate-limited — waiting 65s for reset');
           await new Promise((resolve) => setTimeout(resolve, 65_000));
         }
+
+        // Abort early if first 5 attempts all failed — provider is likely down
+        if (result.errors >= 5 && result.generated === 0) {
+          logger.warn({ errors: result.errors }, 'Aborting quiz generation: first 5 attempts all failed, provider likely unavailable');
+          return result;
+        }
       }
 
       // 1-second delay between LLM calls
@@ -321,6 +327,31 @@ export async function runGapFillPass(result: DailyQuizResult): Promise<void> {
 // Cron job: daily at 6:00 AM
 // ---------------------------------------------------------------------------
 
+export async function runGenerateDailyQuiz(triggeredBy: 'cron' | 'manual' = 'cron', triggeredId?: string, existingRunId?: string): Promise<void> {
+  const run = existingRunId
+    ? { id: existingRunId }
+    : await prisma.jobRun.create({
+        data: { jobName: 'generate-daily-quiz', status: 'running', triggeredBy, triggeredId },
+      });
+  try {
+    const result = await generateDailyQuiz();
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: {
+        status: 'success',
+        finishedAt: new Date(),
+        output: { generated: result.generated, errors: result.errors },
+      },
+    });
+  } catch (e) {
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: { status: 'error', finishedAt: new Date(), output: { error: String(e) } },
+    });
+    throw e;
+  }
+}
+
 let activeJob: ReturnType<typeof cron.schedule> | null = null;
 
 export function startDailyQuizJob(): void {
@@ -331,7 +362,7 @@ export function startDailyQuizJob(): void {
 
   activeJob = cron.schedule('0 6 * * *', async () => {
     logger.info('Running daily quiz generation...');
-    await generateDailyQuiz();
+    await runGenerateDailyQuiz('cron');
   });
 
   logger.info('Daily quiz job scheduled: daily at 06:00.');

@@ -1,13 +1,13 @@
 import type { NewsItem, Reel, QuizQuestion, User, ParentalProfile, RssSource, RssSourceCatalogResponse, Sticker, UserSticker, Achievement, UserAchievement, CheckInResponse, TeamStats, PushPreferences, LiveMatchData, LiveScorePreferences, Organization, OrganizationMember, OrganizationActivity, JoinOrganizationResponse } from '@sportykids/shared';
 import { getAccessToken, refreshToken as refreshAccessToken } from './auth';
 
-const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
+export const API_BASE = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api';
 
 /**
  * Fetch wrapper that attaches the JWT Bearer token and auto-refreshes on 401.
  * Use for any request that requires authentication.
  */
-async function authFetch(url: string, init: RequestInit = {}): Promise<Response> {
+export async function authFetch(url: string, init: RequestInit = {}): Promise<Response> {
   const token = getAccessToken();
   const headers = new Headers(init.headers as Record<string, string>);
   if (token) headers.set('Authorization', `Bearer ${token}`);

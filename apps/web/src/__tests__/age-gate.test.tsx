@@ -43,7 +43,7 @@ vi.mock('@/components/PinInput', () => ({
   ),
 }));
 
-import AgeGatePage from '../app/age-gate/page';
+import AgeGatePage from '../app/(main)/age-gate/page';
 
 describe('AgeGatePage', () => {
   beforeEach(() => {

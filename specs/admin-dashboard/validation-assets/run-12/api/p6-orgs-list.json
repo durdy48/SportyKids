@@ -1,0 +1,9 @@
+{
+  "status": 200,
+  "body": {
+    "organizations": [],
+    "total": 0,
+    "page": 1,
+    "totalPages": 0
+  }
+}

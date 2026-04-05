@@ -34,6 +34,7 @@ import { startTeamStatsSyncJob } from './jobs/sync-team-stats';
 import { startVideoSyncJob, runManualVideoSync } from './jobs/sync-videos';
 import { startLiveScoresJob } from './jobs/live-scores';
 import { startTimelessQuizJob } from './jobs/generate-timeless-quiz';
+import { startComputeAnalyticsJob } from './jobs/compute-analytics';
 import { logger } from './services/logger';
 
 const app = express();
@@ -96,10 +97,26 @@ app.use(errorHandler);
 
 // Start server — wait for DB to be reachable before accepting traffic.
 // This handles Neon cold starts (free tier auto-suspends after inactivity).
+async function cleanupStaleJobRuns(): Promise<void> {
+  try {
+    // Any job left in 'running' state at startup was killed mid-execution — mark as error.
+    const { count } = await prisma.jobRun.updateMany({
+      where: { status: 'running' },
+      data: { status: 'error', finishedAt: new Date(), output: { error: 'Process terminated before job completed' } },
+    });
+    if (count > 0) {
+      logger.info({ count }, 'Marked stale running job runs as error on startup');
+    }
+  } catch (err) {
+    logger.warn({ err }, 'Failed to clean up stale job runs');
+  }
+}
+
 async function start() {
   logger.info('Waiting for database...');
   await waitForDatabase();
   logger.info('Database ready');
+  await cleanupStaleJobRuns();
   startDatabaseKeepAlive();
 
   app.listen(PORT, () => {
@@ -149,6 +166,9 @@ async function start() {
 
     // Schedule weekly timeless quiz generation (Monday 05:00 UTC)
     startTimelessQuizJob();
+
+    // Schedule daily analytics computation (02:00 UTC)
+    startComputeAnalyticsJob();
   });
 }
 

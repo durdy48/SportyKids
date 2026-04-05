@@ -9,6 +9,7 @@
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { NativeModules } from 'react-native';
 
 // ---------------------------------------------------------------------------
 // Dynamic SecureStore resolution
@@ -23,9 +24,17 @@ interface SecureStoreApi {
 let secureStore: SecureStoreApi | null = null;
 let secureStoreChecked = false;
 
+// expo-secure-store v14+ (SDK 54+) depends on expo-crypto's ExpoCryptoAES
+// native module which is NOT bundled in Expo Go. Check for it before attempting
+// to load expo-secure-store — if absent, fall back to AsyncStorage immediately.
+function isSecureStoreSupported(): boolean {
+  return !!NativeModules.ExpoCryptoAES;
+}
+
 // Probe runs lazily on first use. This is intentional — migrateTokensToSecureStore()
 // is called at app startup which triggers the probe early anyway.
 async function getSecureStore(): Promise<SecureStoreApi | null> {
+  if (!isSecureStoreSupported()) return null;
   if (secureStoreChecked) return secureStore;
   secureStoreChecked = true;
 

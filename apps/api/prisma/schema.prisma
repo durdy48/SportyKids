@@ -428,3 +428,27 @@ model Organization {
   @@index([inviteCode])
   @@index([slug])
 }
+
+model JobRun {
+  id          String    @id @default(cuid())
+  jobName     String
+  startedAt   DateTime  @default(now())
+  finishedAt  DateTime?
+  status      String    // 'running' | 'success' | 'error'
+  output      Json?     // { processed: number, errors: number, details: string }
+  triggeredBy String    @default("cron") // 'cron' | 'manual'
+  triggeredId String?   // userId of the admin if triggeredBy === 'manual'
+
+  @@index([jobName, startedAt])
+}
+
+model AnalyticsSnapshot {
+  id        String   @id @default(cuid())
+  date      DateTime
+  metric    String
+  value     Json
+  createdAt DateTime @default(now())
+
+  @@unique([date, metric])
+  @@index([date])
+}

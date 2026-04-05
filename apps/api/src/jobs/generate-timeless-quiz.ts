@@ -123,6 +123,31 @@ export async function generateTimelessQuiz(): Promise<TimelessQuizResult> {
 // Cron job: every Monday at 05:00 UTC
 // ---------------------------------------------------------------------------
 
+export async function runGenerateTimelessQuiz(triggeredBy: 'cron' | 'manual' = 'cron', triggeredId?: string, existingRunId?: string): Promise<void> {
+  const run = existingRunId
+    ? { id: existingRunId }
+    : await prisma.jobRun.create({
+        data: { jobName: 'generate-timeless-quiz', status: 'running', triggeredBy, triggeredId },
+      });
+  try {
+    const result = await generateTimelessQuiz();
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: {
+        status: 'success',
+        finishedAt: new Date(),
+        output: { generated: result.generated, skipped: result.skipped, errors: result.errors },
+      },
+    });
+  } catch (e) {
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: { status: 'error', finishedAt: new Date(), output: { error: String(e) } },
+    });
+    throw e;
+  }
+}
+
 let activeJob: ReturnType<typeof cron.schedule> | null = null;
 
 export function startTimelessQuizJob(): void {
@@ -133,7 +158,7 @@ export function startTimelessQuizJob(): void {
 
   activeJob = cron.schedule('0 5 * * 1', async () => {
     logger.info('Running weekly timeless quiz generation...');
-    await generateTimelessQuiz();
+    await runGenerateTimelessQuiz('cron');
   });
 
   logger.info('Timeless quiz job scheduled: every Monday at 05:00 UTC.');

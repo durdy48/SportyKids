@@ -1,0 +1,2 @@
+hasSourcesLink: true
+  { href: '/admin/sources', label: 'Sources', exact: false },

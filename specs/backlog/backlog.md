@@ -69,11 +69,7 @@ Centralized backlog of items deferred from each phase. Prioritized by necessity 
 - **Current state**: Web redirects new users (no localStorage) to `/onboarding`. Users with existing account but `ageGateCompleted=false` correctly see `/age-gate`. The onboarding already sets `ageGateCompleted=true` + `consentGiven=true` at user creation, but the gate should happen first.
 
 ### Admin Metrics Dashboard
-- **What**: A dedicated dashboard (web, admin-only) showing the most important operational and engagement metrics at a glance: daily/weekly active users, news articles aggregated and moderated (approved/rejected/pending), quiz questions generated and answered, subscription tier breakdown (free vs premium), live score events sent, and AI provider usage (requests/day, latency). Each metric should show a trend (vs previous period) and be easy to scan in under 30 seconds.
-- **Why**: As the platform scales post-launch there is no single place to understand health at a glance. Currently metrics require querying the DB directly or reading Sentry/PostHog dashboards separately. A built-in panel removes friction for day-to-day monitoring.
-- **Approach**: New `/app/admin/metrics` page (web, `requireRole('admin')`) with server components fetching aggregated counts via Prisma. No new external service needed — all data already exists in the DB (`ActivityLog`, `NewsItem`, `QuizQuestion`, `UserQuizHistory`, `User`, `LiveMatch`). Optional: add a lightweight chart library (e.g. recharts, already a possible dep) for trend sparklines.
-- **Key metrics to show**: DAU/WAU (ActivityLog), moderation queue size and approval rate (NewsItem.safetyStatus), quiz generation and answer rate (QuizQuestion/UserQuizHistory), subscription breakdown (User.subscriptionTier), AI summary requests (NewsSummary count), live score events (LiveMatch/notifiedEvents), RSS source health (last sync time per source).
-- **Out of scope**: Real-time streaming, alerting/PagerDuty integration, export to CSV — those are separate items.
+- **Status**: ✅ Superseded by full Admin Dashboard implementation (branch `admin-dashboard`, 2026-04-04). Covers all metrics listed here plus moderation, jobs, sources, analytics, users and orgs management.
 
 ### "Mi Equipo" Redesign for Athletes and Drivers
 - **What**: The "Mi Equipo" page (web `/team` and mobile `FavoriteTeam` screen) uses `favoriteTeam` to show team stats and news. When the user's `favoriteTeam` is an athlete or driver (e.g. "Caeleb Dressel", "Max Verstappen") instead of a club, the page shows a football emoji ⚽, "Noticias y novedades de tu equipo", and "Noticias del equipo" headings — all wrong. The stats section is also irrelevant (W/D/L, next match) for individual athletes.
@@ -95,6 +91,21 @@ Centralized backlog of items deferred from each phase. Prioritized by necessity 
 ---
 
 ## P3 — Not recommended
+
+### Admin Action Audit Log
+- **What**: Persist a log of every admin action (who approved/rejected what content, who changed a user's tier/role, who triggered a job). Model: `AdminAuditLog { id, adminUserId, action, targetType, targetId, metadata, createdAt }`.
+- **Why**: Left out of scope from admin dashboard PRD (2026-04-04). Useful for compliance and accountability as the team grows but not needed for MVP operation.
+- **Blocked by**: Admin dashboard implementation (branch `admin-dashboard`).
+
+### Manual Push to User Segments
+- **What**: From the admin dashboard, select a segment of users (by sport, country, tier, org) and send a custom push notification.
+- **Why**: Left out of scope from admin dashboard PRD (2026-04-04). Useful for marketing/engagement campaigns but not needed for day-to-day operations.
+- **Blocked by**: Admin dashboard implementation + push infrastructure review.
+
+### Granular Admin Roles (Moderator vs Superadmin)
+- **What**: Split the single `admin` role into `moderator` (content moderation + source management only) and `superadmin` (full admin access). Moderators cannot change user tiers/roles or trigger destructive operations.
+- **Why**: Left out of scope from admin dashboard PRD (2026-04-04). Relevant when the team has dedicated moderators who should not have full system access.
+- **Blocked by**: Admin dashboard implementation.
 
 ### Sentry Session Replay
 - **What**: Record and replay user sessions for debugging.

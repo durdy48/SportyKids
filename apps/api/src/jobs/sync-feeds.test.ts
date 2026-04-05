@@ -82,7 +82,7 @@ describe('sync-feeds', () => {
       startSyncJob();
 
       expect(cron.default.schedule).toHaveBeenCalledWith(
-        '*/30 * * * *',
+        '0 * * * *',
         expect.any(Function),
       );
       expect(startDailyQuizJob).toHaveBeenCalled();

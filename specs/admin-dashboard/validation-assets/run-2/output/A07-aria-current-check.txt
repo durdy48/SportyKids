@@ -1,0 +1,3 @@
+Occurrences of "aria-current": 1
+
+  L35: aria-current={isActive(link.href, link.exact) ? 'page' : undefined}

@@ -1,0 +1,5 @@
+File exists: true
+"Last 7 days" or dynamic: true
+"Last 30 days" or dynamic: true
+"Last 90 days" or dynamic: true
+Dynamic ['7','30','90'] pattern: true

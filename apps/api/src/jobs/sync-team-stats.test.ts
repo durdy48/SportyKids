@@ -24,10 +24,24 @@ vi.mock('../services/team-stats-sync', () => ({
   syncAllTeamStats: (...args: unknown[]) => mockSyncAllTeamStats(...args),
 }));
 
+// Mock database for JobRun tracking
+const mockJobRunCreate = vi.fn().mockResolvedValue({ id: 'run-1' });
+const mockJobRunUpdate = vi.fn().mockResolvedValue({});
+vi.mock('../config/database', () => ({
+  prisma: {
+    jobRun: {
+      create: (...args: unknown[]) => mockJobRunCreate(...args),
+      update: (...args: unknown[]) => mockJobRunUpdate(...args),
+    },
+  },
+}));
+
 describe('sync-team-stats', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.resetModules();
+    mockJobRunCreate.mockResolvedValue({ id: 'run-1' });
+    mockJobRunUpdate.mockResolvedValue({});
   });
 
   it('should schedule cron job at 04:00 UTC and call syncAllTeamStats', async () => {
@@ -46,9 +60,11 @@ describe('sync-team-stats', () => {
     await handler();
 
     expect(mockSyncAllTeamStats).toHaveBeenCalledOnce();
-    expect(mockLoggerInfo).toHaveBeenCalledWith(
-      { synced: 15, failed: 0 },
-      'Team stats sync completed',
+    expect(mockJobRunUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { id: 'run-1' },
+        data: expect.objectContaining({ status: 'success', output: { synced: 15, failed: 0 } }),
+      }),
     );
   });
 
@@ -60,11 +76,13 @@ describe('sync-team-stats', () => {
     startTeamStatsSyncJob();
 
     const handler = mockSchedule.mock.calls[0]![1] as () => Promise<void>;
-    await handler();
+    // handler re-throws, so catch it
+    await handler().catch(() => {});
 
-    expect(mockLoggerError).toHaveBeenCalledWith(
-      { err: error },
-      'Team stats sync error',
+    expect(mockJobRunUpdate).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.objectContaining({ status: 'error' }),
+      }),
     );
   });
 

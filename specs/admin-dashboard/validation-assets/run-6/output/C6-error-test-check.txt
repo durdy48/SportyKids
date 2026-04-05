@@ -1,0 +1,4 @@
+hasErrorTest: true
+Matching lines:
+  L878: it('returns statusLabel ERROR when last run has status error', async () => {
+  L896: expect(syncJob.statusLabel).toBe('ERROR');

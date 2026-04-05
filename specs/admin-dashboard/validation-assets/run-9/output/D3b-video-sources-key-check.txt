@@ -1,0 +1,1 @@
+Both RSS and video endpoints use sources: enriched: true

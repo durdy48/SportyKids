@@ -1,0 +1,815 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/overview"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "kpis": {
+        "totalUsers": 56,
+        "dau": 0,
+        "pendingContent": 0,
+        "activeRssSources": 182
+      },
+      "alerts": [
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Estadio Deportivo - Basketball RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Villarreal RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Girona FC RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Athletic Club RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: RCD Mallorca RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Estadio Deportivo - General RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Real Betis RSS source has not synced in 22h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Mucho Deporte - Football RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Sevilla FC RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Las Palmas RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Mucho Deporte - General RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Leganes RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Arsenal FC RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Liverpool FC RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Atletico de Madrid RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Manchester City RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Celta de Vigo RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: El Correo de Andalucia - Football RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Alaves RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Rayo Vallecano RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: El Desmarque - General RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Valencia CF RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Real Madrid RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: FC Barcelona RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Nottingham Forest RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Bayern Munich RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Monaco RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Wolverhampton RSS source has not synced in 22h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Everton RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Borussia Dortmund RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Lazio RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Lyon RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: RB Leipzig RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Inter Milan RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Newcastle United RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Bayer Leverkusen RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Bournemouth RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: PSG RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Brighton RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: AS Roma RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Atalanta RSS source has not synced in 9h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: AC Milan RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Napoli RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: West Ham RSS source has not synced in 6h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Leicester City RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Juventus RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Southampton RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Novak Djokovic RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Real Madrid Basket RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: England National Team RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Daniil Medvedev RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Milwaukee Bucks RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Denver Nuggets RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Golden State Warriors RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Colombia National Team RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Unicaja RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Baskonia RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Miami Heat RSS source has not synced in 22h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Carlos Alcaraz RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Joventut RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Mexico National Team RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Tottenham RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Argentina National Team RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Philadelphia 76ers RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: USA National Team RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Aston Villa RSS source has not synced in 22h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Barcelona Basket RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Brazil National Team RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Boston Celtics RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Seleccion Espanola RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Jannik Sinner RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Max Verstappen RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Red Bull Racing RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Femke Bol RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: McLaren F1 RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Tadej Pogacar RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Charles Leclerc RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Leon Marchand RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: UAE Team Emirates RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Jonas Vingegaard RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Sydney McLaughlin RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Primoz Roglic RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Coco Gauff RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Adam Peaty RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Carlos Sainz F1 RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Aston Martin F1 RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Lewis Hamilton RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Fernando Alonso RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Lando Norris RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Oscar Piastri RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Ferrari F1 RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Stefanos Tsitsipas RSS source has not synced in 22h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Arturo Coello RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Alejandro Galan RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Katie Ledecky RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Real Sociedad RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Ari Sanchez RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Bologna RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Rafael Nadal RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Brentford RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Real Valladolid RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Noah Lyles RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Germany National Team RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Lille RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Estadio Deportivo - Football RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: LA Lakers RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Manchester United RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Gemma Triay RSS source has not synced in 11h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Iga Swiatek RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Remco Evenepoel RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Chelsea FC RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: El Desmarque - Basketball RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Caeleb Dressel RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: El Desmarque - Football RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: El Correo de Andalucia - General RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Aryna Sabalenka RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Espanyol RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Fulham RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Alexander Zverev RSS source has not synced in 22h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: New York Knicks RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Ipswich Town RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Mondo Duplantis RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Marseille RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Crystal Palace RSS source has not synced in 22h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Team Visma RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Italy National Team RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Phoenix Suns RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: VfB Stuttgart RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Dallas Mavericks RSS source has not synced in 22h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Portugal National Team RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Mercedes F1 RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Google News: Faith Kipyegon RSS source has not synced in 23h",
+          "actionUrl": "/admin/sources"
+        }
+      ],
+      "subscriptionBreakdown": {
+        "free": 56,
+        "premium": 0
+      }
+    }
+  }
+}

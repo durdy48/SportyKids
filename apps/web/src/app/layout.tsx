@@ -1,9 +1,5 @@
-import type { Metadata } from 'next';
 import { Poppins, Inter } from 'next/font/google';
 import '@/styles/globals.css';
-import { UserProvider } from '@/lib/user-context';
-import { NavBar } from '@/components/NavBar';
-import { OfflineBanner } from '@/components/OfflineBanner';
 
 const poppins = Poppins({
   subsets: ['latin'],
@@ -15,11 +11,6 @@ const inter = Inter({
   subsets: ['latin'],
   variable: '--font-inter',
 });
-
-export const metadata: Metadata = {
-  title: 'SportyKids - Sports news for kids',
-  description: 'Personalized sports news, short videos and interactive quizzes for kids.',
-};
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
@@ -36,13 +27,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         `}} />
       </head>
       <body className="bg-[var(--color-background)] font-[family-name:var(--font-inter)] text-[var(--color-text)] min-h-screen">
-        <UserProvider>
-          <OfflineBanner />
-          <NavBar />
-          <main className="max-w-6xl mx-auto px-4 py-6">
-            {children}
-          </main>
-        </UserProvider>
+        {children}
       </body>
     </html>
   );

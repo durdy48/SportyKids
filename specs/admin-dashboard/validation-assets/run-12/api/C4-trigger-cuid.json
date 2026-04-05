@@ -1,0 +1,12 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/api/admin/jobs/sync-feeds/trigger"
+  },
+  "response": {
+    "status": 202,
+    "body": {
+      "jobRunId": "cmnm96xni000t26aoij3py751"
+    }
+  }
+}

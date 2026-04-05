@@ -1,0 +1,19 @@
+{
+  "request": {
+    "method": "POST",
+    "url": "/api/admin/content/batch",
+    "body": {
+      "ids": [
+        "some-id"
+      ],
+      "type": "news",
+      "action": "reject"
+    }
+  },
+  "response": {
+    "status": 400,
+    "body": {
+      "error": "Invalid input: expected object, received undefined"
+    }
+  }
+}

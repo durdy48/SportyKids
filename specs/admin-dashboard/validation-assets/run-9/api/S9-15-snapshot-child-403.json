@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/analytics/snapshot",
+    "headers": {
+      "Authorization": "Bearer <child-token>"
+    }
+  },
+  "response": {
+    "status": 404,
+    "body": "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"utf-8\">\n<title>Error</title>\n</head>\n<body>\n<pre>Cannot GET /api/admin/analytics/snapshot</pre>\n</body>\n</html>\n"
+  }
+}

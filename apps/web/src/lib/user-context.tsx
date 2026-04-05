@@ -203,7 +203,8 @@ export function UserProvider({ children }: { children: ReactNode }) {
       router.replace('/age-gate');
       return;
     }
-    if (pathname === '/login' || pathname === '/register') {
+    const isAnonymousUser = !user.authProvider || user.authProvider === 'anonymous';
+    if (!isAnonymousUser && (pathname === '/login' || pathname === '/register')) {
       router.replace('/');
     }
   }, [loading, user, pathname, router]);

@@ -1,0 +1,1 @@
+aggregator.ts includes moderationErrors return: true

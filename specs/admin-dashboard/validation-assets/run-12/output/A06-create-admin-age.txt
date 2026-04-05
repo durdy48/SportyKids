@@ -1,0 +1,9 @@
+Source check — "age: 18" present: true
+
+CLI output (exit 0):
+✓ Admin user created
+  Email:    validate-age18-r10-1775423298769@sportykids-validation.test
+  ID:       cmnm96xj1000026c549p25phw
+  Password: WVHm5aj2dEA2_0Fl
+  (Change this password after first login)
+

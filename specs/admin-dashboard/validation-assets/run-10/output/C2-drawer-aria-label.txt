@@ -1,0 +1,3 @@
+hasConditionalAriaLabel: true
+hasBadFallback: false
+hasAriaHidden={!isOpen}: true

@@ -1,0 +1,2 @@
+Data-row key={i} bad occurrences: 0
+Stable data-row key present: true

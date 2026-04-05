@@ -127,6 +127,16 @@ export function NavBar() {
                 </div>
               )}
             </div>
+            {user?.role === 'admin' && (
+              <Link
+                href="/admin"
+                className="text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white flex items-center gap-1"
+                aria-label="Admin dashboard"
+              >
+                <span>⚙</span>
+                <span>Admin</span>
+              </Link>
+            )}
             <button
               type="button"
               onClick={cycleTheme}

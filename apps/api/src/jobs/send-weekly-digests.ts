@@ -75,6 +75,31 @@ async function processWeeklyDigests(): Promise<void> {
   }
 }
 
+export async function runSendWeeklyDigests(triggeredBy: 'cron' | 'manual' = 'cron', triggeredId?: string, existingRunId?: string): Promise<void> {
+  const run = existingRunId
+    ? { id: existingRunId }
+    : await prisma.jobRun.create({
+        data: { jobName: 'send-weekly-digests', status: 'running', triggeredBy, triggeredId },
+      });
+  try {
+    await processWeeklyDigests();
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: {
+        status: 'success',
+        finishedAt: new Date(),
+        output: { processed: true },
+      },
+    });
+  } catch (e) {
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: { status: 'error', finishedAt: new Date(), output: { error: String(e) } },
+    });
+    throw e;
+  }
+}
+
 /** Start the weekly digest cron job — runs daily at 08:00 UTC */
 export function startWeeklyDigestJob(): void {
   if (activeJob) {
@@ -84,7 +109,7 @@ export function startWeeklyDigestJob(): void {
 
   activeJob = cron.schedule('0 8 * * *', async () => {
     logger.info('Running weekly digest job...');
-    await processWeeklyDigests();
+    await runSendWeeklyDigests('cron');
   });
 
   logger.info('Weekly digest job scheduled: daily at 08:00 UTC.');

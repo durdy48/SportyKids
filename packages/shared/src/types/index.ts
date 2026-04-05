@@ -47,7 +47,7 @@ export interface User {
   email?: string;
   authProvider?: string;
   socialId?: string;
-  role?: 'child' | 'parent';
+  role?: 'child' | 'parent' | 'admin';
   parentUserId?: string;
   favoriteSports: string[];
   favoriteTeam?: string;

@@ -1,0 +1,13 @@
+hasStatusLabelPolling: true
+hasOldPolling (bad): false
+
+Polling-related lines:
+  L23: statusLabel: 'OK' | 'STALE' | 'ERROR' | 'RUNNING' | 'NEVER';
+  L266: const hasRunning = jobs.some(j => j.statusLabel === 'RUNNING');
+  L267: if (!hasRunning) return;
+  L268: const interval = setInterval(() => { void fetchJobs(); }, 5000);
+  L269: return () => clearInterval(interval);
+  L272: const staleJobs = jobs.filter(j => j.statusLabel === 'STALE');
+  L370: <AdminBadge variant={statusVariant(job.statusLabel)}>
+  L371: {job.statusLabel}
+  L375: {job.lastRun?.status === 'running' || triggeringJob === job.name ? (

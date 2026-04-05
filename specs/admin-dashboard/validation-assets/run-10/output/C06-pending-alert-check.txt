@@ -1,0 +1,4 @@
+buildAlerts function: true
+30-min threshold: true
+pending_content type: true
+warning severity: true

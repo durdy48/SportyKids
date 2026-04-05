@@ -1,0 +1,74 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/jobs/sync-feeds/history?limit=5"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "jobName": "sync-feeds",
+      "history": [
+        {
+          "id": "cmnm8w81c002x2689upftgyfw",
+          "startedAt": "2026-04-05T21:00:00.048Z",
+          "finishedAt": "2026-04-05T21:01:32.530Z",
+          "durationMs": 92482,
+          "status": "success",
+          "triggeredBy": "cron",
+          "output": {
+            "errors": 0,
+            "processed": 14718
+          }
+        },
+        {
+          "id": "cmnm8w81b000h26853pemg6vv",
+          "startedAt": "2026-04-05T21:00:00.048Z",
+          "finishedAt": "2026-04-05T21:01:37.864Z",
+          "durationMs": 97816,
+          "status": "success",
+          "triggeredBy": "cron",
+          "output": {
+            "errors": 0,
+            "processed": 15018
+          }
+        },
+        {
+          "id": "cmnm8w819004b267p725v2yvc",
+          "startedAt": "2026-04-05T21:00:00.045Z",
+          "finishedAt": "2026-04-05T21:01:34.218Z",
+          "durationMs": 94173,
+          "status": "success",
+          "triggeredBy": "cron",
+          "output": {
+            "errors": 0,
+            "processed": 14714
+          }
+        },
+        {
+          "id": "cmnm8o5qc003y267p4yx0pnzm",
+          "startedAt": "2026-04-05T20:53:43.813Z",
+          "finishedAt": "2026-04-05T20:54:26.049Z",
+          "durationMs": 42236,
+          "status": "success",
+          "triggeredBy": "manual",
+          "output": {
+            "errors": 0,
+            "processed": 15017
+          }
+        },
+        {
+          "id": "cmnm8nju30039267pmquo1j5j",
+          "startedAt": "2026-04-05T20:53:15.436Z",
+          "finishedAt": "2026-04-05T20:54:13.400Z",
+          "durationMs": 57964,
+          "status": "success",
+          "triggeredBy": "manual",
+          "output": {
+            "errors": 0,
+            "processed": 15017
+          }
+        }
+      ]
+    }
+  }
+}

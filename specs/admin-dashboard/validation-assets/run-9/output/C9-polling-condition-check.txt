@@ -1,0 +1,2 @@
+hasStatusLabelPolling: true
+hasOldPolling (bad): false
