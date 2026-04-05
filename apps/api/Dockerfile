@@ -37,6 +37,9 @@ RUN cd packages/shared && npx tsc
 # Build API (noEmitOnError:false in tsconfig emits JS despite type errors; || true ignores tsc exit code)
 RUN cd apps/api && npx tsc || true
 
+# Build admin scripts (compiled separately so they're available in production)
+RUN cd apps/api && npx tsc -p tsconfig.scripts.json || true
+
 # ---- Stage 3: Production ----
 FROM node:20-slim AS runner
 

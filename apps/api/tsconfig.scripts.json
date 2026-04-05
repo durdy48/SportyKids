@@ -1,0 +1,15 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "node",
+    "strict": true,
+    "skipLibCheck": true,
+    "outDir": "dist/scripts",
+    "rootDir": "scripts",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "noEmitOnError": false
+  },
+  "include": ["scripts"]
+}

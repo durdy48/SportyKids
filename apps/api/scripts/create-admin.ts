@@ -12,7 +12,9 @@
 
 import crypto from 'node:crypto';
 import bcrypt from 'bcryptjs';
-import { prisma } from '../src/config/database';
+import { PrismaClient } from '@prisma/client';
+
+const prisma = new PrismaClient();
 
 const SALT_ROUNDS = 10;
 
