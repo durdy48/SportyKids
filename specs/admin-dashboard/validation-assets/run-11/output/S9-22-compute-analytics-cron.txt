@@ -1,0 +1,3 @@
+compute-analytics.ts exists: true
+'0 2 * * *' found in compute-analytics.ts: true
+startComputeAnalyticsJob called in index.ts: true

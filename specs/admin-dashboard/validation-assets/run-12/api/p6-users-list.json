@@ -1,0 +1,88 @@
+{
+  "status": 200,
+  "body": {
+    "users": [
+      {
+        "id": "cmnm96xua000u26aoy2unbyw9",
+        "email": "child-src-r10-1775423299842@sportykids-validation.test",
+        "role": "child",
+        "subscriptionTier": "free",
+        "authProvider": "email",
+        "country": "ES",
+        "locale": "es",
+        "createdAt": "2026-04-05T21:08:20.051Z",
+        "lastLoginAt": "2026-04-05T21:08:20.050Z",
+        "organizationId": null,
+        "organizationRole": null
+      },
+      {
+        "id": "cmnm96xj1000026c549p25phw",
+        "email": "validate-age18-r10-1775423298769@sportykids-validation.test",
+        "role": "admin",
+        "subscriptionTier": "free",
+        "authProvider": "email",
+        "country": "ES",
+        "locale": "es",
+        "createdAt": "2026-04-05T21:08:19.646Z",
+        "lastLoginAt": null,
+        "organizationId": null,
+        "organizationRole": null
+      },
+      {
+        "id": "cmnm96l8k0000263mqbnc8qd6",
+        "email": "validate-new-admin-r10-1775423283041@sportykids-validation.test",
+        "role": "admin",
+        "subscriptionTier": "free",
+        "authProvider": "email",
+        "country": "ES",
+        "locale": "es",
+        "createdAt": "2026-04-05T21:08:03.717Z",
+        "lastLoginAt": null,
+        "organizationId": null,
+        "organizationRole": null
+      },
+      {
+        "id": "cmnm96iuq000l26aorlvw0oaw",
+        "email": "validate-child-r10-1775423278699@sportykids-validation.test",
+        "role": "parent",
+        "subscriptionTier": "free",
+        "authProvider": "email",
+        "country": "ES",
+        "locale": "es",
+        "createdAt": "2026-04-05T21:08:00.627Z",
+        "lastLoginAt": "2026-04-05T21:08:01.079Z",
+        "organizationId": null,
+        "organizationRole": null
+      },
+      {
+        "id": "cmnm96hkb000g26aoswlv2ohu",
+        "email": "validate-admin-r10-1775423278699@sportykids-validation.test",
+        "role": "admin",
+        "subscriptionTier": "free",
+        "authProvider": "email",
+        "country": "ES",
+        "locale": "es",
+        "createdAt": "2026-04-05T21:07:58.955Z",
+        "lastLoginAt": "2026-04-05T21:08:00.409Z",
+        "organizationId": null,
+        "organizationRole": null
+      },
+      {
+        "id": "cmnm90aaa000i26euf1iv5bbm",
+        "email": null,
+        "role": "child",
+        "subscriptionTier": "free",
+        "authProvider": "anonymous",
+        "country": "ES",
+        "locale": "es",
+        "createdAt": "2026-04-05T21:03:09.586Z",
+        "lastLoginAt": null,
+        "organizationId": null,
+        "organizationRole": null
+      }
+    ],
+    "total": 6,
+    "page": 1,
+    "totalPages": 1
+  }
+}

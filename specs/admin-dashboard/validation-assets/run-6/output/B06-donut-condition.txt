@@ -1,0 +1,9 @@
+totalPieUsers variable: true
+totalPieUsers === 0 check: true
+pieData.every (old pattern): false
+"No subscription data" text: true
+
+Relevant lines:
+  L188: const totalPieUsers = subscriptionBreakdown.free + subscriptionBreakdown.premium;
+  L316: {totalPieUsers === 0 ? (
+  L317: <p className="text-slate-500 text-sm text-center py-8">No subscription data</p>

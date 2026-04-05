@@ -61,6 +61,31 @@ export async function generateDailyMissions(): Promise<{ generated: number; erro
 // Cron job: daily at 05:00 UTC
 // ---------------------------------------------------------------------------
 
+export async function runGenerateDailyMissions(triggeredBy: 'cron' | 'manual' = 'cron', triggeredId?: string, existingRunId?: string): Promise<void> {
+  const run = existingRunId
+    ? { id: existingRunId }
+    : await prisma.jobRun.create({
+        data: { jobName: 'generate-daily-missions', status: 'running', triggeredBy, triggeredId },
+      });
+  try {
+    const result = await generateDailyMissions();
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: {
+        status: 'success',
+        finishedAt: new Date(),
+        output: { generated: result.generated, errors: result.errors },
+      },
+    });
+  } catch (e) {
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: { status: 'error', finishedAt: new Date(), output: { error: String(e) } },
+    });
+    throw e;
+  }
+}
+
 let activeJob: ReturnType<typeof cron.schedule> | null = null;
 
 export function startDailyMissionsJob(): void {
@@ -71,7 +96,7 @@ export function startDailyMissionsJob(): void {
 
   activeJob = cron.schedule('0 5 * * *', async () => {
     logger.info('Running daily missions generation...');
-    await generateDailyMissions();
+    await runGenerateDailyMissions('cron');
   });
 
   logger.info('Daily missions job scheduled: daily at 05:00 UTC.');

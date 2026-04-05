@@ -1,0 +1,12 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/jobs/unknown-job/history"
+  },
+  "response": {
+    "status": 404,
+    "body": {
+      "error": "Unknown job: unknown-job"
+    }
+  }
+}

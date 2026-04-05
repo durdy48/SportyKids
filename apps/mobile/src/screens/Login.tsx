@@ -113,8 +113,8 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
 
               {providers.google && (
                 <TouchableOpacity
-                  style={styles.socialButton}
-                  onPress={() => Alert.alert(t('auth.google_signin', locale), 'Próximamente disponible en la app nativa.')}
+                  style={[styles.socialButton, styles.buttonDisabled]}
+                  onPress={() => Alert.alert(t('auth.google_signin', locale), 'Disponible en la app instalada desde la App Store.')}
                   accessible={true}
                   accessibilityLabel={t('a11y.auth.google_signin', locale)}
                   accessibilityRole="button"

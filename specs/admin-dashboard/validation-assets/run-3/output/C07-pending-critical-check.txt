@@ -1,0 +1,7 @@
+pendingTotal > 50 condition: true
+"pending_content_critical" type: true
+severity: 'error' for critical: true
+
+  L507: if (pendingTotal > 50) {
+  L509: type: 'pending_content_critical',
+  L510: severity: 'error',

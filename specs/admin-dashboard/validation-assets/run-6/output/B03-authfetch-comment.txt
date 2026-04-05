@@ -1,0 +1,13 @@
+authFetch found: true
+Explanation comment found: true
+
+Comment lines near authFetch:
+  L128: // authFetch passes the URL as-is (no internal base-URL prepending),
+  L129: // so we must always provide the full URL via API_BASE here.
+
+AuthFetch usage lines:
+  L17: import { authFetch, API_BASE } from '@/lib/api';
+  L128: // authFetch passes the URL as-is (no internal base-URL prepending),
+  L131: authFetch(`${API_BASE}/admin/overview`),
+  L132: authFetch(`${API_BASE}/admin/analytics/activity-chart`),
+  L133: authFetch(`${API_BASE}/admin/jobs`),

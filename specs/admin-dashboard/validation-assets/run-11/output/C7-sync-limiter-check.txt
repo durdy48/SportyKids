@@ -1,0 +1,2 @@
+hasSyncLimiterImport: true
+hasSyncLimiterInRoute: true

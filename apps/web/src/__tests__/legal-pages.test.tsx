@@ -16,8 +16,8 @@ vi.mock('@sportykids/shared', () => ({
   },
 }));
 
-import PrivacyPage from '../app/privacy/page';
-import TermsPage from '../app/terms/page';
+import PrivacyPage from '../app/(main)/privacy/page';
+import TermsPage from '../app/(main)/terms/page';
 
 describe('Privacy Page', () => {
   it('renders without auth', () => {

@@ -1,0 +1,10 @@
+Data-row key={i} occurrences (skeleton rows excluded): 0
+
+All key= attributes found:
+  key={String(col.key)}
+  key={i}
+  key={String(col.key)}
+  key={String((row as { id?: unknown }
+  key={String(col.key)}
+
+Stable data-row key present: true

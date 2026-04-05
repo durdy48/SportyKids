@@ -3,7 +3,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
 export const navigationRef = createNavigationContainerRef();
-import { Text, TouchableOpacity } from 'react-native';
+import { ActivityIndicator, View, Text, TouchableOpacity } from 'react-native';
 import { t } from '@sportykids/shared';
 import { useUser } from '../lib/user-context';
 import { haptic } from '../lib/haptics';
@@ -139,9 +139,15 @@ function MainTabs() {
 }
 
 export function AppNavigator() {
-  const { user, loading, locale } = useUser();
+  const { user, loading, locale, colors } = useUser();
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', backgroundColor: colors.background }}>
+        <ActivityIndicator size="large" color={colors.blue} />
+      </View>
+    );
+  }
 
   const needsAgeGate = user && user.ageGateCompleted === false;
 

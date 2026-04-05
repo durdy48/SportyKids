@@ -277,3 +277,15 @@ export async function syncAllSources(): Promise<SyncAllResult> {
 
   return allResult;
 }
+
+// ---------------------------------------------------------------------------
+// Sync a single source by ID (for admin-triggered syncs)
+// ---------------------------------------------------------------------------
+
+export async function syncSingleSource(sourceId: string): Promise<{ processed: number; errors: number }> {
+  const source = await prisma.rssSource.findUnique({ where: { id: sourceId } });
+  if (!source) throw new Error('Source not found');
+  if (!source.active) throw new Error('Source not found or inactive');
+  const result = await syncSource(sourceId, source.name, source.url, source.sport);
+  return { processed: result.itemsCreated, errors: result.moderationErrors ?? 0 };
+}

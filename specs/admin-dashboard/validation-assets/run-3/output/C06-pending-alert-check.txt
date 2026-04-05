@@ -1,0 +1,10 @@
+buildAlerts function: true
+30-min threshold: true
+pending_content type: true
+warning severity: true
+
+  L500: function buildAlerts(
+  L509: type: 'pending_content_critical',
+  L516: if (ageMs > 30 * 60 * 1000) {
+  L518: type: 'pending_content',
+  L598: const alerts = buildAlerts(pendingTotal, oldestPending, staleRss);

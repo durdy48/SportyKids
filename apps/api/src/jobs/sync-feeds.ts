@@ -69,6 +69,45 @@ export async function notifyTeamNews(syncStartTime: Date): Promise<void> {
   }
 }
 
+export async function runSyncFeeds(triggeredBy: 'cron' | 'manual' = 'cron', triggeredId?: string, existingRunId?: string): Promise<void> {
+  // Skip if another instance is already running (prevents duplicate runs from overlapping processes)
+  if (!existingRunId) {
+    const alreadyRunning = await prisma.jobRun.findFirst({
+      where: { jobName: 'sync-feeds', status: 'running' },
+    });
+    if (alreadyRunning) {
+      logger.info({ existingRunId: alreadyRunning.id }, 'sync-feeds already running — skipping duplicate execution');
+      return;
+    }
+  }
+
+  const run = existingRunId
+    ? { id: existingRunId }
+    : await prisma.jobRun.create({
+        data: { jobName: 'sync-feeds', status: 'running', triggeredBy, triggeredId },
+      });
+  try {
+    const syncStart = new Date();
+    const result = await syncAllSources();
+    await notifyTeamNews(syncStart);
+    await checkStalePendingContent();
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: {
+        status: 'success',
+        finishedAt: new Date(),
+        output: { processed: result.totalProcessed ?? 0, errors: result.totalErrors ?? 0 },
+      },
+    });
+  } catch (e) {
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: { status: 'error', finishedAt: new Date(), output: { error: String(e) } },
+    });
+    throw e;
+  }
+}
+
 // Run synchronization every 30 minutes
 export function startSyncJob(): void {
   if (activeJob) {
@@ -76,15 +115,12 @@ export function startSyncJob(): void {
     return;
   }
 
-  activeJob = cron.schedule('*/30 * * * *', async () => {
+  activeJob = cron.schedule('0 * * * *', async () => {
     logger.info('Running scheduled synchronization...');
-    const syncStart = new Date();
-    await syncAllSources();
-    await notifyTeamNews(syncStart);
-    await checkStalePendingContent();
+    await runSyncFeeds('cron');
   });
 
-  logger.info('Sync job scheduled: every 30 minutes.');
+  logger.info('Sync job scheduled: every 60 minutes.');
 
   // Start daily quiz generation job
   startDailyQuizJob();

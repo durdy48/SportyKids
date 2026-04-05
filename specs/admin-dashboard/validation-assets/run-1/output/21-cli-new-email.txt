@@ -1,0 +1,5 @@
+✓ Admin user created
+  Email:    validate-new-admin-1775379312945@sportykids-validation.test
+  ID:       cmnlj05pa0000267gz3vfyuh4
+  Password: niHXib1LTJva@CPD
+  (Change this password after first login)

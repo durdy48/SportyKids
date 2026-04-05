@@ -1,0 +1,1 @@
+✓ User validate-admin-r4-1775391368400@sportykids-validation.test (id: cmnlq6jei002e26zrr3iaik1t) updated to role='admin'

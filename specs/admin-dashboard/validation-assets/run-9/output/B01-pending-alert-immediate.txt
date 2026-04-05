@@ -1,0 +1,5 @@
+buildAlerts function found: true
+pendingTotal > 0 check: true
+pending_content type: true
+"newest just arrived" message: true
+"for over 30 minutes" message: true

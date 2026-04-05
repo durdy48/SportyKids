@@ -1,0 +1,3 @@
+hasAriaLive="polite": true
+Lines:
+  L332: <div className="bg-gray-800 rounded-xl overflow-hidden" aria-live="polite" aria-label="Jobs status table">

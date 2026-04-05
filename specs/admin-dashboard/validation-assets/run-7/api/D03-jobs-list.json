@@ -1,0 +1,130 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/jobs"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "jobs": [
+        {
+          "name": "sync-feeds",
+          "expectedFrequencyMinutes": 60,
+          "lastRun": {
+            "id": "cmnm1910t009i260xpr3fwbjd",
+            "startedAt": "2026-04-05T17:26:00.558Z",
+            "finishedAt": null,
+            "status": "running",
+            "triggeredBy": "manual",
+            "output": null
+          },
+          "isStale": false,
+          "statusLabel": "RUNNING"
+        },
+        {
+          "name": "sync-videos",
+          "expectedFrequencyMinutes": 360,
+          "lastRun": {
+            "id": "cmnly6f4z01mw26qi0nidcc72",
+            "startedAt": "2026-04-05T16:00:00.010Z",
+            "finishedAt": "2026-04-05T16:00:23.837Z",
+            "status": "success",
+            "triggeredBy": "cron",
+            "output": {
+              "errors": 0,
+              "processed": 60
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        },
+        {
+          "name": "sync-team-stats",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "generate-daily-quiz",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": {
+            "id": "cmnlzb2nn00052697w1bh86tm",
+            "startedAt": "2026-04-05T16:31:36.756Z",
+            "finishedAt": "2026-04-05T16:38:30.587Z",
+            "status": "success",
+            "triggeredBy": "manual",
+            "output": {
+              "errors": 94,
+              "generated": 7
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        },
+        {
+          "name": "generate-timeless-quiz",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "generate-daily-missions",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "streak-reminder",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "mission-reminder",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": {
+            "id": "cmnly6f4c01mu26qixa8xbhls",
+            "startedAt": "2026-04-05T16:00:00.010Z",
+            "finishedAt": "2026-04-05T16:00:00.040Z",
+            "status": "error",
+            "triggeredBy": "cron",
+            "output": {
+              "error": "PrismaClientValidationError: \nInvalid `prisma.dailyMission.findMany()` invocation in\n/Users/antonioduarteruiz/personal/sportykids/apps/api/src/jobs/mission-reminder.ts:17:46\n\n  14 const today = new Date().toISOString().split('T')[0];\n  15 \n  16 // Find missions that are >50% progress and not yet completed\n→ 17 const missions = await prisma.dailyMission.findMany({\n       where: {\n         date: \"2026-04-05\",\n         completed: false\n       },\n       include: {\n         user: {\n         ~~~~\n           select: {\n             id: true,\n             locale: true\n           }\n         }\n       }\n     })\n\nUnknown field `user` for include statement on model `DailyMission`. Available options are marked with ?."
+            }
+          },
+          "isStale": false,
+          "statusLabel": "ERROR"
+        },
+        {
+          "name": "send-weekly-digests",
+          "expectedFrequencyMinutes": 10080,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "live-scores",
+          "expectedFrequencyMinutes": 5,
+          "lastRun": {
+            "id": "cmnm17qb4003f261t2hplhaig",
+            "startedAt": "2026-04-05T17:25:00.012Z",
+            "finishedAt": "2026-04-05T17:25:00.168Z",
+            "status": "success",
+            "triggeredBy": "cron",
+            "output": {
+              "events": 0,
+              "notified": 0,
+              "processed": 0
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        }
+      ]
+    }
+  }
+}

@@ -244,3 +244,15 @@ export async function syncAllVideoSources(): Promise<VideoSyncAllResult> {
 
   return allResult;
 }
+
+// ---------------------------------------------------------------------------
+// Sync a single video source by ID (for admin-triggered syncs)
+// ---------------------------------------------------------------------------
+
+export async function syncSingleVideoSource(sourceId: string): Promise<{ processed: number; errors: number }> {
+  const source = await prisma.videoSource.findUnique({ where: { id: sourceId } });
+  if (!source) throw new Error('Source not found');
+  if (!source.active) throw new Error('Source not found or inactive');
+  const result = await syncVideoSource(sourceId, source.name, source.feedUrl, source.sport);
+  return { processed: result.itemsCreated, errors: result.moderationErrors ?? 0 };
+}

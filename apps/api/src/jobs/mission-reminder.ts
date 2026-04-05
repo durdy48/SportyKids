@@ -59,6 +59,31 @@ export async function sendMissionReminders(): Promise<{ sent: number; errors: nu
 // Cron job: daily at 18:00 UTC
 // ---------------------------------------------------------------------------
 
+export async function runMissionReminder(triggeredBy: 'cron' | 'manual' = 'cron', triggeredId?: string, existingRunId?: string): Promise<void> {
+  const run = existingRunId
+    ? { id: existingRunId }
+    : await prisma.jobRun.create({
+        data: { jobName: 'mission-reminder', status: 'running', triggeredBy, triggeredId },
+      });
+  try {
+    const result = await sendMissionReminders();
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: {
+        status: 'success',
+        finishedAt: new Date(),
+        output: { sent: result.sent, errors: result.errors },
+      },
+    });
+  } catch (e) {
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: { status: 'error', finishedAt: new Date(), output: { error: String(e) } },
+    });
+    throw e;
+  }
+}
+
 let activeJob: ReturnType<typeof cron.schedule> | null = null;
 
 export function startMissionReminderJob(): void {
@@ -69,7 +94,7 @@ export function startMissionReminderJob(): void {
 
   activeJob = cron.schedule('0 18 * * *', async () => {
     logger.info('Running mission reminders...');
-    await sendMissionReminders();
+    await runMissionReminder('cron');
   });
 
   logger.info('Mission reminder job scheduled: daily at 18:00 UTC.');

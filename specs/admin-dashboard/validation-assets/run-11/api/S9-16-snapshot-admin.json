@@ -1,0 +1,108 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/analytics/snapshot"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "snapshots": [
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "dau",
+          "value": {
+            "count": 0
+          }
+        },
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "mau",
+          "value": {
+            "count": 0
+          }
+        },
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "sport_activity",
+          "value": {
+            "padel": 0,
+            "tennis": 0,
+            "cycling": 0,
+            "football": 0,
+            "formula1": 0,
+            "swimming": 0,
+            "athletics": 0,
+            "basketball": 0
+          }
+        },
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "retention_d1",
+          "value": {
+            "rate": 0,
+            "cohortSize": 0
+          }
+        },
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "retention_d7",
+          "value": {
+            "rate": 0,
+            "cohortSize": 0
+          }
+        },
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "subscription_breakdown",
+          "value": {
+            "free": 13,
+            "premium": 0
+          }
+        },
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "parental_activation_rate",
+          "value": {
+            "rate": 1,
+            "totalParents": 2,
+            "withParental": 2
+          }
+        },
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "consent_rate",
+          "value": {
+            "rate": 0.15,
+            "total": 13,
+            "consented": 2
+          }
+        },
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "quiz_engagement",
+          "value": {
+            "dau": 0,
+            "rate": 0,
+            "quizAnswered": 0
+          }
+        },
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "missions_completed",
+          "value": {
+            "count": 0
+          }
+        },
+        {
+          "date": "2026-04-03T22:00:00.000Z",
+          "metric": "missions_claimed",
+          "value": {
+            "count": 0
+          }
+        }
+      ],
+      "from": "2026-03-05T23:00:00.000Z",
+      "to": "2026-04-04T21:59:59.999Z"
+    }
+  }
+}

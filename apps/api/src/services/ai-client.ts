@@ -168,7 +168,7 @@ export function isNonRetryableError(err: unknown): boolean {
 
 function getConfig(): AIClientConfig {
   return {
-    provider: (process.env.AI_PROVIDER as AIProvider) || 'ollama',
+    provider: (process.env.AI_PROVIDER as AIProvider) || 'groq',
     maxRetries: parseInt(process.env.AI_MAX_RETRIES || '3', 10),
     retryDelayMs: parseInt(process.env.AI_RETRY_DELAY_MS || '1000', 10),
     rateLimitRpm: parseInt(process.env.AI_RATE_LIMIT_RPM || '30', 10),

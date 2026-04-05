@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from 'react';
+import { useEffect, useRef } from 'react';
 import { View } from 'react-native';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
@@ -30,6 +30,20 @@ function StatusBarManager() {
   return <StatusBar style={resolvedTheme === 'dark' ? 'light' : 'dark'} />;
 }
 
+// Hides the splash screen once the user context has finished loading.
+// Must live inside UserProvider so it can access the loading state.
+function SplashHider() {
+  const { loading } = useUser();
+
+  useEffect(() => {
+    if (!loading) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [loading]);
+
+  return null;
+}
+
 function App() {
   const unsubscribeRef = useRef<(() => void) | null>(null);
 
@@ -50,15 +64,12 @@ function App() {
     };
   }, []);
 
-  const onLayoutRootView = useCallback(async () => {
-    await SplashScreen.hideAsync();
-  }, []);
-
   return (
     <ErrorBoundary>
-      <View style={{ flex: 1 }} onLayout={onLayoutRootView}>
+      <View style={{ flex: 1 }}>
         <SafeAreaProvider>
           <UserProvider>
+            <SplashHider />
             <StatusBarManager />
             <AppNavigator />
           </UserProvider>

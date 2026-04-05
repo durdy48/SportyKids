@@ -1,0 +1,128 @@
+{
+  "request": {
+    "url": "/api/admin/jobs"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "jobs": [
+        {
+          "name": "sync-feeds",
+          "expectedFrequencyMinutes": 60,
+          "lastRun": {
+            "id": "cmnm4q8qq008o2661vz3jjfm1",
+            "startedAt": "2026-04-05T19:03:22.562Z",
+            "finishedAt": null,
+            "status": "running",
+            "triggeredBy": "manual",
+            "output": null
+          },
+          "isStale": false,
+          "statusLabel": "RUNNING"
+        },
+        {
+          "name": "sync-videos",
+          "expectedFrequencyMinutes": 360,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "sync-team-stats",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "generate-daily-quiz",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "generate-timeless-quiz",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": {
+            "id": "cmnm2dbog000r262bh0338c14",
+            "startedAt": "2026-04-05T17:57:20.609Z",
+            "finishedAt": "2026-04-05T17:58:59.571Z",
+            "status": "success",
+            "triggeredBy": "manual",
+            "output": {
+              "errors": 0,
+              "skipped": 47,
+              "generated": 1
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        },
+        {
+          "name": "generate-daily-missions",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "streak-reminder",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": {
+            "id": "cmnm2gqpk003o261txzw8rnpk",
+            "startedAt": "2026-04-05T18:00:00.038Z",
+            "finishedAt": "2026-04-05T18:00:00.061Z",
+            "status": "success",
+            "triggeredBy": "cron",
+            "output": {
+              "sent": 0
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        },
+        {
+          "name": "mission-reminder",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "send-weekly-digests",
+          "expectedFrequencyMinutes": 10080,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "live-scores",
+          "expectedFrequencyMinutes": 5,
+          "lastRun": {
+            "id": "cmnm4lwgq001q2662kzndetpt",
+            "startedAt": "2026-04-05T19:00:00.024Z",
+            "finishedAt": "2026-04-05T19:00:00.198Z",
+            "status": "success",
+            "triggeredBy": "cron",
+            "output": {
+              "events": 0,
+              "notified": 0,
+              "processed": 0
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        },
+        {
+          "name": "compute-analytics",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        }
+      ]
+    }
+  },
+  "elapsed": 4
+}

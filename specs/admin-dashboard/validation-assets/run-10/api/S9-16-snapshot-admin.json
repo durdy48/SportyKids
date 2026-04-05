@@ -1,0 +1,14 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/analytics/snapshot"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "snapshots": [],
+      "from": "2026-03-05T23:00:00.000Z",
+      "to": "2026-04-04T21:59:59.999Z"
+    }
+  }
+}

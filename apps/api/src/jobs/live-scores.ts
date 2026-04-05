@@ -287,6 +287,31 @@ export async function pollLiveScores(): Promise<{ processed: number; events: num
 // Cron job: every 5 minutes
 // ---------------------------------------------------------------------------
 
+export async function runLiveScores(triggeredBy: 'cron' | 'manual' = 'cron', triggeredId?: string, existingRunId?: string): Promise<void> {
+  const run = existingRunId
+    ? { id: existingRunId }
+    : await prisma.jobRun.create({
+        data: { jobName: 'live-scores', status: 'running', triggeredBy, triggeredId },
+      });
+  try {
+    const result = await pollLiveScores();
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: {
+        status: 'success',
+        finishedAt: new Date(),
+        output: { processed: result.processed, events: result.events, notified: result.notified },
+      },
+    });
+  } catch (e) {
+    await prisma.jobRun.update({
+      where: { id: run.id },
+      data: { status: 'error', finishedAt: new Date(), output: { error: String(e) } },
+    });
+    throw e;
+  }
+}
+
 let activeJob: ReturnType<typeof cron.schedule> | null = null;
 
 export function startLiveScoresJob(): void {
@@ -297,7 +322,7 @@ export function startLiveScoresJob(): void {
 
   activeJob = cron.schedule('*/5 * * * *', async () => {
     logger.info('Polling live scores...');
-    await pollLiveScores();
+    await runLiveScores('cron');
   });
 
   logger.info('Live scores job scheduled: every 5 minutes.');

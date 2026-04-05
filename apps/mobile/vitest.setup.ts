@@ -63,6 +63,10 @@ vi.mock('react-native', () => {
       Presets: { easeInEaseOut: {}, linear: {}, spring: {} },
     },
     useColorScheme: vi.fn(() => 'light'),
+    // ExpoCryptoAES is the native module used by expo-secure-store v14+ (SDK 54+).
+    // Stub it so isSecureStoreSupported() returns true in tests, allowing
+    // secure-storage tests to exercise the SecureStore code paths.
+    NativeModules: { ExpoCryptoAES: {} },
   };
   return { ...RN, default: RN };
 });

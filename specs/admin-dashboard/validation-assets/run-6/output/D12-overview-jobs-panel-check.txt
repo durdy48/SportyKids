@@ -1,0 +1,4 @@
+Contains '/admin/jobs': true
+Matching lines:
+  L133: authFetch(`${API_BASE}/admin/jobs`),
+  L354: <Link href="/admin/jobs" className="text-xs text-blue-400 hover:text-blue-300 underline">

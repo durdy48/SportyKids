@@ -1,0 +1,23 @@
+Files checked: 20
+Matches found: 0
+
+apps/api/src/routes/admin.ts: CLEAN
+apps/api/src/services/job-runner.ts: CLEAN
+apps/api/src/jobs/generate-daily-missions.test.ts: CLEAN
+apps/api/src/jobs/generate-daily-missions.ts: CLEAN
+apps/api/src/jobs/generate-daily-quiz.test.ts: CLEAN
+apps/api/src/jobs/generate-daily-quiz.ts: CLEAN
+apps/api/src/jobs/generate-timeless-quiz.ts: CLEAN
+apps/api/src/jobs/live-scores.ts: CLEAN
+apps/api/src/jobs/mission-reminder.test.ts: CLEAN
+apps/api/src/jobs/mission-reminder.ts: CLEAN
+apps/api/src/jobs/send-weekly-digests.test.ts: CLEAN
+apps/api/src/jobs/send-weekly-digests.ts: CLEAN
+apps/api/src/jobs/streak-reminder.test.ts: CLEAN
+apps/api/src/jobs/streak-reminder.ts: CLEAN
+apps/api/src/jobs/sync-feeds.test.ts: CLEAN
+apps/api/src/jobs/sync-feeds.ts: CLEAN
+apps/api/src/jobs/sync-team-stats.test.ts: CLEAN
+apps/api/src/jobs/sync-team-stats.ts: CLEAN
+apps/api/src/jobs/sync-videos.test.ts: CLEAN
+apps/api/src/jobs/sync-videos.ts: CLEAN

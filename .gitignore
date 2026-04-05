@@ -24,3 +24,6 @@ playwright/.cache/
 
 # Generated store screenshots
 apps/mobile/store-metadata/screenshots/
+.claude/
+CLAUDE_OPTIMIZER.skill.md
+app.json

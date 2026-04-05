@@ -1,0 +1,4 @@
+{
+  "status": 400,
+  "error": "feedUrl must be a YouTube URL"
+}

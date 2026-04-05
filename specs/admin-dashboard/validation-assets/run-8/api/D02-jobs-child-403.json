@@ -1,0 +1,20 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/jobs",
+    "headers": {
+      "Authorization": "Bearer <child-token>"
+    }
+  },
+  "response": {
+    "status": 403,
+    "body": {
+      "error": {
+        "code": "AUTHORIZATION_ERROR",
+        "message": "Insufficient permissions",
+        "stack": "AuthorizationError: Insufficient permissions\n    at <anonymous> (/Users/antonioduarteruiz/personal/sportykids/apps/api/src/middleware/auth.ts:50:13)\n    at Layer.handleRequest (/Users/antonioduarteruiz/personal/sportykids/node_modules/router/lib/layer.js:152:17)\n    at next (/Users/antonioduarteruiz/personal/sportykids/node_modules/router/lib/route.js:157:13)\n    at requireAuth (/Users/antonioduarteruiz/personal/sportykids/apps/api/src/middleware/auth.ts:38:3)\n    at Layer.handleRequest (/Users/antonioduarteruiz/personal/sportykids/node_modules/router/lib/layer.js:152:17)\n    at next (/Users/antonioduarteruiz/personal/sportykids/node_modules/router/lib/route.js:157:13)\n    at Route.dispatch (/Users/antonioduarteruiz/personal/sportykids/node_modules/router/lib/route.js:117:3)\n    at handle (/Users/antonioduarteruiz/personal/sportykids/node_modules/router/index.js:435:11)\n    at Layer.handleRequest (/Users/antonioduarteruiz/personal/sportykids/node_modules/router/lib/layer.js:152:17)\n    at /Users/antonioduarteruiz/personal/sportykids/node_modules/router/index.js:295:15",
+        "requestId": "18e93ed0-ed47-48e8-a684-3df66edc12f5"
+      }
+    }
+  }
+}

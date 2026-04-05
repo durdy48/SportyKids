@@ -1,0 +1,51 @@
+buildAlerts function found: true
+pendingTotal > 0 check: true
+pending_content type: true
+"newest just arrived" message: true
+"for over 30 minutes" message: true
+Unconditional fire (pendingTotal > 0 → pending_content within ~300 chars): false
+
+buildAlerts source (first 1500 chars):
+function buildAlerts(
+  pendingTotal: number,
+  oldestPending: { createdAt: Date } | null,
+  staleRss: Array<{ name: string; lastSyncedAt: Date | null }>,
+): OverviewAlert[] {
+  const alerts: OverviewAlert[] = [];
+
+  if (pendingTotal > 50) {
+    alerts.push({
+      type: 'pending_content_critical',
+      severity: 'error',
+      message: `${pendingTotal} items pending — queue is growing faster than it is cleared`,
+      actionUrl: '/admin/moderation',
+    });
+  } else if (pendingTotal > 0) {
+    // Emit warning immediately when any items are pending; the 30-min value is
+    // part of the message text only, not a gate condition (per PRD spec).
+    const ageMsg =
+      oldestPending
+        ? Date.now() - new Date(oldestPending.createdAt).getTime() > 30 * 60 * 1000
+          ? 'for over 30 minutes'
+          : '(newest just arrived)'
+        : '';
+    alerts.push({
+      type: 'pending_content',
+      severity: 'warning',
+      message: `${pendingTotal} items pending moderation ${ageMsg}`.trim(),
+      actionUrl: '/admin/moderation',
+    });
+  }
+
+  for (const source of staleRss) {
+    const lastSync = source.lastSyncedAt ? new Date(source.lastSyncedAt) : null;
+    const hoursAgo = lastSync
+      ? Math.floor((Date.now() - lastSync.getTime()) / (60 * 60 * 1000))
+      : null;
+    alerts.push({
+      type: 'stale_rss',
+      severity: 'warning',
+      message:
+        hoursAgo !== null
+          ? `${source.name} RSS source has not synced in ${hoursAgo}h`
+          : `${source.n

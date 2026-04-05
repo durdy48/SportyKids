@@ -398,53 +398,83 @@ router.get('/google/callback', async (req: Request, res: Response, next) => {
   })(req, res, next);
 });
 
-// POST /api/auth/google/token — Mobile flow: verify Google ID token
+// POST /api/auth/google/token — Mobile flow: verify Google ID token or access token
 router.post('/google/token', async (req: Request, res: Response) => {
-  const { idToken } = req.body;
-  if (!idToken || typeof idToken !== 'string') {
-    throw new ValidationError('ID token required');
+  const { idToken, accessToken: googleAccessToken } = req.body;
+  if (!idToken && !googleAccessToken) {
+    throw new ValidationError('Token required');
   }
 
   if (!process.env.GOOGLE_CLIENT_ID) {
     throw new NotFoundError('Google OAuth not configured');
   }
 
-  const { OAuth2Client } = await import('google-auth-library');
-  const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+  let googleSub: string;
+  let googleEmail: string | null;
+  let googleName: string;
 
-  let ticket;
-  try {
-    ticket = await client.verifyIdToken({
-      idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
-    });
-  } catch {
-    throw new AuthenticationError('Invalid Google ID token');
+  if (idToken && typeof idToken === 'string') {
+    // Verify Google ID token (standard flow)
+    const { OAuth2Client } = await import('google-auth-library');
+    const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+
+    let ticket;
+    try {
+      ticket = await client.verifyIdToken({
+        idToken,
+        audience: process.env.GOOGLE_CLIENT_ID,
+      });
+    } catch {
+      throw new AuthenticationError('Invalid Google ID token');
+    }
+
+    const payload = ticket.getPayload();
+    if (!payload?.sub) {
+      throw new AuthenticationError('Invalid Google ID token payload');
+    }
+
+    googleSub = payload.sub;
+    googleEmail = payload.email || null;
+    googleName = payload.name || 'User';
+  } else {
+    // Verify Google access token via userinfo endpoint (fallback for Expo Go flow)
+    if (typeof googleAccessToken !== 'string') {
+      throw new ValidationError('Invalid access token');
+    }
+
+    let userInfo: { sub?: string; email?: string; name?: string };
+    try {
+      const r = await fetch(
+        `https://www.googleapis.com/oauth2/v3/userinfo?access_token=${encodeURIComponent(googleAccessToken)}`
+      );
+      if (!r.ok) throw new Error('Userinfo request failed');
+      userInfo = (await r.json()) as { sub?: string; email?: string; name?: string };
+    } catch {
+      throw new AuthenticationError('Invalid Google access token');
+    }
+
+    if (!userInfo.sub) {
+      throw new AuthenticationError('Invalid Google access token payload');
+    }
+
+    googleSub = userInfo.sub;
+    googleEmail = userInfo.email || null;
+    googleName = userInfo.name || 'User';
   }
 
-  const googlePayload = ticket.getPayload();
-  if (!googlePayload || !googlePayload.sub) {
-    throw new AuthenticationError('Invalid Google ID token payload');
-  }
-
-  const { user } = await findOrCreateSocialUser(
-    'google',
-    googlePayload.sub,
-    googlePayload.email || null,
-    googlePayload.name || 'User',
-  );
+  const { user } = await findOrCreateSocialUser('google', googleSub, googleEmail, googleName);
 
   const jwtPayload: JwtPayload = {
     userId: user.id,
     role: (user.role as 'child' | 'parent') || 'parent',
     parentUserId: user.parentUserId || undefined,
   };
-  const accessToken = generateAccessToken(jwtPayload);
-  const refreshToken = await generateRefreshToken(user.id);
+  const appAccessToken = generateAccessToken(jwtPayload);
+  const appRefreshToken = await generateRefreshToken(user.id);
 
   res.json({
-    accessToken,
-    refreshToken: refreshToken.token,
+    accessToken: appAccessToken,
+    refreshToken: appRefreshToken.token,
     user: formatUser(user),
   });
 });

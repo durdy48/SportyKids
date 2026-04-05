@@ -1,0 +1,15 @@
+hasAssertion: true
+hasThrow: true
+
+Relevant lines:
+  L31: const JOB_MAP: Record<string, JobFn> = {
+  L32: 'sync-feeds': runSyncFeeds,
+  L33: 'sync-videos': runSyncVideos,
+  L34: 'sync-team-stats': runSyncTeamStats,
+  L44: // Verify JOB_MAP and JOB_FREQUENCIES are in sync
+  L46: const mapKeys = Object.keys(JOB_MAP).sort().join(',');
+  L49: throw new Error(`JOB_MAP and JOB_FREQUENCIES are out of sync: map=[${mapKeys}] freq=[${freqKeys}]`);
+  L53: export async function triggerJob(jobName: string, adminUserId: string): Promise<{ jobRunId: string }> {
+  L55: throw new Error(`Unknown job: ${jobName}`);
+  L58: const fn = JOB_MAP[jobName]!;
+  L65: // Run async — do not await. Pass existingRunId so the job skips its own create call.

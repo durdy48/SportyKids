@@ -1,0 +1,7 @@
+"stale_rss" found in test file: true
+it() block for stale_rss: true
+"6 hours" mentioned near stale_rss test: true
+
+Matching lines:
+  L736: it('includes stale_rss alert when a source has not synced in > 6 hours (W2)', async () => {
+  L748: const alert = res.body.alerts.find((a: { type: string }) => a.type === 'stale_rss');

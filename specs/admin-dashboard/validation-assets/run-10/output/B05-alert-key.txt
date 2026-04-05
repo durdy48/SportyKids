@@ -1,0 +1,2 @@
+key uses type+message: true
+key uses index (bad): false

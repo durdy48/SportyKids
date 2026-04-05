@@ -1,0 +1,6 @@
+key uses ${alert.type}-${alert.message}: true
+key uses index (bad): false
+
+Alert map lines:
+  L189: {alerts.map((alert) => {
+  L193: key={`${alert.type}-${alert.message}`}

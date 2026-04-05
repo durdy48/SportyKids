@@ -1,0 +1,13 @@
+{
+  "request": {
+    "method": "PATCH",
+    "url": "/api/admin/content/news/fake-id-for-validation/reject",
+    "body": {}
+  },
+  "response": {
+    "status": 400,
+    "body": {
+      "error": "reason is required (min 3 chars)"
+    }
+  }
+}

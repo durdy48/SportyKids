@@ -1,0 +1,10 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/analytics/activity-chart"
+  },
+  "response": {
+    "status": 200,
+    "body": []
+  }
+}

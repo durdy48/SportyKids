@@ -1,0 +1,3 @@
+backend imports SPORTS from shared: true
+frontend imports SPORTS from shared: true
+backend local SPORTS const: false

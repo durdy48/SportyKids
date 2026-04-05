@@ -109,13 +109,20 @@ export async function fetchAuthProviders(): Promise<{ google: boolean; apple: bo
 
 export async function loginWithSocialToken(
   provider: 'google' | 'apple',
-  idToken: string,
-  name?: string
+  token: string,
+  name?: string,
+  tokenType: 'idToken' | 'accessToken' = 'idToken'
 ): Promise<AuthResponse> {
+  const body: Record<string, string | undefined> = { name };
+  if (tokenType === 'accessToken') {
+    body.accessToken = token;
+  } else {
+    body.idToken = token;
+  }
   const res = await fetch(`${API_BASE}/auth/${provider}/token`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ idToken, name }),
+    body: JSON.stringify(body),
   });
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));

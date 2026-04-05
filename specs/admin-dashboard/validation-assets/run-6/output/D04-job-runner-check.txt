@@ -1,0 +1,17 @@
+KNOWN_JOBS present: true
+Exported: true
+Entry count (JOB_FREQUENCIES keys): 10
+
+JOB_FREQUENCIES block:
+JOB_FREQUENCIES: Record<string, number> = {
+  'sync-feeds': 30,
+  'sync-videos': 360,
+  'sync-team-stats': 1440,
+  'generate-daily-quiz': 1440,
+  'generate-timeless-quiz': 1440,
+  'generate-daily-missions': 1440,
+  'streak-reminder': 1440,
+  'mission-reminder': 1440,
+  'send-weekly-digests': 10080,
+  'live-scores': 5,
+}

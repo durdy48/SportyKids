@@ -1,0 +1,3 @@
+hasAnalyticsLink: true
+Matching lines:
+  { href: '/admin/analytics', label: 'Analytics', exact: false },

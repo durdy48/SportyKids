@@ -1,0 +1,94 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/jobs"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "jobs": [
+        {
+          "name": "sync-feeds",
+          "expectedFrequencyMinutes": 30,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "sync-videos",
+          "expectedFrequencyMinutes": 360,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "sync-team-stats",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "generate-daily-quiz",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "generate-timeless-quiz",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "generate-daily-missions",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "streak-reminder",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "mission-reminder",
+          "expectedFrequencyMinutes": 1440,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "send-weekly-digests",
+          "expectedFrequencyMinutes": 10080,
+          "lastRun": null,
+          "isStale": false,
+          "statusLabel": "NEVER"
+        },
+        {
+          "name": "live-scores",
+          "expectedFrequencyMinutes": 5,
+          "lastRun": {
+            "id": "cmnlsn36x000026qinper7wlm",
+            "startedAt": "2026-04-05T13:25:00.010Z",
+            "finishedAt": "2026-04-05T13:25:00.205Z",
+            "status": "success",
+            "triggeredBy": "cron",
+            "output": {
+              "events": 0,
+              "notified": 0,
+              "processed": 0
+            }
+          },
+          "isStale": false,
+          "statusLabel": "OK"
+        }
+      ]
+    }
+  }
+}

@@ -6,6 +6,57 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/).
 
 ## [Unreleased]
 
+### Added — Admin Dashboard (Phases S1–S6)
+
+#### S1–S2: Infrastructure, Moderation & Reports
+- Admin route group `(admin)/admin/*` with dedicated layout and `AdminSidebar` component
+- `AdminTable<T>`, `AdminBadge`, `AdminMetricCard` reusable component library
+- `requireRole('admin')` middleware for all admin endpoints
+- `authFetch()` utility for admin API calls (auto-attaches JWT Bearer token)
+- Content moderation dashboard — approve/reject news and reels, batch actions (up to 100), content age/sport filters
+- `GET /api/admin/moderation/pending`, `PATCH /api/admin/content/:type/:id/approve|reject`, `POST /api/admin/content/batch`
+- Content reports dashboard — filter by status/type, update report status
+- `GET /api/admin/reports`, `PATCH /api/admin/reports/:id`
+
+#### S3: Overview KPIs
+- Admin overview page with KPI cards (users, content, pending, reports), Recharts PieChart for subscription breakdown
+- System alert banners with severity levels and actionable links
+- `GET /api/admin/overview` endpoint with 5-min cache and subscription tier breakdown
+- Activity chart — `GET /api/admin/analytics/activity-chart` (30-day daily active users)
+
+#### S4: Analytics Snapshots
+- `AnalyticsSnapshot` Prisma model for daily metric aggregation (11 metric types)
+- `compute-analytics` cron job (02:00 UTC) computing DAU, MAU, D1/D7 retention, sport activity, subscription breakdown, parental activation rate, consent rate, quiz engagement, missions completed/claimed
+- Analytics dashboard with Recharts AreaChart (DAU/MAU trend), BarChart (retention), PolarArea (sport activity), PieChart (subscription breakdown)
+- `GET /api/admin/analytics/snapshot?from&to&metrics`, `GET /api/admin/analytics/top-content?from&to&limit`
+
+#### S5: Operations & Jobs
+- `JobRun` Prisma model tracking execution history for all 11 cron jobs (status, duration, triggeredBy, error)
+- `JobRunner` service wrapping all cron jobs with pre/post hooks writing JobRun records
+- Manual job trigger with async execution (202 Accepted) and status polling
+- Jobs dashboard showing real-time status, last run, duration, history (up to 50 entries per job)
+- `GET /api/admin/jobs`, `POST /api/admin/jobs/:name/trigger`, `GET /api/admin/jobs/:name/history`
+- RSS sources management — list, approve/reject sources
+- `GET /api/admin/sources`, `PATCH /api/admin/sources/:id/status`
+
+#### S6: Users & Organizations
+- Users list with paginated table, search (debounced 300ms), role and tier filters
+- User detail page — full profile, parental profile (with `scheduleLocked` computed field), recent activity, stats
+- Change Tier modal (with RevenueCat warning), Change Role modal (with admin access warning), Revoke Sessions
+- `GET /api/admin/users`, `GET /api/admin/users/:id` (explicit Prisma select, no passwordHash leak)
+- `PATCH /api/admin/users/:id/tier`, `PATCH /api/admin/users/:id/role` (403 on self-change)
+- `POST /api/admin/users/:id/revoke-tokens` — deletes all RefreshTokens for a user
+- Organizations list with member count, search filter
+- Organization detail page — Recharts AreaChart (30-day activity), members table, invite code with copy button
+- `GET /api/admin/organizations`, `GET /api/admin/organizations/:id`, `PATCH /api/admin/organizations/:id`
+- `POST /api/admin/organizations/:id/regenerate-code` (admin-scoped, separate from org-owner endpoint)
+
+### Fixed
+- `UserProvider` redirect bug — anonymous users were incorrectly redirected away from `/login` and `/register`
+- `User.role` type in shared package extended to include `'admin'` (was limited to `'child' | 'parent'`)
+- `AdminTable<T>` generic constraint relaxed from `Record<string, unknown>` to `object` for proper type inference
+- Import paths for `auth/callback` and `organizations` pages corrected to use `@/` aliases after route group migration
+
 ### Added
 - Groq AI provider integration with free tier support (14,400 req/day)
 - Gemini AI provider support for content generation

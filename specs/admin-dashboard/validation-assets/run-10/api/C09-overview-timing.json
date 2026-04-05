@@ -1,0 +1,110 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/overview"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "kpis": {
+        "totalUsers": 5,
+        "dau": 0,
+        "pendingContent": 0,
+        "activeRssSources": 182
+      },
+      "alerts": [
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Marca - Swimming RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Marca - Football RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Marca - La Liga RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Marca - Champions League RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "World Athletics News RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Marca - Basketball RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Marca - Athletics RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Goal.com RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Marca - Tennis RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Marca - Cycling RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Marca - Formula 1 RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "AS - Formula 1 RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "Marca - Padel RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        },
+        {
+          "type": "stale_rss",
+          "severity": "warning",
+          "message": "PadelFIP RSS source has never synced",
+          "actionUrl": "/admin/sources"
+        }
+      ],
+      "subscriptionBreakdown": {
+        "free": 5,
+        "premium": 0
+      }
+    }
+  },
+  "timing": {
+    "elapsedMs": 1
+  }
+}

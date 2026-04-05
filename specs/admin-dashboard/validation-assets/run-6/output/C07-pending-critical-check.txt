@@ -1,0 +1,3 @@
+pendingTotal > 50: true
+pending_content_critical: true
+severity error: true

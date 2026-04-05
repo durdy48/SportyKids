@@ -1,0 +1,15 @@
+{
+  "request": {
+    "method": "GET",
+    "url": "/api/admin/moderation/pending?type=reel"
+  },
+  "response": {
+    "status": 200,
+    "body": {
+      "items": [],
+      "total": 0,
+      "page": 1,
+      "totalPages": 1
+    }
+  }
+}
