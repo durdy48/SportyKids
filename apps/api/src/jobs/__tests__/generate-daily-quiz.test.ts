@@ -110,10 +110,10 @@ describe('generateDailyQuiz', () => {
   });
 
   // -------------------------------------------------------------------------
-  // 30-day news window
+  // 48h news window
   // -------------------------------------------------------------------------
-  describe('30-day news window', () => {
-    it('uses a 30-day cutoff for newsItem query', async () => {
+  describe('48h news window', () => {
+    it('uses a 48h cutoff for newsItem query', async () => {
       const articles = [makeArticle('a1', 'football')];
       vi.mocked(prisma.newsItem.findMany).mockResolvedValue(articles);
       vi.mocked(generateQuizFromNews).mockResolvedValue(null);
@@ -127,8 +127,8 @@ describe('generateDailyQuiz', () => {
       const cutoffDate: Date = call.where?.publishedAt?.gte;
       expect(cutoffDate).toBeInstanceOf(Date);
 
-      // The cutoff should be approximately 30 days ago (within 5 seconds tolerance)
-      const expectedCutoff = before - 30 * 24 * 60 * 60 * 1000;
+      // The cutoff should be approximately 48h ago (within 5 seconds tolerance)
+      const expectedCutoff = before - 48 * 60 * 60 * 1000;
       const diff = Math.abs(cutoffDate.getTime() - expectedCutoff);
       expect(diff).toBeLessThan(5000);
     });
