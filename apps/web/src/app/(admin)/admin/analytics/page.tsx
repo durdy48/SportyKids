@@ -103,8 +103,8 @@ export default function AnalyticsPage() {
     try {
       const { from, to } = getDateRange(days);
       const [snapshotsRes, topContentRes] = await Promise.all([
-        authFetch(`${API_BASE}/api/admin/analytics/snapshot?from=${from}&to=${to}`),
-        authFetch(`${API_BASE}/api/admin/analytics/top-content?from=${from}&to=${to}&limit=10`),
+        authFetch(`${API_BASE}/admin/analytics/snapshot?from=${from}&to=${to}`),
+        authFetch(`${API_BASE}/admin/analytics/top-content?from=${from}&to=${to}&limit=10`),
       ]);
 
       if (!snapshotsRes.ok || !topContentRes.ok) {
