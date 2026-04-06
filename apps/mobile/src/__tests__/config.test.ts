@@ -74,10 +74,10 @@ describe('resolveApiBase', () => {
     expect(resolveApiBase()).toBe('http://192.168.1.189:3001/api');
   });
 
-  it('falls back to localhost when no signal available', async () => {
+  it('falls back to production URL when no signal available', async () => {
     mockExpoConfig = {};
     const resolveApiBase = await getResolveApiBase();
-    expect(resolveApiBase()).toBe('http://localhost:3001/api');
+    expect(resolveApiBase()).toBe('https://sportykids-api.fly.dev/api');
   });
 
   it('env var takes priority over EAS channel', async () => {

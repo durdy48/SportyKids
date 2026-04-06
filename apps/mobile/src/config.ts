@@ -23,14 +23,14 @@ export function resolveApiBase(): string {
     return ENV_MAP[channel];
   }
 
-  // 3. Development fallback — use Expo debugger host IP for physical device compatibility
+  // 3. Local dev — use Expo debugger host IP (only present when Metro is running)
   const debuggerHost = Constants.expoConfig?.hostUri?.split(':')[0];
   if (debuggerHost) {
     return `http://${debuggerHost}:3001/api`;
   }
 
-  // 4. Last resort localhost (simulator only)
-  return 'http://localhost:3001/api';
+  // 4. Default to production — covers EAS Updates loaded in Expo Go without channel metadata
+  return 'https://sportykids-api.fly.dev/api';
 }
 
 export const API_BASE = resolveApiBase();
@@ -56,7 +56,7 @@ function resolveWebBase(): string {
     return `http://${debuggerHost}:3000`;
   }
 
-  return 'http://localhost:3000';
+  return 'https://sportykids.app';
 }
 
 export const WEB_BASE = resolveWebBase();
