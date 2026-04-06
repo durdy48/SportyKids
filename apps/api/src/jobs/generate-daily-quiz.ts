@@ -93,6 +93,7 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
       publishedAt: { gte: cutoff },
     },
     orderBy: { publishedAt: 'desc' },
+    take: 300, // cap to avoid loading thousands of articles into memory
     select: {
       id: true,
       title: true,
