@@ -283,9 +283,7 @@ async function sendViaOpenAICompat(
 
   const choice = response.choices?.[0];
   if (!choice?.message?.content) {
-    // Mark retryable so the caller gets one more attempt on the same provider
-    // before falling through to the next in the chain (e.g. fallback).
-    throw new AIServiceError('Empty response from AI', provider, { retryable: true });
+    throw new AIServiceError('Empty response from AI', provider);
   }
 
   return {

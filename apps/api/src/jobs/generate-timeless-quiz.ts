@@ -35,6 +35,8 @@ export async function generateTimelessQuiz(): Promise<TimelessQuizResult> {
 
   logger.info('Starting weekly timeless quiz generation...');
 
+  let consecutiveProviderFailures = 0;
+
   for (const sport of SPORTS) {
     for (const ageRange of AGE_RANGES) {
       let generatedForSlot = 0;
@@ -49,8 +51,11 @@ export async function generateTimelessQuiz(): Promise<TimelessQuizResult> {
             if (!question) {
               logger.warn({ sport, ageRange, attempt }, 'Timeless question generation returned null');
               result.skipped++;
+              consecutiveProviderFailures++;
               break; // AI unavailable or failed — move to next question slot
             }
+
+            consecutiveProviderFailures = 0; // reset on any successful AI call
 
             const normalizedTopic = question.topic; // already normalised in generateTimelessQuestion
             const duplicate = await isTopicDuplicate(normalizedTopic);
@@ -89,6 +94,7 @@ export async function generateTimelessQuiz(): Promise<TimelessQuizResult> {
             break; // Success — move to next question in this slot
           } catch (err) {
             result.errors++;
+            consecutiveProviderFailures++;
             logger.error(
               { err: err instanceof Error ? err : new Error(String(err)), sport, ageRange, attempt },
               'Error generating timeless question',
@@ -103,6 +109,16 @@ export async function generateTimelessQuiz(): Promise<TimelessQuizResult> {
             { sport, ageRange, slot: q },
             'Max retries exceeded for timeless question slot, moving to next',
           );
+        }
+
+        // Abort early if the AI provider is consistently down — avoids burning retries
+        // across all remaining sport/ageRange combinations.
+        if (consecutiveProviderFailures >= 5 && result.generated === 0) {
+          logger.warn(
+            { errors: result.errors, skipped: result.skipped },
+            'Aborting timeless quiz generation: 5 consecutive failures with 0 generated, provider likely unavailable',
+          );
+          return result;
         }
 
         // Brief delay between questions to avoid overwhelming AI provider
