@@ -15,24 +15,27 @@ export async function sendMissionReminders(): Promise<{ sent: number; errors: nu
 
   // Find missions that are >50% progress and not yet completed
   const missions = await prisma.dailyMission.findMany({
-    where: {
-      date: today,
-      completed: false,
-    },
-    include: {
-      user: {
-        select: { id: true, locale: true },
-      },
-    },
+    where: { date: today, completed: false },
   });
+
+  // Fetch push-enabled users for those missions in a single query
+  const userIds = [...new Set(missions.map((m) => m.userId))];
+  const users = await prisma.user.findMany({
+    where: { id: { in: userIds }, pushEnabled: true },
+    select: { id: true, locale: true },
+  });
+  const userMap = new Map(users.map((u) => [u.id, u]));
 
   for (const mission of missions) {
     // Only remind if >50% progress
     if (mission.target <= 0 || mission.progress / mission.target <= 0.5) continue;
 
+    const user = userMap.get(mission.userId);
+    if (!user) continue; // push not enabled or user not found
+
     try {
-      const locale = mission.user.locale || 'es';
-      await sendPushToUser(mission.user.id, {
+      const locale = user.locale || 'es';
+      await sendPushToUser(user.id, {
         title: t('push.mission_almost_title', locale),
         body: t('push.mission_almost_body', locale),
         data: { screen: 'HomeFeed' },
