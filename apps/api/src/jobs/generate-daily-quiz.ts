@@ -84,8 +84,8 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
     return result;
   }
 
-  // Get recent approved news from the last 30 days (widened from 48h)
-  const cutoff = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+  // Get approved news from the last 48h — quiz questions should be about recent news
+  const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000);
 
   const recentNews = await prisma.newsItem.findMany({
     where: {
