@@ -15,8 +15,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { t } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
 import { useUser } from '../lib/user-context';
-import { register, fetchAuthProviders } from '../lib/auth';
-import { WEB_BASE } from '../config';
+import { register } from '../lib/auth';
+import { WEB_BASE, GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '../config';
 
 export function RegisterScreen({ navigation }: { navigation: { goBack: () => void } }) {
   const { setUser, locale, colors } = useUser();
@@ -27,11 +27,8 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
   const [age, setAge] = useState('');
   const [role, setRole] = useState<'parent' | 'child'>('parent');
   const [loading, setLoading] = useState(false);
-  const [providers, setProviders] = useState<{ google: boolean; apple: boolean }>({ google: false, apple: false });
-
-  useEffect(() => {
-    fetchAuthProviders().then(setProviders).catch(() => {});
-  }, []);
+  const hasGoogleClientId = !!(GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID);
+  const providers = { google: hasGoogleClientId, apple: false };
 
   const handleRegister = async () => {
     if (!name.trim() || !email.trim() || !password.trim()) return;

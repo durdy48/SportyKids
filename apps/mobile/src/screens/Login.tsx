@@ -15,8 +15,8 @@ import * as WebBrowser from 'expo-web-browser';
 import { t } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
 import { useUser } from '../lib/user-context';
-import { login, fetchAuthProviders } from '../lib/auth';
-import { WEB_BASE } from '../config';
+import { login } from '../lib/auth';
+import { WEB_BASE, GOOGLE_IOS_CLIENT_ID, GOOGLE_WEB_CLIENT_ID } from '../config';
 
 export function LoginScreen({ navigation }: { navigation: { navigate: (screen: string) => void } }) {
   const { setUser, locale, colors } = useUser();
@@ -24,11 +24,8 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [providers, setProviders] = useState<{ google: boolean; apple: boolean }>({ google: false, apple: false });
-
-  useEffect(() => {
-    fetchAuthProviders().then(setProviders).catch(() => {});
-  }, []);
+  const hasGoogleClientId = !!(GOOGLE_IOS_CLIENT_ID || GOOGLE_WEB_CLIENT_ID);
+  const providers = { google: hasGoogleClientId, apple: false };
 
   const handleLogin = async () => {
     if (!email.trim() || !password.trim()) return;
