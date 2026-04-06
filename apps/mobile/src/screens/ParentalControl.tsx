@@ -174,7 +174,19 @@ export function ParentalControlScreen() {
       const updated = await updateParentalProfile(user.id, data);
       setProfile(updated as unknown as ParentalProfileData);
       setParentalProfile(updated);
-    } catch { /* */ }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('401') || msg.toLowerCase().includes('session')) {
+        // Parental session expired — ask user to re-verify PIN
+        Alert.alert(
+          t('parental.session_expired', locale),
+          undefined,
+          [{ text: t('buttons.access', locale), onPress: () => setScreenState('verify-pin') }],
+        );
+      } else {
+        Alert.alert(t('errors.generic', locale));
+      }
+    }
     setSaving(false);
   };
 
