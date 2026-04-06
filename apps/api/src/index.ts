@@ -116,59 +116,47 @@ async function start() {
   logger.info('Waiting for database...');
   await waitForDatabase();
   logger.info('Database ready');
+
+  // Explicitly connect so the Prisma query engine is fully initialised before
+  // cron jobs start. Without this, jobs that fire within the first few seconds
+  // of startup (e.g. live-scores at :00/:05) hit "Engine is not yet connected".
+  await prisma.$connect();
+
   await cleanupStaleJobRuns();
   startDatabaseKeepAlive();
 
+  // -------------------------------------------------------------------------
+  // Cron jobs — started before app.listen() so the engine is guaranteed ready.
+  // With min_machines_running = 1 in fly.toml, Fly.io always keeps exactly one
+  // machine running. During rolling deploys there may be a brief two-machine
+  // overlap, but all jobs are idempotent (upserts / dedup by rssGuid).
+  // -------------------------------------------------------------------------
+  logger.info('Starting cron jobs');
+
+  // Initial sync on startup — delayed in dev to avoid saturating the AI rate
+  // limiter with bulk moderation before user-facing requests can go through.
+  const syncDelay = process.env.NODE_ENV === 'production' ? 0 : 30_000;
+  setTimeout(() => {
+    runManualSync().catch((err) => logger.error({ err }, 'Initial sync failed'));
+  }, syncDelay);
+
+  startSyncJob();
+  startWeeklyDigestJob();
+  startDailyMissionsJob();
+  startStreakReminderJob();
+  startMissionReminderJob();
+  startTeamStatsSyncJob();
+
+  setTimeout(() => {
+    runManualVideoSync().catch((err) => logger.error({ err }, 'Initial video sync failed'));
+  }, syncDelay);
+  startVideoSyncJob();
+  startLiveScoresJob();
+  startTimelessQuizJob();
+  startComputeAnalyticsJob();
+
   app.listen(PORT, () => {
     logger.info({ port: PORT }, `SportyKids API running at http://localhost:${PORT}`);
-
-    // -------------------------------------------------------------------------
-    // Cron jobs — run on every started machine. With min_machines_running = 1
-    // in fly.toml, Fly.io always keeps exactly one machine running, so crons
-    // execute reliably. During rolling deploys there may be a brief two-machine
-    // overlap, but all jobs are idempotent (upserts / dedup by rssGuid).
-    // -------------------------------------------------------------------------
-    logger.info('Starting cron jobs');
-
-    // Initial sync on startup — delayed in dev to avoid saturating the AI rate
-    // limiter with bulk moderation before user-facing requests can go through.
-    const syncDelay = process.env.NODE_ENV === 'production' ? 0 : 30_000;
-    setTimeout(() => {
-      runManualSync().catch((err) => logger.error({ err }, 'Initial sync failed'));
-    }, syncDelay);
-
-    // Schedule periodic sync
-    startSyncJob();
-
-    // Schedule weekly digest job
-    startWeeklyDigestJob();
-
-    // Schedule daily missions generation
-    startDailyMissionsJob();
-
-    // Schedule streak reminder notifications
-    startStreakReminderJob();
-
-    // Schedule daily mission reminders (18:00 UTC)
-    startMissionReminderJob();
-
-    // Schedule daily team stats sync from TheSportsDB
-    startTeamStatsSyncJob();
-
-    // Initial video sync on startup + schedule periodic sync — same delay as news sync
-    setTimeout(() => {
-      runManualVideoSync().catch((err) => logger.error({ err }, 'Initial video sync failed'));
-    }, syncDelay);
-    startVideoSyncJob();
-
-    // Schedule live score polling (every 5 minutes)
-    startLiveScoresJob();
-
-    // Schedule weekly timeless quiz generation (Monday 05:00 UTC)
-    startTimelessQuizJob();
-
-    // Schedule daily analytics computation (02:00 UTC)
-    startComputeAnalyticsJob();
   });
 }
 
