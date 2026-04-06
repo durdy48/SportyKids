@@ -332,7 +332,7 @@ Triggers manual synchronization of all feeds.
 ## Reels
 
 ### `GET /api/reels`
-Short video feed. Only returns reels with `safetyStatus: "approved"`, ordered by `publishedAt` descending.
+Short video feed. Only returns reels with `safetyStatus: "approved"`. Order is random but deterministic per day (seed: `md5(id || UTC_date)`): the feed rotates at midnight UTC for variety. Falls back to `publishedAt` descending in non-PostgreSQL environments.
 
 **Query params:**
 

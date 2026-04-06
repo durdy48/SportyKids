@@ -174,20 +174,21 @@ Servicio que consume feeds RSS externos y los convierte en registros de la base 
 ### Agregador de Video (`apps/api/src/services/video-aggregator.ts`)
 Servicio que consume feeds Atom de YouTube y los convierte en registros Reel.
 
-- **Entrada**: URLs de feeds Atom desde la tabla `VideoSource` (22+ fuentes, 8 deportes)
+- **Entrada**: URLs de feeds Atom desde la tabla `VideoSource` (40+ fuentes, 8 deportes)
 - **Proceso**: parsea XML Atom, extrae videoId de `yt:video:...`, genera embed URL y thumbnail URL
 - **Salida**: registros `Reel` en la BD (upsert por `rssGuid` para evitar duplicados)
 - **Post-proceso**: pasa cada item por classifier y content-moderator
 - **Helpers exportados**: `buildFeedUrl`, `extractYouTubeVideoId`, `buildEmbedUrl`, `buildThumbnailUrl`
 - **Solo YouTube**: filtra fuentes cuyo `platform` empieza con `youtube_`
 - **Resiliencia**: si un feed falla, continua con el siguiente; moderation fail-open
+- **Limpieza automática**: `pruneOldReels()` elimina reels con `publishedAt` de más de 14 días antes de cada sincronización para mantener el pool fresco y variado
 
 ### Cron: Sync Videos (`apps/api/src/jobs/sync-videos.ts`)
 Job programado que ejecuta la sincronizacion de fuentes de video.
 
 - **Frecuencia**: cada 6 horas (`0 */6 * * *`)
 - **Tambien se ejecuta**: al arrancar el servidor
-- **Funcion**: `syncAllVideoSources()` -> consume feeds YouTube Atom de fuentes activas
+- **Funcion**: `syncAllVideoSources()` -> poda reels >14 días + consume feeds YouTube Atom de fuentes activas
 
 ### Clasificador de contenido (`apps/api/src/services/classifier.ts`)
 Etiqueta cada noticia con equipo detectado y rango de edad.

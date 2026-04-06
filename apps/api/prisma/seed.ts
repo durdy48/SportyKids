@@ -29,6 +29,7 @@ const initialVideoSources: VideoSourceSeed[] = [
   { name: 'Real Madrid CF', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCWV3obpZVGgJ3j9FVhEjF2Q', channelId: 'UCWV3obpZVGgJ3j9FVhEjF2Q', sport: 'football' },
   { name: 'Premier League', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCG5qGWdu8nIRZqJ_GgDwQ-w', channelId: 'UCG5qGWdu8nIRZqJ_GgDwQ-w', sport: 'football' },
   { name: 'UEFA Champions League', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCLcSuj4B8YyUVJdVDeozFQg', channelId: 'UCLcSuj4B8YyUVJdVDeozFQg', sport: 'football' },
+  { name: 'Bayern Munich', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCle_9ogeckix384eRvTbVog', channelId: 'UCle_9ogeckix384eRvTbVog', sport: 'football' },
 
   // ── Basketball ──────────────────────────────────────────────────────
   { name: 'NBA', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCWJ2lWNubArHWmf3FIHbfcQ', channelId: 'UCWJ2lWNubArHWmf3FIHbfcQ', sport: 'basketball' },

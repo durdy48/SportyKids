@@ -347,7 +347,7 @@ Ejecuta sincronizacion manual de todos los feeds.
 Protegido por middleware `parental-guard`.
 
 ### `GET /api/reels`
-Feed de videos cortos. Solo devuelve reels con `safetyStatus: "approved"`, ordenados por `publishedAt` descendente.
+Feed de videos cortos. Solo devuelve reels con `safetyStatus: "approved"`. El orden es aleatorio pero determinista por día (semilla `md5(id || fecha_UTC)`): el feed rota cada medianoche UTC para garantizar variedad. En entornos sin PostgreSQL usa `publishedAt` descendente como fallback.
 
 **Query params:**
 

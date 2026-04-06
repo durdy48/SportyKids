@@ -1,6 +1,7 @@
 import { Router, Request, Response } from 'express';
 import { z } from 'zod';
 import Parser from 'rss-parser';
+import { Prisma } from '@prisma/client';
 import { prisma } from '../config/database';
 import { parentalGuard } from '../middleware/parental-guard';
 import { subscriptionGuard } from '../middleware/subscription-guard';
@@ -22,6 +23,7 @@ const filtersSchema = z.object({
 });
 
 // GET /api/reels — Reels feed with filters (only approved content)
+// Uses daily-seeded ordering: same sequence throughout the day, rotates at midnight UTC.
 router.get('/', parentalGuard, subscriptionGuard('reels'), async (req: Request, res: Response) => {
   const parsed = filtersSchema.safeParse(req.query);
   if (!parsed.success) {
@@ -29,22 +31,51 @@ router.get('/', parentalGuard, subscriptionGuard('reels'), async (req: Request, 
   }
 
   const { sport, age, page, limit } = parsed.data;
-  const where: Record<string, unknown> = { safetyStatus: 'approved' };
-  if (sport) where.sport = sport;
+  const offset = (page - 1) * limit;
+
+  // Build WHERE conditions for count query (Prisma) and raw query
+  const whereForCount: Record<string, unknown> = { safetyStatus: 'approved' };
+  if (sport) whereForCount.sport = sport;
   if (age) {
-    where.minAge = { lte: age };
-    where.maxAge = { gte: age };
+    whereForCount.minAge = { lte: age };
+    whereForCount.maxAge = { gte: age };
   }
 
-  const [reels, total] = await Promise.all([
-    prisma.reel.findMany({
-      where,
-      orderBy: { publishedAt: 'desc' },
-      skip: (page - 1) * limit,
-      take: limit,
-    }),
-    prisma.reel.count({ where }),
-  ]);
+  // Build sport/age filters for raw query
+  const sportFilter = sport ? Prisma.sql`AND sport = ${sport}` : Prisma.empty;
+  const ageFilter = age
+    ? Prisma.sql`AND "minAge" <= ${age} AND "maxAge" >= ${age}`
+    : Prisma.empty;
+
+  // Daily-seeded random: md5(id || 'YYYY-MM-DD') — consistent within the day, rotates at midnight UTC
+  // Falls back to publishedAt desc if raw query fails (e.g., SQLite in tests)
+  let reels: { id: string; title: string; videoUrl: string; thumbnailUrl: string; source: string; sport: string; team: string | null; minAge: number; maxAge: number; durationSeconds: number; videoType: string | null; aspectRatio: string | null; previewGifUrl: string | null; rssGuid: string | null; videoSourceId: string | null; safetyStatus: string; safetyReason: string | null; moderatedAt: Date | null; publishedAt: Date | null; createdAt: Date }[];
+  let total: number;
+
+  try {
+    [reels, total] = await Promise.all([
+      prisma.$queryRaw<typeof reels>`
+        SELECT * FROM "Reel"
+        WHERE "safetyStatus" = 'approved'
+        ${sportFilter}
+        ${ageFilter}
+        ORDER BY md5(id || to_char(NOW() AT TIME ZONE 'UTC', 'YYYY-MM-DD'))
+        LIMIT ${limit} OFFSET ${offset}
+      `,
+      prisma.reel.count({ where: whereForCount }),
+    ]);
+  } catch {
+    // Fallback for non-PostgreSQL environments (e.g., SQLite in tests)
+    [reels, total] = await Promise.all([
+      prisma.reel.findMany({
+        where: whereForCount,
+        orderBy: { publishedAt: 'desc' },
+        skip: offset,
+        take: limit,
+      }),
+      prisma.reel.count({ where: whereForCount }),
+    ]);
+  }
 
   res.json({ reels, total, page, totalPages: Math.ceil(total / limit) });
 });

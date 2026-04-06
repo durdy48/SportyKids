@@ -201,8 +201,35 @@ export async function syncVideoSource(
 // Sync all active video sources
 // ---------------------------------------------------------------------------
 
+// ---------------------------------------------------------------------------
+// Prune reels older than the retention window to keep the pool fresh
+// ---------------------------------------------------------------------------
+
+const REEL_RETENTION_DAYS = 14;
+
+export async function pruneOldReels(): Promise<number> {
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - REEL_RETENTION_DAYS);
+
+  const { count } = await prisma.reel.deleteMany({
+    where: {
+      publishedAt: { lt: cutoff },
+      safetyStatus: { in: ['approved', 'rejected'] },
+    },
+  });
+
+  if (count > 0) {
+    logger.info({ deleted: count, cutoffDays: REEL_RETENTION_DAYS }, 'Pruned old reels');
+  }
+  return count;
+}
+
 export async function syncAllVideoSources(): Promise<VideoSyncAllResult> {
   logger.info('Starting video source synchronization...');
+
+  // Prune reels older than retention window before syncing new ones
+  await pruneOldReels();
+
   const sources = await prisma.videoSource.findMany({ where: { active: true } });
 
   const allResult: VideoSyncAllResult = {
