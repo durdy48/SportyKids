@@ -43,8 +43,9 @@ export function RegisterScreen({ navigation }: { navigation: { goBack: () => voi
         ...(role === 'child' && age ? { age: parseInt(age, 10) } : {}),
       });
       setUser(result.user);
-    } catch {
-      Alert.alert(t('auth.register_error', locale));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : t('auth.register_error', locale);
+      Alert.alert(t('auth.register_error', locale), msg);
     } finally {
       setLoading(false);
     }

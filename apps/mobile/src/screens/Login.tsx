@@ -34,8 +34,9 @@ export function LoginScreen({ navigation }: { navigation: { navigate: (screen: s
     try {
       const result = await login({ email: email.trim(), password });
       setUser(result.user);
-    } catch {
-      Alert.alert(t('auth.login_error', locale));
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : t('auth.login_error', locale);
+      Alert.alert(t('auth.login_error', locale), msg);
     } finally {
       setLoading(false);
     }

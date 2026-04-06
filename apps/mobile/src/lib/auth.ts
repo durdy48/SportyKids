@@ -22,7 +22,8 @@ export async function register(data: RegisterRequest): Promise<AuthResponse> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Error ${res.status}`);
+    const msg = body.error?.message ?? body.error ?? `Error ${res.status}`;
+    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
   }
 
   const result: AuthResponse = await res.json();
@@ -39,7 +40,8 @@ export async function login(data: LoginRequest): Promise<AuthResponse> {
 
   if (!res.ok) {
     const body = await res.json().catch(() => ({}));
-    throw new Error(body.error || `Error ${res.status}`);
+    const msg = body.error?.message ?? body.error ?? `Error ${res.status}`;
+    throw new Error(typeof msg === 'string' ? msg : JSON.stringify(msg));
   }
 
   const result: AuthResponse = await res.json();
