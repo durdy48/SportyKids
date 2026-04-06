@@ -283,7 +283,9 @@ async function sendViaOpenAICompat(
 
   const choice = response.choices?.[0];
   if (!choice?.message?.content) {
-    throw new AIServiceError('Empty response from AI', provider);
+    // Mark retryable so the caller gets one more attempt on the same provider
+    // before falling through to the next in the chain (e.g. fallback).
+    throw new AIServiceError('Empty response from AI', provider, { retryable: true });
   }
 
   return {
@@ -406,7 +408,9 @@ class AIClient {
           if (isRateLimitError(err)) {
             // Trip the circuit breaker scoped to this purpose so that other
             // purposes (e.g. generation) can still use the provider.
-            const retryAfterMs = parseRetryAfterMs(err) ?? 60_000;
+            // Default 30 s (not 60 s) so the provider becomes available again
+            // sooner when no Retry-After header is present.
+            const retryAfterMs = parseRetryAfterMs(err) ?? 30_000;
             this.circuitBreaker.trip(provider, retryAfterMs, purpose);
             break; // Stop retrying this provider; outer loop tries next one.
           }

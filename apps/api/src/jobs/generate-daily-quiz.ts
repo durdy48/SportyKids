@@ -201,8 +201,10 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
         // If all providers are exhausted, wait for rate limit windows to reset
         // before continuing — avoids rapid-fire failures burning the error budget.
         if (errMsg.includes('exhausting all providers')) {
-          logger.info('All AI providers rate-limited — waiting 65s for reset');
-          await new Promise((resolve) => setTimeout(resolve, 65_000));
+          // Circuit default trip is 30 s; wait 35 s to allow all provider
+          // circuits to reset before continuing with the remaining articles.
+          logger.info('All AI providers rate-limited — waiting 35s for circuit reset');
+          await new Promise((resolve) => setTimeout(resolve, 35_000));
         }
 
         // Abort early if first 5 attempts all failed — provider is likely down
