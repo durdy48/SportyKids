@@ -30,16 +30,33 @@ const initialVideoSources: VideoSourceSeed[] = [
   { name: 'Premier League', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCG5qGWdu8nIRZqJ_GgDwQ-w', channelId: 'UCG5qGWdu8nIRZqJ_GgDwQ-w', sport: 'football' },
   { name: 'UEFA Champions League', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCLcSuj4B8YyUVJdVDeozFQg', channelId: 'UCLcSuj4B8YyUVJdVDeozFQg', sport: 'football' },
   { name: 'Bayern Munich', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCle_9ogeckix384eRvTbVog', channelId: 'UCle_9ogeckix384eRvTbVog', sport: 'football' },
+  { name: 'Atlético de Madrid', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCuzKFwdh7z2GHcIOX_tXgxA', channelId: 'UCuzKFwdh7z2GHcIOX_tXgxA', sport: 'football' },
+  { name: 'Liverpool FC', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC9LQwHZoucFT94I2h6JOcjw', channelId: 'UC9LQwHZoucFT94I2h6JOcjw', sport: 'football' },
+  { name: 'Arsenal FC', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCpryVRk_VDudG8SHXgWcG0w', channelId: 'UCpryVRk_VDudG8SHXgWcG0w', sport: 'football' },
+  { name: 'Manchester City', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCkzCjdRMrW2vXLx8mvPVLdQ', channelId: 'UCkzCjdRMrW2vXLx8mvPVLdQ', sport: 'football' },
+  { name: 'Borussia Dortmund', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCK8rTVgp3-MebXkmeJcQb1Q', channelId: 'UCK8rTVgp3-MebXkmeJcQb1Q', sport: 'football' },
+  { name: 'Paris Saint-Germain', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC55IBlOmkFJ7do1PxiQ1-lw', channelId: 'UC55IBlOmkFJ7do1PxiQ1-lw', sport: 'football' },
+  { name: 'UEFA Europa League', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCBJeMCIeLQos7wacox4hmLQ', channelId: 'UCBJeMCIeLQos7wacox4hmLQ', sport: 'football' },
+  { name: 'Bundesliga', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCt9a_qP9CqHCNwilf-iULag', channelId: 'UCt9a_qP9CqHCNwilf-iULag', sport: 'football' },
+  { name: 'Serie A', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC6UL29enLNe4mqwTfAyeNuw', channelId: 'UC6UL29enLNe4mqwTfAyeNuw', sport: 'football' },
+  { name: 'Ligue 1', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCQsH5XtIc9hONE1BQjucM0g', channelId: 'UCQsH5XtIc9hONE1BQjucM0g', sport: 'football' },
+  { name: 'Selección Española', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCJ2F8qpzHRk3RdJZ4YXLbxQ', channelId: 'UCJ2F8qpzHRk3RdJZ4YXLbxQ', sport: 'football' },
+  { name: 'Copa del Rey', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCi9gZnvjkEq_iDPnQv9zlNQ', channelId: 'UCi9gZnvjkEq_iDPnQv9zlNQ', sport: 'football' },
 
   // ── Basketball ──────────────────────────────────────────────────────
   { name: 'NBA', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCWJ2lWNubArHWmf3FIHbfcQ', channelId: 'UCWJ2lWNubArHWmf3FIHbfcQ', sport: 'basketball' },
   { name: 'ACB Liga Endesa', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCjZh7FzztNo3up7mD75DAiQ', channelId: 'UCjZh7FzztNo3up7mD75DAiQ', sport: 'basketball' },
   { name: 'EuroLeague Basketball', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCGr3nR_XH9r6E5b09ZJAT9w', channelId: 'UCGr3nR_XH9r6E5b09ZJAT9w', sport: 'basketball' },
+  { name: 'FIBA Basketball', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCtInrnU3QbWqFGsdKT1GZtg', channelId: 'UCtInrnU3QbWqFGsdKT1GZtg', sport: 'basketball' },
+  { name: 'Real Madrid Baloncesto', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC9V4YMznqy74Ve2cW0KCg6w', channelId: 'UC9V4YMznqy74Ve2cW0KCg6w', sport: 'basketball' },
 
   // ── Tennis ──────────────────────────────────────────────────────────
   { name: 'ATP Tour', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCY_5h5zaSwN7Or4kIJDYNXA', channelId: 'UCY_5h5zaSwN7Or4kIJDYNXA', sport: 'tennis' },
   { name: 'WTA Tennis', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCaBIVVpHjq6j3tSyxwTE-8Q', channelId: 'UCaBIVVpHjq6j3tSyxwTE-8Q', sport: 'tennis' },
   { name: 'Roland Garros', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCLhFbNomu6fEJ8LAQHFGCFA', channelId: 'UCLhFbNomu6fEJ8LAQHFGCFA', sport: 'tennis' },
+  { name: 'Wimbledon', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCNa8NxMgSm7m4Ii9d4QGk1Q', channelId: 'UCNa8NxMgSm7m4Ii9d4QGk1Q', sport: 'tennis' },
+  { name: 'US Open Tennis', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCXbboag48Qlr78zzz6SkzkQ', channelId: 'UCXbboag48Qlr78zzz6SkzkQ', sport: 'tennis' },
+  { name: 'Australian Open', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCeTKJSW1NTAkf27nNmjWt5A', channelId: 'UCeTKJSW1NTAkf27nNmjWt5A', sport: 'tennis' },
 
   // ── Swimming ────────────────────────────────────────────────────────
   { name: 'World Aquatics', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCOmS8sLY6FjYqFHqYdTYIwg', channelId: 'UCOmS8sLY6FjYqFHqYdTYIwg', sport: 'swimming' },
@@ -48,18 +65,26 @@ const initialVideoSources: VideoSourceSeed[] = [
   // ── Athletics ───────────────────────────────────────────────────────
   { name: 'World Athletics', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCQk7fWv15ChjMJLCRVmtApw', channelId: 'UCQk7fWv15ChjMJLCRVmtApw', sport: 'athletics' },
   { name: 'Olympics', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCTl3QQTvqHFjurroKxexy2Q', channelId: 'UCTl3QQTvqHFjurroKxexy2Q', sport: 'athletics' },
+  { name: 'Paralympic Games', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCi8n36NkW2uCQSFZNiYtuMQ', channelId: 'UCi8n36NkW2uCQSFZNiYtuMQ', sport: 'athletics' },
+  { name: 'European Athletics', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCp21zu_8Hd0w9HULooemRCA', channelId: 'UCp21zu_8Hd0w9HULooemRCA', sport: 'athletics' },
 
   // ── Cycling ─────────────────────────────────────────────────────────
   { name: 'GCN en Espanol', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCuTaETsuCOkJ0H_GAztWt0Q', channelId: 'UCuTaETsuCOkJ0H_GAztWt0Q', sport: 'cycling' },
   { name: 'Tour de France', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCSpycUnuU0IVF7gGIhGojhg', channelId: 'UCSpycUnuU0IVF7gGIhGojhg', sport: 'cycling' },
+  { name: 'Vuelta a España', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCrQIsqw3kkzMAVDtD5DjNRw', channelId: 'UCrQIsqw3kkzMAVDtD5DjNRw', sport: 'cycling' },
+  { name: 'Giro d\'Italia', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCe10BxbsFg9Kbmkg-ean_Dg', channelId: 'UCe10BxbsFg9Kbmkg-ean_Dg', sport: 'cycling' },
+  { name: 'TNT Sports Cycling', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCfDfvvMARk4TKcC62ALi6eA', channelId: 'UCfDfvvMARk4TKcC62ALi6eA', sport: 'cycling' },
 
   // ── Formula 1 ───────────────────────────────────────────────────────
   { name: 'Formula 1', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCB_qr75-ydFVKSz9KnBMLpg', channelId: 'UCB_qr75-ydFVKSz9KnBMLpg', sport: 'formula1' },
   { name: 'Scuderia Ferrari', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCEsCUOoJoR7Y5c2wuEIo8lQ', channelId: 'UCEsCUOoJoR7Y5c2wuEIo8lQ', sport: 'formula1' },
+  { name: 'Red Bull Racing', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCQIyqMWCdx1GBvbw_Yi6lEA', channelId: 'UCQIyqMWCdx1GBvbw_Yi6lEA', sport: 'formula1' },
+  { name: 'Mercedes-AMG F1', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UC7_VGkwCoKfqh1eZEkzey3A', channelId: 'UC7_VGkwCoKfqh1eZEkzey3A', sport: 'formula1' },
 
   // ── Padel ───────────────────────────────────────────────────────────
   { name: 'Premier Padel', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCW-WYt6vA9DJQHE0zOA8e0A', channelId: 'UCW-WYt6vA9DJQHE0zOA8e0A', sport: 'padel' },
   { name: 'World Padel Tour', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCMxpzwjvC64W5OUFNZ9ReOA', channelId: 'UCMxpzwjvC64W5OUFNZ9ReOA', sport: 'padel' },
+  { name: 'Federación Española de Pádel', platform: 'youtube_channel', feedUrl: 'https://www.youtube.com/feeds/videos.xml?channel_id=UCFwGJKz0DyppnWwHbDXzbdg', channelId: 'UCFwGJKz0DyppnWwHbDXzbdg', sport: 'padel' },
 ];
 
 const initialSources: RssSourceSeed[] = [
