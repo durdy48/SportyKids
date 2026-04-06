@@ -22,6 +22,7 @@ vi.mock('../config/database', () => ({
       findMany: vi.fn(),
       findUnique: vi.fn(),
       upsert: vi.fn(),
+      deleteMany: vi.fn().mockResolvedValue({ count: 0 }),
     },
     videoSource: {
       findMany: vi.fn(),
