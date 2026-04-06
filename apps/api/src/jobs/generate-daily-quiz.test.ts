@@ -87,7 +87,7 @@ describe('generate-daily-quiz', () => {
   it('should generate quizzes for each age range from recent news', async () => {
     mockIsProviderAvailable.mockResolvedValue(true);
     mockFindManyNews.mockResolvedValue([
-      { id: 'n1', title: 'Goal!', summary: 'A goal was scored', sport: 'football', team: 'Real Madrid' },
+      { id: 'n1', title: 'Goal!', summary: 'A goal was scored in an exciting match last weekend', sport: 'football', team: 'Real Madrid' },
     ]);
     mockFindManyQuiz.mockResolvedValue([]); // No existing quizzes
     mockGenerateQuizFromNews.mockResolvedValue({
@@ -110,7 +110,7 @@ describe('generate-daily-quiz', () => {
   it('should skip existing age range combos', async () => {
     mockIsProviderAvailable.mockResolvedValue(true);
     mockFindManyNews.mockResolvedValue([
-      { id: 'n1', title: 'Goal!', summary: 'Summary', sport: 'football', team: null },
+      { id: 'n1', title: 'Goal!', summary: 'A detailed summary about this football match with enough content', sport: 'football', team: null },
     ]);
     // Already has quiz for 6-8 and 9-11
     mockFindManyQuiz.mockResolvedValue([
@@ -136,7 +136,7 @@ describe('generate-daily-quiz', () => {
   it('should count errors when quiz generation fails', async () => {
     mockIsProviderAvailable.mockResolvedValue(true);
     mockFindManyNews.mockResolvedValue([
-      { id: 'n1', title: 'News', summary: 'S', sport: 'tennis', team: null },
+      { id: 'n1', title: 'News', summary: 'A detailed summary about this tennis news article', sport: 'tennis', team: null },
     ]);
     mockFindManyQuiz.mockResolvedValue([]);
     mockGenerateQuizFromNews.mockRejectedValue(new Error('AI error'));
@@ -150,7 +150,7 @@ describe('generate-daily-quiz', () => {
   it('should send push notification when quizzes are generated', async () => {
     mockIsProviderAvailable.mockResolvedValue(true);
     mockFindManyNews.mockResolvedValue([
-      { id: 'n1', title: 'News', summary: 'S', sport: 'football', team: null },
+      { id: 'n1', title: 'News', summary: 'A detailed summary about this football news article', sport: 'football', team: null },
     ]);
     mockFindManyQuiz.mockResolvedValue([]);
     mockGenerateQuizFromNews.mockResolvedValue({
@@ -175,7 +175,7 @@ describe('generate-daily-quiz', () => {
   it('should send locale-aware push notifications grouped by user locale', async () => {
     mockIsProviderAvailable.mockResolvedValue(true);
     mockFindManyNews.mockResolvedValue([
-      { id: 'n1', title: 'News', summary: 'S', sport: 'football', team: null },
+      { id: 'n1', title: 'News', summary: 'A detailed summary about this football news article', sport: 'football', team: null },
     ]);
     mockFindManyQuiz.mockResolvedValue([]);
     mockGenerateQuizFromNews.mockResolvedValue({
@@ -217,7 +217,7 @@ describe('generate-daily-quiz', () => {
   it('should default to es locale when user has no locale set', async () => {
     mockIsProviderAvailable.mockResolvedValue(true);
     mockFindManyNews.mockResolvedValue([
-      { id: 'n1', title: 'News', summary: 'S', sport: 'tennis', team: null },
+      { id: 'n1', title: 'News', summary: 'A detailed summary about this tennis news article', sport: 'tennis', team: null },
     ]);
     mockFindManyQuiz.mockResolvedValue([]);
     mockGenerateQuizFromNews.mockResolvedValue({
