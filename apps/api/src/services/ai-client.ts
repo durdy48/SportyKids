@@ -12,7 +12,7 @@ import { logger } from './logger';
 // Types
 // ---------------------------------------------------------------------------
 
-export type AIProvider = 'ollama' | 'openrouter' | 'anthropic' | 'groq' | 'gemini';
+export type AIProvider = 'ollama' | 'openrouter' | 'anthropic' | 'groq' | 'gemini' | 'cerebras';
 export type ModelPurpose = 'moderation' | 'generation';
 
 export interface AIMessage {
@@ -185,7 +185,7 @@ export function getFallbackProviders(): AIProvider[] {
     .split(',')
     .map((p) => p.trim() as AIProvider)
     .filter((p): p is AIProvider =>
-      ['ollama', 'openrouter', 'anthropic', 'groq', 'gemini'].includes(p),
+      ['ollama', 'openrouter', 'anthropic', 'groq', 'gemini', 'cerebras'].includes(p),
     );
 }
 
@@ -196,6 +196,7 @@ function getModelNameForProvider(purpose: ModelPurpose, provider: AIProvider): s
     if (provider === 'anthropic') return process.env.AI_MODEL_MODERATION || 'claude-sonnet-4-20250514';
     if (provider === 'groq') return process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
     if (provider === 'gemini') return process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+    if (provider === 'cerebras') return process.env.CEREBRAS_MODEL || 'llama3.1-8b';
   }
   // generation
   if (provider === 'ollama') return process.env.OLLAMA_MODEL_GENERATION || 'llama3.2';
@@ -203,6 +204,7 @@ function getModelNameForProvider(purpose: ModelPurpose, provider: AIProvider): s
   if (provider === 'anthropic') return process.env.AI_MODEL_GENERATION || 'claude-sonnet-4-20250514';
   if (provider === 'groq') return process.env.GROQ_MODEL || 'llama-3.1-8b-instant';
   if (provider === 'gemini') return process.env.GEMINI_MODEL || 'gemini-1.5-flash';
+  if (provider === 'cerebras') return process.env.CEREBRAS_MODEL || 'llama3.1-8b';
   return 'llama3.2';
 }
 
@@ -238,6 +240,8 @@ async function isProviderAvailable(): Promise<boolean> {
       providerAvailable = !!process.env.GROQ_API_KEY;
     } else if (cfg.provider === 'gemini') {
       providerAvailable = !!process.env.GEMINI_API_KEY;
+    } else if (cfg.provider === 'cerebras') {
+      providerAvailable = !!process.env.CEREBRAS_API_KEY;
     } else {
       providerAvailable = false;
     }
@@ -509,6 +513,19 @@ class AIClient {
         // Gemini OpenAI-compatible endpoint: https://ai.google.dev/gemini-api/docs/openai
         const baseUrl = process.env.GEMINI_BASE_URL || 'https://generativelanguage.googleapis.com/v1beta/openai';
         return sendViaOpenAICompat(baseUrl, apiKey, model, messages, 'gemini', maxTokens);
+      }
+
+      case 'cerebras': {
+        const apiKey = process.env.CEREBRAS_API_KEY;
+        if (!apiKey) {
+          throw new AIServiceError(
+            'CEREBRAS_API_KEY is required when AI_PROVIDER=cerebras or used as fallback',
+            'cerebras',
+            { retryable: false },
+          );
+        }
+        const baseUrl = process.env.CEREBRAS_BASE_URL || 'https://api.cerebras.ai/v1';
+        return sendViaOpenAICompat(baseUrl, apiKey, model, messages, 'cerebras', maxTokens);
       }
 
       default:
