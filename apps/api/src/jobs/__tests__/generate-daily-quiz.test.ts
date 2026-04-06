@@ -55,7 +55,7 @@ const { generateQuizFromNews, generateTimelessQuestion } = await import('../../s
 // ---------------------------------------------------------------------------
 
 function makeArticle(id: string, sport = 'football') {
-  return { id, title: `Title ${id}`, summary: `Summary ${id}`, sport, team: null };
+  return { id, title: `Title ${id}`, summary: `Detailed summary about this sports article with id ${id}, long enough to pass the 30-char filter`, sport, team: null };
 }
 
 function makeValidQuiz(topic?: string) {

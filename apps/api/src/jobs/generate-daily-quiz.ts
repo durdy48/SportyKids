@@ -117,8 +117,11 @@ export async function generateDailyQuiz(): Promise<DailyQuizResult> {
   );
 
   // For initial filtering, find articles that have at least one missing age range
-  const articlesWithMissingQuizzes = recentNews.filter((n) =>
-    AGE_RANGES.some((age) => !existingCombos.has(`${n.id}:${age}`)),
+  // Also skip articles with missing or too-short summaries — they cause empty AI responses.
+  const articlesWithMissingQuizzes = recentNews.filter(
+    (n) =>
+      n.summary && n.summary.trim().length >= 30 &&
+      AGE_RANGES.some((age) => !existingCombos.has(`${n.id}:${age}`)),
   );
 
   // Select up to 40 articles, round-robin by sport (40 × 3 age ranges = 120 questions max)
