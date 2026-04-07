@@ -263,7 +263,8 @@
     "custom_error_duplicate": "This URL already exists in the catalog",
     "custom_delete_confirm": "Delete this custom source?",
     "custom_badge": "Custom",
-    "no_sources_for_sports": "No sources available for the selected sports"
+    "no_sources_for_sports": "No sources available for the selected sports",
+    "active_section": "Active sources"
   },
   "sync": {
     "approved": "approved",

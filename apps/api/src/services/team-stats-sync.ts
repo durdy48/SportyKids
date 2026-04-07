@@ -77,9 +77,26 @@ export async function syncTeamStats(teamName: string, sportsDbId: string, sport:
       fetchNextEvents(sportsDbId),
     ]);
 
+    // Validate that events actually belong to the requested team — TheSportsDB can return
+    // wrong team data when rate-limited or when IDs resolve to different entities.
+    const teamNameLower = teamName.toLowerCase();
+    const teamMatchesEvent = (event: SportsDbEvent) => {
+      const home = event.strHomeTeam?.toLowerCase() ?? '';
+      const away = event.strAwayTeam?.toLowerCase() ?? '';
+      return home.includes(teamNameLower) || away.includes(teamNameLower);
+    };
+
+    const validLastEvents = lastEvents.filter(teamMatchesEvent);
+    const validNextEvents = nextEvents.filter(teamMatchesEvent);
+
+    if (lastEvents.length > 0 && validLastEvents.length === 0) {
+      logger.warn({ teamName, sampleTeam: lastEvents[0]?.strHomeTeam }, 'TheSportsDB returned events for wrong team — skipping upsert');
+      return false;
+    }
+
     // Parse recent results
-    const recentResults = lastEvents.slice(0, 5).map((event) => {
-      const isHome = event.strHomeTeam?.toLowerCase().includes(teamName.toLowerCase());
+    const recentResults = validLastEvents.slice(0, 5).map((event) => {
+      const isHome = event.strHomeTeam?.toLowerCase().includes(teamNameLower);
       const homeScore = parseInt(event.intHomeScore ?? '0', 10);
       const awayScore = parseInt(event.intAwayScore ?? '0', 10);
       const myScore = isHome ? homeScore : awayScore;
@@ -99,9 +116,9 @@ export async function syncTeamStats(teamName: string, sportsDbId: string, sport:
     });
 
     // Parse next match
-    const next = nextEvents[0];
+    const next = validNextEvents[0];
     const nextMatch = next ? {
-      opponent: next.strHomeTeam?.toLowerCase().includes(teamName.toLowerCase())
+      opponent: next.strHomeTeam?.toLowerCase().includes(teamNameLower)
         ? next.strAwayTeam ?? 'TBD'
         : next.strHomeTeam ?? 'TBD',
       date: next.dateEvent ?? '',

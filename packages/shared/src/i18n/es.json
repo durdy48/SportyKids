@@ -263,7 +263,8 @@
     "custom_error_duplicate": "Esta URL ya existe en el catálogo",
     "custom_delete_confirm": "¿Eliminar esta fuente personalizada?",
     "custom_badge": "Personalizada",
-    "no_sources_for_sports": "No hay fuentes disponibles para los deportes seleccionados"
+    "no_sources_for_sports": "No hay fuentes disponibles para los deportes seleccionados",
+    "active_section": "Fuentes activas"
   },
   "sync": {
     "approved": "aprobadas",
