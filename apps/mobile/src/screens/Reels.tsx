@@ -263,7 +263,13 @@ export function ReelsScreen() {
           mediaPlaybackRequiresUserAction={false}
           javaScriptEnabled
           scrollEnabled={false}
-          onMessage={(e) => { if (e.nativeEvent.data === 'EMBED_ERROR') setErrorIds(prev => new Set([...prev, item.id])); }}
+          onMessage={(e) => {
+            if (e.nativeEvent.data === 'EMBED_ERROR') {
+              setErrorIds(prev => new Set([...prev, item.id]));
+              setPlayingId(null);
+              WebBrowser.openBrowserAsync(`https://www.youtube.com/watch?v=${getYouTubeVideoId(item.videoUrl) ?? ''}`);
+            }
+          }}
           onError={() => setErrorIds(prev => new Set([...prev, item.id]))}
         />
       );
