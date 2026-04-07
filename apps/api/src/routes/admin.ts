@@ -8,7 +8,7 @@ import { generateUniqueCode } from '../services/invite-code';
 
 // Alias to allow mocking in tests
 const AdminRssParser = Parser;
-import { syncLimiter } from '../middleware/rate-limiter';
+import { syncLimiter, adminJobLimiter } from '../middleware/rate-limiter';
 import { prisma } from '../config/database';
 import { logger } from '../services/logger';
 import { generateDailyQuiz } from '../jobs/generate-daily-quiz';
@@ -795,9 +795,9 @@ router.post(
   '/jobs/:name/trigger',
   requireAuth,
   requireRole('admin'),
-  syncLimiter,
+  adminJobLimiter,
   async (req: Request, res: Response) => {
-    const { name } = req.params;
+    const name = String(req.params.name);
 
     if (!KNOWN_JOBS.includes(name)) {
       res.status(404).json({ error: `Unknown job: ${name}` });

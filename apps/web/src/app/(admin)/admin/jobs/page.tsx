@@ -278,11 +278,14 @@ export default function JobsPage() {
 
     try {
       const r = await authFetch(`${API_BASE}/admin/jobs/${name}/trigger`, { method: 'POST' });
-      if (!r.ok) throw new Error('Trigger failed');
+      if (!r.ok) {
+        const body = await r.json().catch(() => ({})) as { error?: string };
+        throw new Error(body.error ?? `HTTP ${r.status}`);
+      }
       // Refresh after short delay to show running state
       setTimeout(() => { void fetchJobs(); }, 500);
-    } catch {
-      setError(`Failed to trigger ${name}`);
+    } catch (err) {
+      setError(`Failed to trigger ${name}: ${err instanceof Error ? err.message : String(err)}`);
     } finally {
       setTriggeringJob(null);
     }

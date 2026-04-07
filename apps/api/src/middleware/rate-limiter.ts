@@ -16,4 +16,5 @@ export const authLimiter = createLimiter(5, 'RATE_LIMIT_AUTH');
 export const pinLimiter = createLimiter(10, 'RATE_LIMIT_PIN');
 export const contentLimiter = createLimiter(60, 'RATE_LIMIT_CONTENT');
 export const syncLimiter = createLimiter(2, 'RATE_LIMIT_SYNC');
+export const adminJobLimiter = createLimiter(20, 'RATE_LIMIT_ADMIN_JOBS'); // Separate limiter for admin job triggers
 export const defaultLimiter = createLimiter(100, 'RATE_LIMIT_DEFAULT');
