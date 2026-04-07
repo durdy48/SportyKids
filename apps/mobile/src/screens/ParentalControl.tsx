@@ -497,7 +497,7 @@ export function ParentalControlScreen({ navigation }: { navigation: { navigate: 
             </View>
             {teamSelectionVisible && (
               <View style={s.sportsGrid}>
-                {(user.favoriteSports ?? []).flatMap((sport: string) =>
+                {(user.favoriteSports?.length > 0 ? user.favoriteSports : SPORTS).flatMap((sport: string) =>
                   (SPORT_ENTITIES[sport] ?? []).map((entity) => (
                     <TouchableOpacity
                       key={entity.feedQuery}

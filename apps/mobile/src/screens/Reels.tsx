@@ -228,8 +228,32 @@ export function ReelsScreen() {
 
     if (isYouTube) {
       const videoId = getYouTubeVideoId(item.videoUrl) ?? '';
-      const embedUrl = `https://www.youtube-nocookie.com/embed/${htmlEncode(videoId)}?autoplay=1&playsinline=1&modestbranding=1&rel=0`;
-      const html = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;overflow:hidden}</style></head><body><iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" allow="autoplay;encrypted-media;fullscreen" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%"></iframe></body></html>`;
+      const safeId = htmlEncode(videoId);
+      // Use IFrame API for error detection (errors 101/150 = embedding disabled = "Error 153" in UI).
+      // If the IFrame API script fails to load, fall back to a direct iframe after 5s.
+      const html = `<!DOCTYPE html><html><head>
+        <meta name="viewport" content="width=device-width,initial-scale=1">
+        <style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;overflow:hidden}#player,#player iframe{width:100%;height:100%;position:absolute;top:0;left:0}</style>
+        </head><body>
+        <div id="player"></div>
+        <script>
+          var apiReady=false;
+          var tag=document.createElement('script');
+          tag.src='https://www.youtube.com/iframe_api';
+          tag.onerror=function(){showDirect();};
+          document.body.appendChild(tag);
+          function onYouTubeIframeAPIReady(){
+            apiReady=true;
+            new YT.Player('player',{width:'100%',height:'100%',videoId:'${safeId}',
+              playerVars:{autoplay:1,playsinline:1,modestbranding:1,rel:0},
+              events:{onError:function(){window.ReactNativeWebView.postMessage('EMBED_ERROR');}}
+            });
+          }
+          function showDirect(){
+            document.getElementById('player').innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/${safeId}?autoplay=1&playsinline=1&modestbranding=1&rel=0" frameborder="0" allow="autoplay;encrypted-media;fullscreen" allowfullscreen></iframe>';
+          }
+          setTimeout(function(){if(!apiReady)showDirect();},5000);
+        </script></body></html>`;
       return (
         <WebView
           source={{ html }}
@@ -238,8 +262,8 @@ export function ReelsScreen() {
           mediaPlaybackRequiresUserAction={false}
           javaScriptEnabled
           scrollEnabled={false}
+          onMessage={(e) => { if (e.nativeEvent.data === 'EMBED_ERROR') setErrorIds(prev => new Set([...prev, item.id])); }}
           onError={() => setErrorIds(prev => new Set([...prev, item.id]))}
-          onHttpError={(e) => { if (e.nativeEvent.statusCode >= 400) setErrorIds(prev => new Set([...prev, item.id])); }}
         />
       );
     }
