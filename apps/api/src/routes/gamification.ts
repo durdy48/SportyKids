@@ -39,7 +39,8 @@ router.get('/stickers/:userId', async (req: Request, res: Response) => {
     collected: userStickers.length,
     total: totalStickers,
     stickers: userStickers.map((us) => ({
-      id: us.sticker.id,
+      id: us.id,
+      stickerId: us.sticker.id,
       name: us.sticker.name,
       nameKey: us.sticker.nameKey,
       imageUrl: us.sticker.imageUrl,
