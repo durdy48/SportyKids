@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import {
   View, Text, FlatList, Dimensions, TouchableOpacity, StyleSheet,
-  Image, Share, Linking,
+  Image, Share,
 } from 'react-native';
+import * as WebBrowser from 'expo-web-browser';
 import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Reel } from '@sportykids/shared';
@@ -128,9 +129,9 @@ export function ReelsScreen() {
               accessibilityRole="button"
               onPress={() => {
                 if (hasError) {
-                  // Error: open in native app
+                  // Error: open in in-app browser
                   const watchUrl = isYouTube ? `https://www.youtube.com/watch?v=${getYouTubeVideoId(item.videoUrl)}` : item.videoUrl;
-                  Linking.openURL(watchUrl);
+                  WebBrowser.openBrowserAsync(watchUrl);
                 } else {
                   setPlayingId(item.id);
                 }
@@ -227,13 +228,8 @@ export function ReelsScreen() {
 
     if (isYouTube) {
       const videoId = getYouTubeVideoId(item.videoUrl) ?? '';
-      const html = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0}body{background:#000}</style></head><body>
-        <div id="player" style="width:100%;height:100%"></div>
-        <script>
-          var tag=document.createElement('script');tag.src='https://www.youtube.com/iframe_api';document.body.appendChild(tag);
-          function onYouTubeIframeAPIReady(){new YT.Player('player',{width:'100%',height:'100%',videoId:'${htmlEncode(videoId)}',playerVars:{autoplay:1,playsinline:1,modestbranding:1,rel:0},events:{onError:function(){window.ReactNativeWebView.postMessage('EMBED_ERROR')}}});}
-          setTimeout(function(){if(!document.querySelector('iframe'))window.ReactNativeWebView.postMessage('EMBED_ERROR');},8000);
-        </script></body></html>`;
+      const embedUrl = `https://www.youtube-nocookie.com/embed/${htmlEncode(videoId)}?autoplay=1&playsinline=1&modestbranding=1&rel=0`;
+      const html = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"><style>*{margin:0;padding:0;box-sizing:border-box}body{background:#000;overflow:hidden}</style></head><body><iframe src="${embedUrl}" width="100%" height="100%" frameborder="0" allow="autoplay;encrypted-media;fullscreen" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%"></iframe></body></html>`;
       return (
         <WebView
           source={{ html }}
@@ -242,12 +238,8 @@ export function ReelsScreen() {
           mediaPlaybackRequiresUserAction={false}
           javaScriptEnabled
           scrollEnabled={false}
-          onMessage={(e) => {
-            if (e.nativeEvent.data === 'EMBED_ERROR') {
-              setErrorIds(prev => new Set([...prev, item.id]));
-            }
-          }}
           onError={() => setErrorIds(prev => new Set([...prev, item.id]))}
+          onHttpError={(e) => { if (e.nativeEvent.statusCode >= 400) setErrorIds(prev => new Set([...prev, item.id])); }}
         />
       );
     }

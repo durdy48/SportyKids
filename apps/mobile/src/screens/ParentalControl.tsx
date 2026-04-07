@@ -454,13 +454,13 @@ export function ParentalControlScreen({ navigation }: { navigation: { navigate: 
       {activeTab === 'profile' && (
         <>
           <View style={s.card}>
-            <Text style={s.cardTitle}>{t('onboarding.step1_title', locale).replace(/[!?¡¿]/g, '')}</Text>
+            <Text style={s.cardTitle}>{t('parental.child_profile', locale)}</Text>
             <View style={s.profileRow}>
-              <Text style={s.profileLabel}>{t('onboarding.step1_title', locale).replace(/[!?¡¿]/g, '')}</Text>
+              <Text style={s.profileLabel}>{t('parental.profile_name', locale)}</Text>
               <Text style={s.profileValue}>{user.name}</Text>
             </View>
             <View style={s.profileRow}>
-              <Text style={s.profileLabel}>{t('onboarding.age_question', locale).replace(/[!?¡¿]/g, '')}</Text>
+              <Text style={s.profileLabel}>{t('parental.profile_age', locale)}</Text>
               <Text style={s.profileValue}>
                 {user.age} ({getAgeRangeLabel(
                   user.age <= 8 ? '6-8' : user.age <= 11 ? '9-11' : '12-14',
@@ -469,7 +469,7 @@ export function ParentalControlScreen({ navigation }: { navigation: { navigate: 
               </Text>
             </View>
             <View style={s.profileRow}>
-              <Text style={s.profileLabel}>{t('onboarding.step2_title', locale).replace(/[!?¡¿]/g, '')}</Text>
+              <Text style={s.profileLabel}>{t('parental.profile_sports', locale)}</Text>
               <Text style={s.profileValue}>
                 {(user.favoriteSports ?? []).map((sp: string) => `${sportToEmoji(sp)} ${getSportLabel(sp, locale)}`).join(', ') || '—'}
               </Text>

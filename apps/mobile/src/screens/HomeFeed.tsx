@@ -178,15 +178,6 @@ export function HomeFeedScreen({ navigation }: { navigation: { navigate: (screen
                   {user ? t('feed.personalized', locale) : t('home.subtitle', locale)}
                 </Text>
               </View>
-              <TouchableOpacity
-                onPress={() => navigation.navigate('RssCatalog')}
-                style={styles.settingsButton}
-                accessible={true}
-                accessibilityLabel={t('sources.catalog_title', locale)}
-                accessibilityRole="button"
-              >
-                <Text style={styles.settingsIcon}>{'\u2699\uFE0F'}</Text>
-              </TouchableOpacity>
             </View>
             {streakInfo && streakInfo.currentStreak > 0 && (
               <StreakCounter
@@ -307,13 +298,6 @@ function createStyles(colors: ThemeColors) {
       alignItems: 'flex-start',
       justifyContent: 'space-between',
       marginBottom: 4,
-    },
-    settingsButton: {
-      padding: 8,
-      marginTop: 2,
-    },
-    settingsIcon: {
-      fontSize: 22,
     },
     searchContainer: {
       flexDirection: 'row',
