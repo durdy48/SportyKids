@@ -8,7 +8,7 @@ import { generateUniqueCode } from '../services/invite-code';
 
 // Alias to allow mocking in tests
 const AdminRssParser = Parser;
-import { syncLimiter, adminJobLimiter } from '../middleware/rate-limiter';
+import { adminJobLimiter } from '../middleware/rate-limiter';
 import { prisma } from '../config/database';
 import { logger } from '../services/logger';
 import { generateDailyQuiz } from '../jobs/generate-daily-quiz';
