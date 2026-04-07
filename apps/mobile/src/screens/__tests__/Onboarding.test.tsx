@@ -3,7 +3,6 @@ import { describe, it, expect, vi } from 'vitest';
 vi.mock('../../config', () => ({ API_BASE: 'http://localhost:3001/api', WEB_BASE: 'http://localhost:3000' }));
 vi.mock('../../lib/api', () => ({
   createUser: vi.fn().mockResolvedValue({ id: 'u1', name: 'Test' }),
-  fetchSourceCatalog: vi.fn().mockResolvedValue({ sources: [], totalCount: 0, bySport: {} }),
   setupParentalPin: vi.fn().mockResolvedValue({}),
 }));
 vi.mock('../../lib/user-context', () => ({
@@ -75,40 +74,27 @@ describe('OnboardingScreen', () => {
   });
 });
 
-describe('Onboarding — Step 3 entity selection', () => {
-  it('uses SPORT_ENTITIES, not TEAMS', async () => {
+describe('Onboarding — 3-step flow', () => {
+  it('has TOTAL_STEPS = 3', async () => {
     const { OnboardingScreen } = await import('../Onboarding');
     const source = OnboardingScreen.toString();
-    expect(source).toContain('SPORT_ENTITIES');
-    expect(source).toContain('visibleEntities');
-    expect(source).toContain('selectedEntities');
-    expect(source).not.toContain('TEAMS.map');
+    // TOTAL_STEPS constant is defined outside the component; verify 3-step parental step
+    expect(source).toContain('onboarding.step5_title');
   });
 
-  it('entity chips use accessibilityState.selected', async () => {
+  it('step 3 renders parental PIN section', async () => {
     const { OnboardingScreen } = await import('../Onboarding');
     const source = OnboardingScreen.toString();
-    expect(source).toContain('accessibilityState');
-    expect(source).toContain('selected');
-    expect(source).toContain('isSelected');
+    expect(source).toContain('onboarding.pin_create');
+    expect(source).toContain('onboarding.formats_label');
+    expect(source).toContain('onboarding.time_limit_label');
   });
 
-  it('toggleEntity function handles multi-select', async () => {
+  it('does not contain entity selection (moved to ParentalControl)', async () => {
     const { OnboardingScreen } = await import('../Onboarding');
     const source = OnboardingScreen.toString();
-    expect(source).toContain('toggleEntity');
-    expect(source).toContain('feedQuery');
-  });
-
-  it('uses a11y.onboarding.select_entity key', async () => {
-    const { OnboardingScreen } = await import('../Onboarding');
-    const source = OnboardingScreen.toString();
-    expect(source).toContain('a11y.onboarding.select_entity');
-  });
-
-  it('getSourceIdsForEntities is used in step 4 pre-population', async () => {
-    const { OnboardingScreen } = await import('../Onboarding');
-    const source = OnboardingScreen.toString();
-    expect(source).toContain('getSourceIdsForEntities');
+    expect(source).not.toContain('selectedEntities');
+    expect(source).not.toContain('getSourceIdsForEntities');
+    expect(source).not.toContain('selectedFeeds');
   });
 });

@@ -1,25 +1,16 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState } from 'react';
 import {
-  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert, ActivityIndicator,
+  View, Text, TextInput, TouchableOpacity, ScrollView, StyleSheet, SafeAreaView, Alert,
 } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
-import { SPORTS, AGE_RANGES, SPORT_ENTITIES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale, getSourceIdsForEntities } from '@sportykids/shared';
+import { SPORTS, AGE_RANGES, sportToEmoji, t, getSportLabel, getAgeRangeLabel, inferCountryFromLocale } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
-import type { AgeRange, RssSource, SportEntity } from '@sportykids/shared';
-import { createUser, fetchSourceCatalog, setupParentalPin } from '../lib/api';
+import type { AgeRange } from '@sportykids/shared';
+import { createUser, setupParentalPin } from '../lib/api';
 import { useUser } from '../lib/user-context';
 import { WEB_BASE } from '../config';
 
-const COUNTRY_FLAGS: Record<string, string> = {
-  ES: '\u{1F1EA}\u{1F1F8}',
-  GB: '\u{1F1EC}\u{1F1E7}',
-  US: '\u{1F1FA}\u{1F1F8}',
-  FR: '\u{1F1EB}\u{1F1F7}',
-  IT: '\u{1F1EE}\u{1F1F9}',
-  DE: '\u{1F1E9}\u{1F1EA}',
-};
-
-const TOTAL_STEPS = 5;
+const TOTAL_STEPS = 3;
 
 const TIME_LIMIT_OPTIONS = [
   { minutes: 15, label: '15 min' },
@@ -54,110 +45,15 @@ export function OnboardingScreen() {
   // Step 2 - Sports
   const [sports, setSports] = useState<string[]>([]);
 
-  // Step 3 - Entities
-  const [selectedEntities, setSelectedEntities] = useState<SportEntity[]>([]);
-
-  // Step 4 - Sources
-  const [sources, setSources] = useState<RssSource[]>([]);
-  const [sourcesLoading, setSourcesLoading] = useState(true);
-  const [sourcesError, setSourcesError] = useState(false);
-  const [selectedFeeds, setSelectedFeeds] = useState<string[]>([]);
-  const [searchQuery, setSearchQuery] = useState('');
-
-  // Step 5 - Parental PIN
+  // Step 3 - Parental PIN
   const [parentalPin, setParentalPin] = useState('');
   const [confirmPin, setConfirmPin] = useState('');
   const [pinError, setPinError] = useState('');
   const [allowedFormats, setAllowedFormats] = useState<string[]>(['news', 'reels', 'quiz']);
   const [maxDailyTime, setMaxDailyTime] = useState(0); // 0 = no limit
 
-  const loadSources = () => {
-    setSourcesLoading(true);
-    setSourcesError(false);
-    fetchSourceCatalog()
-      .then((catalog) => {
-        setSources(catalog.sources);
-        setSourcesLoading(false);
-      })
-      .catch((err) => {
-        // eslint-disable-next-line no-console
-        console.error('[Onboarding] fetchSourceCatalog failed:', err);
-        setSourcesLoading(false);
-        setSourcesError(true);
-      });
-  };
-
-  useEffect(() => {
-    loadSources();
-  }, []);
-
-  // Auto-pre-select sources matching selected sports when entering step 4
-  useEffect(() => {
-    if (step === 4 && selectedFeeds.length === 0 && sources.length > 0 && sports.length > 0) {
-      const matching = sources
-        .filter((s) => s.active && sports.includes(s.sport))
-        .map((s) => s.id);
-      const entityIds = getSourceIdsForEntities(sources, selectedEntities);
-      const merged = Array.from(new Set([...matching, ...entityIds]));
-      setSelectedFeeds(merged);
-    }
-  // `selectedEntities` is intentionally omitted from deps: the effect is guarded by
-  // `selectedFeeds.length === 0`, so it runs exactly once on step 4 entry. At that
-  // point, `selectedEntities` already reflects the user's current selections from step 3.
-  // If navigation ever becomes non-linear, this guard would need revisiting.
-  }, [step, sources, sports]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Group sources by country, filtered by selected sports and search query
-  const groupedSources = useMemo(() => {
-    const sportsSet = new Set(sports);
-    const query = searchQuery.toLowerCase().trim();
-
-    const filtered = sources.filter((s) => {
-      if (!s.active) return false;
-      if (!sportsSet.has(s.sport)) return false;
-      if (query && !s.name.toLowerCase().includes(query)) return false;
-      return true;
-    });
-
-    const byCountry: Record<string, RssSource[]> = {};
-    for (const source of filtered) {
-      const country = source.country || 'OTHER';
-      if (!byCountry[country]) byCountry[country] = [];
-      byCountry[country].push(source);
-    }
-
-    // Sort countries: user's locale country first, then alphabetically
-    const countryOrder = Object.keys(byCountry).sort((a, b) => {
-      const userCountry = inferCountryFromLocale(locale);
-      if (a === userCountry) return -1;
-      if (b === userCountry) return 1;
-      return a.localeCompare(b);
-    });
-
-    return countryOrder.map((country) => ({
-      country,
-      title: `${COUNTRY_FLAGS[country] || '\u{1F30D}'} ${t(`sources.country_${country}`, locale) || country}`,
-      data: byCountry[country],
-    }));
-  }, [sources, sports, searchQuery, locale]);
-
   const toggleSport = (sport: string) =>
     setSports((prev) => prev.includes(sport) ? prev.filter((x) => x !== sport) : [...prev, sport]);
-
-  const visibleEntities = useMemo(
-    () => sports.flatMap((sport) => SPORT_ENTITIES[sport] ?? []),
-    [sports]
-  );
-
-  const toggleEntity = (entity: SportEntity) => {
-    setSelectedEntities((prev) => {
-      const exists = prev.some((e) => e.feedQuery === entity.feedQuery);
-      return exists ? prev.filter((e) => e.feedQuery !== entity.feedQuery) : [...prev, entity];
-    });
-  };
-
-  const toggleFeed = (id: string) =>
-    setSelectedFeeds((prev) => prev.includes(id) ? prev.filter((x) => x !== id) : [...prev, id]);
 
   const toggleFormat = (formatId: string) => {
     setAllowedFormats((prev) => {
@@ -173,7 +69,7 @@ export function OnboardingScreen() {
   const canAdvance = () => {
     if (step === 1) return name.trim().length >= 2 && ageRange !== null;
     if (step === 2) return sports.length > 0;
-    if (step === 5) {
+    if (step === 3) {
       // PIN is optional at onboarding, but if entered must be valid
       if (parentalPin.length === 0) return true; // skip PIN
       return parentalPin.length === 4 && confirmPin.length === 4;
@@ -202,8 +98,6 @@ export function OnboardingScreen() {
         name: name.trim(),
         age: AGE_RANGES[ageRange].min,
         favoriteSports: sports,
-        favoriteTeam: selectedEntities[0]?.name ?? undefined,
-        selectedFeeds,
         locale,
         country: inferredCountry,
         ageGateCompleted: true,
@@ -344,126 +238,6 @@ export function OnboardingScreen() {
         )}
 
         {step === 3 && (
-          <View style={s.stepContainer}>
-            <Text style={s.emoji}>⭐</Text>
-            <Text style={s.title}>{t('onboarding.step3_title', locale)}</Text>
-            <Text style={s.subtitle}>{t('onboarding.step3_subtitle', locale)}</Text>
-            {visibleEntities.length === 0 ? (
-              <Text style={s.subtitle}>{t('onboarding.step3_no_entities', locale)}</Text>
-            ) : (
-            <View style={s.grid}>
-              {visibleEntities.map((entity) => {
-                const isSelected = selectedEntities.some(
-                  (e) => e.feedQuery === entity.feedQuery
-                );
-                return (
-                  <TouchableOpacity
-                    key={entity.feedQuery}
-                    style={[s.chip, isSelected && s.chipActive]}
-                    onPress={() => toggleEntity(entity)}
-                    accessible={true}
-                    accessibilityLabel={t('a11y.onboarding.select_entity', locale, {
-                      entity: entity.name,
-                    })}
-                    accessibilityRole="button"
-                    accessibilityState={{ selected: isSelected }}
-                  >
-                    <Text style={[s.chipText, isSelected && s.chipTextActive]}>
-                      {entity.name}
-                    </Text>
-                  </TouchableOpacity>
-                );
-              })}
-            </View>
-            )}
-          </View>
-        )}
-
-        {step === 4 && (
-          <View style={s.stepContainer}>
-            <Text style={s.emoji}>📰</Text>
-            <Text style={s.title}>{t('sources.catalog_title', locale)}</Text>
-            <Text style={s.subtitle}>{t('sources.catalog_subtitle', locale)}</Text>
-
-            {/* Selected count badge */}
-            <View style={s.selectedBadge}>
-              <Text style={s.selectedBadgeText}>
-                {t('sources.selected_count', locale, { count: String(selectedFeeds.length) })}
-              </Text>
-            </View>
-
-            {/* Search input */}
-            <TextInput
-              style={s.searchInput}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              placeholder={t('search.placeholder', locale)}
-              placeholderTextColor="#9CA3AF"
-              autoCorrect={false}
-              clearButtonMode="while-editing"
-            />
-
-            {/* Grouped source list */}
-            {sourcesLoading ? (
-              <ActivityIndicator size="large" color={colors.blue} style={{ marginTop: 32 }} />
-            ) : sourcesError ? (
-              <View style={s.errorContainer}>
-                <Text style={s.errorText}>{t('kid_errors.network_message', locale)}</Text>
-                <TouchableOpacity style={s.retryButton} onPress={loadSources} accessibilityRole="button">
-                  <Text style={s.retryButtonText}>{t('buttons.retry', locale)}</Text>
-                </TouchableOpacity>
-              </View>
-            ) : (
-              <>
-                {groupedSources.map((section) => (
-                  <View key={section.country} style={s.countrySection}>
-                    <Text style={s.countrySectionTitle}>{section.title}</Text>
-                    {section.data.map((source) => {
-                      const selected = selectedFeeds.includes(source.id);
-                      return (
-                        <TouchableOpacity
-                          key={source.id}
-                          style={[s.sourceChip, selected && s.sourceActive]}
-                          onPress={() => toggleFeed(source.id)}
-                          accessible={true}
-                          accessibilityLabel={t('a11y.onboarding.toggle_source', locale, { source: source.name, state: selected ? t('a11y.catalog.source_enabled', locale) : t('a11y.catalog.source_disabled', locale) })}
-                          accessibilityRole="button"
-                          accessibilityState={{ selected }}
-                        >
-                          <View style={s.sourceRow}>
-                            <View style={s.sourceInfo}>
-                              <Text style={[s.sourceNameText, selected && s.sourceNameSelected]}>
-                                {source.name}
-                              </Text>
-                              {source.description ? (
-                                <Text style={s.sourceDesc} numberOfLines={1}>
-                                  {source.description}
-                                </Text>
-                              ) : null}
-                            </View>
-                            <View style={[s.sourceSportBadge, { backgroundColor: selected ? colors.yellow : colors.border }]}>
-                              <Text style={s.sourceSportText}>
-                                {sportToEmoji(source.sport)}
-                              </Text>
-                            </View>
-                          </View>
-                        </TouchableOpacity>
-                      );
-                    })}
-                  </View>
-                ))}
-                {groupedSources.length === 0 && searchQuery.length > 0 && (
-                  <Text style={s.noResults}>{t('search.no_results', locale, { query: searchQuery })}</Text>
-                )}
-                {groupedSources.length === 0 && searchQuery.length === 0 && sources.length > 0 && (
-                  <Text style={s.noResults}>{t('sources.no_sources_for_sports', locale)}</Text>
-                )}
-              </>
-            )}
-          </View>
-        )}
-
-        {step === 5 && (
           <View style={s.stepContainer}>
             <Text style={s.emoji}>🔒</Text>
             <Text style={s.title}>{t('onboarding.step5_title', locale)}</Text>
@@ -620,31 +394,6 @@ function createStyles(colors: ThemeColors) {
   chipGreen: { backgroundColor: colors.green },
   chipText: { fontSize: 14, fontWeight: '500', color: colors.muted, textAlign: 'center' },
   chipTextActive: { color: '#fff' },
-  selectedBadge: {
-    backgroundColor: colors.blue, borderRadius: 16, paddingHorizontal: 14, paddingVertical: 6,
-    alignSelf: 'center', marginBottom: 12,
-  },
-  selectedBadgeText: { color: '#fff', fontSize: 13, fontWeight: '600' },
-  searchInput: {
-    width: '100%', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12,
-    borderWidth: 1, borderColor: colors.border, fontSize: 15, backgroundColor: colors.surface, color: colors.text, marginBottom: 16,
-  },
-  countrySection: { width: '100%', marginBottom: 12 },
-  countrySectionTitle: { fontSize: 15, fontWeight: '700', color: colors.text, marginBottom: 6, marginTop: 4 },
-  sourceChip: { width: '100%', paddingHorizontal: 14, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.border, marginTop: 6, borderWidth: 2, borderColor: 'transparent' },
-  sourceActive: { borderColor: colors.yellow, backgroundColor: colors.yellow + '15' },
-  sourceRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-  sourceInfo: { flex: 1, marginRight: 8 },
-  sourceNameText: { fontSize: 14, fontWeight: '500', color: colors.muted },
-  sourceNameSelected: { fontWeight: '600', color: colors.text },
-  sourceDesc: { fontSize: 12, color: colors.muted, marginTop: 2 },
-  sourceSportBadge: { width: 30, height: 30, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
-  sourceSportText: { fontSize: 14 },
-  noResults: { fontSize: 14, color: colors.muted, textAlign: 'center', marginTop: 20 },
-  errorContainer: { alignItems: 'center', marginTop: 32, paddingHorizontal: 16 },
-  errorText: { fontSize: 14, color: colors.muted, textAlign: 'center', marginBottom: 16 },
-  retryButton: { paddingHorizontal: 24, paddingVertical: 12, borderRadius: 12, backgroundColor: colors.blue },
-  retryButtonText: { color: '#fff', fontSize: 14, fontWeight: '600' },
   pinInput: {
     fontSize: 32, fontWeight: '700', textAlign: 'center', letterSpacing: 16,
     width: 200, paddingVertical: 14, borderBottomWidth: 3, borderBottomColor: colors.border,

@@ -6,7 +6,7 @@ import {
 import * as WebBrowser from 'expo-web-browser';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { NewsItem, Reel, LiveScorePreferences } from '@sportykids/shared';
-import { COLORS, SPORTS, t, sportToEmoji, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
+import { COLORS, SPORTS, SPORT_ENTITIES, t, sportToEmoji, getSportLabel, getAgeRangeLabel } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
 import * as Haptics from 'expo-haptics';
 import {
@@ -14,6 +14,7 @@ import {
   updateParentalProfile, fetchActivity, fetchFeedPreview,
   getDigestPreferences, updateDigestPreferences,
   getLiveScorePreferences, subscribeNotifications,
+  updateUser,
 } from '../lib/api';
 import { API_BASE, WEB_BASE } from '../config';
 import { getAccessToken } from '../lib/auth';
@@ -55,8 +56,8 @@ const FORMATS = [
 
 const TIME_PRESETS = [15, 30, 60, 90, 120, 0]; // 0 = no limit
 
-export function ParentalControlScreen() {
-  const { user, setParentalProfile, locale, colors, theme, setTheme, logout } = useUser();
+export function ParentalControlScreen({ navigation }: { navigation: { navigate: (screen: string) => void } }) {
+  const { user, setUser, setParentalProfile, locale, colors, theme, setTheme, logout } = useUser();
   const s = createStyles(colors);
   const [screenState, setScreenState] = useState<ScreenState>('loading');
   const [pin, setPin] = useState('');
@@ -90,6 +91,10 @@ export function ParentalControlScreen() {
   const [newPinInput, setNewPinInput] = useState('');
   const [confirmNewPin, setConfirmNewPin] = useState('');
   const [pinChangeError, setPinChangeError] = useState('');
+
+  // Team selection state
+  const [teamSelectionVisible, setTeamSelectionVisible] = useState(false);
+  const [savingTeam, setSavingTeam] = useState(false);
 
   useEffect(() => {
     if (!user) return;
@@ -270,6 +275,19 @@ export function ParentalControlScreen() {
     }
   };
 
+  const selectTeam = async (team: string) => {
+    if (!user) return;
+    setSavingTeam(true);
+    try {
+      const updated = await updateUser(user.id, { favoriteTeam: team });
+      setUser(updated);
+    } catch {
+      Alert.alert(t('errors.generic', locale));
+    }
+    setSavingTeam(false);
+    setTeamSelectionVisible(false);
+  };
+
   const openFeedPreview = async () => {
     if (!user) return;
     setPreviewLoading(true);
@@ -434,32 +452,72 @@ export function ParentalControlScreen() {
 
       {/* Profile tab */}
       {activeTab === 'profile' && (
-        <View style={s.card}>
-          <Text style={s.cardTitle}>{t('onboarding.step1_title', locale).replace(/[!?¡¿]/g, '')}</Text>
-          <View style={s.profileRow}>
-            <Text style={s.profileLabel}>{t('onboarding.step1_title', locale).replace(/[!?¡¿]/g, '')}</Text>
-            <Text style={s.profileValue}>{user.name}</Text>
+        <>
+          <View style={s.card}>
+            <Text style={s.cardTitle}>{t('onboarding.step1_title', locale).replace(/[!?¡¿]/g, '')}</Text>
+            <View style={s.profileRow}>
+              <Text style={s.profileLabel}>{t('onboarding.step1_title', locale).replace(/[!?¡¿]/g, '')}</Text>
+              <Text style={s.profileValue}>{user.name}</Text>
+            </View>
+            <View style={s.profileRow}>
+              <Text style={s.profileLabel}>{t('onboarding.age_question', locale).replace(/[!?¡¿]/g, '')}</Text>
+              <Text style={s.profileValue}>
+                {user.age} ({getAgeRangeLabel(
+                  user.age <= 8 ? '6-8' : user.age <= 11 ? '9-11' : '12-14',
+                  locale,
+                )})
+              </Text>
+            </View>
+            <View style={s.profileRow}>
+              <Text style={s.profileLabel}>{t('onboarding.step2_title', locale).replace(/[!?¡¿]/g, '')}</Text>
+              <Text style={s.profileValue}>
+                {(user.favoriteSports ?? []).map((sp: string) => `${sportToEmoji(sp)} ${getSportLabel(sp, locale)}`).join(', ') || '—'}
+              </Text>
+            </View>
+            <View style={s.profileRow}>
+              <Text style={s.profileLabel}>{t('parental.favorite_team', locale)}</Text>
+              <Text style={s.profileValue}>{user.favoriteTeam || '—'}</Text>
+            </View>
           </View>
-          <View style={s.profileRow}>
-            <Text style={s.profileLabel}>{t('onboarding.age_question', locale).replace(/[!?¡¿]/g, '')}</Text>
-            <Text style={s.profileValue}>
-              {user.age} ({getAgeRangeLabel(
-                user.age <= 8 ? '6-8' : user.age <= 11 ? '9-11' : '12-14',
-                locale,
-              )})
-            </Text>
+
+          {/* Favorite team editor */}
+          <View style={s.card}>
+            <Text style={s.cardTitle}>{t('parental.favorite_team', locale)}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Text style={{ fontSize: 15, color: colors.text, fontWeight: '600' }}>{user.favoriteTeam || '—'}</Text>
+              <TouchableOpacity
+                style={[s.button, { paddingVertical: 8, paddingHorizontal: 16 }]}
+                onPress={() => setTeamSelectionVisible(!teamSelectionVisible)}
+                accessible={true}
+                accessibilityLabel={t('parental.change_team', locale)}
+                accessibilityRole="button"
+              >
+                <Text style={[s.buttonText, { fontSize: 13 }]}>{t('parental.change_team', locale)}</Text>
+              </TouchableOpacity>
+            </View>
+            {teamSelectionVisible && (
+              <View style={s.sportsGrid}>
+                {(user.favoriteSports ?? []).flatMap((sport: string) =>
+                  (SPORT_ENTITIES[sport] ?? []).map((entity) => (
+                    <TouchableOpacity
+                      key={entity.feedQuery}
+                      style={[s.sportChip, user.favoriteTeam === entity.name ? s.sportChipActive : s.sportChipInactive, savingTeam && { opacity: 0.5 }]}
+                      onPress={() => !savingTeam && selectTeam(entity.name)}
+                      accessible={true}
+                      accessibilityLabel={entity.name}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: user.favoriteTeam === entity.name }}
+                    >
+                      <Text style={[s.sportChipText, user.favoriteTeam === entity.name && { color: '#fff' }]}>
+                        {entity.name}
+                      </Text>
+                    </TouchableOpacity>
+                  ))
+                )}
+              </View>
+            )}
           </View>
-          <View style={s.profileRow}>
-            <Text style={s.profileLabel}>{t('onboarding.step2_title', locale).replace(/[!?¡¿]/g, '')}</Text>
-            <Text style={s.profileValue}>
-              {(user.favoriteSports ?? []).map((sp: string) => `${sportToEmoji(sp)} ${getSportLabel(sp, locale)}`).join(', ') || '—'}
-            </Text>
-          </View>
-          <View style={s.profileRow}>
-            <Text style={s.profileLabel}>{t('onboarding.step3_title', locale).replace(/[!?¡¿]/g, '')}</Text>
-            <Text style={s.profileValue}>{user.favoriteTeam || '—'}</Text>
-          </View>
-        </View>
+        </>
       )}
 
       {/* Content tab */}
@@ -550,6 +608,25 @@ export function ParentalControlScreen() {
               })}
             </View>
           ) : null}
+
+          {/* News Sources */}
+          <View style={s.card}>
+            <Text style={s.cardTitle}>{t('sources.catalog_title', locale)}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+              <Text style={{ fontSize: 13, color: colors.muted }}>
+                {t('parental.sources_selected', locale, { count: String(user?.selectedFeeds?.length ?? 0) })}
+              </Text>
+              <TouchableOpacity
+                style={[s.button, { paddingVertical: 8, paddingHorizontal: 16 }]}
+                onPress={() => navigation.navigate('RssCatalog')}
+                accessible={true}
+                accessibilityLabel={t('parental.manage_sources', locale)}
+                accessibilityRole="button"
+              >
+                <Text style={[s.buttonText, { fontSize: 13 }]}>{t('parental.manage_sources', locale)}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
 
           {/* Feed Preview button */}
           <TouchableOpacity
