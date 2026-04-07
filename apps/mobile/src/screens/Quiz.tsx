@@ -75,7 +75,6 @@ export function QuizScreen() {
       setFeedback(data);
       setRoundPoints((p) => p + data.pointsEarned);
       haptic(data.correct ? 'success' : 'error');
-      recordActivity(user.id, 'quizzes_played').catch(() => {});
     } catch (err) {
       __DEV__ && console.error(err); // eslint-disable-line no-console
     }
@@ -85,6 +84,8 @@ export function QuizScreen() {
     if (index === questions.length - 1) {
       setTotalPoints((p) => p + roundPoints);
       setGameState('result');
+      // Record one activity per completed quiz round (not per question)
+      if (user) recordActivity(user.id, 'quizzes_played').catch(() => {});
       refreshUser(); // Sync points/stickers from server
       return;
     }
