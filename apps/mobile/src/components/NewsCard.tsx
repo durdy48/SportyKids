@@ -6,7 +6,7 @@ import type { ThemeColors } from '../lib/theme';
 import { useUser } from '../lib/user-context';
 import { getSportLabel } from '@sportykids/shared';
 import { isFavorite, toggleFavorite } from '../lib/favorites';
-import { fetchRelatedArticles, fetchNewsSummary } from '../lib/api';
+import { fetchRelatedArticles, fetchNewsSummary, recordActivity } from '../lib/api';
 
 interface NewsCardProps {
   item: NewsItem;
@@ -143,6 +143,7 @@ export function NewsCard({ item, isTrending = false }: NewsCardProps) {
             accessibilityRole="link"
             onPress={() => {
               Linking.openURL(item.sourceUrl);
+              if (user) recordActivity(user.id, 'news_viewed', { contentId: item.id, sport: item.sport }).catch(() => {});
               if (!showRelated && related.length === 0) {
                 fetchRelatedArticles(item.id, 3).then((res) => {
                   setRelated(res.related);

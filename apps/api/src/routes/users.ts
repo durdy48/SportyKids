@@ -25,6 +25,8 @@ const createUserSchema = z.object({
 
 const updateUserSchema = createUserSchema.partial().extend({
   consentBy: z.string().optional(),
+  // Override: no default on update — absence means "don't change"
+  selectedFeeds: z.array(z.string()).optional(),
 });
 
 // POST /api/users — Create user
@@ -90,7 +92,7 @@ router.put('/:id', async (req: Request, res: Response) => {
   const { favoriteSports, selectedFeeds, locale, country, ageGateCompleted, consentGiven, consentBy, ...rest } = parsed.data;
   const data: Record<string, unknown> = { ...rest };
   if (favoriteSports) data.favoriteSports = favoriteSports;
-  if (selectedFeeds) data.selectedFeeds = selectedFeeds;
+  if (selectedFeeds !== undefined) data.selectedFeeds = selectedFeeds;
   if (locale !== undefined) data.locale = locale;
   if (country !== undefined) data.country = country;
   if (ageGateCompleted !== undefined) data.ageGateCompleted = ageGateCompleted;

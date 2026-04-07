@@ -8,7 +8,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import type { Reel } from '@sportykids/shared';
 import { SPORTS, COLORS, sportToEmoji, t, getSportLabel } from '@sportykids/shared';
-import { fetchReels } from '../lib/api';
+import { fetchReels, recordActivity } from '../lib/api';
 import { useUser } from '../lib/user-context';
 import { haptic } from '../lib/haptics';
 import { BrandedRefreshControl } from '../components/BrandedRefreshControl';
@@ -134,6 +134,7 @@ export function ReelsScreen() {
                   WebBrowser.openBrowserAsync(watchUrl);
                 } else {
                   setPlayingId(item.id);
+                  if (user) recordActivity(user.id, 'reels_viewed', { contentId: item.id, sport: item.sport }).catch(() => {});
                 }
               }}
               activeOpacity={0.8}

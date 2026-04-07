@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity, StyleSheet, ScrollView, ActivityIndicator
 import type { QuizQuestion } from '@sportykids/shared';
 import { sportToEmoji, t, getSportLabel } from '@sportykids/shared';
 import type { ThemeColors } from '../lib/theme';
-import { fetchQuestions, submitAnswer, fetchScore } from '../lib/api';
+import { fetchQuestions, submitAnswer, fetchScore, recordActivity } from '../lib/api';
 import { useUser } from '../lib/user-context';
 import { haptic } from '../lib/haptics';
 import { BrandedRefreshControl } from '../components/BrandedRefreshControl';
@@ -75,6 +75,7 @@ export function QuizScreen() {
       setFeedback(data);
       setRoundPoints((p) => p + data.pointsEarned);
       haptic(data.correct ? 'success' : 'error');
+      recordActivity(user.id, 'quizzes_played').catch(() => {});
     } catch (err) {
       __DEV__ && console.error(err); // eslint-disable-line no-console
     }
