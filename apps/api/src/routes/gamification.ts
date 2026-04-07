@@ -85,13 +85,18 @@ router.get('/achievements/:userId', async (req: Request, res: Response) => {
     unlocked: userAchievements.length,
     total: totalAchievements,
     achievements: userAchievements.map((ua) => ({
-      key: ua.achievement.key,
-      nameKey: ua.achievement.nameKey,
-      descriptionKey: ua.achievement.descriptionKey,
-      icon: ua.achievement.icon,
-      threshold: ua.achievement.threshold,
-      type: ua.achievement.type,
+      id: ua.id,
+      achievementId: ua.achievement.id,
       unlockedAt: ua.unlockedAt,
+      achievement: {
+        id: ua.achievement.id,
+        key: ua.achievement.key,
+        nameKey: ua.achievement.nameKey,
+        descriptionKey: ua.achievement.descriptionKey,
+        icon: ua.achievement.icon,
+        threshold: ua.achievement.threshold,
+        type: ua.achievement.type,
+      },
     })),
   });
 });
