@@ -611,6 +611,8 @@
     "quiz_ready_body": "Pon a prueba tus conocimientos deportivos hoy.",
     "team_news_title": "Noticias de {team}",
     "team_news_body": "Hay nuevas noticias sobre tu equipo favorito.",
+    "team_news_description": "Recibe avisos cuando haya noticias nuevas de tu equipo favorito.",
+    "team_news_toggle": "Noticias del equipo",
     "streak_warning_title": "No pierdas tu racha!",
     "streak_warning_body": "Llevas {days} dias seguidos. Entra hoy para no perderla!",
     "sticker_earned_title": "Nuevo sticker!",

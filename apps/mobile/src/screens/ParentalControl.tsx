@@ -86,6 +86,12 @@ export function ParentalControlScreen({ navigation }: { navigation: { navigate: 
   });
   const [liveScoreLoaded, setLiveScoreLoaded] = useState(false);
 
+  // Team news notification preference
+  const [teamUpdatesEnabled, setTeamUpdatesEnabled] = useState(() => {
+    const prefs = (user?.pushPreferences ?? {}) as Record<string, unknown>;
+    return prefs.teamUpdates !== false;
+  });
+
   // PIN change state
   const [currentPinInput, setCurrentPinInput] = useState('');
   const [newPinInput, setNewPinInput] = useState('');
@@ -332,6 +338,22 @@ export function ParentalControlScreen({ navigation }: { navigation: { navigate: 
     }
   }, [user, activeTab, liveScoreLoaded]);
 
+  const toggleTeamUpdates = async () => {
+    if (!user) return;
+    const updated = !teamUpdatesEnabled;
+    setTeamUpdatesEnabled(updated);
+    try {
+      const currentPrefs = (user.pushPreferences ?? { sports: true, dailyQuiz: true, teamUpdates: true }) as Record<string, unknown>;
+      await subscribeNotifications(user.id, {
+        enabled: user.pushEnabled ?? false,
+        preferences: { ...currentPrefs, teamUpdates: updated } as never,
+      });
+      setUser({ ...user, pushPreferences: { ...currentPrefs, teamUpdates: updated } });
+    } catch {
+      setTeamUpdatesEnabled(!updated);
+    }
+  };
+
   const toggleLiveScorePref = async (key: keyof LiveScorePreferences) => {
     if (!user) return;
     const updated = { ...liveScorePrefs, [key]: !liveScorePrefs[key] };
@@ -570,6 +592,29 @@ export function ParentalControlScreen({ navigation }: { navigation: { navigate: 
               })}
             </View>
           </View>
+
+          {/* Team News Notifications */}
+          {user.favoriteTeam ? (
+            <View style={s.card}>
+              <Text style={s.cardTitle}>{t('push.team_news_title', locale).replace('{team}', user.favoriteTeam)}</Text>
+              <Text style={[s.cardSubtitle, { color: colors.muted, marginBottom: 12 }]}>
+                {t('push.team_news_description', locale)}
+              </Text>
+              <TouchableOpacity
+                style={[s.formatRow, teamUpdatesEnabled ? s.formatActive : s.formatInactive]}
+                onPress={toggleTeamUpdates}
+                accessible={true}
+                accessibilityLabel={t('push.team_news_toggle', locale)}
+                accessibilityRole="switch"
+                accessibilityState={{ checked: teamUpdatesEnabled }}
+              >
+                <Text style={s.formatText}>{t('push.team_news_toggle', locale)}</Text>
+                <Text style={[s.formatBadge, teamUpdatesEnabled ? s.badgeOn : s.badgeOff]}>
+                  {teamUpdatesEnabled ? t('parental.enabled', locale) : t('parental.blocked', locale)}
+                </Text>
+              </TouchableOpacity>
+            </View>
+          ) : null}
 
           {/* Live Score Notifications */}
           {user.favoriteTeam ? (

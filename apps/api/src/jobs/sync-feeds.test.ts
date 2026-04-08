@@ -94,7 +94,7 @@ describe('sync-feeds', () => {
     it('should send locale-aware push notifications for team news', async () => {
       // Setup: new approved team article
       mockFindManyNews.mockResolvedValue([
-        { id: 'n1', title: 'Madrid wins', team: 'Real Madrid' },
+        { id: 'n1', title: 'Madrid wins', team: 'Real Madrid', sourceUrl: 'https://example.com/madrid-wins' },
       ]);
       // Users with different locales
       mockFindManyUser.mockResolvedValue([
@@ -112,6 +112,7 @@ describe('sync-feeds', () => {
         ['u1', 'u3'],
         expect.objectContaining({
           title: expect.stringContaining('[es]'),
+          data: { screen: 'HomeFeed', newsId: 'n1', url: 'https://example.com/madrid-wins' },
         }),
         'teamUpdates',
       );
@@ -120,6 +121,7 @@ describe('sync-feeds', () => {
         ['u2'],
         expect.objectContaining({
           title: expect.stringContaining('[en]'),
+          data: { screen: 'HomeFeed', newsId: 'n1', url: 'https://example.com/madrid-wins' },
         }),
         'teamUpdates',
       );
@@ -127,7 +129,7 @@ describe('sync-feeds', () => {
 
     it('should default to es locale when user has no locale', async () => {
       mockFindManyNews.mockResolvedValue([
-        { id: 'n1', title: 'Goal scored', team: 'Barcelona' },
+        { id: 'n1', title: 'Goal scored', team: 'Barcelona', sourceUrl: 'https://example.com/goal' },
       ]);
       mockFindManyUser.mockResolvedValue([
         { id: 'u1', locale: null },

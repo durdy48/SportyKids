@@ -611,6 +611,8 @@
     "quiz_ready_body": "Test your sports knowledge today.",
     "team_news_title": "{team} news",
     "team_news_body": "There's new news about your favorite team.",
+    "team_news_description": "Get notified when there's new content about your favourite team.",
+    "team_news_toggle": "Team news",
     "streak_warning_title": "Don't lose your streak!",
     "streak_warning_body": "You're on a {days}-day streak. Open SportyKids to keep it!",
     "sticker_earned_title": "New sticker!",

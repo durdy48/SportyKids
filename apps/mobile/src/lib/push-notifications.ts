@@ -1,6 +1,6 @@
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
-import { Platform } from 'react-native';
+import { Platform, Linking } from 'react-native';
 import { subscribeNotifications } from './api';
 
 // Configure how notifications are presented when the app is in the foreground
@@ -93,7 +93,12 @@ export function setupNotificationTapHandler(
   const subscription = Notifications.addNotificationResponseReceivedListener(
     (response) => {
       const data = response.notification.request.content.data as Record<string, string> | undefined;
-      if (data?.screen) {
+      if (data?.url) {
+        Linking.openURL(data.url).catch(() => {
+          // Fallback to screen navigation if URL fails to open
+          if (data.screen) navigate(data.screen, data);
+        });
+      } else if (data?.screen) {
         navigate(data.screen, data);
       }
     },

@@ -23,20 +23,20 @@ export async function notifyTeamNews(syncStartTime: Date): Promise<void> {
         team: { not: null },
         safetyStatus: 'approved',
       },
-      select: { id: true, title: true, team: true },
+      select: { id: true, title: true, team: true, sourceUrl: true },
     });
 
     if (newTeamArticles.length === 0) return;
 
-    // Group by team
-    const byTeam = new Map<string, string>();
+    // Group by team — keep first article's id and url for deep link
+    const byTeam = new Map<string, { title: string; newsId: string; url: string }>();
     for (const article of newTeamArticles) {
       if (article.team && !byTeam.has(article.team)) {
-        byTeam.set(article.team, article.title);
+        byTeam.set(article.team, { title: article.title, newsId: article.id, url: article.sourceUrl });
       }
     }
 
-    for (const [team, title] of byTeam) {
+    for (const [team, entry] of byTeam) {
       const users = await prisma.user.findMany({
         where: { favoriteTeam: team, pushEnabled: true },
         select: { id: true, locale: true },
@@ -56,8 +56,8 @@ export async function notifyTeamNews(syncStartTime: Date): Promise<void> {
             userIds,
             {
               title: t('push.team_news_title', locale).replace('{team}', team),
-              body: title,
-              data: { screen: 'HomeFeed' },
+              body: entry.title,
+              data: { screen: 'HomeFeed', newsId: entry.newsId, url: entry.url },
             },
             'teamUpdates',
           );
