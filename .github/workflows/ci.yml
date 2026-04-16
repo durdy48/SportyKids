@@ -161,43 +161,4 @@ jobs:
           path: apps/web/playwright-report/
           retention-days: 7
 
-  deploy:
-    name: Deploy to Fly.io
-    needs: [build-api, build-web]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    concurrency:
-      group: deploy-production
-      cancel-in-progress: false
-    steps:
-      - uses: actions/checkout@v4
-
-      - uses: superfly/flyctl-actions/setup-flyctl@master
-
-      - name: Deploy to Fly.io
-        run: flyctl deploy --remote-only
-        env:
-          FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
-          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
-          AI_PROVIDER: groq
-
-  deploy-mobile:
-    name: Publish Mobile Update (Expo Go)
-    needs: [deploy]
-    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-      - run: npm ci
-      - name: Build shared package
-        run: npm run build -w packages/shared
-      - name: Publish EAS Update
-        run: npx eas-cli@latest update --branch preview --message "$EAS_UPDATE_MSG" --non-interactive
-        working-directory: apps/mobile
-        env:
-          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
-          EAS_UPDATE_MSG: ${{ github.event.head_commit.message }}
+  # deploy and deploy-mobile are disabled — Fly.io and Expo/EAS not in use
