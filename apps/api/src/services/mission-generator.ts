@@ -126,6 +126,66 @@ export async function generateDailyMission(
 }
 
 // ---------------------------------------------------------------------------
+// generateDailyMissionBatched — used by the daily job with pre-fetched data
+// ---------------------------------------------------------------------------
+
+export interface UserBatchData {
+  age: number;
+  favoriteSports: string[];
+  allowedFormats: string[];
+}
+
+export async function generateDailyMissionBatched(
+  userId: string,
+  batchData: UserBatchData,
+  locale: 'es' | 'en' = 'es',
+): Promise<Record<string, unknown>> {
+  const today = getTodayDate();
+
+  const { age, allowedFormats } = batchData;
+
+  // Filter mission types based on parental restrictions
+  const availableMissions = MISSION_TYPES.filter((m) => {
+    if (m.type === 'watch_reels' && !allowedFormats.includes('reels')) return false;
+    if ((m.type === 'quiz_master' || m.type === 'quiz_perfect') && !allowedFormats.includes('quiz')) return false;
+    if (m.type === 'read_and_quiz' && (!allowedFormats.includes('news') || !allowedFormats.includes('quiz'))) return false;
+    return true;
+  });
+
+  // Pick a mission via weighted random selection
+  const picked = weightedRandomPick(availableMissions);
+
+  // Determine target based on age (younger kids get lower targets)
+  const target = age <= 8
+    ? picked.minTarget
+    : picked.minTarget + Math.floor(Math.random() * (picked.maxTarget - picked.minTarget + 1));
+
+  // Render localized title and description
+  const title = t(picked.titleKey, locale, { target: String(target) });
+  const description = t(picked.descKey, locale, { target: String(target) });
+
+  // Create the mission record
+  const mission = await prisma.dailyMission.create({
+    data: {
+      userId,
+      date: today,
+      type: picked.type,
+      title,
+      description,
+      target,
+      progress: 0,
+      completed: false,
+      rewardType: picked.rewardType,
+      rewardRarity: picked.rewardRarity || null,
+      rewardPoints: picked.rewardPoints,
+      claimed: false,
+    },
+  });
+
+  return mission;
+}
+
+// ---------------------------------------------------------------------------
 // checkMissionProgress
 // ---------------------------------------------------------------------------
 

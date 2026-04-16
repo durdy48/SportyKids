@@ -11,9 +11,9 @@ vi.mock('../services/logger', () => ({
 }));
 
 // Mock mission-generator
-const mockGenerateDailyMission = vi.fn();
+const mockGenerateDailyMissionBatched = vi.fn();
 vi.mock('../services/mission-generator', () => ({
-  generateDailyMission: (...args: unknown[]) => mockGenerateDailyMission(...args),
+  generateDailyMissionBatched: (...args: unknown[]) => mockGenerateDailyMissionBatched(...args),
 }));
 
 // Mock push-sender
@@ -29,48 +29,71 @@ vi.mock('@sportykids/shared', () => ({
 }));
 
 // Mock prisma
-const mockFindManyUser = vi.fn();
+const mockPrisma = vi.hoisted(() => ({
+  user: { findMany: vi.fn() },
+  dailyMission: { findMany: vi.fn() },
+  parentalProfile: { findMany: vi.fn() },
+}));
 vi.mock('../config/database', () => ({
-  prisma: {
-    user: { findMany: (...args: unknown[]) => mockFindManyUser(...args) },
-  },
+  prisma: mockPrisma,
 }));
 
 import { generateDailyMissions } from './generate-daily-missions';
 
+const makeUser = (id: string, overrides = {}) => ({
+  id,
+  locale: 'es',
+  age: 10,
+  favoriteSports: ['football'],
+  ...overrides,
+});
+
 describe('generate-daily-missions', () => {
   beforeEach(() => {
     vi.clearAllMocks();
+    // Default: no existing missions, no parental profiles
+    mockPrisma.dailyMission.findMany.mockResolvedValue([]);
+    mockPrisma.parentalProfile.findMany.mockResolvedValue([]);
   });
 
-  it('should generate missions for all active users', async () => {
-    mockFindManyUser.mockResolvedValue([
-      { id: 'u1' },
-      { id: 'u2' },
-      { id: 'u3' },
-    ]);
-    mockGenerateDailyMission.mockResolvedValue({ rewardRarity: 'rare' });
+  it('should generate missions for all active users with no existing missions', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([makeUser('u1'), makeUser('u2'), makeUser('u3')]);
+    mockGenerateDailyMissionBatched.mockResolvedValue({ rewardRarity: 'rare' });
 
     const result = await generateDailyMissions();
 
     expect(result.generated).toBe(3);
     expect(result.errors).toBe(0);
-    expect(mockGenerateDailyMission).toHaveBeenCalledTimes(3);
+    expect(mockGenerateDailyMissionBatched).toHaveBeenCalledTimes(3);
   });
 
   it('should return zero when no active users found', async () => {
-    mockFindManyUser.mockResolvedValue([]);
+    mockPrisma.user.findMany.mockResolvedValue([]);
 
     const result = await generateDailyMissions();
 
     expect(result.generated).toBe(0);
     expect(result.errors).toBe(0);
-    expect(mockGenerateDailyMission).not.toHaveBeenCalled();
+    expect(mockGenerateDailyMissionBatched).not.toHaveBeenCalled();
+  });
+
+  it('should skip users that already have a mission today', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([makeUser('u1'), makeUser('u2')]);
+    mockPrisma.dailyMission.findMany.mockResolvedValue([{ userId: 'u1' }]);
+    mockGenerateDailyMissionBatched.mockResolvedValue({ rewardRarity: 'common' });
+
+    const result = await generateDailyMissions();
+
+    // u1 already had a mission (counted as generated), u2 gets generated
+    expect(result.generated).toBe(2);
+    expect(result.errors).toBe(0);
+    expect(mockGenerateDailyMissionBatched).toHaveBeenCalledTimes(1);
+    expect(mockGenerateDailyMissionBatched).toHaveBeenCalledWith('u2', expect.any(Object), 'es');
   });
 
   it('should count errors when mission generation fails for a user', async () => {
-    mockFindManyUser.mockResolvedValue([{ id: 'u1' }, { id: 'u2' }]);
-    mockGenerateDailyMission
+    mockPrisma.user.findMany.mockResolvedValue([makeUser('u1'), makeUser('u2')]);
+    mockGenerateDailyMissionBatched
       .mockRejectedValueOnce(new Error('DB error'))
       .mockResolvedValueOnce({ rewardRarity: 'common' });
 
@@ -81,8 +104,8 @@ describe('generate-daily-missions', () => {
   });
 
   it('should send push notification when mission is generated', async () => {
-    mockFindManyUser.mockResolvedValue([{ id: 'u1', locale: 'es' }]);
-    mockGenerateDailyMission.mockResolvedValue({ rewardRarity: 'epic' });
+    mockPrisma.user.findMany.mockResolvedValue([makeUser('u1', { locale: 'es' })]);
+    mockGenerateDailyMissionBatched.mockResolvedValue({ rewardRarity: 'epic' });
 
     await generateDailyMissions();
 
@@ -93,8 +116,8 @@ describe('generate-daily-missions', () => {
   });
 
   it('should use user locale for push notification text', async () => {
-    mockFindManyUser.mockResolvedValue([{ id: 'u1', locale: 'en' }]);
-    mockGenerateDailyMission.mockResolvedValue({ rewardRarity: 'rare' });
+    mockPrisma.user.findMany.mockResolvedValue([makeUser('u1', { locale: 'en' })]);
+    mockGenerateDailyMissionBatched.mockResolvedValue({ rewardRarity: 'rare' });
 
     await generateDailyMissions();
 
@@ -103,8 +126,8 @@ describe('generate-daily-missions', () => {
   });
 
   it('should use Spanish locale for push notification when user has locale es', async () => {
-    mockFindManyUser.mockResolvedValue([{ id: 'u1', locale: 'es' }]);
-    mockGenerateDailyMission.mockResolvedValue({ rewardRarity: 'common' });
+    mockPrisma.user.findMany.mockResolvedValue([makeUser('u1', { locale: 'es' })]);
+    mockGenerateDailyMissionBatched.mockResolvedValue({ rewardRarity: 'common' });
 
     await generateDailyMissions();
 
@@ -113,12 +136,42 @@ describe('generate-daily-missions', () => {
   });
 
   it('should default to es locale when user has no locale set', async () => {
-    mockFindManyUser.mockResolvedValue([{ id: 'u1', locale: null }]);
-    mockGenerateDailyMission.mockResolvedValue({ rewardRarity: 'common' });
+    mockPrisma.user.findMany.mockResolvedValue([makeUser('u1', { locale: null })]);
+    mockGenerateDailyMissionBatched.mockResolvedValue({ rewardRarity: 'common' });
 
     await generateDailyMissions();
 
     expect(mockT).toHaveBeenCalledWith('push.mission_ready_title', 'es');
     expect(mockT).toHaveBeenCalledWith('push.mission_ready_body', 'es');
+  });
+
+  it('should pass parental allowedFormats from pre-fetched profile', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([makeUser('u1')]);
+    mockPrisma.parentalProfile.findMany.mockResolvedValue([
+      { userId: 'u1', allowedFormats: ['news'] },
+    ]);
+    mockGenerateDailyMissionBatched.mockResolvedValue({ rewardRarity: 'common' });
+
+    await generateDailyMissions();
+
+    expect(mockGenerateDailyMissionBatched).toHaveBeenCalledWith(
+      'u1',
+      expect.objectContaining({ allowedFormats: ['news'] }),
+      'es',
+    );
+  });
+
+  it('should use default allowedFormats when no parental profile exists', async () => {
+    mockPrisma.user.findMany.mockResolvedValue([makeUser('u1')]);
+    mockPrisma.parentalProfile.findMany.mockResolvedValue([]);
+    mockGenerateDailyMissionBatched.mockResolvedValue({ rewardRarity: 'common' });
+
+    await generateDailyMissions();
+
+    expect(mockGenerateDailyMissionBatched).toHaveBeenCalledWith(
+      'u1',
+      expect.objectContaining({ allowedFormats: ['news', 'reels', 'quiz'] }),
+      'es',
+    );
   });
 });

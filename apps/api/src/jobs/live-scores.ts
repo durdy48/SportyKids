@@ -208,6 +208,36 @@ async function processLivescoreEntry(
 }
 
 // ---------------------------------------------------------------------------
+// In-memory cache for TeamStats.nextMatch dates (refreshed every hour)
+// ---------------------------------------------------------------------------
+
+interface MatchDateCache {
+  dates: string[]; // ISO date strings of upcoming matches
+  refreshedAt: number; // timestamp
+}
+
+let matchDateCache: MatchDateCache | null = null;
+const MATCH_DATE_CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
+
+async function getUpcomingMatchDates(): Promise<string[]> {
+  const now = Date.now();
+  if (matchDateCache && now - matchDateCache.refreshedAt < MATCH_DATE_CACHE_TTL_MS) {
+    return matchDateCache.dates;
+  }
+
+  const teamStats = await prisma.teamStats.findMany({
+    select: { nextMatch: true },
+  });
+
+  const dates = teamStats
+    .map((ts) => (ts.nextMatch as { date?: string } | null)?.date)
+    .filter((d): d is string => !!d);
+
+  matchDateCache = { dates, refreshedAt: now };
+  return dates;
+}
+
+// ---------------------------------------------------------------------------
 // Poll & process
 // ---------------------------------------------------------------------------
 
@@ -225,16 +255,10 @@ export async function pollLiveScores(): Promise<{ processed: number; events: num
       where: { status: { in: ['live', 'half_time'] } },
     });
 
-    // Also check TeamStats.nextMatch for matches today
-    const teamStats = await prisma.teamStats.findMany({
-      select: { teamName: true, nextMatch: true },
-    });
-
-    const hasMatchToday = teamStats.some((ts) => {
-      if (!ts.nextMatch) return false;
-      const nm = ts.nextMatch as { date?: string };
-      if (!nm.date) return false;
-      const matchDate = new Date(nm.date);
+    // Use cached TeamStats.nextMatch dates to avoid repeated full-table reads
+    const upcomingDates = await getUpcomingMatchDates();
+    const hasMatchToday = upcomingDates.some((d) => {
+      const matchDate = new Date(d);
       return matchDate >= today && matchDate < tomorrow;
     });
 
@@ -288,24 +312,39 @@ export async function pollLiveScores(): Promise<{ processed: number; events: num
 // ---------------------------------------------------------------------------
 
 export async function runLiveScores(triggeredBy: 'cron' | 'manual' = 'cron', triggeredId?: string, existingRunId?: string): Promise<void> {
-  const run = existingRunId
-    ? { id: existingRunId }
-    : await prisma.jobRun.create({
+  // For manual triggers always log; for cron only log when there is actual work
+  // to avoid ~288 JobRun rows/day when no matches are scheduled.
+  let run: { id: string } | null = existingRunId ? { id: existingRunId } : null;
+
+  const ensureRun = async () => {
+    if (!run) {
+      run = await prisma.jobRun.create({
         data: { jobName: 'live-scores', status: 'running', triggeredBy, triggeredId },
       });
+    }
+    return run;
+  };
+
   try {
     const result = await pollLiveScores();
-    await prisma.jobRun.update({
-      where: { id: run.id },
-      data: {
-        status: 'success',
-        finishedAt: new Date(),
-        output: { processed: result.processed, events: result.events, notified: result.notified },
-      },
-    });
+
+    // Only persist a JobRun record when there was something to process or
+    // this was triggered manually (admins expect a history entry).
+    if (triggeredBy === 'manual' || result.processed > 0 || result.events > 0) {
+      const r = await ensureRun();
+      await prisma.jobRun.update({
+        where: { id: r.id },
+        data: {
+          status: 'success',
+          finishedAt: new Date(),
+          output: { processed: result.processed, events: result.events, notified: result.notified },
+        },
+      });
+    }
   } catch (e) {
+    const r = await ensureRun();
     await prisma.jobRun.update({
-      where: { id: run.id },
+      where: { id: r.id },
       data: { status: 'error', finishedAt: new Date(), output: { error: String(e) } },
     });
     throw e;

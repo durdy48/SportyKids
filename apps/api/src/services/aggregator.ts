@@ -131,6 +131,17 @@ export async function syncSource(
   try {
     const feed = await parser.parseURL(sourceUrl);
 
+    // Pre-fetch all existing guids in one query to avoid N+1 per-item lookups
+    const candidateGuids = feed.items
+      .filter((item) => item.title && item.link)
+      .map((item) => item.guid || item.link!);
+
+    const existingItems = await prisma.newsItem.findMany({
+      where: { rssGuid: { in: candidateGuids } },
+      select: { rssGuid: true, safetyStatus: true },
+    });
+    const existingByGuid = new Map(existingItems.map((r) => [r.rssGuid, r.safetyStatus]));
+
     for (const item of feed.items) {
       if (!item.title || !item.link) continue;
 
@@ -138,8 +149,8 @@ export async function syncSource(
       result.itemsProcessed++;
 
       // Check if item already exists and is not pending — skip re-moderation
-      const existing = await prisma.newsItem.findUnique({ where: { rssGuid } });
-      if (existing && existing.safetyStatus !== 'pending') {
+      const existingStatus = existingByGuid.get(rssGuid);
+      if (existingStatus && existingStatus !== 'pending') {
         result.itemsSkipped++;
         continue;
       }

@@ -6,7 +6,7 @@ initSentry();
 
 import express from 'express';
 import cors from 'cors';
-import { prisma, waitForDatabase, startDatabaseKeepAlive } from './config/database';
+import { prisma, waitForDatabase } from './config/database';
 import newsRouter from './routes/news';
 import usersRouter from './routes/users';
 import reelsRouter from './routes/reels';
@@ -96,7 +96,6 @@ app.use('/api/organizations', organizationsRouter);
 app.use(errorHandler);
 
 // Start server — wait for DB to be reachable before accepting traffic.
-// This handles Neon cold starts (free tier auto-suspends after inactivity).
 async function cleanupStaleJobRuns(): Promise<void> {
   try {
     // Any job left in 'running' state at startup was killed mid-execution — mark as error.
@@ -123,7 +122,6 @@ async function start() {
   await prisma.$connect();
 
   await cleanupStaleJobRuns();
-  startDatabaseKeepAlive();
 
   // -------------------------------------------------------------------------
   // Cron jobs — started before app.listen() so the engine is guaranteed ready.

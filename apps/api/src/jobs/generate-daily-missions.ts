@@ -1,6 +1,6 @@
 import cron from 'node-cron';
 import { prisma } from '../config/database';
-import { generateDailyMission } from '../services/mission-generator';
+import { generateDailyMissionBatched, type UserBatchData } from '../services/mission-generator';
 import { logger } from '../services/logger';
 
 // ---------------------------------------------------------------------------
@@ -15,20 +15,50 @@ export async function generateDailyMissions(): Promise<{ generated: number; erro
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   const activeUsers = await prisma.user.findMany({
-    where: {
-      lastActiveDate: { gte: sevenDaysAgo },
-    },
-    select: { id: true, locale: true },
+    where: { lastActiveDate: { gte: sevenDaysAgo } },
+    select: { id: true, locale: true, age: true, favoriteSports: true },
   });
 
   logger.info({ activeUsers: activeUsers.length }, 'Found active users for daily missions');
+
+  if (activeUsers.length === 0) return result;
+
+  const today = new Date().toISOString().split('T')[0]!;
+  const userIds = activeUsers.map((u) => u.id);
+
+  // Batch pre-fetch all data needed for mission generation in 3 queries
+  const [existingMissions, parentalProfiles] = await Promise.all([
+    prisma.dailyMission.findMany({
+      where: { date: today, userId: { in: userIds } },
+      select: { userId: true },
+    }),
+    prisma.parentalProfile.findMany({
+      where: { userId: { in: userIds } },
+      select: { userId: true, allowedFormats: true },
+    }),
+  ]);
+
+  const existingMissionSet = new Set(existingMissions.map((m) => m.userId));
+  const parentalByUserId = new Map(parentalProfiles.map((p) => [p.userId, p.allowedFormats]));
 
   const { sendPushToUser } = await import('../services/push-sender');
   const { t } = await import('@sportykids/shared');
 
   for (const user of activeUsers) {
+    // Skip users that already have a mission today
+    if (existingMissionSet.has(user.id)) {
+      result.generated++;
+      continue;
+    }
+
     try {
-      const mission = await generateDailyMission(user.id);
+      const batchData: UserBatchData = {
+        age: user.age ?? 10,
+        favoriteSports: user.favoriteSports,
+        allowedFormats: parentalByUserId.get(user.id) ?? ['news', 'reels', 'quiz'],
+      };
+
+      const mission = await generateDailyMissionBatched(user.id, batchData, user.locale || 'es');
       result.generated++;
 
       // Send push notification about new mission
@@ -36,7 +66,7 @@ export async function generateDailyMissions(): Promise<{ generated: number; erro
         const locale = user.locale || 'es';
         sendPushToUser(user.id, {
           title: t('push.mission_ready_title', locale),
-          body: t('push.mission_ready_body', locale).replace('{rarity}', mission.rewardRarity || 'common'),
+          body: t('push.mission_ready_body', locale).replace('{rarity}', (mission.rewardRarity as string) || 'common'),
           data: { screen: 'HomeFeed' },
         }).catch(() => {}); // Non-blocking
       }

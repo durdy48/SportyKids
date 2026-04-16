@@ -17,12 +17,12 @@ function dayBounds(date: Date): { start: Date; end: Date } {
 // ---------------------------------------------------------------------------
 export async function computeDau(date: Date): Promise<{ count: number }> {
   const { start, end } = dayBounds(date);
-  const rows = await prisma.activityLog.findMany({
-    where: { createdAt: { gte: start, lte: end } },
-    select: { userId: true },
-    distinct: ['userId'],
-  });
-  return { count: rows.length };
+  const result = await prisma.$queryRaw<[{ count: bigint }]>`
+    SELECT COUNT(DISTINCT "userId") AS count
+    FROM "ActivityLog"
+    WHERE "createdAt" >= ${start} AND "createdAt" <= ${end}
+  `;
+  return { count: Number(result[0]?.count ?? 0) };
 }
 
 // ---------------------------------------------------------------------------
@@ -35,12 +35,12 @@ export async function computeMau(date: Date): Promise<{ count: number }> {
   start.setDate(start.getDate() - 29);
   start.setHours(0, 0, 0, 0);
 
-  const rows = await prisma.activityLog.findMany({
-    where: { createdAt: { gte: start, lte: end } },
-    select: { userId: true },
-    distinct: ['userId'],
-  });
-  return { count: rows.length };
+  const result = await prisma.$queryRaw<[{ count: bigint }]>`
+    SELECT COUNT(DISTINCT "userId") AS count
+    FROM "ActivityLog"
+    WHERE "createdAt" >= ${start} AND "createdAt" <= ${end}
+  `;
+  return { count: Number(result[0]?.count ?? 0) };
 }
 
 // ---------------------------------------------------------------------------
@@ -49,9 +49,10 @@ export async function computeMau(date: Date): Promise<{ count: number }> {
 export async function computeSportActivity(date: Date): Promise<Record<string, number>> {
   const { start, end } = dayBounds(date);
 
-  const rows = await prisma.activityLog.findMany({
+  const groups = await prisma.activityLog.groupBy({
+    by: ['sport'],
     where: { createdAt: { gte: start, lte: end }, sport: { not: null } },
-    select: { sport: true },
+    _count: { sport: true },
   });
 
   // Initialise with 0 for every sport
@@ -60,9 +61,9 @@ export async function computeSportActivity(date: Date): Promise<Record<string, n
     result[sport] = 0;
   }
 
-  for (const row of rows) {
-    if (row.sport && result[row.sport] !== undefined) {
-      result[row.sport] = (result[row.sport] ?? 0) + 1;
+  for (const group of groups) {
+    if (group.sport && result[group.sport] !== undefined) {
+      result[group.sport] = group._count.sport;
     }
   }
 
@@ -92,14 +93,17 @@ export async function computeRetentionD1(date: Date): Promise<{ rate: number; co
   const dateEnd = new Date(date);
   dateEnd.setHours(23, 59, 59, 999);
 
-  const retained = await prisma.activityLog.findMany({
-    where: { userId: { in: cohortIds }, createdAt: { gte: dateStart, lte: dateEnd } },
-    select: { userId: true },
-    distinct: ['userId'],
-  });
+  const retained = await prisma.$queryRaw<[{ count: bigint }]>`
+    SELECT COUNT(DISTINCT "userId") AS count
+    FROM "ActivityLog"
+    WHERE "userId" = ANY(${cohortIds}::text[])
+      AND "createdAt" >= ${dateStart}
+      AND "createdAt" <= ${dateEnd}
+  `;
+  const retainedCount = Number(retained[0]?.count ?? 0);
 
   return {
-    rate: Math.round((retained.length / cohort.length) * 100) / 100,
+    rate: Math.round((retainedCount / cohort.length) * 100) / 100,
     cohortSize: cohort.length,
   };
 }
@@ -130,14 +134,17 @@ export async function computeRetentionD7(date: Date): Promise<{ rate: number; co
   const windowEnd = new Date(date);
   windowEnd.setHours(23, 59, 59, 999);
 
-  const retained = await prisma.activityLog.findMany({
-    where: { userId: { in: cohortIds }, createdAt: { gte: windowStart, lte: windowEnd } },
-    select: { userId: true },
-    distinct: ['userId'],
-  });
+  const retained = await prisma.$queryRaw<[{ count: bigint }]>`
+    SELECT COUNT(DISTINCT "userId") AS count
+    FROM "ActivityLog"
+    WHERE "userId" = ANY(${cohortIds}::text[])
+      AND "createdAt" >= ${windowStart}
+      AND "createdAt" <= ${windowEnd}
+  `;
+  const retainedCount = Number(retained[0]?.count ?? 0);
 
   return {
-    rate: Math.round((retained.length / cohort.length) * 100) / 100,
+    rate: Math.round((retainedCount / cohort.length) * 100) / 100,
     cohortSize: cohort.length,
   };
 }

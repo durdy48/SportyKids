@@ -5,8 +5,8 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 // ---------------------------------------------------------------------------
 const mockPrisma = vi.hoisted(() => ({
   activityLog: {
-    findMany: vi.fn(),
     count: vi.fn(),
+    groupBy: vi.fn(),
   },
   user: {
     findMany: vi.fn(),
@@ -19,6 +19,7 @@ const mockPrisma = vi.hoisted(() => ({
   dailyMission: {
     count: vi.fn(),
   },
+  $queryRaw: vi.fn(),
 }));
 
 vi.mock('../config/database', () => ({
@@ -60,7 +61,7 @@ describe('admin-stats', () => {
       const result = await computeRetentionD1(TODAY);
 
       expect(result).toEqual({ rate: 0, cohortSize: 0 });
-      expect(mockPrisma.activityLog.findMany).not.toHaveBeenCalled();
+      expect(mockPrisma.$queryRaw).not.toHaveBeenCalled();
     });
 
     it('returns correct rate when 2 of 4 cohort users are retained', async () => {
@@ -70,8 +71,7 @@ describe('admin-stats', () => {
         { id: 'u3' },
         { id: 'u4' },
       ]);
-      // 2 retained
-      mockPrisma.activityLog.findMany.mockResolvedValue([{ userId: 'u1' }, { userId: 'u2' }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: BigInt(2) }]);
 
       const result = await computeRetentionD1(TODAY);
 
@@ -80,7 +80,7 @@ describe('admin-stats', () => {
 
     it('returns rate: 1 when all cohort users are retained', async () => {
       mockPrisma.user.findMany.mockResolvedValue([{ id: 'u1' }, { id: 'u2' }]);
-      mockPrisma.activityLog.findMany.mockResolvedValue([{ userId: 'u1' }, { userId: 'u2' }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: BigInt(2) }]);
 
       const result = await computeRetentionD1(TODAY);
 
@@ -102,11 +102,10 @@ describe('admin-stats', () => {
 
     it('returns correct rate for D7 cohort', async () => {
       mockPrisma.user.findMany.mockResolvedValue([{ id: 'u1' }, { id: 'u2' }, { id: 'u3' }]);
-      mockPrisma.activityLog.findMany.mockResolvedValue([{ userId: 'u1' }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: BigInt(1) }]);
 
       const result = await computeRetentionD7(TODAY);
 
-      // 1 / 3 = 0.33
       expect(result.cohortSize).toBe(3);
       expect(result.rate).toBeCloseTo(0.33, 2);
     });
@@ -117,20 +116,20 @@ describe('admin-stats', () => {
   // -------------------------------------------------------------------------
   describe('computeDau', () => {
     it('counts distinct active users for the given date', async () => {
-      mockPrisma.activityLog.findMany.mockResolvedValue([
-        { userId: 'u1' },
-        { userId: 'u2' },
-        { userId: 'u3' },
-      ]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: BigInt(3) }]);
 
       const result = await computeDau(TODAY);
 
       expect(result).toEqual({ count: 3 });
-      // Should query with date range bounds
-      const call = mockPrisma.activityLog.findMany.mock.calls[0]![0] as { where: { createdAt: { gte: Date; lte: Date }; }; distinct: string[] };
-      expect(call.where.createdAt.gte).toBeDefined();
-      expect(call.where.createdAt.lte).toBeDefined();
-      expect(call.distinct).toContain('userId');
+      expect(mockPrisma.$queryRaw).toHaveBeenCalled();
+    });
+
+    it('returns 0 when no activity', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: BigInt(0) }]);
+
+      const result = await computeDau(TODAY);
+
+      expect(result).toEqual({ count: 0 });
     });
   });
 
@@ -139,11 +138,20 @@ describe('admin-stats', () => {
   // -------------------------------------------------------------------------
   describe('computeMau', () => {
     it('counts distinct active users in last 30 days', async () => {
-      mockPrisma.activityLog.findMany.mockResolvedValue([{ userId: 'u1' }, { userId: 'u2' }]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: BigInt(2) }]);
 
       const result = await computeMau(TODAY);
 
       expect(result).toEqual({ count: 2 });
+      expect(mockPrisma.$queryRaw).toHaveBeenCalled();
+    });
+
+    it('returns 0 when no activity', async () => {
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: BigInt(0) }]);
+
+      const result = await computeMau(TODAY);
+
+      expect(result).toEqual({ count: 0 });
     });
   });
 
@@ -152,7 +160,7 @@ describe('admin-stats', () => {
   // -------------------------------------------------------------------------
   describe('computeSportActivity', () => {
     it('returns 0 for sports with no activity', async () => {
-      mockPrisma.activityLog.findMany.mockResolvedValue([]);
+      mockPrisma.activityLog.groupBy.mockResolvedValue([]);
 
       const result = await computeSportActivity(TODAY);
 
@@ -167,11 +175,10 @@ describe('admin-stats', () => {
     });
 
     it('correctly counts activity per sport', async () => {
-      mockPrisma.activityLog.findMany.mockResolvedValue([
-        { sport: 'football' },
-        { sport: 'football' },
-        { sport: 'tennis' },
-        { sport: 'basketball' },
+      mockPrisma.activityLog.groupBy.mockResolvedValue([
+        { sport: 'football', _count: { sport: 2 } },
+        { sport: 'tennis', _count: { sport: 1 } },
+        { sport: 'basketball', _count: { sport: 1 } },
       ]);
 
       const result = await computeSportActivity(TODAY);
@@ -183,9 +190,9 @@ describe('admin-stats', () => {
     });
 
     it('ignores unknown sports', async () => {
-      mockPrisma.activityLog.findMany.mockResolvedValue([
-        { sport: 'hockey' }, // not in SPORTS
-        { sport: 'football' },
+      mockPrisma.activityLog.groupBy.mockResolvedValue([
+        { sport: 'hockey', _count: { sport: 3 } },
+        { sport: 'football', _count: { sport: 1 } },
       ]);
 
       const result = await computeSportActivity(TODAY);
@@ -275,8 +282,7 @@ describe('admin-stats', () => {
   // -------------------------------------------------------------------------
   describe('computeQuizEngagement', () => {
     it('returns 0 rate when DAU is 0', async () => {
-      // First call to activityLog.findMany for computeDau → empty
-      mockPrisma.activityLog.findMany.mockResolvedValue([]);
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: BigInt(0) }]);
       mockPrisma.activityLog.count.mockResolvedValue(5);
 
       const result = await computeQuizEngagement(TODAY);
@@ -286,11 +292,7 @@ describe('admin-stats', () => {
     });
 
     it('returns correct quiz engagement rate', async () => {
-      // computeDau returns 10 distinct users
-      mockPrisma.activityLog.findMany.mockResolvedValue(
-        Array.from({ length: 10 }, (_, i) => ({ userId: `u${i}` }))
-      );
-      // quizAnswered = 5
+      mockPrisma.$queryRaw.mockResolvedValue([{ count: BigInt(10) }]);
       mockPrisma.activityLog.count.mockResolvedValue(5);
 
       const result = await computeQuizEngagement(TODAY);
